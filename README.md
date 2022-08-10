@@ -9,7 +9,7 @@ RPL workcell execution interface
 For more details and specific examples of how to use rpl_wei, please see our [documentation](https://readthedocs.org/).
 
 ## Table of Contents
-- [rpl_wei](#rplwei)
+- [rpl_wei](#rpl-wei)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
     - [Install latest version with PyPI](#install-latest-version-with-pypi)
