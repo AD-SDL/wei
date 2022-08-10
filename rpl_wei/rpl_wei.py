@@ -2,11 +2,12 @@
 from argparse import ArgumentParser
 from pathlib import Path
 
-from data_classes import WorkCell, Workflow
 from devtools import debug
 
+from rpl_wei.data_classes import WorkCell, Workflow
 
-class WF_Client:
+
+class WEI:
     """Client to interact with a workflow"""
 
     def __init__(self, wc_config_file):
@@ -50,7 +51,7 @@ class WF_Client:
 
 
 def main(args):  # noqa: D103
-    wc = WF_Client(args.workflow)
+    wc = WEI(args.workflow)
     if args.verbose:
         wc.print_flow()
         wc.print_workcell()
@@ -60,12 +61,8 @@ def main(args):  # noqa: D103
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument(
-        "-wf", "--workflow", help="Path to workflow file", type=Path, required=True
-    )
-    parser.add_argument(
-        "-v", "--verbose", help="Extended printing options", action="store_true"
-    )
+    parser.add_argument("-wf", "--workflow", help="Path to workflow file", type=Path, required=True)
+    parser.add_argument("-v", "--verbose", help="Extended printing options", action="store_true")
 
     args = parser.parse_args()
     main(args)
