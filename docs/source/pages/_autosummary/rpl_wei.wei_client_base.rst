@@ -1,7 +1,7 @@
-﻿rpl\_wei.rpl\_wei
-=================
+rpl\_wei.wei\_client\_base
+==========================
 
-.. automodule:: rpl_wei.rpl_wei
+.. automodule:: rpl_wei.wei_client_base
 
    
    

@@ -28,5 +28,5 @@
    :recursive:
 
    rpl_wei.data_classes
-   rpl_wei.rpl_wei
+   rpl_wei.wei_client_base
 
