@@ -1,1 +1,3 @@
 # Place your requirements here
+pydantic==1.9.1
+devtools==0.9.0
