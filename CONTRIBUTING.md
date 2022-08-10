@@ -7,7 +7,7 @@ If you are interested in contributing to rpl_wei, your contributions will fall i
 2. You want to fix a bug:
     - Please post an issue using the Bug template which provides a clear and concise description of what the bug was.
 
-Once you finish implementing a feature or bug-fix, please send a Pull Request to https://github.com/KPHippe/rpl_wei.
+Once you finish implementing a feature or bug-fix, please send a Pull Request to https://github.com/AD-SDL/rpl_wei.
 
 ## Developing rpl_wei
 
@@ -16,7 +16,7 @@ To develop rpl_wei on your machine, please follow these instructions:
 1. Clone a copy of rpl_wei from source:
 
 ```
-git clone https://github.com/KPHippe/rpl_wei.git
+git clone https://github.com/AD-SDL/rpl_wei.git
 cd rpl_wei
 ```
 
@@ -46,11 +46,10 @@ Hence, if you modify a Python file, you do not need to reinstall rpl_wei again a
 python3 -c "import rpl_wei; print(rpl_wei.__version__)"
 ```
 
-5. To run dev tools (isort, flake8, black, mypy):
+5. To run dev tools (isort, flake8, black):
 
 ```
 make
-make mypy
 ```
 
 ## Unit Testing
@@ -84,7 +83,7 @@ To view the docs run: `open rpl_wei/docs/build/html/index.html`.
 
 To release a new version of rpl_wei to PyPI:
 
-1. Merge the `develop` branch into the `main` branch with an updated version number in [`rpl_wei.__init__`](https://github.com/ramanathanlab/rpl_wei/blob/main/rpl_wei/__init__.py).
+1. Merge the `develop` branch into the `main` branch with an updated version number in [`rpl_wei.__init__`](https://github.com/AD-SDL/rpl_wei/blob/main/rpl_wei/__init__.py).
 2. Make a new release on GitHub with the tag and name equal to the version number.
 3. [Build and install](#developing-rpl_wei) rpl_wei from source.
 4. Run the following commands:

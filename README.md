@@ -23,7 +23,7 @@ For more details and specific examples of how to use rpl_wei, please see our [do
 ### Install latest version with PyPI 
 
 ```
-git clone https://github.com/KPHippe/rpl_wei.git
+git clone https://github.com/AD-SDL/rpl_wei.git
 pip3 install -r requirements/requirements.txt
 pip3 install .
 ``` 
@@ -34,9 +34,9 @@ TODO
 
 ## Contributing
 
-Please report **bugs**, **enhancement requests**, or **questions** through the [Issue Tracker](https://github.com/KPHippe/rpl_wei/issues).
+Please report **bugs**, **enhancement requests**, or **questions** through the [Issue Tracker](https://github.com/AD-SDL/rpl_wei/issues).
 
-If you are looking to contribute, please see [`CONTRIBUTING.md`](https://github.com/KPHippe/rpl_wei/blob/main/CONTRIBUTING.md).
+If you are looking to contribute, please see [`CONTRIBUTING.md`](https://github.com/AD-SDL/rpl_wei/blob/main/CONTRIBUTING.md).
 
 
 ## Acknowledgments
