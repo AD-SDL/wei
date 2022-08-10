@@ -51,12 +51,12 @@ class WEI:
 
 
 def main(args):  # noqa: D103
-    wc = WEI(args.workflow)
+    wei = WEI(args.workflow)
     if args.verbose:
-        wc.print_flow()
-        wc.print_workcell()
-    wc.check_modules()
-    wc.check_flowdef()
+        wei.print_flow()
+        wei.print_workcell()
+    wei.check_modules()
+    wei.check_flowdef()
 
 
 if __name__ == "__main__":
