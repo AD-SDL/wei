@@ -80,7 +80,7 @@ class SimpleModule(BaseModel):
     # what else? Equipemnt it needs?
 
 
-class Command(BaseModel):
+class Action(BaseModel):
     """Container to store command information"""
 
     name: str
@@ -102,7 +102,7 @@ class Step(BaseModel):
     """Name of step"""
     module: str
     """Module used in the step"""
-    commands: List[Command]
+    actions: List[Action]
     """List of commands to be executed by the step"""
     requirements: Optional[Dict]
     """Equipment needed in module"""
