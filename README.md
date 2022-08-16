@@ -28,6 +28,16 @@ pip3 install -r requirements/requirements.txt
 pip3 install .
 ``` 
 
+### Development install 
+```
+conda create -n rpl-wei python=3.9
+conda activate rpl-wei
+pip3 install --upgrade pip setuptools wheel
+pip3 install -r requirements/dev.txt
+pip3 install -r requirements/requirements.txt
+pip3 install -e .
+```
+
 ## Usage
 
 TODO

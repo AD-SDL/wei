@@ -29,8 +29,8 @@ git pull
 3. Install rpl_wei in `develop` mode:
 
 ```
-python3 -m venv env
-source env/bin/activate
+conda create -n rpl-wei python=3.9
+conda activate rpl-wei
 pip3 install --upgrade pip setuptools wheel
 pip3 install -r requirements/dev.txt
 pip3 install -r requirements/requirements.txt
