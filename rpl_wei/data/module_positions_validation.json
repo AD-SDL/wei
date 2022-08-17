@@ -1,0 +1,37 @@
+{
+    "ot2": {
+        "iterable": true,
+        "type": "float",
+        "length": 6
+    },
+    "pf400": {
+        "iterable": true,
+        "type": "float",
+        "length": 6
+    },
+    "sealer": {
+        "iterable": true,
+        "type": "float",
+        "length": 6
+    },
+    "pealer": {
+        "iterable": true,
+        "type": "float",
+        "length": 6
+    },
+    "plate_stacker": {
+        "iterable": true,
+        "type": "float",
+        "length": 6
+    },
+    "hidex": {
+        "iterable": true,
+        "type": "float",
+        "length": 6
+    },
+    "biometra": {
+        "iterable": true,
+        "type": "float",
+        "length": 6
+    }
+}

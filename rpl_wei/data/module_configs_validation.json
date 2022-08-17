@@ -1,0 +1,30 @@
+{
+    "ot2": [
+        "ip",
+        "port"
+    ],
+    "pf400": [
+        "ip",
+        "port"
+    ],
+    "sealer": [
+        "ip",
+        "port"
+    ],
+    "pealer": [
+        "ip",
+        "port"
+    ],
+    "plate_stacker": [
+        "ip",
+        "port"
+    ],
+    "hidex": [
+        "ip",
+        "port"
+    ],
+    "biometra": [
+        "ip",
+        "port"
+    ]
+}
