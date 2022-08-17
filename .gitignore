@@ -274,3 +274,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,visualstudiocode,macos,linux,windows
+
+# Ignore logs folder that is created if user does not specify
+logs/
