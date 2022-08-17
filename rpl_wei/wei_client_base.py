@@ -1,13 +1,13 @@
 """Interaction point for user to the RPL workcells/flows"""
-from argparse import ArgumentParser
-from pathlib import Path
 import logging
 import time
+from argparse import ArgumentParser
+from pathlib import Path
 from uuid import uuid4
 
 from devtools import debug
 
-from rpl_wei.data_classes import PathLike, WorkCell, Workflow, Step
+from rpl_wei.data_classes import PathLike, Step, WorkCell, Workflow
 
 
 class WEI:
@@ -36,13 +36,21 @@ class WEI:
         self.run_log_dir = run_log_dir
 
         self.run_id = uuid4()
-        self._setup_logger("runLogger", run_log_dir / f"run-{self.run_id}.log", level=logging.INFO)
-        self._setup_logger("wcLogger", log_dir / f"{Path(self.workflow.workcell).stem}.log", level=logging.INFO)
+        self._setup_logger(
+            "runLogger", run_log_dir / f"run-{self.run_id}.log", level=logging.INFO
+        )
+        self._setup_logger(
+            "wcLogger",
+            log_dir / f"{Path(self.workflow.workcell).stem}.log",
+            level=logging.INFO,
+        )
 
         self.run_logger = self._get_logger("runLogger")
         self.wc_logger = self._get_logger("wcLogger")
 
-    def _setup_logger(self, logger_name: str, log_file: PathLike, level: int = logging.INFO):
+    def _setup_logger(
+        self, logger_name: str, log_file: PathLike, level: int = logging.INFO
+    ):
         logger = logging.getLogger(logger_name)
         formatter = logging.Formatter("%(asctime)s : %(message)s")
         fileHandler = logging.FileHandler(log_file, mode="a+")
@@ -72,7 +80,11 @@ class WEI:
         # Set the run ID
         if self.run_id is None:
             self.run_id = uuid4()
-            self._setup_logger("runLogger", self.run_log_dir / f"run-{self.run_id}.log", level=logging.INFO)
+            self._setup_logger(
+                "runLogger",
+                self.run_log_dir / f"run-{self.run_id}.log",
+                level=logging.INFO,
+            )
 
         # Log start time of the run
         self.wc_logger.info(f"Starting workflow run {self.run_id}")
@@ -119,8 +131,12 @@ def main(args):  # noqa: D103
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("-wf", "--workflow", help="Path to workflow file", type=Path, required=True)
-    parser.add_argument("-v", "--verbose", help="Extended printing options", action="store_true")
+    parser.add_argument(
+        "-wf", "--workflow", help="Path to workflow file", type=Path, required=True
+    )
+    parser.add_argument(
+        "-v", "--verbose", help="Extended printing options", action="store_true"
+    )
 
     args = parser.parse_args()
     main(args)

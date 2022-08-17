@@ -1,6 +1,6 @@
 """Validators for actions and modules"""
-from pathlib import Path
 from argparse import ArgumentParser
+from pathlib import Path
 from typing import Tuple
 
 from rpl_wei.data_classes import Module
@@ -15,7 +15,7 @@ class ActionValidator:
 class ModuleValidator:
     """Validate the modules of a workcell"""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # noqa: D103, D107
         pass
 
     def check_module(self, module: Module) -> Tuple[bool, str]:
@@ -34,7 +34,7 @@ class ModuleValidator:
         print(f"checking module: {module}")
 
 
-def main(args):
+def main(args):  # noqa: D103
     module_validator = ModuleValidator()
 
     from rpl_wei.wei_client_base import WEI
@@ -47,7 +47,9 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("-c", "--config", help="WEI config file, for testing", type=Path, required=True)
+    parser.add_argument(
+        "-c", "--config", help="WEI config file, for testing", type=Path, required=True
+    )
 
     args = parser.parse_args()
     main(args)

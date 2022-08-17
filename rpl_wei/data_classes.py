@@ -20,6 +20,13 @@ class BaseModel(_BaseModel):
     """
 
     def dict(self, **kwargs):
+        """Return the dictionary without the hidden fields
+
+        Returns
+        -------
+        dict
+            Dict representation of the object
+        """
         hidden_fields = set(
             attribute_name
             for attribute_name, model_field in self.__fields__.items()
@@ -28,7 +35,14 @@ class BaseModel(_BaseModel):
         kwargs.setdefault("exclude", hidden_fields)
         return super().dict(**kwargs)
 
-    def json(self, **kwargs):
+    def json(self, **kwargs) -> str:
+        """Returns the json representation of the object without the hidden fields
+
+        Returns
+        -------
+        str
+            returns the JSON string of the object
+        """
         hidden_fields = set(
             attribute_name
             for attribute_name, model_field in self.__fields__.items()
@@ -74,11 +88,13 @@ class Module(BaseModel):
 
     # Hidden
     config_validation: Optional[Path] = Field(
-        Path(__file__).parent.resolve() / "data/module_configs_validation.json", hidden=True
+        Path(__file__).parent.resolve() / "data/module_configs_validation.json",
+        hidden=True,
     )
     """Path to the validation config file, will replace with db eventually"""
     position_validation: Optional[Path] = Field(
-        Path(__file__).parent.resolve() / "data/module_positions_validation.json", hidden=True
+        Path(__file__).parent.resolve() / "data/module_positions_validation.json",
+        hidden=True,
     )
     """Path to position validation config file"""
     # Public
@@ -97,10 +113,33 @@ class Module(BaseModel):
 
     @validator("config")
     def validate_config(cls, v, values, **kwargs):
+        """Validate the config field of the workcell config with special rules for each type of robot
+
+        Parameters
+        ----------
+        v : dict
+            the config dict being checked
+        values : dict
+            The other loaded values of this instance
+
+        Returns
+        -------
+        dict
+            If the config passes, it will be returned to the clss
+
+        Raises
+        ------
+        ValueError
+            If the configuration for the type of robot does not exist in database
+        ValueError
+            A field is missing from the configuration
+        """
         config_validation = json.load(values["config_validation"].open())
         robot_type = values["type"].lower()
         if robot_type.lower() not in config_validation:
-            raise ValueError(f"Module type {robot_type} not in configuration validators")
+            raise ValueError(
+                f"Module type {robot_type} not in configuration validators"
+            )
 
         req_fields = config_validation[robot_type]
         for field in req_fields:
@@ -112,6 +151,33 @@ class Module(BaseModel):
     @validator("positions")
     # TODO Figure out how to have more types... this is not a great solution
     def validate_positions(cls, v, values, **kwargs):
+        """Validate the positions dict from the workcell config
+
+        Parameters
+        ----------
+        v : dict
+            the dict of positions passed from the user
+        values : dict
+            the values already loaded into this dataclass
+
+        Returns
+        -------
+        dict
+            If the positions are syntactically correct, they will be given back to the class
+
+        Raises
+        ------
+        ValueError
+            If there is no validation rule for this robot
+        ValueError
+            If the passed type is not iterable but should be
+        ValueError
+            If the passed type is iterable and should not be
+        ValueError
+            Not all passed fields are correct type (non-iterable field)
+        ValueError
+            Not all passed fields are correct type (iterable field)
+        """
         if v is None:
             return v
         position_validation = json.load(values["position_validation"].open())
@@ -134,10 +200,14 @@ class Module(BaseModel):
 
             if not hasattr(val, "__iter__"):
                 if not isinstance(val, req_type):
-                    raise ValueError(f"Not all position arguments are of required type {req_type}, ({v})")
+                    raise ValueError(
+                        f"Not all position arguments are of required type {req_type}, ({v})"
+                    )
 
             elif not all([isinstance(elem, req_type) for elem in val]):
-                raise ValueError(f"Not all position arguments are of required type {req_type}, ({v})")
+                raise ValueError(
+                    f"Not all position arguments are of required type {req_type}, ({v})"
+                )
 
         return v
 
