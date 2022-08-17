@@ -38,8 +38,11 @@ class WEI:
     def run_flow(self):
         """Executes the flowdef commmands"""
 
+        # TODO: add start flow, metadata about that
         for step in self.flowdef:
+            # TODO: add logging for print(step_start) "ive started"
             print(step)
+            # TODO: add logging for print(step_finish) "ive finished"
 
     def print_flow(self):
         """Prints the workflow dataclass, for debugging"""
