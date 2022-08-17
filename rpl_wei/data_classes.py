@@ -120,7 +120,6 @@ class Module(BaseModel):
             raise ValueError(f"Module type {robot_type} not in position validators")
 
         valid_positions = position_validation[robot_type]
-        print(valid_positions)
         if valid_positions["iterable"] and not hasattr(v, "__iter__"):
             raise ValueError(f"Value {v} is not iterable and should be")
 
