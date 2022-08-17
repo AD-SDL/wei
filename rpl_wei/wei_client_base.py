@@ -36,9 +36,7 @@ class WEI:
         self.run_log_dir = run_log_dir
 
         self.run_id = uuid4()
-        self._setup_logger(
-            "runLogger", run_log_dir / f"run-{self.run_id}.log", level=logging.INFO
-        )
+        self._setup_logger("runLogger", run_log_dir / f"run-{self.run_id}.log", level=logging.INFO)
         self._setup_logger(
             "wcLogger",
             log_dir / f"{Path(self.workflow.workcell).stem}.log",
@@ -48,9 +46,7 @@ class WEI:
         self.run_logger = self._get_logger("runLogger")
         self.wc_logger = self._get_logger("wcLogger")
 
-    def _setup_logger(
-        self, logger_name: str, log_file: PathLike, level: int = logging.INFO
-    ):
+    def _setup_logger(self, logger_name: str, log_file: PathLike, level: int = logging.INFO):
         logger = logging.getLogger(logger_name)
         formatter = logging.Formatter("%(asctime)s : %(message)s")
         fileHandler = logging.FileHandler(log_file, mode="a+")
@@ -89,6 +85,8 @@ class WEI:
         # Log start time of the run
         self.wc_logger.info(f"Starting workflow run {self.run_id}")
 
+        # TODO: Eventually pull this into the `execution.py` StepExecutor class
+        # Make sure to get the necesary logging and what not
         # Start executing the step
         for step in self.flowdef:
             self._execute_step(step)
@@ -131,12 +129,8 @@ def main(args):  # noqa: D103
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument(
-        "-wf", "--workflow", help="Path to workflow file", type=Path, required=True
-    )
-    parser.add_argument(
-        "-v", "--verbose", help="Extended printing options", action="store_true"
-    )
+    parser.add_argument("-wf", "--workflow", help="Path to workflow file", type=Path, required=True)
+    parser.add_argument("-v", "--verbose", help="Extended printing options", action="store_true")
 
     args = parser.parse_args()
     main(args)
