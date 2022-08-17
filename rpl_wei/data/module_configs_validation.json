@@ -4,27 +4,21 @@
         "port"
     ],
     "pf400": [
-        "ip",
-        "port"
+        "ros_node"
     ],
     "sealer": [
-        "ip",
-        "port"
+        "ros_node"
     ],
     "pealer": [
-        "ip",
-        "port"
+        "ros_node"
     ],
     "plate_stacker": [
-        "ip",
-        "port"
+        "ros_node"
     ],
     "hidex": [
-        "ip",
-        "port"
+        "ros_node"
     ],
     "biometra": [
-        "ip",
-        "port"
+        "ros_node"
     ]
 }
