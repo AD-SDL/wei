@@ -137,7 +137,7 @@ class Module(BaseModel):
                 if not isinstance(val, req_type):
                     raise ValueError(f"Not all position arguments are of required type {req_type}, ({v})")
 
-            if not all([isinstance(elem, req_type) for elem in val]):
+            elif not all([isinstance(elem, req_type) for elem in val]):
                 raise ValueError(f"Not all position arguments are of required type {req_type}, ({v})")
 
         return v
