@@ -1,7 +1,9 @@
 """Interaction point for user to the RPL workcells/flows"""
+from genericpath import isfile
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
+from typing import Optional
 
 from devtools import debug
 
@@ -15,8 +17,8 @@ class WEI:
 
     def __init__(
         self,
-        wc_config_file,
-        log_dir: Path = Path("./logs"),
+        wf_config: Path,
+        log_dir: Optional[Path] = None,
         workcell_log_level: int = logging.INFO,
         workflow_log_level: int = logging.INFO,
     ):
@@ -27,14 +29,18 @@ class WEI:
         wc_config_file : Pathlike
             The workflow config path
         """
-        self.state = None
 
-        self.workflow = Workflow.from_yaml(wc_config_file)
+        self.workflow = Workflow.from_yaml(wf_config)
         self.modules = self.workflow.modules
         self.flowdef = self.workflow.flowdef
         self.workcell = WorkCell.from_yaml(self.workflow.workcell)
 
         # Setup loggers
+        if log_dir is None:
+            if wf_config.is_dir():
+                log_dir = wf_config.resolve().parent / "logs"
+            elif wf_config.is_file():
+                log_dir = wf_config.resolve().parent.parent / "logs"
         log_dir.mkdir(exist_ok=True)
         run_log_dir = log_dir / "runs/"
         run_log_dir.mkdir(exist_ok=True)
