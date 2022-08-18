@@ -1,5 +1,4 @@
 """Interaction point for user to the RPL workcells/flows"""
-from genericpath import isfile
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
