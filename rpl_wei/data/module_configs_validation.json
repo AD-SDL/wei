@@ -1,0 +1,24 @@
+{
+    "ot2": [
+        "ip",
+        "port"
+    ],
+    "pf400": [
+        "ros_node"
+    ],
+    "sealer": [
+        "ros_node"
+    ],
+    "pealer": [
+        "ros_node"
+    ],
+    "plate_stacker": [
+        "ros_node"
+    ],
+    "hidex": [
+        "ros_node"
+    ],
+    "biometra": [
+        "ros_node"
+    ]
+}
