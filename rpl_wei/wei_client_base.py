@@ -109,6 +109,7 @@ class WEI:
         Workflow
             The workflow object which you can execute directly on
         """
+        return self.workflows.get(run_id, None)
 
     def add_workflow(self, workflow_path: Path) -> None:
         """Add a workflow file to be run
