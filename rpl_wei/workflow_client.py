@@ -32,12 +32,6 @@ class WF_Client:
         self.workcell = WorkCell.from_yaml(self.workflow.workcell)
 
         # Setup loggers
-        if log_dir is None:
-            if wf_config.is_dir():
-                log_dir = wf_config.resolve().parent / "logs"
-            elif wf_config.is_file():
-                log_dir = wf_config.resolve().parent.parent / "logs"
-        log_dir.mkdir(exist_ok=True)
         run_log_dir = log_dir / "runs/"
         run_log_dir.mkdir(exist_ok=True)
         self.log_dir = log_dir
@@ -57,7 +51,7 @@ class WF_Client:
 
     def _setup_logger(self, logger_name: str, log_file: PathLike, level: int = logging.INFO):
         logger = logging.getLogger(logger_name)
-        formatter = logging.Formatter("%(asctime)s %(levelname)s : %(message)s")
+        formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
         fileHandler = logging.FileHandler(log_file, mode="a+")
         fileHandler.setFormatter(formatter)
         streamHandler = logging.StreamHandler()
@@ -83,9 +77,7 @@ class WF_Client:
     def run_flow(self):
         """Executes the flowdef commmands"""
 
-        # TODO: Eventually pull this into the `execution.py` StepExecutor class
-        # Make sure to get the necesary logging and what not
-        # Start executing the step
+        # Start executing the steps
         for step in self.flowdef:
             self.executor.execute_step(step)
 
