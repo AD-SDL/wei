@@ -1,7 +1,6 @@
 {
     "ot2": [
-        "ip",
-        "port"
+        "ros_node"
     ],
     "pf400": [
         "ros_node"
@@ -12,7 +11,7 @@
     "pealer": [
         "ros_node"
     ],
-    "plate_stacker": [
+    "sciclops": [
         "ros_node"
     ],
     "hidex": [

@@ -211,27 +211,7 @@ class SimpleModule(BaseModel):
     """Simple module for use in the workflow file (does not need as much info)"""
 
     name: str
-    """Name, should follow opentrons api standard"""
-    type: str
-    """Type of robot"""
-    id: Optional[Union[UUID, str]]
-    """Id of the robot, not necesary as this is stored in the workcell."""
-    # what else? Equipemnt it needs?
-
-
-class Command(BaseModel):
-    """Container to store command information"""
-
-    name: str
-    """Name of the command"""
-    instruction: str
-    """The instruction to run"""
-    args: Dict
-    """Arguments for instruction"""
-    checks: Optional[str]
-    """For future use"""
-    comment: Optional[str]
-    """Note about the command, from user """
+    """Name, should correspond with a module rosnode"""
 
 
 class Step(BaseModel):
@@ -241,10 +221,14 @@ class Step(BaseModel):
     """Name of step"""
     module: str
     """Module used in the step"""
-    commands: List[Command]
-    """List of commands to be executed by the step"""
+    command: str
+    """The command type to get executed by the robot"""
+    args: Dict
+    """Arguments for instruction"""
+    checks: Optional[str]
+    """For future use"""
     requirements: Optional[Dict]
-    """Equipment needed in module"""
+    """Equipment/resources needed in module"""
     dependencies: Optional[Union[str, UUID]]
     """Other steps required to be done before this can start"""
     priority: Optional[int]

@@ -19,7 +19,7 @@
         "type": "float",
         "length": 6
     },
-    "plate_stacker": {
+    "sciclops": {
         "iterable": true,
         "type": "float",
         "length": 6

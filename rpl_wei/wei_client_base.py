@@ -138,7 +138,7 @@ def main(args):  # noqa: D103
 
     wei.run_workflow(wf_id)
 
-    print(wei.get_workflows())
+    print(f"Workflows present: {wei.get_workflows()}")
 
 
 if __name__ == "__main__":

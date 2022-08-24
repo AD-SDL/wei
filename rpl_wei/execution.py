@@ -35,7 +35,7 @@ class StepExecutor:
 
         # TODO: remove when we actually populate with real execution, this is just to show we can
         # read and interpret the file
-        sleep_time = step.commands[0].args["vars"]["time"]
+        sleep_time = step.args["vars"]["time"]
         time.sleep(sleep_time)
 
         self.run_logger.info(f"Finished running step with name: {step.name}")
