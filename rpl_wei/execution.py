@@ -1,7 +1,8 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import time
+from typing import Any, Optional, List
 
-from rpl_wei.data_classes import Step, StepStatus
+from rpl_wei.data_classes import Module, Step, StepStatus
 
 
 class StepExecutor:
@@ -17,7 +18,7 @@ class StepExecutor:
         """
         self.run_logger = run_logger
 
-    def execute_step(self, step: Step) -> StepStatus:
+    def execute_step(self, step: Step, step_module: Module, callbacks: Optional[List[Any]]) -> StepStatus:
         """Executes a single step from a workflow
 
         Parameters
@@ -33,9 +34,12 @@ class StepExecutor:
         self.run_logger.info(f"Started running step with name: {step.name}")
         self.run_logger.debug(step)
 
+        if callbacks:
+            for callback in callbacks:
+                callback(step, step_module=step_module)
+
         # TODO: remove when we actually populate with real execution, this is just to show we can
         # read and interpret the file
-     
         time.sleep(2)
 
         self.run_logger.info(f"Finished running step with name: {step.name}")

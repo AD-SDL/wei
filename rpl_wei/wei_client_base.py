@@ -2,7 +2,7 @@
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Any
 from uuid import UUID
 
 
@@ -66,7 +66,7 @@ class WEI:
     def _get_logger(self, log_name: str) -> logging.Logger:
         return logging.getLogger(log_name)
 
-    def run_workflow(self, workflow_id: Optional[UUID] = None) -> None:
+    def run_workflow(self, workflow_id: Optional[UUID] = None, callbacks: Optional[List[Any]] = None) -> None:
         """Run a workflow with a given workflow ID
 
         Parameters
@@ -77,7 +77,7 @@ class WEI:
         if workflow_id:
             workflow: WF_Client = self.workflows[workflow_id]["workflow"]
             self.wc_logger.info(f"Starting run with run id: {workflow.run_id}")
-            workflow.run_flow()
+            workflow.run_flow(callbacks)
             self.wc_logger.info(f"Completed run with run id: {workflow.run_id}")
             self.workflows[workflow_id]["run"] = True
         else:

@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, List
 
 from devtools import debug
 
-from rpl_wei.data_classes import PathLike, WorkCell, Workflow
+from rpl_wei.data_classes import Module, PathLike, WorkCell, Workflow
 from rpl_wei.validation import ModuleValidator, StepValidator
 from rpl_wei.execution import StepExecutor
 
@@ -74,12 +74,24 @@ class WF_Client:
         for step in self.flowdef:
             self.step_validator.check_step(step=step)
 
-    def run_flow(self):
+    def run_flow(self, callbacks: Optional[List[Any]] = None):
         """Executes the flowdef commmands"""
 
         # Start executing the steps
         for step in self.flowdef:
-            self.executor.execute_step(step)
+            # find the module
+            step_module = self._find_step_module(step.module)
+            # execute the step
+            self.executor.execute_step(step, step_module, callbacks=callbacks)
+
+    def _find_step_module(self, step_module: str) -> Optional[Module]:
+
+        for module in self.workcell.modules:
+            module_name = module.name
+            if module_name == step_module:
+                return module
+
+        return None
 
     def print_flow(self):
         """Prints the workflow dataclass, for debugging"""
