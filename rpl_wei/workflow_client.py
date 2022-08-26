@@ -81,6 +81,8 @@ class WF_Client:
         for step in self.flowdef:
             # find the module
             step_module = self._find_step_module(step.module)
+            if not step_module:
+                raise ValueError(f"No module found for step module: {step.module}, in step: {step}")
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)
 
