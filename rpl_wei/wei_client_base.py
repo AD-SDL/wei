@@ -2,11 +2,7 @@
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
-<<<<<<< HEAD
-from typing import Dict, Optional, List, Any
-=======
 from typing import Callable, Dict, Optional, List
->>>>>>> feature/workcell_abstraction
 from uuid import UUID
 
 from rpl_wei.data_classes import PathLike, WorkCell, Workflow
@@ -99,15 +95,11 @@ class WEI:
     def _get_logger(self, log_name: str) -> logging.Logger:
         return logging.getLogger(log_name)
 
-<<<<<<< HEAD
-    def run_workflow(self, workflow_id: Optional[UUID] = None, callbacks: Optional[List[Any]] = None) -> None:
-=======
     def run_workflow(
         self,
         workflow_id: Optional[UUID] = None,
         callbacks: Optional[List[Callable]] = None,
     ) -> None:
->>>>>>> feature/workcell_abstraction
         """Run a workflow with a given workflow ID
 
         Parameters
@@ -118,11 +110,7 @@ class WEI:
         if workflow_id:
             workflow: WF_Client = self.workflows[workflow_id]["workflow"]
             self.wc_logger.info(f"Starting run with run id: {workflow.run_id}")
-<<<<<<< HEAD
             workflow.run_flow(callbacks)
-=======
-            workflow.run_flow(callbacks=callbacks)
->>>>>>> feature/workcell_abstraction
             self.wc_logger.info(f"Completed run with run id: {workflow.run_id}")
             self.workflows[workflow_id]["run"] = True
         else:
