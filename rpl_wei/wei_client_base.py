@@ -2,7 +2,7 @@
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Callable, Dict, Optional, List
+from typing import Callable, Dict, List, Optional
 from uuid import UUID
 
 from rpl_wei.data_classes import PathLike, WorkCell, Workflow

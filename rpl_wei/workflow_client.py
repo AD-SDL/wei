@@ -1,12 +1,13 @@
+"""Abstraction of a singular workflow. Wei client interacts with this to run workflows"""
 import logging
 from pathlib import Path
-from typing import Any, Optional, List
+from typing import Any, List, Optional
 
 from devtools import debug
 
 from rpl_wei.data_classes import Module, PathLike, WorkCell, Workflow
-from rpl_wei.validation import ModuleValidator, StepValidator
 from rpl_wei.execution import StepExecutor
+from rpl_wei.validation import ModuleValidator, StepValidator
 
 
 class WF_Client:
@@ -15,6 +16,7 @@ class WF_Client:
     def __init__(
         self,
         wf_config: Path,
+        wc_config: Optional[Path] = None,
         log_dir: Optional[Path] = None,
         workflow_log_level: int = logging.INFO,
     ):
@@ -29,6 +31,21 @@ class WF_Client:
         self.workflow = Workflow.from_yaml(wf_config)
         self.modules = self.workflow.modules
         self.flowdef = self.workflow.flowdef
+
+        if wc_config:
+            wc_config = wc_config.expanduser().resolve()
+            # if relative path used, resolve
+            if not self.workflow.workcell.is_absolute():
+                self.workflow.workcell = (
+                    (wf_config.parent / self.workflow.workcell).expanduser().resolve()
+                )
+
+            # match the wc_config and workflow.workcell files, make sure they are the same
+            if not self.workflow.workcell.samefile(wc_config):
+                raise ValueError(
+                    f"Workcell file from workcell ({self.workflow.workcell}) is not the same file as the workcell from WEI ({wc_config})"
+                )
+
         self.workcell = WorkCell.from_yaml(self.workflow.workcell)
 
         # Setup loggers
@@ -88,7 +105,9 @@ class WF_Client:
             # find the module
             step_module = self._find_step_module(step.module)
             if not step_module:
-                raise ValueError(f"No module found for step module: {step.module}, in step: {step}")
+                raise ValueError(
+                    f"No module found for step module: {step.module}, in step: {step}"
+                )
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)
 
