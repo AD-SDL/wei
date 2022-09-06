@@ -1,10 +1,10 @@
 """Dataclasses used for the workflows/cells"""
 
 import json
+from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
-from enum import Enum
 
 import yaml
 from pydantic import BaseModel as _BaseModel
@@ -138,7 +138,9 @@ class Module(BaseModel):
         config_validation = json.load(values["config_validation"].open())
         robot_type = values["type"].lower()
         if robot_type.lower() not in config_validation:
-            raise ValueError(f"Module type {robot_type} not in configuration validators")
+            raise ValueError(
+                f"Module type {robot_type} not in configuration validators"
+            )
 
         req_fields = config_validation[robot_type]
         for field in req_fields:
@@ -199,10 +201,14 @@ class Module(BaseModel):
 
             if not hasattr(val, "__iter__"):
                 if not isinstance(val, req_type):
-                    raise ValueError(f"Not all position arguments are of required type {req_type}, ({v})")
+                    raise ValueError(
+                        f"Not all position arguments are of required type {req_type}, ({v})"
+                    )
 
             elif not all([isinstance(elem, req_type) for elem in val]):
-                raise ValueError(f"Not all position arguments are of required type {req_type}, ({v})")
+                raise ValueError(
+                    f"Not all position arguments are of required type {req_type}, ({v})"
+                )
 
         return v
 
@@ -255,7 +261,7 @@ class Metadata(BaseModel):
 class Workflow(BaseModel):
     """Grand container that pulls all info of a workflow together"""
 
-    workcell: Union[str, Path]
+    workcell: Path
     """The path to the workcell required by this workflow"""
     modules: List[SimpleModule]
     """List of modules needed for the workflow"""

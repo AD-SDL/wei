@@ -1,8 +1,8 @@
 """Validators for actions and modules"""
+import logging
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Tuple, Optional
-import logging
+from typing import Optional, Tuple
 
 from rpl_wei.data_classes import SimpleModule, Step
 
@@ -10,7 +10,9 @@ from rpl_wei.data_classes import SimpleModule, Step
 class StepValidator:
     """Validate the steps of a workcell"""
 
-    def __init__(self, run_logger: Optional[logging.Logger] = None) -> None:  # noqa: D103, D107
+    def __init__(
+        self, run_logger: Optional[logging.Logger] = None
+    ) -> None:  # noqa: D103, D107
         self.run_logger = run_logger
 
     def check_step(self, step: Step) -> Tuple[bool, str]:
@@ -35,7 +37,9 @@ class StepValidator:
 class ModuleValidator:
     """Validate the modules of a workcell"""
 
-    def __init__(self, run_logger: Optional[logging.Logger] = None) -> None:  # noqa: D103, D107
+    def __init__(
+        self, run_logger: Optional[logging.Logger] = None
+    ) -> None:  # noqa: D103, D107
         self.run_logger = run_logger
 
     def check_module(self, module: SimpleModule) -> Tuple[bool, str]:
@@ -70,7 +74,9 @@ def main(args):  # noqa: D103
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("-c", "--config", help="WEI config file, for testing", type=Path, required=True)
+    parser.add_argument(
+        "-c", "--config", help="WEI config file, for testing", type=Path, required=True
+    )
 
     args = parser.parse_args()
     main(args)

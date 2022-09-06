@@ -14,7 +14,7 @@
         "type": "float",
         "length": 6
     },
-    "pealer": {
+    "peeler": {
         "iterable": true,
         "type": "float",
         "length": 6
