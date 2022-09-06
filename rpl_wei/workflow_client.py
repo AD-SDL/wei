@@ -38,7 +38,11 @@ class WF_Client:
         self.run_log_dir = run_log_dir
 
         self.run_id = self.workflow.id
-        self._setup_logger("runLogger", run_log_dir / f"run-{self.run_id}.log", level=workflow_log_level)
+        self._setup_logger(
+            "runLogger",
+            run_log_dir / f"run-{self.run_id}.log",
+            level=workflow_log_level,
+        )
 
         self.run_logger = self._get_logger("runLogger")
 
@@ -49,7 +53,9 @@ class WF_Client:
         # Setup executor
         self.executor = StepExecutor(self.run_logger)
 
-    def _setup_logger(self, logger_name: str, log_file: PathLike, level: int = logging.INFO):
+    def _setup_logger(
+        self, logger_name: str, log_file: PathLike, level: int = logging.INFO
+    ):
         logger = logging.getLogger(logger_name)
         formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
         fileHandler = logging.FileHandler(log_file, mode="a+")

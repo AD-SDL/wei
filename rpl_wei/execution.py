@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import time
-from typing import Any, Optional, List
+from typing import Callable, List, Optional
 
 from rpl_wei.data_classes import Module, Step, StepStatus
 
@@ -18,7 +18,12 @@ class StepExecutor:
         """
         self.run_logger = run_logger
 
-    def execute_step(self, step: Step, step_module: Module, callbacks: Optional[List[Any]]) -> StepStatus:
+    def execute_step(
+        self,
+        step: Step,
+        step_module: Module,
+        callbacks: Optional[List[Callable]] = None,
+    ) -> StepStatus:
         """Executes a single step from a workflow
 
         Parameters
