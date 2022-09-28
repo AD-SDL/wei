@@ -102,7 +102,7 @@ class WF_Client:
 
         # Start executing the steps
         for step in self.flowdef:
-            # find the module
+            # get module information from workcell file
             step_module = self._find_step_module(step.module)
             if not step_module:
                 raise ValueError(
