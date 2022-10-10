@@ -13,6 +13,8 @@ For more details and specific examples of how to use rpl_wei, please see our [do
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
     - [Install latest version with PyPI](#install-latest-version-with-pypi)
+    - [Development install](#development-install)
+  - [Testing](#testing)
   - [Usage](#usage)
   - [Contributing](#contributing)
   - [Acknowledgments](#acknowledgments)
@@ -36,6 +38,13 @@ pip3 install --upgrade pip setuptools wheel
 pip3 install -r requirements/dev.txt
 pip3 install -r requirements/requirements.txt
 pip3 install -e .
+```
+
+## Testing
+
+Create unit tests under the `test` directory. Do not submit the code until all the tests passed. Run all the tests by entering the `test` directory and the following command.
+```
+python -m unittest test_rpl_wei.TestWEI
 ```
 
 ## Usage

@@ -1,0 +1,113 @@
+metadata:
+  name: PCR - Workflow
+  author: Casey Stone, Rafael Vescovi
+  info: Initial PCR workflow for RPL workcell
+  version: 0.1
+
+workcell: test_pcr_workcell.yaml
+
+modules:
+  - name: ot2_pcr_alpha
+  - name: pf400
+  - name: peeler
+  - name: sealer
+  - name: biometra
+  - name: sciclops
+
+flowdef:
+  # - name: PCR Plate Exchange
+  #   module: sciclops
+  #   command: get_plate
+  #   args:
+  #     loc: "tower1"
+  #   checks: null
+  #   comment: Stage pcr plates
+
+  - name: Move from Sciclops to OT2
+    module: pf400
+    command: transfer
+    args:
+      source: sciclops.positions.exchange
+      target: ot2_pcr_alpha.positions.deck2
+      source_plate_rotation: narrow
+      target_plate_rotation: wide
+    checks: null
+    comment: Place plate in ot2
+
+  # - name: Mix OT2 reactions
+  #   module: ot2_pcr_alpha
+  #   command: run_protocol
+  #   args:
+  #     config_path: pcr_workcell/protocol_files/ot2_pcr_config.yaml
+  #   checks: RESOURCE_CHECK
+  #   comment: resource check not implemented, but will be
+
+  - name: Move from OT2 to sealer
+    module: pf400
+    command: transfer
+    args:
+      source: ot2_pcr_alpha.positions.deck2
+      target: sealer.positions.default
+      source_plate_rotation: wide
+      target_plate_rotation: narrow
+    checks: null
+    comment: null
+
+  - name: Seal PCR plate
+    module: sealer
+    command: seal
+    args:
+      time: 3
+      temperature: 175
+    checks: null
+
+  - name: Move from sealer to Thermocycler
+    module: pf400
+    command: transfer
+    args:
+      source: sealer.positions.default
+      target: [279.948, 40.849, 75.130, 598.739, 79.208, -916.456] 
+      source_plate_rotation: narrow
+      target_plate_rotation: narrow
+    checks: null
+    comment: null
+
+  # - name: Thermocycle
+  #   module: biometra  # - name: Seal PCR plate
+  #   command: seal
+  #   args:
+  #     time: 3
+  #     temperature: 175
+  #   checks: null
+  #     protocol_file: pcr_workcell/protocol_files/biometra_protocol.yaml
+  #   checks: null
+  #   comment: null
+
+  - name: Move from Thermocycler to peeler
+    module: pf400
+    command: transfer
+    args:
+      target: [279.948, 40.849, 75.130, 598.739, 79.208, -916.456] 
+      source: [277.638, 39.029, 74.413, 602.159, 78.980, -910.338] 
+      source_plate_rotation: narrow
+      target_plate_rotation: narrow
+    checks: null
+    comment: null
+
+  - name: Peal
+    module: peeler
+    command: peel
+    args: {}
+    checks: null
+    comment: null
+
+  - name: Move from peeler to final destination
+    module: pf400
+    command: transfer
+    args:
+      source: peeler.positions.default
+      target: [262.550, 20.608, 119.290, 662.570, 0.0, 574.367]
+      source_plate_rotation: narrow
+      target_plate_rotation: narrow
+    checks: null
+    comments: null

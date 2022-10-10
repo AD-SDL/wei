@@ -1,0 +1,56 @@
+modules:
+  - name: pf400
+    type: pf400
+    config:
+      ros_node: "/pf400_client/PF400_Client_Node/action_handler"
+    positions:
+      final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  - name: sciclops
+    type: sciclops
+    config:
+      ros_node: "/sciclops_module/sciclopsNode/action_handler"
+    positions:
+      exchange: [262.550, 20.608, 119.290, 662.570, 0.0, 574.367]
+
+  - name: sealer
+    type: sealer
+    config:
+      ros_node: "/sp_module/sealerNode/action_handler"
+    positions:
+      default: [231.788, -27.154, 313.011, 342.317, 0.0, 683.702]
+      
+  - name: peeler
+    type: peeler
+    config:
+      ros_node: "/sp_module/peelerNode/action_handler"
+    positions:
+      default: [264.584, -29.413, 284.376, 372.338, 0.0, 651.621]
+
+  - name: ot2_pcr_alpha                                                     ## correct? was ot2_alpha
+    type: ot2
+    config:
+      ros_node: "ot2_alpha/ot2Node/actions"                      ## ros node meaning ros service
+    positions:                                                    ## N/A
+      deck2: [195.99, 60.21,  92.13,  565.41,   82.24,  -65.25]   ## N/A
+
+  - name: ot2_growth_beta                                               ## correct? was ot2_alpha
+    type: ot2
+    config:
+      ros_node: "ot2_beta/ot2Node/actions"                      ## ros node meaning ros service
+    positions:                                                    ## N/A
+      deck2: [195.99, 60.21,  92.13,  565.41,   82.24,  -65.25]   ## N/A
+
+  - name: biometra
+    type: biometra
+    config:
+      ros_node: biometra rosnode
+    positions:
+      default: [277.638, 39.029, 74.413, 602.159, 78.980, -910.338]
+
+  - name: hidex
+    type: hidex
+    config:
+      ros_node: hidex rosnode
+    positions:
+      default: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
