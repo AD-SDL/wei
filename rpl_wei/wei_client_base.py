@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from uuid import UUID
 
-from rpl_wei.data_classes import PathLike, WorkCell, Workflow
+from rpl_wei.data_classes import PathLike, Workflow
 from rpl_wei.workflow_client import WF_Client
 
 
@@ -17,7 +17,6 @@ class WEI:
 
     def __init__(
         self,
-        wc_config: Path,
         wf_configs: Path,
         log_dir: Optional[Path] = None,
         workcell_log_level: int = logging.INFO,
@@ -39,21 +38,27 @@ class WEI:
             Python logging level for the workflow logs, by default logging.INFO
 
         """
-        # TODO: remove the workcell? I think we can resolve from the workflow level
-        self.workcell = WorkCell.from_yaml(wc_config)
         self.workcell_log_level = workcell_log_level
         self.workflow_log_level = workflow_log_level
 
         # Setup log files
+        # TODO this was originally wc_config, but since this is optional now this might
+        #      have to be handled in the workflow_client.py
         if not log_dir:
-            self.log_dir = wc_config.parent / "logs/"
+            self.log_dir = wf_configs.parent / "logs/"
         else:
-            self.log_dir = log_dir
+            if log_dir.is_file():
+                self.log_dir = log_dir.parent
+            else:
+                self.log_dir = log_dir
         self.log_dir.mkdir(exist_ok=True)
 
+        # TODO this was originally wc_config, but since this is optional now this might
+        #      might have be handled elsewhere
+        print(wf_configs)
         self._setup_logger(
             "wcLogger",
-            log_file=self.log_dir / f"{wc_config.stem}.log",
+            log_file=self.log_dir / f"{wf_configs.stem}.log",
             level=self.workcell_log_level,
         )
         self.wc_logger = self._get_logger(log_name="wcLogger")
@@ -63,8 +68,7 @@ class WEI:
         if wf_configs.is_file():
             wf = WF_Client(
                 wf_configs,
-                wc_config,
-                self.log_dir,
+                log_dir=self.log_dir,
                 workflow_log_level=self.workflow_log_level,
             )
             self.workflows[wf.run_id] = {"workflow": wf, "run": False}
@@ -161,7 +165,6 @@ class WEI:
 
 def main(args):  # noqa: D103
     wei = WEI(
-        args.workcell,
         args.workflow,
         workcell_log_level=logging.DEBUG,
         workflow_log_level=logging.DEBUG,

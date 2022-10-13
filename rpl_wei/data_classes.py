@@ -244,6 +244,25 @@ class Step(BaseModel):
     comment: Optional[str]
     """Notes about step"""
 
+    # Assumes any path given to args is a yaml file
+    # TODO consider if we want any other files given to the workflow files
+    @validator("args")
+    def validate_args_dict(cls, v, **kwargs):
+        assert isinstance(v, dict), "Args is not a dictionary"
+        for key, arg_data in v.items():
+            try:
+                arg_path = Path(arg_data)
+                # Strings can be path objects, so check if exists before loading it
+                if arg_path.exists():
+
+                    yaml.safe_load(arg_path.open("r"))
+                    v[key] = yaml.safe_load(arg_path.open("r"))
+
+            except TypeError:  # Is not a file
+                pass
+
+        return v
+
 
 class Metadata(BaseModel):
     """Metadata container"""
