@@ -87,6 +87,7 @@ class Tag(BaseModel):
 class Module(BaseModel):
     """Container for a module found in a workcell file (more info than in a workflow file)"""
 
+    # TODO this __file__ messes up the CI system, figure out how to fix this
     # Hidden
     config_validation: Optional[Path] = Field(
         Path(__file__).parent.resolve() / "data/module_configs_validation.json",
@@ -243,6 +244,25 @@ class Step(BaseModel):
     """ID of step"""
     comment: Optional[str]
     """Notes about step"""
+
+    # Assumes any path given to args is a yaml file
+    # TODO consider if we want any other files given to the workflow files
+    @validator("args")
+    def validate_args_dict(cls, v, **kwargs):
+        assert isinstance(v, dict), "Args is not a dictionary"
+        for key, arg_data in v.items():
+            try:
+                arg_path = Path(arg_data)
+                # Strings can be path objects, so check if exists before loading it
+                if arg_path.exists():
+
+                    yaml.safe_load(arg_path.open("r"))
+                    v[key] = yaml.safe_load(arg_path.open("r"))
+
+            except TypeError:  # Is not a file
+                pass
+
+        return v
 
 
 class Metadata(BaseModel):

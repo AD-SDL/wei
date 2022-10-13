@@ -45,7 +45,11 @@ class WF_Client:
                 raise ValueError(
                     f"Workcell file from workcell ({self.workflow.workcell}) is not the same file as the workcell from WEI ({wc_config})"
                 )
-
+        else:
+            if not self.workflow.workcell.is_absolute():
+                self.workflow.workcell = (
+                    (wf_config.parent / self.workflow.workcell).expanduser().resolve()
+                )
         self.workcell = WorkCell.from_yaml(self.workflow.workcell)
 
         # Setup loggers
@@ -120,7 +124,7 @@ class WF_Client:
                         raise ValueError(
                             f"Source module not found for step: {step}, source: {source_locator}"
                         )
-                    assert split_source[1] == 'positions'
+                    assert split_source[1] == "positions"
                     source_locator = source_module.positions[split_source[2]]
                 if type(target_locator) == str:
                     split_target = target_locator.split(".")
@@ -129,12 +133,12 @@ class WF_Client:
                         raise ValueError(
                             f"Targe module not found for step: {step}, target: {target_locator}"
                         )
-                    assert split_target[1] == 'positions'
+                    assert split_target[1] == "positions"
                     target_locator = target_module.positions[split_target[2]]
-                
+
                 step.args["source"] = source_locator
                 step.args["target"] = target_locator
-            
+
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)
 
