@@ -87,6 +87,7 @@ class Tag(BaseModel):
 class Module(BaseModel):
     """Container for a module found in a workcell file (more info than in a workflow file)"""
 
+    # TODO this __file__ messes up the CI system, figure out how to fix this
     # Hidden
     config_validation: Optional[Path] = Field(
         Path(__file__).parent.resolve() / "data/module_configs_validation.json",
