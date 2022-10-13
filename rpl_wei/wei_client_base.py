@@ -55,7 +55,6 @@ class WEI:
 
         # TODO this was originally wc_config, but since this is optional now this might
         #      might have be handled elsewhere
-        print(wf_configs)
         self._setup_logger(
             "wcLogger",
             log_file=self.log_dir / f"{wf_configs.stem}.log",
