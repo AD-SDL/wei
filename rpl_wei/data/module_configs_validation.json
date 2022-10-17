@@ -1,5 +1,5 @@
 {
-    "ot2": [
+    "ros_wei_client": [
         "ros_node"
     ],
     "pf400": [
@@ -18,6 +18,9 @@
         "ros_node"
     ],
     "biometra": [
+        "ros_node"
+    ],
+    "ot2": [
         "ros_node"
     ]
 }
