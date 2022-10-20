@@ -1,7 +1,5 @@
 """Validators for actions and modules"""
 import logging
-from argparse import ArgumentParser
-from pathlib import Path
 from typing import Optional, Tuple
 
 from rpl_wei.data_classes import SimpleModule, Step
@@ -59,24 +57,3 @@ class ModuleValidator:
             self.run_logger.debug(f"Checking module: {module}")
 
         return True, f"status okay for module: {module}"
-
-
-def main(args):  # noqa: D103
-    module_validator = ModuleValidator()
-
-    from rpl_wei.wei_workcell_base import WEI
-
-    wei = WEI(wc_config_file=args.config)
-
-    for module in wei.workcell.modules:
-        print(module_validator.check_module(module))
-
-
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-c", "--config", help="WEI config file, for testing", type=Path, required=True
-    )
-
-    args = parser.parse_args()
-    main(args)

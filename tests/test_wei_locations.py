@@ -1,12 +1,7 @@
-import unittest
+from tests.test_base import TestWEI_Base
 
 
-class TestWEI(unittest.TestCase):
-    def test_rpl_wei_import(self):
-        import rpl_wei
-
-        assert rpl_wei.__version__
-
+class TestWEI_Locations(TestWEI_Base):
     def test_workflow_replace_locations(self):
         from rpl_wei.wei_workcell_base import WEI
         from pathlib import Path
@@ -56,7 +51,3 @@ class TestWEI(unittest.TestCase):
             arg_after_replace2["target"],
             [279.948, 40.849, 75.130, 598.739, 79.208, -916.456],
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

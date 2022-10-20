@@ -6,8 +6,8 @@ from typing import Any, List, Optional
 from devtools import debug
 
 from rpl_wei.data_classes import Module, PathLike, WorkCell, Workflow
-from rpl_wei.execution import StepExecutor
-from rpl_wei.validation import ModuleValidator, StepValidator
+from rpl_wei.executors import StepExecutor
+from rpl_wei.validators import ModuleValidator, StepValidator
 
 
 class WF_Client:
