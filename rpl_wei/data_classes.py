@@ -113,7 +113,7 @@ class Module(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     """Robot id"""
 
-    @validator("config")
+    # @validator("config")
     def validate_config(cls, v, values, **kwargs):
         """Validate the config field of the workcell config with special rules for each type of robot
 
@@ -150,7 +150,7 @@ class Module(BaseModel):
 
         return v
 
-    @validator("positions")
+    # @validator("positions")
     # TODO Figure out how to have more types... this is not a great solution
     def validate_positions(cls, v, values, **kwargs):
         """Validate the positions dict from the workcell config
