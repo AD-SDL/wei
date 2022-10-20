@@ -64,7 +64,7 @@ class ModuleValidator:
 def main(args):  # noqa: D103
     module_validator = ModuleValidator()
 
-    from rpl_wei.wei_client_base import WEI
+    from rpl_wei.wei_workcell_base import WEI
 
     wei = WEI(wc_config_file=args.config)
 
