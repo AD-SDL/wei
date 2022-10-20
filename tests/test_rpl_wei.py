@@ -18,10 +18,9 @@ class TestWEI(unittest.TestCase):
         wei = WEI(
             workflow_config_path,
             log_dir=Path("logs"),
-            workcell_log_level=logging.DEBUG,
-            workflow_log_level=logging.DEBUG,
+            workcell_log_level=logging.ERROR,
+            workflow_log_level=logging.ERROR,
         )
-        print(wei.get_workflows())
         wf_id = list(wei.get_workflows().keys())[0]
         # Test that the named locations are replaced with the actual locations
         arg_before_replace = wei.get_workflows()[wf_id]["workflow"].flowdef[0].args
