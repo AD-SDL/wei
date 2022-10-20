@@ -6,7 +6,7 @@ from typing import Callable, Dict, List, Optional
 from uuid import UUID
 
 from rpl_wei.data_classes import PathLike, Workflow
-from rpl_wei.workflow_client import WF_Client
+from rpl_wei.wei_workflow_base import WF_Client
 
 
 class WEI:

@@ -8,7 +8,7 @@ class TestWEI(unittest.TestCase):
         assert rpl_wei.__version__
 
     def test_workflow_replace_locations(self):
-        from rpl_wei.wei_client_base import WEI
+        from rpl_wei.wei_workcell_base import WEI
         from pathlib import Path
         import logging
 
