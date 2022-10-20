@@ -87,18 +87,6 @@ class Tag(BaseModel):
 class Module(BaseModel):
     """Container for a module found in a workcell file (more info than in a workflow file)"""
 
-    # TODO this __file__ messes up the CI system, figure out how to fix this
-    # Hidden
-    config_validation: Optional[Path] = Field(
-        Path(__file__).parent.resolve() / "data/module_configs_validation.json",
-        hidden=True,
-    )
-    """Path to the validation config file, will replace with db eventually"""
-    position_validation: Optional[Path] = Field(
-        Path(__file__).parent.resolve() / "data/module_positions_validation.json",
-        hidden=True,
-    )
-    """Path to position validation config file"""
     # Public
     name: str
     """name of the module, should be opentrons api compatible"""
@@ -113,105 +101,7 @@ class Module(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     """Robot id"""
 
-    # @validator("config")
-    def validate_config(cls, v, values, **kwargs):
-        """Validate the config field of the workcell config with special rules for each type of robot
-
-        Parameters
-        ----------
-        v : dict
-            the config dict being checked
-        values : dict
-            The other loaded values of this instance
-
-        Returns
-        -------
-        dict
-            If the config passes, it will be returned to the clss
-
-        Raises
-        ------
-        ValueError
-            If the configuration for the type of robot does not exist in database
-        ValueError
-            A field is missing from the configuration
-        """
-        config_validation = json.load(values["config_validation"].open())
-        robot_type = values["type"].lower()
-        if robot_type.lower() not in config_validation:
-            raise ValueError(
-                f"Module type {robot_type} not in configuration validators"
-            )
-
-        req_fields = config_validation[robot_type]
-        for field in req_fields:
-            if field not in v:
-                raise ValueError(f"Required field `{field}` not in values")
-
-        return v
-
-    # @validator("positions")
-    # TODO Figure out how to have more types... this is not a great solution
-    def validate_positions(cls, v, values, **kwargs):
-        """Validate the positions dict from the workcell config
-
-        Parameters
-        ----------
-        v : dict
-            the dict of positions passed from the user
-        values : dict
-            the values already loaded into this dataclass
-
-        Returns
-        -------
-        dict
-            If the positions are syntactically correct, they will be given back to the class
-
-        Raises
-        ------
-        ValueError
-            If there is no validation rule for this robot
-        ValueError
-            If the passed type is not iterable but should be
-        ValueError
-            If the passed type is iterable and should not be
-        ValueError
-            Not all passed fields are correct type (non-iterable field)
-        ValueError
-            Not all passed fields are correct type (iterable field)
-        """
-        if v is None:
-            return v
-        position_validation = json.load(values["position_validation"].open())
-        robot_type = values["type"].lower()
-        if robot_type.lower() not in position_validation:
-            raise ValueError(f"Module type {robot_type} not in position validators")
-
-        valid_positions = position_validation[robot_type]
-        if valid_positions["iterable"] and not hasattr(v, "__iter__"):
-            raise ValueError(f"Value {v} is not iterable and should be")
-
-        if not valid_positions["iterable"] and hasattr(v, "__iter__"):
-            if not isinstance(v, str):
-                raise ValueError(f"Value {v} is iterable and should not be")
-
-        types = {"float": float, "int": int, "str": str}
-        req_type = types[valid_positions["type"]]
-
-        for k, val in v.items():
-
-            if not hasattr(val, "__iter__"):
-                if not isinstance(val, req_type):
-                    raise ValueError(
-                        f"Not all position arguments are of required type {req_type}, ({v})"
-                    )
-
-            elif not all([isinstance(elem, req_type) for elem in val]):
-                raise ValueError(
-                    f"Not all position arguments are of required type {req_type}, ({v})"
-                )
-
-        return v
+    # TODO: Think about new validators based on backend types, e.g rosnodes, docker containers
 
 
 class SimpleModule(BaseModel):
