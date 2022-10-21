@@ -87,21 +87,63 @@ class Tag(BaseModel):
 class Module(BaseModel):
     """Container for a module found in a workcell file (more info than in a workflow file)"""
 
+    # Hidden
+    config_validation: Optional[Path] = Field(
+        Path(__file__).parent.resolve() / "data/module_configs_validation.json",
+        hidden=True,
+    )
+
     # Public
     name: str
     """name of the module, should be opentrons api compatible"""
     type: str
+    """Type of client (e.g ros_wei_client)"""
+    model: Optional[str]
     """type of the robot (e.g OT2, pf400, etc.) """
-    config: Dict  # contains ip and port
+    config: Dict
     """the necessary configuration for the robot, arbitrary dict"""
     positions: Optional[dict]
-    """Optional, if the robot supports positions we will use htem"""
+    """Optional, if the robot supports positions we will use them"""
     tag: Optional[Tag]
     """Vision tag"""
     id: UUID = Field(default_factory=uuid4)
     """Robot id"""
 
     # TODO: Think about new validators based on backend types, e.g rosnodes, docker containers
+    @validator("config")
+    def validate_config(cls, v, values, **kwargs):
+        """Validate the config field of the workcell config with special rules for each type of robot
+        Parameters
+        ----------
+        v : dict
+            the config dict being checked
+        values : dict
+            The other loaded values of this instance
+        Returns
+        -------
+        dict
+            If the config passes, it will be returned to the clss
+        Raises
+        ------
+        ValueError
+            If the configuration for the type of robot does not exist in database
+        ValueError
+            A field is missing from the configuration
+        """
+        config_validation = json.load(values["config_validation"].open())
+        robot_type = values.get("type", "").lower()
+
+        if robot_type.lower() not in config_validation:
+            raise ValueError(
+                f"Module type {robot_type} not in configuration validators"
+            )
+
+        req_fields = config_validation[robot_type]
+        for field in req_fields:
+            if field not in v:
+                raise ValueError(f"Required field `{field}` not in values")
+
+        return v
 
 
 class SimpleModule(BaseModel):

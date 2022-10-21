@@ -1,40 +1,5 @@
 {
-    "wei_ros_node": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    },
-    "ot2": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    },
-    "pf400": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    },
-    "sealer": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    },
-    "peeler": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    },
-    "sciclops": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    },
-    "hidex": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    },
-    "biometra": {
+    "wei_ros_client": {
         "iterable": true,
         "type": "float",
         "length": 6
