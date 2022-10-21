@@ -1,5 +1,6 @@
 """Abstraction of a singular workflow. Wei client interacts with this to run workflows"""
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional
 
@@ -52,16 +53,19 @@ class WF_Client:
                 )
         self.workcell = WorkCell.from_yaml(self.workflow.workcell)
 
-        # Setup loggers
-        run_log_dir = log_dir / "runs/"
-        run_log_dir.mkdir(exist_ok=True)
+        # Setup loggers and results
+        timestamp = datetime.now().strftime("%Y%m%d-%H%m%s")
+        run_log_dir = log_dir / f"run-{timestamp}"
+        run_log_dir.mkdir(exist_ok=True, parents=True)
         self.log_dir = log_dir
         self.run_log_dir = run_log_dir
+
+        (run_log_dir / "results").mkdir(exist_ok=True, parents=True)
 
         self.run_id = self.workflow.id
         self._setup_logger(
             "runLogger",
-            run_log_dir / f"run-{self.run_id}.log",
+            run_log_dir / "runlog.log",
             level=workflow_log_level,
         )
 

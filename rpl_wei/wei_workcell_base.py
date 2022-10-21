@@ -49,7 +49,7 @@ class WEI:
                 self.log_dir = log_dir.parent
             else:
                 self.log_dir = log_dir
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(exist_ok=True, parents=True)
 
         # TODO this was originally wc_config, but since this is optional now this might
         #      might have be handled elsewhere
