@@ -1,5 +1,6 @@
 from pathlib import Path
-from rich.pretty import pprint
+from devtools import debug
+
 
 from test_base import TestWEI_Base
 
@@ -13,5 +14,5 @@ class Test_Workcell_Base(TestWEI_Base):
 
         workcell = wei.workcell
 
-        pprint(workcell)
+        debug(workcell)
         assert workcell is not None
