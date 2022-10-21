@@ -1,7 +1,7 @@
 from pathlib import Path
 from rich.pretty import pprint
 
-from tests.test_base import TestWEI_Base
+from test_base import TestWEI_Base
 
 
 class Test_Workcell_Base(TestWEI_Base):

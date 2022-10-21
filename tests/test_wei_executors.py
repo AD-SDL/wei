@@ -1,7 +1,7 @@
 from pathlib import Path
 import logging
 
-from tests.test_base import TestWEI_Base
+from test_base import TestWEI_Base
 
 
 class TestExecutors(TestWEI_Base):

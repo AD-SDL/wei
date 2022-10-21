@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tests.test_base import TestWEI_Base
+from test_base import TestWEI_Base
 
 
 class TestValidators(TestWEI_Base):

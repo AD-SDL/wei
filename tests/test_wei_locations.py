@@ -1,4 +1,4 @@
-from tests.test_base import TestWEI_Base
+from test_base import TestWEI_Base
 
 
 class TestWEI_Locations(TestWEI_Base):

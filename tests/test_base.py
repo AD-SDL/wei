@@ -5,7 +5,7 @@ class TestWEI_Base(unittest.TestCase):
     pass
 
 
-class TestImports(unittest.TestCase):
+class TestImports(TestWEI_Base):
     def test_rpl_wei_import(self):
         import rpl_wei
 
