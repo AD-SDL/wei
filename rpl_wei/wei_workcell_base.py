@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from uuid import UUID
 
-from rpl_wei.data_classes import PathLike, Workflow
+from rpl_wei.data_classes import PathLike, WorkCell, Workflow
 from rpl_wei.wei_workflow_base import WF_Client
 
 
@@ -26,8 +26,6 @@ class WEI:
 
         Parameters
         ----------
-        wc_config : Path
-            path to the workcell, needed for validation
         wf_configs : Path
             path to the config/config folder
         log_dir : Optional[Path], optional
@@ -80,6 +78,16 @@ class WEI:
                 )
 
                 self.workflows[wf.run_id] = {"workflow": wf, "run": False}
+
+    @property
+    def workcell(self) -> Optional[WorkCell]:
+        if len(self.workflows) != 1:
+            # more than one workflow present
+            # Could check them all to see if same workflow?
+            return None
+
+        key = list(self.workflows.keys())[0]
+        return self.workflows[key].get("workflow").workcell
 
     def _setup_logger(
         self, logger_name: str, log_file: PathLike, level: int = logging.INFO
