@@ -81,6 +81,16 @@ class WEI:
 
     @property
     def workcell(self) -> Optional[WorkCell]:
+        """Return the workcell of a run
+
+        As long as there is only one workflow then we cna return a run, otherwise we need to know what
+        run we need the workcell for. This should be changed when we switch to the wc-has->wf model.
+
+        Returns
+        -------
+        Optional[WorkCell]
+            The workcell object if there is only one attatched to this client, otherwise None
+        """
         if len(self.workflows) != 1:
             # more than one workflow present
             # Could check them all to see if same workflow?
