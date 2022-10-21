@@ -1,26 +1,5 @@
 {
-    "ros_wei_client": [
-        "ros_node"
-    ],
-    "pf400": [
-        "ros_node"
-    ],
-    "sealer": [
-        "ros_node"
-    ],
-    "peeler": [
-        "ros_node"
-    ],
-    "sciclops": [
-        "ros_node"
-    ],
-    "hidex": [
-        "ros_node"
-    ],
-    "biometra": [
-        "ros_node"
-    ],
-    "ot2": [
+    "wei_ros_node": [
         "ros_node"
     ]
 }

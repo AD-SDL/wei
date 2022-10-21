@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from uuid import UUID
 
-from rpl_wei.data_classes import PathLike, Workflow
-from rpl_wei.workflow_client import WF_Client
+from rpl_wei.data_classes import PathLike, WorkCell, Workflow
+from rpl_wei.wei_workflow_base import WF_Client
 
 
 class WEI:
@@ -26,8 +26,6 @@ class WEI:
 
         Parameters
         ----------
-        wc_config : Path
-            path to the workcell, needed for validation
         wf_configs : Path
             path to the config/config folder
         log_dir : Optional[Path], optional
@@ -51,7 +49,7 @@ class WEI:
                 self.log_dir = log_dir.parent
             else:
                 self.log_dir = log_dir
-        self.log_dir.mkdir(exist_ok=True)
+        self.log_dir.mkdir(exist_ok=True, parents=True)
 
         # TODO this was originally wc_config, but since this is optional now this might
         #      might have be handled elsewhere
@@ -80,6 +78,26 @@ class WEI:
                 )
 
                 self.workflows[wf.run_id] = {"workflow": wf, "run": False}
+
+    @property
+    def workcell(self) -> Optional[WorkCell]:
+        """Return the workcell of a run
+
+        As long as there is only one workflow then we cna return a run, otherwise we need to know what
+        run we need the workcell for. This should be changed when we switch to the wc-has->wf model.
+
+        Returns
+        -------
+        Optional[WorkCell]
+            The workcell object if there is only one attatched to this client, otherwise None
+        """
+        if len(self.workflows) != 1:
+            # more than one workflow present
+            # Could check them all to see if same workflow?
+            return None
+
+        key = list(self.workflows.keys())[0]
+        return self.workflows[key].get("workflow").workcell
 
     def _setup_logger(
         self, logger_name: str, log_file: PathLike, level: int = logging.INFO

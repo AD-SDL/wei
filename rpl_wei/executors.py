@@ -1,5 +1,4 @@
 """Handling execution for steps in the RPL-SDL efforts"""
-import time
 from typing import Callable, List, Optional
 
 from rpl_wei.data_classes import Module, Step, StepStatus
@@ -39,13 +38,11 @@ class StepExecutor:
         self.run_logger.info(f"Started running step with name: {step.name}")
         self.run_logger.debug(step)
 
+        # The `execution` is really just a callback system.
+        # TODO: make a cleaner execution system, less boilerplate for user
         if callbacks:
             for callback in callbacks:
                 callback(step, step_module=step_module)
-
-        # TODO: remove when we actually populate with real execution, this is just to show we can
-        # read and interpret the file
-        # time.sleep(2)
 
         self.run_logger.info(f"Finished running step with name: {step.name}")
 

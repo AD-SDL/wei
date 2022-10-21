@@ -1,14 +1,9 @@
-import unittest
+from test_base import TestWEI_Base
 
 
-class TestWEI(unittest.TestCase):
-    def test_rpl_wei_import(self):
-        import rpl_wei
-
-        assert rpl_wei.__version__
-
+class TestWEI_Locations(TestWEI_Base):
     def test_workflow_replace_locations(self):
-        from rpl_wei.wei_client_base import WEI
+        from rpl_wei.wei_workcell_base import WEI
         from pathlib import Path
         import logging
 
@@ -18,10 +13,9 @@ class TestWEI(unittest.TestCase):
         wei = WEI(
             workflow_config_path,
             log_dir=Path("logs"),
-            workcell_log_level=logging.DEBUG,
-            workflow_log_level=logging.DEBUG,
+            workcell_log_level=logging.ERROR,
+            workflow_log_level=logging.ERROR,
         )
-        print(wei.get_workflows())
         wf_id = list(wei.get_workflows().keys())[0]
         # Test that the named locations are replaced with the actual locations
         arg_before_replace = wei.get_workflows()[wf_id]["workflow"].flowdef[0].args
@@ -57,7 +51,3 @@ class TestWEI(unittest.TestCase):
             arg_after_replace2["target"],
             [279.948, 40.849, 75.130, 598.739, 79.208, -916.456],
         )
-
-
-if __name__ == "__main__":
-    unittest.main()
