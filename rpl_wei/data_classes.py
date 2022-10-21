@@ -230,6 +230,8 @@ class WorkCell(BaseModel):
 
     modules: List[Module]
     """The modules available to a workcell"""
+    search_index: Optional[str]
+    """Globus search index, needed for publishing"""
 
 
 class StepStatus(Enum):

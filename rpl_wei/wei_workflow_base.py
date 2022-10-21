@@ -53,6 +53,10 @@ class WF_Client:
                 )
         self.workcell = WorkCell.from_yaml(self.workflow.workcell)
 
+        # cache filenames for globus
+        self.wf_file = wf_config
+        self.wc_file = self.workflow.workcell
+
         # Setup loggers and results
         timestamp = datetime.now().strftime("%Y%m%d-%H%m%s")
         run_log_dir = log_dir / f"run-{timestamp}"

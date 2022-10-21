@@ -61,3 +61,5 @@ modules:
       ros_node: hidex rosnode
     positions:
       default: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+search_index: abcd-efgh-ijkl-mnop

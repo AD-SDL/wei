@@ -7,6 +7,7 @@ from uuid import UUID
 
 from rpl_wei.data_classes import PathLike, WorkCell, Workflow
 from rpl_wei.wei_workflow_base import WF_Client
+from rpl_wei.publishers import PilotPublisher
 
 
 class WEI:
@@ -120,7 +121,8 @@ class WEI:
         self,
         workflow_id: Optional[UUID] = None,
         callbacks: Optional[List[Callable]] = None,
-    ) -> None:
+        publish: bool = False,
+    ) -> Optional[bool]:
         """Run a workflow with a given workflow ID
 
         Parameters
@@ -134,6 +136,10 @@ class WEI:
             workflow.run_flow(callbacks)
             self.wc_logger.info(f"Completed run with run id: {workflow.run_id}")
             self.workflows[workflow_id]["run"] = True
+
+            if publish:
+                return PilotPublisher.publish(workflow)
+
         else:
             # TODO: Figure out what to do if they don't give a workflow id
             # TODO: What if there is a specific order to run flows
