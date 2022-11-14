@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from uuid import UUID
 
-from rpl_wei.data_classes import PathLike, WorkCell, Workflow
+from rpl_wei.data_classes import PathLike, WorkCell, Workflow, Payload
 from rpl_wei.wei_workflow_base import WF_Client
 
 
@@ -118,6 +118,7 @@ class WEI:
 
     def run_workflow(
         self,
+        payload: Payload = None,
         workflow_id: Optional[UUID] = None,
         callbacks: Optional[List[Callable]] = None,
     ) -> None:
