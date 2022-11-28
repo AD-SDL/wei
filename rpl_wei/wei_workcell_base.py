@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 from uuid import UUID
 
-from rpl_wei.data_classes import PathLike, WorkCell, Workflow, Payload
+from rpl_wei.data_classes import PathLike, WorkCell, Workflow
 from rpl_wei.wei_workflow_base import WF_Client
 from rpl_wei.publishers import PilotPublisher
 
@@ -121,7 +121,7 @@ class WEI:
         self,
         workflow_id: Optional[UUID] = None,
         callbacks: Optional[List[Callable]] = None,
-        payload: Payload = None,
+        payload: Dict = None,
         publish: bool = False,
     ) -> Optional[bool]:
         """Run a workflow with a given workflow ID

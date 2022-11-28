@@ -6,9 +6,6 @@ metadata:
 
 workcell: test_pcr_workcell.yaml
 
-payload:
-  input: { "time": 10 }
-
 modules:
   - name: ot2_pcr_alpha
   - name: pf400

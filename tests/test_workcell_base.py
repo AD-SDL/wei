@@ -4,8 +4,6 @@ from devtools import debug
 
 from test_base import TestWEI_Base
 
-from rpl_wei.data_classes import Payload
-
 
 def silent_callback(step, **kwargs):
     pass
@@ -31,7 +29,7 @@ class Test_Workcell_Base(TestWEI_Base):
 
         run = list(wei.get_workflows().keys())[0]
 
-        payload = Payload(input={"name": "input-name"})
+        payload = {"name": "input-name"}
 
         wei.run_workflow(workflow_id=run, payload=payload, callbacks=[silent_callback])
 
