@@ -237,10 +237,10 @@ class Workflow(BaseModel):
     """Steps of the flow"""
     metadata: Metadata
     """Information about the flow"""
+    payload: Optional[Payload]
+    """input information for a given workflow run"""
     id: UUID = Field(default_factory=uuid4)
     """An instance of a workflow will be assigned a run_id"""
-    #    payload: Payload
-    """input information for a given workflow run"""
 
 
 class StepStatus(Enum):

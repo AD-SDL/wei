@@ -109,7 +109,8 @@ class WF_Client:
         for step in self.flowdef:
             self.step_validator.check_step(step=step)
 
-    def run_flow(self, callbacks: Optional[List[Any]] = None):
+    def run_flow(self, callbacks: Optional[List[Any]] = None, payload=None):
+        # TODO: Add the payload injection here
         """Executes the flowdef commmands"""
 
         # Start executing the steps
