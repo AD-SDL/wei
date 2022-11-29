@@ -210,6 +210,15 @@ class Metadata(BaseModel):
     """Version of interface used"""
 
 
+class WorkCell(BaseModel):
+    """Container for information in a workcell"""
+
+    modules: List[Module]
+    """The modules available to a workcell"""
+    search_index: Optional[str]
+    """Globus search index, needed for publishing"""
+
+
 class Workflow(BaseModel):
     """Grand container that pulls all info of a workflow together"""
 
@@ -221,15 +230,10 @@ class Workflow(BaseModel):
     """Steps of the flow"""
     metadata: Metadata
     """Information about the flow"""
+    payload: Optional[Dict]
+    """input information for a given workflow run"""
     id: UUID = Field(default_factory=uuid4)
     """An instance of a workflow will be assigned a run_id"""
-
-
-class WorkCell(BaseModel):
-    """Container for information in a workcell"""
-
-    modules: List[Module]
-    """The modules available to a workcell"""
 
 
 class StepStatus(Enum):

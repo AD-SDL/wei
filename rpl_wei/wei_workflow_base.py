@@ -53,6 +53,10 @@ class WF_Client:
                 )
         self.workcell = WorkCell.from_yaml(self.workflow.workcell)
 
+        # cache filenames for globus
+        self.wf_file = wf_config
+        self.wc_file = self.workflow.workcell
+
         # Setup loggers and results
         timestamp = datetime.now().strftime("%Y%m%d-%H%m%s")
         run_log_dir = log_dir / f"run-{timestamp}"
@@ -105,7 +109,8 @@ class WF_Client:
         for step in self.flowdef:
             self.step_validator.check_step(step=step)
 
-    def run_flow(self, callbacks: Optional[List[Any]] = None):
+    def run_flow(self, callbacks: Optional[List[Any]] = None, payload=None):
+        # TODO: Add the payload injection here
         """Executes the flowdef commmands"""
 
         # Start executing the steps

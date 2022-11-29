@@ -66,7 +66,7 @@ flowdef:
     command: transfer
     args:
       source: sealer.positions.default
-      target: [279.948, 40.849, 75.130, 598.739, 79.208, -916.456] 
+      target: [279.948, 40.849, 75.130, 598.739, 79.208, -916.456]
       source_plate_rotation: narrow
       target_plate_rotation: narrow
     checks: null
@@ -87,8 +87,8 @@ flowdef:
     module: pf400
     command: transfer
     args:
-      target: [279.948, 40.849, 75.130, 598.739, 79.208, -916.456] 
-      source: [277.638, 39.029, 74.413, 602.159, 78.980, -910.338] 
+      target: [279.948, 40.849, 75.130, 598.739, 79.208, -916.456]
+      source: [277.638, 39.029, 74.413, 602.159, 78.980, -910.338]
       source_plate_rotation: narrow
       target_plate_rotation: narrow
     checks: null

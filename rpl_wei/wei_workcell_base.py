@@ -7,6 +7,7 @@ from uuid import UUID
 
 from rpl_wei.data_classes import PathLike, WorkCell, Workflow
 from rpl_wei.wei_workflow_base import WF_Client
+from rpl_wei.publishers import PilotPublisher
 
 
 class WEI:
@@ -68,7 +69,7 @@ class WEI:
                 log_dir=self.log_dir,
                 workflow_log_level=self.workflow_log_level,
             )
-            self.workflows[wf.run_id] = {"workflow": wf, "run": False}
+            self.workflows[wf.run_id] = {"workflow": wf}
 
         elif wf_configs.is_dir():
             # TODO: what if there is a specific order to run the workflows?
@@ -77,7 +78,7 @@ class WEI:
                     wf_path, self.log_dir, workflow_log_level=self.workflow_log_level
                 )
 
-                self.workflows[wf.run_id] = {"workflow": wf, "run": False}
+                self.workflows[wf.run_id] = {"workflow": wf}
 
     @property
     def workcell(self) -> Optional[WorkCell]:
@@ -120,7 +121,9 @@ class WEI:
         self,
         workflow_id: Optional[UUID] = None,
         callbacks: Optional[List[Callable]] = None,
-    ) -> None:
+        payload: Dict = None,
+        publish: bool = False,
+    ) -> Optional[bool]:
         """Run a workflow with a given workflow ID
 
         Parameters
@@ -128,12 +131,20 @@ class WEI:
         workflow_id : Optional[UUID], optional
             The workflow ID you would like to run, by default None
         """
+
         if workflow_id:
             workflow: WF_Client = self.workflows[workflow_id]["workflow"]
             self.wc_logger.info(f"Starting run with run id: {workflow.run_id}")
-            workflow.run_flow(callbacks)
-            self.wc_logger.info(f"Completed run with run id: {workflow.run_id}")
-            self.workflows[workflow_id]["run"] = True
+            workflow.run_flow(callbacks, payload=payload)
+            self.wc_logger.info(
+                f"Completed run with run id: {workflow.run_id} and payload: {payload}"
+            )
+
+            self.workflows[workflow_id][workflow.run_id] = payload
+
+            if publish:
+                return PilotPublisher.publish(workflow)
+
         else:
             # TODO: Figure out what to do if they don't give a workflow id
             # TODO: What if there is a specific order to run flows
@@ -177,7 +188,7 @@ class WEI:
             workflow_path, self.log_dir, workflow_log_level=self.workflow_log_level
         )
 
-        self.workflows[new_workflow.run_id] = {"workflow": new_workflow, "run": False}
+        self.workflows[new_workflow.run_id] = {"workflow": new_workflow}
 
 
 def main(args):  # noqa: D103
