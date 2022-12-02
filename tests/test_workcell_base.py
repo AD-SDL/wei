@@ -6,7 +6,7 @@ from test_base import TestWEI_Base
 
 
 def silent_callback(step, **kwargs):
-    pass
+    print(step)
 
 
 class Test_Workcell_Base(TestWEI_Base):
@@ -29,7 +29,7 @@ class Test_Workcell_Base(TestWEI_Base):
 
         run = list(wei.get_workflows().keys())[0]
 
-        payload = {"name": "input-name"}
+        payload = {"thermocycle_time": 10, "thermocycle_temp": 175}
 
         wei.run_workflow(workflow_id=run, payload=payload, callbacks=[silent_callback])
 
