@@ -6,7 +6,7 @@ from test_base import TestWEI_Base
 
 
 def silent_callback(step, **kwargs):
-    pass
+    print(step)
 
 
 class Test_Workcell_Base(TestWEI_Base):

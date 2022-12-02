@@ -114,7 +114,6 @@ class WF_Client:
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
     ):
-        # TODO: Add the payload injection here
         """Executes the flowdef commmands"""
 
         # Start executing the steps
@@ -126,31 +125,25 @@ class WF_Client:
                     f"No module found for step module: {step.module}, in step: {step}"
                 )
 
-            # replace location names with actual locations
-            if "source" in step.args:
-                source_locator = step.args["source"]  # ot2_pcr_alpha.positions.deck2
-                target_locator = step.args["target"]
-                if type(source_locator) == str:
-                    split_source = source_locator.split(".")
-                    source_module = self._find_step_module(split_source[0])
-                    if not source_module:
-                        raise ValueError(
-                            f"Source module not found for step: {step}, source: {source_locator}"
-                        )
-                    assert split_source[1] == "positions"
-                    source_locator = source_module.positions[split_source[2]]
-                if type(target_locator) == str:
-                    split_target = target_locator.split(".")
-                    target_module = self._find_step_module(split_target[0])
-                    if not target_module:
-                        raise ValueError(
-                            f"Targe module not found for step: {step}, target: {target_locator}"
-                        )
-                    assert split_target[1] == "positions"
-                    target_locator = target_module.positions[split_target[2]]
+            # replace position names with actual positions
+            if isinstance(step.args, dict) and len(step.args) > 0:
+                for key, value in step.args.items():
+                    if hasattr(value, "__contains__") and "positions" in value:
+                        module_name = value.split(".")[0]
+                        module = self._find_step_module(module_name)
 
-                step.args["source"] = source_locator
-                step.args["target"] = target_locator
+                        if not module:
+                            raise ValueError(
+                                f"Module positon not found for module '{module_name}' and identifier '{value}'"
+                            )
+
+                        location_varname = value.split(".")[-1]
+                        assert (
+                            location_varname in module.positions
+                        ), f"Position {location_varname} not found"
+                        location = module.positions[location_varname]
+
+                        step.args[key] = location
 
             # Inject the payload
             if isinstance(payload, dict):
