@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Dict
 
 from devtools import debug
 
@@ -109,7 +109,11 @@ class WF_Client:
         for step in self.flowdef:
             self.step_validator.check_step(step=step)
 
-    def run_flow(self, callbacks: Optional[List[Any]] = None, payload=None):
+    def run_flow(
+        self,
+        callbacks: Optional[List[Any]] = None,
+        payload: Optional[Dict[str, Any]] = None,
+    ):
         # TODO: Add the payload injection here
         """Executes the flowdef commmands"""
 
@@ -147,6 +151,18 @@ class WF_Client:
 
                 step.args["source"] = source_locator
                 step.args["target"] = target_locator
+
+            # Inject the payload
+            if isinstance(payload, dict):
+                if not isinstance(step.args, dict) or len(step.args) == 0:
+                    continue
+
+                (arg_keys, arg_values) = zip(*step.args.items())
+                for key, value in payload.items():
+                    if key in arg_values:
+                        idx = arg_values.index(key)
+                        step_arg_key = arg_keys[idx]
+                        step.args[step_arg_key] = value
 
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)

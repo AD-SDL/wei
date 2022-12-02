@@ -72,16 +72,14 @@ flowdef:
     checks: null
     comment: null
 
-  # - name: Thermocycle
-  #   module: biometra  # - name: Seal PCR plate
-  #   command: seal
-  #   args:
-  #     time: 3
-  #     temperature: 175
-  #   checks: null
-  #     protocol_file: pcr_workcell/protocol_files/biometra_protocol.yaml
-  #   checks: null
-  #   comment: null
+  - name: Thermocycle
+    module: biometra
+    command: run
+    args:
+      time: payload.thermocyle_time
+      temperature: payload.thermocyle_temp
+    checks: null
+    comment: null
 
   - name: Move from Thermocycler to peeler
     module: pf400
