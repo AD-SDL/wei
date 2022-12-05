@@ -152,6 +152,9 @@ class WF_Client:
 
                 (arg_keys, arg_values) = zip(*step.args.items())
                 for key, value in payload.items():
+                    # Covers naming issues when referring to namespace from yaml file
+                    if "payload." not in key:
+                        key = f"payload.{key}"
                     if key in arg_values:
                         idx = arg_values.index(key)
                         step_arg_key = arg_keys[idx]
