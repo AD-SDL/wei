@@ -2,7 +2,7 @@
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Any
 from uuid import UUID
 
 from rpl_wei.data_classes import PathLike, WorkCell, Workflow
@@ -189,6 +189,9 @@ class WEI:
         )
 
         self.workflows[new_workflow.run_id] = {"workflow": new_workflow}
+
+    def get_workflow_results(self, run_id: UUID) -> Optional[Any]:
+        ...
 
 
 def main(args):  # noqa: D103
