@@ -1,3 +1,5 @@
+config: { "search_index": "endpoint" }
+
 modules:
   - name: pf400
     model: pf400

@@ -12,7 +12,7 @@ class PilotPublisher:
             "workcell": run.wc_file,
             "workflow": run.wf_file,
             "run_folder": run.run_log_dir,
-            "search_index": run.workcell.search_index,
+            "search_index": run.workcell.config["search_index"],
         }
 
         print(globus_data)

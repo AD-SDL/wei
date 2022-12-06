@@ -41,6 +41,8 @@ class WF_Client:
                     (wf_config.parent / self.workflow.workcell).expanduser().resolve()
                 )
 
+            # TODO: Add flow_id and flow_name to self
+
             # match the wc_config and workflow.workcell files, make sure they are the same
             if not self.workflow.workcell.samefile(wc_config):
                 raise ValueError(
