@@ -3,7 +3,7 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Type, TypeVar, Union
+from typing import Dict, List, Optional, Type, TypeVar, Union, Any
 from uuid import UUID, uuid4
 
 import yaml
@@ -215,7 +215,7 @@ class WorkCell(BaseModel):
 
     modules: List[Module]
     """The modules available to a workcell"""
-    search_index: Optional[str]
+    config: Optional[Dict[str, Any]]
     """Globus search index, needed for publishing"""
 
 

@@ -41,7 +41,7 @@ class WF_Client:
                     (wf_config.parent / self.workflow.workcell).expanduser().resolve()
                 )
 
-        #TODO: Add flow_id and flow_name to self
+            # TODO: Add flow_id and flow_name to self
 
             # match the wc_config and workflow.workcell files, make sure they are the same
             if not self.workflow.workcell.samefile(wc_config):
@@ -111,24 +111,12 @@ class WF_Client:
         for step in self.flowdef:
             self.step_validator.check_step(step=step)
 
-<<<<<<< HEAD
-    def run_flow(self, callbacks: Optional[List[Any]] = None, payload=None):
-=======
     def run_flow(
         self,
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
     ):
->>>>>>> fb3acb3cbfa35ac81c8e62edda86857df76db6b4
         """Executes the flowdef commmands"""
-
-        print('Executing flow : flow_id')
-        print('Payload:')
-        print(payload)
-        print(payload.keys())
-        wc = self.workcell.dict()
-        print(wc['config'])
-        print(wc['config'].keys())
 
         # Start executing the steps
         for step in self.flowdef:
