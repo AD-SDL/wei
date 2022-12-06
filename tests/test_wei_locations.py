@@ -18,12 +18,12 @@ class TestWEI_Locations(TestWEI_Base):
         )
         wf_id = list(wei.get_workflows().keys())[0]
         # Test that the named locations are replaced with the actual locations
-        arg_before_replace = wei.get_workflows()[wf_id]["workflow"].flowdef[0].args
+        arg_before_replace = wei.get_workflows()[wf_id]["workflow"].flowdef[1].args
         self.assertEqual(arg_before_replace["source"], "sciclops.positions.exchange")
         self.assertEqual(arg_before_replace["target"], "ot2_pcr_alpha.positions.deck2")
 
         # Also test the compatibility of the named/actual locations
-        arg_before_replace2 = wei.get_workflows()[wf_id]["workflow"].flowdef[3].args
+        arg_before_replace2 = wei.get_workflows()[wf_id]["workflow"].flowdef[5].args
         self.assertEqual(arg_before_replace2["source"], "sealer.positions.default")
         self.assertListEqual(
             arg_before_replace2["target"],
@@ -33,7 +33,7 @@ class TestWEI_Locations(TestWEI_Base):
         # Changes happen during the running of workflow
         wei.run_workflow(wf_id)
 
-        arg_after_replace = wei.get_workflows()[wf_id]["workflow"].flowdef[0].args
+        arg_after_replace = wei.get_workflows()[wf_id]["workflow"].flowdef[1].args
         self.assertListEqual(
             arg_after_replace["source"],
             [262.550, 20.608, 119.290, 662.570, 0.0, 574.367],
@@ -42,7 +42,7 @@ class TestWEI_Locations(TestWEI_Base):
             arg_after_replace["target"], [195.99, 60.21, 92.13, 565.41, 82.24, -65.25]
         )
 
-        arg_after_replace2 = wei.get_workflows()[wf_id]["workflow"].flowdef[3].args
+        arg_after_replace2 = wei.get_workflows()[wf_id]["workflow"].flowdef[5].args
         self.assertListEqual(
             arg_after_replace2["source"],
             [231.788, -27.154, 313.011, 342.317, 0.0, 683.702],

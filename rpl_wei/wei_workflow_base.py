@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from devtools import debug
 
@@ -111,7 +111,15 @@ class WF_Client:
         for step in self.flowdef:
             self.step_validator.check_step(step=step)
 
+<<<<<<< HEAD
     def run_flow(self, callbacks: Optional[List[Any]] = None, payload=None):
+=======
+    def run_flow(
+        self,
+        callbacks: Optional[List[Any]] = None,
+        payload: Optional[Dict[str, Any]] = None,
+    ):
+>>>>>>> fb3acb3cbfa35ac81c8e62edda86857df76db6b4
         """Executes the flowdef commmands"""
 
         print('Executing flow : flow_id')
@@ -131,31 +139,37 @@ class WF_Client:
                     f"No module found for step module: {step.module}, in step: {step}"
                 )
 
-            # replace location names with actual locations
-            if "source" in step.args:
-                source_locator = step.args["source"]  # ot2_pcr_alpha.positions.deck2
-                target_locator = step.args["target"]
-                if type(source_locator) == str:
-                    split_source = source_locator.split(".")
-                    source_module = self._find_step_module(split_source[0])
-                    if not source_module:
-                        raise ValueError(
-                            f"Source module not found for step: {step}, source: {source_locator}"
-                        )
-                    assert split_source[1] == "positions"
-                    source_locator = source_module.positions[split_source[2]]
-                if type(target_locator) == str:
-                    split_target = target_locator.split(".")
-                    target_module = self._find_step_module(split_target[0])
-                    if not target_module:
-                        raise ValueError(
-                            f"Targe module not found for step: {step}, target: {target_locator}"
-                        )
-                    assert split_target[1] == "positions"
-                    target_locator = target_module.positions[split_target[2]]
+            # replace position names with actual positions
+            if isinstance(step.args, dict) and len(step.args) > 0:
+                for key, value in step.args.items():
+                    if hasattr(value, "__contains__") and "positions" in value:
+                        module_name = value.split(".")[0]
+                        module = self._find_step_module(module_name)
 
-                step.args["source"] = source_locator
-                step.args["target"] = target_locator
+                        if not module:
+                            raise ValueError(
+                                f"Module positon not found for module '{module_name}' and identifier '{value}'"
+                            )
+
+                        location_varname = value.split(".")[-1]
+                        assert (
+                            location_varname in module.positions
+                        ), f"Position {location_varname} not found"
+                        location = module.positions[location_varname]
+
+                        step.args[key] = location
+
+            # Inject the payload
+            if isinstance(payload, dict):
+                if not isinstance(step.args, dict) or len(step.args) == 0:
+                    continue
+
+                (arg_keys, arg_values) = zip(*step.args.items())
+                for key, value in payload.items():
+                    if key in arg_values:
+                        idx = arg_values.index(key)
+                        step_arg_key = arg_keys[idx]
+                        step.args[step_arg_key] = value
 
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)

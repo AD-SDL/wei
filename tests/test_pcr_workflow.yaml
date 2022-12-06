@@ -15,13 +15,13 @@ modules:
   - name: sciclops
 
 flowdef:
-  # - name: PCR Plate Exchange
-  #   module: sciclops
-  #   command: get_plate
-  #   args:
-  #     loc: "tower1"
-  #   checks: null
-  #   comment: Stage pcr plates
+  - name: PCR Plate Exchange
+    module: sciclops
+    command: get_plate
+    args:
+      loc: "tower1"
+    checks: null
+    comment: Stage pcr plates
 
   - name: Move from Sciclops to OT2
     module: pf400
@@ -34,13 +34,13 @@ flowdef:
     checks: null
     comment: Place plate in ot2
 
-  # - name: Mix OT2 reactions
-  #   module: ot2_pcr_alpha
-  #   command: run_protocol
-  #   args:
-  #     config_path: pcr_workcell/protocol_files/ot2_pcr_config.yaml
-  #   checks: RESOURCE_CHECK
-  #   comment: resource check not implemented, but will be
+  - name: Mix OT2 reactions
+    module: ot2_pcr_alpha
+    command: run_protocol
+    args:
+      config_path: pcr_workcell/protocol_files/ot2_pcr_config.yaml
+    checks: RESOURCE_CHECK
+    comment: resource check not implemented, but will be
 
   - name: Move from OT2 to sealer
     module: pf400
@@ -72,23 +72,21 @@ flowdef:
     checks: null
     comment: null
 
-  # - name: Thermocycle
-  #   module: biometra  # - name: Seal PCR plate
-  #   command: seal
-  #   args:
-  #     time: 3
-  #     temperature: 175
-  #   checks: null
-  #     protocol_file: pcr_workcell/protocol_files/biometra_protocol.yaml
-  #   checks: null
-  #   comment: null
+  - name: Thermocycle
+    module: biometra
+    command: run
+    args:
+      time: payload.thermocyle_time
+      temperature: payload.thermocyle_temp
+    checks: null
+    comment: null
 
   - name: Move from Thermocycler to peeler
     module: pf400
     command: transfer
     args:
-      target: [279.948, 40.849, 75.130, 598.739, 79.208, -916.456]
-      source: [277.638, 39.029, 74.413, 602.159, 78.980, -910.338]
+      target: biometra.positions.default
+      source: peeler.positions.default
       source_plate_rotation: narrow
       target_plate_rotation: narrow
     checks: null
@@ -106,7 +104,7 @@ flowdef:
     command: transfer
     args:
       source: peeler.positions.default
-      target: [262.550, 20.608, 119.290, 662.570, 0.0, 574.367]
+      target: sciclops.positions.exchange
       source_plate_rotation: narrow
       target_plate_rotation: narrow
     checks: null
