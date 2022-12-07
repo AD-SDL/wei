@@ -162,7 +162,7 @@ class Step(BaseModel):
     """Module used in the step"""
     command: str
     """The command type to get executed by the robot"""
-    args: Dict
+    args: Optional[Dict]
     """Arguments for instruction"""
     checks: Optional[str]
     """For future use"""
