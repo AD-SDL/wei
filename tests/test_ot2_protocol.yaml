@@ -1,0 +1,50 @@
+equipment:
+  - name: opentrons_6_tuberack_nest_50ml_conical
+    location: "7"
+    alias: source
+  - name: corning_96_wellplate_360ul_flat
+    location: "1"
+    alias: dest
+  - name: opentrons_96_tiprack_1000ul
+    location: "10"
+  - name: opentrons_96_tiprack_20ul
+    location: "11"
+  - name: p1000_single_gen2
+    mount: left
+  - name: p20_single_gen2
+    mount: right
+
+commands:
+  - name: add water
+    source: source:B1
+    destination: payload.destination_wells
+    volume: payload.water_volumes
+    dispense_clearance: 2
+    aspirate_clearance: 0.1
+
+  - name: Mix Color 1
+    source: source:A1
+    destination: payload.destination_wells
+    volume: payload.red_volumes
+    dispense_clearance: 2
+    aspirate_clearance: 0.1
+
+  - name: Mix Green
+    source: source:A2
+    destination: payload.destination_wells
+    volume: payload.green_volumes
+    dispense_clearance: 2
+    aspirate_clearance: 0.1
+
+  - name: Mix Blue
+    source: source:A3
+    destination: payload.destination_wells
+    volume: payload.blue_volumes
+    dispense_clearance: 2
+    aspirate_clearance: 0.1
+
+metadata:
+  protocolName: All color mixing
+  author: Kyle khippe@anl.gov
+  description: Mixing red colors
+  apiLevel: "2.12"

@@ -38,7 +38,7 @@ flowdef:
     module: ot2_pcr_alpha
     command: run_protocol
     args:
-      config_path: pcr_workcell/protocol_files/ot2_pcr_config.yaml
+      config_path: tests/test_ot2_protocol.yaml
     checks: RESOURCE_CHECK
     comment: resource check not implemented, but will be
 
