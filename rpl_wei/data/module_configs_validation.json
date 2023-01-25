@@ -3,7 +3,6 @@
         "ros_node"
     ], 
     "wei_ros_camera": [
-        "ros_node", 
-        "camera_stream"
+        "ros_node"
     ]
 }
