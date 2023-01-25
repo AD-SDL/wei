@@ -16,8 +16,6 @@ except ImportError as err:
 
 
 # Callbacks 
-
-
 def wei_service_callback(step: Step, **kwargs):
 
     module: Module = kwargs["step_module"]
@@ -37,10 +35,15 @@ def wei_service_callback(step: Step, **kwargs):
         msg["node"], msg["action_handle"], msg["action_vars"]
     )
 
-#TODO write the camera callback here 
 def wei_camera_callback(step: Step, **kwargs): 
-    ...
 
+    module: Module = kwargs["step_module"]
+
+    wei_execution_node.capture_image(
+        node_name = module.config["ros_node"],
+        image_name = step.args['file_name'], 
+        path = step.args['save_location'] 
+    )
 
 ### Executor mapping
 
