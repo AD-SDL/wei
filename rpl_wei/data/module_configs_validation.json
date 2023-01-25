@@ -1,5 +1,8 @@
 {
     "wei_ros_node": [
         "ros_node"
+    ], 
+    "wei_ros_camera": [
+        "ros_node"
     ]
 }

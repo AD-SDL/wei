@@ -65,8 +65,8 @@ class WF_Client:
         run_log_dir.mkdir(exist_ok=True, parents=True)
         self.log_dir = log_dir
         self.run_log_dir = run_log_dir
-
-        (run_log_dir / "results").mkdir(exist_ok=True, parents=True)
+        self.result_dir = self.run_log_dir / "results"
+        self.result_dir.mkdir(exist_ok=True, parents=True)
 
         self.run_id = self.workflow.id
         self._setup_logger(
@@ -151,7 +151,7 @@ class WF_Client:
             if isinstance(payload, dict):
                 if not isinstance(step.args, dict) or len(step.args) == 0:
                     continue
-
+                #TODO check if you can see the attr of this class and match them with vars in the yaml
                 (arg_keys, arg_values) = zip(*step.args.items())
                 for key, value in payload.items():
                     # Covers naming issues when referring to namespace from yaml file
@@ -161,6 +161,13 @@ class WF_Client:
                         idx = arg_values.index(key)
                         step_arg_key = arg_keys[idx]
                         step.args[step_arg_key] = value
+
+                # TODO remove once there is a better result_dir injection method
+                # WARNING WILL FAIL IF `local_run_results` IN ARGS MORE THAN ONCE
+                if "local_run_results" in arg_values: 
+                    idx = arg_values.index(key) 
+                    step_arg_key = arg_keys[idx]
+                    step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)
