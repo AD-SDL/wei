@@ -165,7 +165,7 @@ class WF_Client:
                 # TODO remove once there is a better result_dir injection method
                 # WARNING WILL FAIL IF `local_run_results` IN ARGS MORE THAN ONCE
                 if "local_run_results" in arg_values: 
-                    idx = arg_values.index(key) 
+                    idx = arg_values.index("local_run_results") 
                     step_arg_key = arg_keys[idx]
                     step.args[step_arg_key] = str(self.result_dir)
 

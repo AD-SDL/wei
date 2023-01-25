@@ -85,7 +85,7 @@ class StepExecutor:
         StepStatus
             A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
         """
-        assert step_module.type in Executor_Map, f"Executor not found for {step_module.type}"
+        assert step_module.type in Executor_Map.function, f"Executor not found for {step_module.type}"
         
         self.run_logger.info(f"Started running step with name: {step.name}")
         self.run_logger.debug(step)
