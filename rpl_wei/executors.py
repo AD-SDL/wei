@@ -39,10 +39,6 @@ def wei_service_callback(step: Step, **kwargs):
         print(msg)
         print()
 
-
-    if not wei_execution_node:
-        wei_execution_node = weiExecNode()
-
     wei_execution_node.send_wei_command(
         msg["node"], msg["action_handle"], msg["action_vars"]
     )
@@ -51,18 +47,8 @@ def wei_service_callback(step: Step, **kwargs):
 def wei_camera_callback(step: Step, **kwargs):
     __init_rclpy()
 
-    if not rclpy.utilities.ok():
-        print('Restarting node')
-        try: 
-            rclpy.init()
-        except ImportError as err: 
-            print("No WEI executor found... Cannot use ROS")
-            wei_execution_node = None    
-
     module: Module = kwargs["step_module"]
 
-    if not wei_execution_node:
-        wei_execution_node = weiExecNode()
     wei_execution_node.capture_image(
         node_name=module.config["ros_node"],
         image_name=step.args["file_name"],
