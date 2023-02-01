@@ -83,7 +83,7 @@ class WF_Client:
 
         # Setup executor
         self.executor = StepExecutor(self.run_logger)
-        __init_rclpy()
+        
 
     def _setup_logger(
         self, logger_name: str, log_file: PathLike, level: int = logging.INFO

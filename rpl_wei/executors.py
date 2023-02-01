@@ -2,31 +2,29 @@
 from typing import Callable, List, Optional
 
 from rpl_wei.data_classes import Module, Step, StepStatus
-
-try:
-    import rclpy
-except ImportError:
-    print("No ROS found... Cannot use ROS")
-    rclpy = None
+import rclpy
 
 wei_execution_node = None
 
 
 def __init_rclpy():
-    if not rclpy.utilities.ok():
-        try:
-            from wei_executor.weiExecutorNode import weiExecNode
+    global wei_execution_node
 
-            global wei_execution_node
-            wei_execution_node = weiExecNode()
-        except ImportError as err:
-            print("No WEI executor found... Cannot use ROS")
-            global wei_execution_node
-            wei_execution_node = None
+    if not rclpy.utilities.ok():
+        rclpy.init()
+ 
+    print(rclpy.utilities.ok())
+    try:
+        from wei_executor.weiExecutorNode import weiExecNode
+        wei_execution_node = weiExecNode()
+    except ImportError as err:
+        print("No WEI executor found... Cannot use ROS")
+        wei_execution_node = None
 
 
 # Callbacks
 def wei_service_callback(step: Step, **kwargs):
+    __init_rclpy()
 
     module: Module = kwargs["step_module"]
 
@@ -47,6 +45,7 @@ def wei_service_callback(step: Step, **kwargs):
 
 
 def wei_camera_callback(step: Step, **kwargs):
+    __init_rclpy()
 
     module: Module = kwargs["step_module"]
 
