@@ -3,19 +3,29 @@ from typing import Callable, List, Optional
 
 from rpl_wei.data_classes import Module, Step, StepStatus
 
-
-try: 
+try:
     import rclpy
-    from wei_executor.weiExecutorNode import weiExecNode
+except ImportError:
+    print("No ROS found... Cannot use ROS")
+    rclpy = None
 
-    rclpy.init()
-    wei_execution_node = weiExecNode()
-except ImportError as err: 
-    print("No WEI executor found... Cannot use ROS")
-    wei_execution_node = None
+wei_execution_node = None
 
 
-# Callbacks 
+def __init_rclpy():
+    if not rclpy.utilities.ok():
+        try:
+            from wei_executor.weiExecutorNode import weiExecNode
+
+            global wei_execution_node
+            wei_execution_node = weiExecNode()
+        except ImportError as err:
+            print("No WEI executor found... Cannot use ROS")
+            global wei_execution_node
+            wei_execution_node = None
+
+
+# Callbacks
 def wei_service_callback(step: Step, **kwargs):
 
     module: Module = kwargs["step_module"]
@@ -26,7 +36,7 @@ def wei_service_callback(step: Step, **kwargs):
         "action_vars": step.args,
     }
 
-    if kwargs.get("verbose", False): 
+    if kwargs.get("verbose", False):
         print("\n Callback message:")
         print(msg)
         print()
@@ -35,22 +45,25 @@ def wei_service_callback(step: Step, **kwargs):
         msg["node"], msg["action_handle"], msg["action_vars"]
     )
 
-def wei_camera_callback(step: Step, **kwargs): 
+
+def wei_camera_callback(step: Step, **kwargs):
 
     module: Module = kwargs["step_module"]
 
     wei_execution_node.capture_image(
-        node_name = module.config["ros_node"],
-        image_name = step.args['file_name'], 
-        path = step.args['save_location'] 
+        node_name=module.config["ros_node"],
+        image_name=step.args["file_name"],
+        path=step.args["save_location"],
     )
+
 
 ### Executor mapping
 
-class Executor_Map: 
+
+class Executor_Map:
     function = {
-        "wei_ros_node": wei_service_callback, 
-        "wei_ros_camera": wei_camera_callback, 
+        "wei_ros_node": wei_service_callback,
+        "wei_ros_camera": wei_camera_callback,
     }
 
 
@@ -85,12 +98,14 @@ class StepExecutor:
         StepStatus
             A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
         """
-        assert step_module.type in Executor_Map.function, f"Executor not found for {step_module.type}"
-        
+        assert (
+            step_module.type in Executor_Map.function
+        ), f"Executor not found for {step_module.type}"
+
         self.run_logger.info(f"Started running step with name: {step.name}")
         self.run_logger.debug(step)
 
-        #map the correct executor function to the step_module
+        # map the correct executor function to the step_module
         Executor_Map.function[step_module.type](step, step_module=step_module)
 
         # TODO: Allow for callbacks, disabled for now because we are switching to the in-package callbacks

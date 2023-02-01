@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from devtools import debug
 
 from rpl_wei.data_classes import Module, PathLike, WorkCell, Workflow
-from rpl_wei.executors import StepExecutor
+from rpl_wei.executors import StepExecutor, __init_rclpy
 from rpl_wei.validators import ModuleValidator, StepValidator
 
 
@@ -83,6 +83,7 @@ class WF_Client:
 
         # Setup executor
         self.executor = StepExecutor(self.run_logger)
+        __init_rclpy()
 
     def _setup_logger(
         self, logger_name: str, log_file: PathLike, level: int = logging.INFO
@@ -151,7 +152,7 @@ class WF_Client:
             if isinstance(payload, dict):
                 if not isinstance(step.args, dict) or len(step.args) == 0:
                     continue
-                #TODO check if you can see the attr of this class and match them with vars in the yaml
+                # TODO check if you can see the attr of this class and match them with vars in the yaml
                 (arg_keys, arg_values) = zip(*step.args.items())
                 for key, value in payload.items():
                     # Covers naming issues when referring to namespace from yaml file
@@ -164,8 +165,8 @@ class WF_Client:
 
                 # TODO remove once there is a better result_dir injection method
                 # WARNING WILL FAIL IF `local_run_results` IN ARGS MORE THAN ONCE
-                if "local_run_results" in arg_values: 
-                    idx = arg_values.index("local_run_results") 
+                if "local_run_results" in arg_values:
+                    idx = arg_values.index("local_run_results")
                     step_arg_key = arg_keys[idx]
                     step.args[step_arg_key] = str(self.result_dir)
 
