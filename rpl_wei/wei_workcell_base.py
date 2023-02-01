@@ -135,7 +135,7 @@ class WEI:
         if workflow_id:
             workflow: WF_Client = self.workflows[workflow_id]["workflow"]
             self.wc_logger.info(f"Starting run with run id: {workflow.run_id}")
-            workflow.run_flow(callbacks, payload=payload)
+            run_info = workflow.run_flow(callbacks, payload=payload)
             self.wc_logger.info(
                 f"Completed run with run id: {workflow.run_id} and payload: {payload}"
             )
@@ -143,12 +143,15 @@ class WEI:
             self.workflows[workflow_id][workflow.run_id] = payload
 
             if publish:
-                return PilotPublisher.publish(workflow)
-
+                PilotPublisher.publish(workflow)
+            run_info['run_id']=workflow_id
+            return run_info 
         else:
             # TODO: Figure out what to do if they don't give a workflow id
             # TODO: What if there is a specific order to run flows
-            pass
+            return None
+
+
 
     def get_workflows(self) -> Dict:
         """Return all workflows. Gets the workflow id and its path

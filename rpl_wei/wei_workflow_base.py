@@ -172,6 +172,7 @@ class WF_Client:
 
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)
+        return {'run_dir':self.run_log_dir}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
 
