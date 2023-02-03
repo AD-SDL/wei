@@ -66,7 +66,7 @@ class WF_Client:
         self.step_validator = StepValidator()
 
         # Setup executor
-        self.executor = StepExecutor(self.run_logger)
+        self.executor = StepExecutor()
 
     def setup_logs(self):
         # Setup loggers and results
@@ -175,7 +175,9 @@ class WF_Client:
                     step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
-            self.executor.execute_step(step, step_module, callbacks=callbacks)
+            self.executor.execute_step(
+                step, step_module, logger=self.run_logger, callbacks=callbacks
+            )
         return {"run_dir": self.run_log_dir}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:

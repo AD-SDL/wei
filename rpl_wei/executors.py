@@ -1,4 +1,5 @@
 """Handling execution for steps in the RPL-SDL efforts"""
+import logging
 from typing import Callable, List, Optional
 
 from rpl_wei.data_classes import Module, Step, StepStatus
@@ -12,10 +13,11 @@ def __init_rclpy():
 
     if not rclpy.utilities.ok():
         rclpy.init()
- 
+
     print(rclpy.utilities.ok())
     try:
         from wei_executor.weiExecutorNode import weiExecNode
+
         wei_execution_node = weiExecNode()
     except ImportError as err:
         print("No WEI executor found... Cannot use ROS")
@@ -69,20 +71,11 @@ class Executor_Map:
 class StepExecutor:
     """Class to handle executing steps"""
 
-    def __init__(self, run_logger) -> None:
-        """Initialize the StepExecutor with necesary tools/data
-
-        Parameters
-        ----------
-        run_logger : logging.Logger
-            The run logger for this run
-        """
-        self.run_logger = run_logger
-
     def execute_step(
         self,
         step: Step,
         step_module: Module,
+        logger: Optional[logging.Logger] = None,
         callbacks: Optional[List[Callable]] = None,
     ) -> StepStatus:
         """Executes a single step from a workflow
@@ -101,8 +94,8 @@ class StepExecutor:
             step_module.type in Executor_Map.function
         ), f"Executor not found for {step_module.type}"
 
-        self.run_logger.info(f"Started running step with name: {step.name}")
-        self.run_logger.debug(step)
+        logger.info(f"Started running step with name: {step.name}")
+        logger.debug(step)
 
         # map the correct executor function to the step_module
         Executor_Map.function[step_module.type](step, step_module=step_module)
@@ -112,6 +105,6 @@ class StepExecutor:
         #     for callback in callbacks:
         #         callback(step, step_module=step_module)
 
-        self.run_logger.info(f"Finished running step with name: {step.name}")
+        logger.info(f"Finished running step with name: {step.name}")
 
         return StepStatus.SUCCEEDED
