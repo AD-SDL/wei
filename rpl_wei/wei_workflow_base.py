@@ -175,6 +175,7 @@ class WF_Client:
                     step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
+            self.run_logger.info(f"Payload for step {step.name}: {payload}")
             self.executor.execute_step(
                 step, step_module, logger=self.run_logger, callbacks=callbacks
             )
