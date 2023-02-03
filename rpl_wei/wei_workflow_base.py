@@ -3,12 +3,13 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from uuid import UUID, uuid4
 
 from devtools import debug
 
 from rpl_wei.data_classes import Module, PathLike, WorkCell, Workflow
-from rpl_wei.executors import StepExecutor, __init_rclpy
 from rpl_wei.validators import ModuleValidator, StepValidator
+from rpl_wei.executors import StepExecutor, __init_rclpy
 
 
 class WF_Client:
@@ -70,15 +71,15 @@ class WF_Client:
 
     def setup_logs(self):
         # Setup loggers and results
+        self.run_id = uuid4()
         timestamp = datetime.now().strftime("%Y%m%d-%H%m%s")
-        run_log_dir = self.log_dir / f"run-{timestamp}"
+        run_log_dir = self.log_dir / f"run-{timestamp}-{self.run_id}"
         run_log_dir.mkdir(exist_ok=True, parents=True)
         self.log_dir = self.log_dir
         self.run_log_dir = run_log_dir
         self.result_dir = self.run_log_dir / "results"
         self.result_dir.mkdir(exist_ok=True, parents=True)
 
-        self.run_id = self.workflow.id
         self._setup_logger(
             "runLogger",
             run_log_dir / "runlog.log",
@@ -118,9 +119,10 @@ class WF_Client:
         self,
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> Dict[str, Any]:
         """Executes the flowdef commmands"""
-        # Setup logs for this run
+        # Setup logs for this run NOTE: sets self.run_id
+        # TODO make this less class dependent, currently relies on self
         self.setup_logs()
 
         # Start executing the steps
@@ -179,7 +181,7 @@ class WF_Client:
             self.executor.execute_step(
                 step, step_module, logger=self.run_logger, callbacks=callbacks
             )
-        return {"run_dir": self.run_log_dir}
+        return {"run_dir": self.run_log_dir, "run_id": self.run_id}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
 

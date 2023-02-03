@@ -3,24 +3,30 @@ import logging
 from typing import Callable, List, Optional
 
 from rpl_wei.data_classes import Module, Step, StepStatus
-import rclpy
+
+try:
+    import rclpy
+except ImportError as err:
+    print("No RCLPY found... Cannot use ROS")
+    rclpy = None
 
 wei_execution_node = None
 
 
 def __init_rclpy():
-    global wei_execution_node
-    from wei_executor.weiExecutorNode import weiExecNode
+    if rclpy is not None:
+        global wei_execution_node
+        from wei_executor.weiExecutorNode import weiExecNode
 
-    if not rclpy.utilities.ok():
-        rclpy.init()
-        print('Restarted RCLPY')
-        wei_execution_node = weiExecNode()
-    else:
-        print('RCLPY OK ')
-    
+        if not rclpy.utilities.ok():
+            rclpy.init()
+            print("Restarted RCLPY")
+            wei_execution_node = weiExecNode()
+        else:
+            print("RCLPY OK ")
+
     # print(rclpy.utilities.ok())
- 
+
     # try:
     #     weiExecNode
     # except ImportError as err:

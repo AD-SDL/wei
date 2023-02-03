@@ -14,7 +14,7 @@ class Test_Workcell_Base(TestWEI_Base):
         from rpl_wei.wei_workcell_base import WEI
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
-        wei = WEI(wf_configs=workflow_config_path)
+        wei = WEI(wf_config=workflow_config_path)
 
         workcell = wei.workcell
 
@@ -25,7 +25,7 @@ class Test_Workcell_Base(TestWEI_Base):
         from rpl_wei.wei_workcell_base import WEI
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
-        wei = WEI(wf_configs=workflow_config_path)
+        wei = WEI(wf_config=workflow_config_path)
 
         run = list(wei.get_workflows().keys())[0]
 

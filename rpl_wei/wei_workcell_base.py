@@ -18,7 +18,7 @@ class WEI:
 
     def __init__(
         self,
-        wf_configs: Path,
+        wf_config: Path,
         log_dir: Optional[Path] = None,
         workcell_log_level: int = logging.INFO,
         workflow_log_level: int = logging.INFO,
@@ -44,7 +44,7 @@ class WEI:
         # TODO this was originally wc_config, but since this is optional now this might
         #      have to be handled in the workflow_client.py
         if not log_dir:
-            self.log_dir = wf_configs.parent / "logs/"
+            self.log_dir = wf_config.parent / "logs/"
         else:
             if log_dir.is_file():
                 self.log_dir = log_dir.parent
@@ -56,29 +56,24 @@ class WEI:
         #      might have be handled elsewhere
         self._setup_logger(
             "wcLogger",
-            log_file=self.log_dir / f"{wf_configs.stem}.log",
+            log_file=self.log_dir / f"{wf_config.stem}.log",
             level=self.workcell_log_level,
         )
         self.wc_logger = self._get_logger(log_name="wcLogger")
 
-        self.workflows = {}
         # User can pass us a single file or a directory of files
-        if wf_configs.is_file():
+        if wf_config.is_file():
             wf = WF_Client(
-                wf_configs,
+                wf_config,
                 log_dir=self.log_dir,
                 workflow_log_level=self.workflow_log_level,
             )
-            self.workflows[wf.run_id] = {"workflow": wf}
+            self.workflow = wf
 
-        elif wf_configs.is_dir():
-            # TODO: what if there is a specific order to run the workflows?
-            for wf_path in wf_configs.glob("*[.yml][.yaml]"):
-                wf = WF_Client(
-                    wf_path, self.log_dir, workflow_log_level=self.workflow_log_level
-                )
-
-                self.workflows[wf.run_id] = {"workflow": wf}
+        elif wf_config.is_dir():
+            raise NotImplementedError(
+                "Directory of workflow configs not implemented yet"
+            )
 
     @property
     def workcell(self) -> Optional[WorkCell]:
@@ -92,13 +87,7 @@ class WEI:
         Optional[WorkCell]
             The workcell object if there is only one attatched to this client, otherwise None
         """
-        if len(self.workflows) != 1:
-            # more than one workflow present
-            # Could check them all to see if same workflow?
-            return None
-
-        key = list(self.workflows.keys())[0]
-        return self.workflows[key].get("workflow").workcell
+        return self.wf.workcell
 
     def _setup_logger(
         self, logger_name: str, log_file: PathLike, level: int = logging.INFO
@@ -119,7 +108,6 @@ class WEI:
 
     def run_workflow(
         self,
-        workflow_id: Optional[UUID] = None,
         callbacks: Optional[List[Callable]] = None,
         payload: Dict = None,
         publish: bool = False,
@@ -132,26 +120,17 @@ class WEI:
             The workflow ID you would like to run, by default None
         """
 
-        if workflow_id:
-            workflow: WF_Client = self.workflows[workflow_id]["workflow"]
-            self.wc_logger.info(f"Starting run with run id: {workflow.run_id}")
-            run_info = workflow.run_flow(callbacks, payload=payload)
-            self.wc_logger.info(
-                f"Completed run with run id: {workflow.run_id} and payload: {payload}"
-            )
+        workflow: WF_Client = self.workflow
+        self.wc_logger.info(f"Starting run with payload: {payload}")
+        run_info = workflow.run_flow(callbacks, payload=payload)
+        self.wc_logger.info(
+            f"Completed run with run id: {run_info['run_id']} and payload: {payload}"
+        )
 
-            self.workflows[workflow_id][workflow.run_id] = payload
+        if publish:
+            PilotPublisher.publish(workflow)
 
-            if publish:
-                PilotPublisher.publish(workflow)
-            run_info['run_id']=workflow_id
-            return run_info 
-        else:
-            # TODO: Figure out what to do if they don't give a workflow id
-            # TODO: What if there is a specific order to run flows
-            return None
-
-
+        return run_info
 
     def get_workflows(self) -> Dict:
         """Return all workflows. Gets the workflow id and its path
@@ -164,7 +143,7 @@ class WEI:
         """
         return self.workflows
 
-    def get_workflow(self, run_id: UUID) -> Workflow:
+    def get_workflow(self) -> Workflow:
         """Get a workflow with a specific id
 
         Parameters
@@ -177,7 +156,7 @@ class WEI:
         Workflow
             The workflow object which you can execute directly on
         """
-        return self.workflows.get(run_id, None)
+        return self.workflow
 
     def add_workflow(self, workflow_path: Path) -> None:
         """Add a workflow file to be run

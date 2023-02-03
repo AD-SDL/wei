@@ -11,7 +11,7 @@ class TestValidators(TestWEI_Base):
         module_validator = ModuleValidator()
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
-        wei = WEI(wf_configs=workflow_config_path)
+        wei = WEI(wf_config=workflow_config_path)
 
         # get run id (TODO: this is clunky...)
         run_id = list(wei.get_workflows().keys())[0]

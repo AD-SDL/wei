@@ -10,12 +10,10 @@ class TestDCValidation(TestWEI_Base):
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
         wei = WEI(
-            wf_configs=workflow_config_path,
+            wf_config=workflow_config_path,
             workcell_log_level=logging.ERROR,
             workflow_log_level=logging.ERROR,
         )
 
-        run = list(wei.get_workflows().keys())[0]
-
-        wf = wei.get_workflow(run)
-        print(f"{wf['workflow'].flowdef=}")
+        wf = wei.get_workflow()
+        print(f"{wf.flowdef=}")
