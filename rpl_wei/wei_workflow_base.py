@@ -30,6 +30,7 @@ class WF_Client:
         """
 
         self.workflow = Workflow.from_yaml(wf_config)
+        self.run_id = self.workflow.id
         self.modules = self.workflow.modules
         self.flowdef = self.workflow.flowdef
         self.log_dir = log_dir
@@ -78,7 +79,6 @@ class WF_Client:
         self.result_dir = self.run_log_dir / "results"
         self.result_dir.mkdir(exist_ok=True, parents=True)
 
-        self.run_id = self.workflow.id
         self._setup_logger(
             "runLogger",
             run_log_dir / "runlog.log",
