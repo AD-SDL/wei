@@ -32,6 +32,8 @@ class WF_Client:
         self.workflow = Workflow.from_yaml(wf_config)
         self.modules = self.workflow.modules
         self.flowdef = self.workflow.flowdef
+        self.log_dir = log_dir
+        self.workflow_log_level = workflow_log_level
 
         if wc_config:
             wc_config = wc_config.expanduser().resolve()
@@ -59,11 +61,19 @@ class WF_Client:
         self.wf_file = wf_config
         self.wc_file = self.workflow.workcell
 
+        # Setup validators
+        self.module_validator = ModuleValidator()
+        self.step_validator = StepValidator()
+
+        # Setup executor
+        self.executor = StepExecutor(self.run_logger)
+
+    def setup_logs(self):
         # Setup loggers and results
         timestamp = datetime.now().strftime("%Y%m%d-%H%m%s")
-        run_log_dir = log_dir / f"run-{timestamp}"
+        run_log_dir = self.log_dir / f"run-{timestamp}"
         run_log_dir.mkdir(exist_ok=True, parents=True)
-        self.log_dir = log_dir
+        self.log_dir = self.log_dir
         self.run_log_dir = run_log_dir
         self.result_dir = self.run_log_dir / "results"
         self.result_dir.mkdir(exist_ok=True, parents=True)
@@ -72,18 +82,10 @@ class WF_Client:
         self._setup_logger(
             "runLogger",
             run_log_dir / "runlog.log",
-            level=workflow_log_level,
+            level=self.workflow_log_level,
         )
 
         self.run_logger = self._get_logger("runLogger")
-
-        # Setup validators
-        self.module_validator = ModuleValidator()
-        self.step_validator = StepValidator()
-
-        # Setup executor
-        self.executor = StepExecutor(self.run_logger)
-        
 
     def _setup_logger(
         self, logger_name: str, log_file: PathLike, level: int = logging.INFO
@@ -118,6 +120,8 @@ class WF_Client:
         payload: Optional[Dict[str, Any]] = None,
     ):
         """Executes the flowdef commmands"""
+        # Setup logs for this run
+        self.setup_logs()
 
         # Start executing the steps
         for step in self.flowdef:
@@ -172,7 +176,7 @@ class WF_Client:
 
             # execute the step
             self.executor.execute_step(step, step_module, callbacks=callbacks)
-        return {'run_dir':self.run_log_dir}
+        return {"run_dir": self.run_log_dir}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
 
