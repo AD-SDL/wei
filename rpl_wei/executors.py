@@ -9,17 +9,22 @@ wei_execution_node = None
 
 def __init_rclpy():
     global wei_execution_node
+    from wei_executor.weiExecutorNode import weiExecNode
 
     if not rclpy.utilities.ok():
         rclpy.init()
- 
-    print(rclpy.utilities.ok())
-    try:
-        from wei_executor.weiExecutorNode import weiExecNode
+        print('Restarted RCLPY')
         wei_execution_node = weiExecNode()
-    except ImportError as err:
-        print("No WEI executor found... Cannot use ROS")
-        wei_execution_node = None
+    else:
+        print('RCLPY OK ')
+    
+    # print(rclpy.utilities.ok())
+ 
+    # try:
+    #     weiExecNode
+    # except ImportError as err:
+    #     print("No WEI executor found... Cannot use ROS")
+    #     wei_execution_node = None
 
 
 # Callbacks
@@ -46,7 +51,6 @@ def wei_service_callback(step: Step, **kwargs):
 
 def wei_camera_callback(step: Step, **kwargs):
     __init_rclpy()
-
     module: Module = kwargs["step_module"]
 
     wei_execution_node.capture_image(
