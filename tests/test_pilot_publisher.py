@@ -10,12 +10,11 @@ class TestPilotPublisher(TestWEI_Base):
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
         wei = WEI(
-            wf_configs=workflow_config_path,
+            wf_config=workflow_config_path,
             workcell_log_level=logging.ERROR,
             workflow_log_level=logging.ERROR,
         )
 
-        run_id = list(wei.get_workflows().keys())[0]
-        publish_status = wei.run_workflow(run_id, publish=True)
+        publish_status = wei.run_workflow(publish=True)
 
         assert publish_status

@@ -3,7 +3,12 @@ import logging
 from typing import Callable, List, Optional
 
 from rpl_wei.data_classes import Module, Step, StepStatus
-import rclpy
+
+try:
+    import rclpy
+except ImportError as err:
+    print("No RCLPY found... Cannot use ROS")
+    rclpy = None
 
 wei_execution_node = None
 
@@ -23,7 +28,7 @@ def __kill_node():
     global wei_execution_node
     print('killing node')
     wei_execution_node.destroy_node()
-    rclpy.shutdown()
+
 
 
 # Callbacks
@@ -61,6 +66,10 @@ def wei_camera_callback(step: Step, **kwargs):
     )
     __kill_node()
 
+def silent_callback(step: Step, **kwargs):
+    print(step)
+
+
 ### Executor mapping
 
 
@@ -68,6 +77,7 @@ class Executor_Map:
     function = {
         "wei_ros_node": wei_service_callback,
         "wei_ros_camera": wei_camera_callback,
+        "silent_callback": silent_callback,
     }
 
 
@@ -101,7 +111,10 @@ class StepExecutor:
         logger.debug(step)
 
         # map the correct executor function to the step_module
-        Executor_Map.function[step_module.type](step, step_module=step_module)
+        if rclpy is not None:
+            Executor_Map.function[step_module.type](step, step_module=step_module)
+        else:
+            Executor_Map.function["silent_callback"](step, step_module=step_module)
 
         # TODO: Allow for callbacks, disabled for now because we are switching to the in-package callbacks
         # if callbacks:
