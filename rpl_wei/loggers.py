@@ -9,13 +9,15 @@ import logging
 class WEI_Logger:
     @staticmethod
     def _create_logger(
-        self,
         logger_name: str,
         log_file: Optional[PathLike] = None,
         level: int = logging.INFO,
     ):
         if log_file is None:
             log_file = Path().resolve() / f"{logger_name}.log"
+
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+
         logger = logging.getLogger(logger_name)
         formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
         fileHandler = logging.FileHandler(log_file, mode="a+")

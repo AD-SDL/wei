@@ -6,7 +6,7 @@ from rpl_wei.data_classes import Module, Step, StepStatus
 
 try:
     import rclpy
-except ImportError as err:
+except ImportError:
     print("No RCLPY found... Cannot use ROS")
     rclpy = None
 
@@ -19,16 +19,16 @@ def __init_rclpy():
 
     if not rclpy.utilities.ok():
         rclpy.init()
-        print('Started RCLPY')
+        print("Started RCLPY")
         wei_execution_node = weiExecNode()
     else:
-        print('RCLPY OK ')
-    
+        print("RCLPY OK ")
+
+
 def __kill_node():
     global wei_execution_node
-    print('killing node')
+    print("killing node")
     wei_execution_node.destroy_node()
-
 
 
 # Callbacks
@@ -54,7 +54,6 @@ def wei_service_callback(step: Step, **kwargs):
     __kill_node()
 
 
-
 def wei_camera_callback(step: Step, **kwargs):
     __init_rclpy()
     module: Module = kwargs["step_module"]
@@ -66,11 +65,12 @@ def wei_camera_callback(step: Step, **kwargs):
     )
     __kill_node()
 
+
 def silent_callback(step: Step, **kwargs):
     print(step)
 
 
-### Executor mapping
+### Executor mapping ###
 
 
 class Executor_Map:

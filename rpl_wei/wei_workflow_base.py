@@ -2,7 +2,7 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from devtools import debug
 
@@ -82,20 +82,28 @@ class WF_Client:
         for step in self.flowdef:
             self.step_validator.check_step(step=step)
 
+    def initialize_run(self) -> Tuple[str, Path, Path, logging.Logger]:
+        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_dir = self.log_dir / f"run-{run_id}"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        result_dir = log_dir / "results"
+        result_dir.mkdir(parents=True, exist_ok=True)
+        run_logger = WEI_Logger.get_logger(
+            "runLogger",
+            log_dir=log_dir,
+            log_level=self.workflow_log_level,
+        )
+
+        return run_id, log_dir, result_dir, run_logger
+
     def run_flow(
         self,
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Executes the flowdef commmands"""
-        # Setup run_id
-        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_dir = self.log_dir / run_id
-        run_logger = WEI_Logger.get_logger(
-            "runLogger",
-            log_dir=log_dir,
-            log_level=self.workflow_log_level,
-        )
+        # Setup this run
+        run_id, log_dir, result_dir, run_logger = self.initialize_run()
 
         # Start executing the steps
         for step in self.flowdef:
@@ -146,17 +154,18 @@ class WF_Client:
                 if "local_run_results" in arg_values:
                     idx = arg_values.index("local_run_results")
                     step_arg_key = arg_keys[idx]
-                    step.args[step_arg_key] = str(self.result_dir)
+                    step.args[step_arg_key] = str(result_dir)
 
             # execute the step
-            self.run_logger.info(f"Payload for step {step.name}: {payload}")
+            run_logger.info(f"Payload for step {step.name}: {payload}")
             step_thread = Thread(
-                target=self.executor.execute_step, 
+                target=self.executor.execute_step,
                 kwargs={
-                    'step':step, 
-                    'step_module':step_module, 
-                    'logger':self.run_logger, 
-                    'callbacks':callbacks}
+                    "step": step,
+                    "step_module": step_module,
+                    "logger": run_logger,
+                    "callbacks": callbacks,
+                },
             )
             step_thread.start()
             step_thread.join()
