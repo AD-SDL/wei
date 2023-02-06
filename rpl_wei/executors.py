@@ -29,6 +29,7 @@ def __kill_node():
     global wei_execution_node
     print("killing node")
     wei_execution_node.destroy_node()
+    rclpy.shutdown()
 
 
 # Callbacks
