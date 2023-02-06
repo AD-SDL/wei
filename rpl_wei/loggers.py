@@ -44,7 +44,7 @@ class WEI_Logger:
                 log_dir / f"{log_name}.log",
                 log_level,
             )
-            if not logging.getLogger().hasHandlers()
+            if not logging.getLogger(log_name).hasHandlers()
             else logging.getLogger(log_name)
         )
         return logger
