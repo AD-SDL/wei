@@ -9,7 +9,7 @@ from devtools import debug
 from rpl_wei.data_classes import Module, PathLike, WorkCell, Workflow
 from rpl_wei.executors import StepExecutor, __init_rclpy
 from rpl_wei.validators import ModuleValidator, StepValidator
-
+from threading import Thread
 
 class WF_Client:
     """Class for interacting with a specific workflow"""
@@ -176,9 +176,16 @@ class WF_Client:
 
             # execute the step
             self.run_logger.info(f"Payload for step {step.name}: {payload}")
-            self.executor.execute_step(
-                step, step_module, logger=self.run_logger, callbacks=callbacks
+            step_thread = Thread(
+                target=self.executor.execute_step, 
+                kwargs={
+                    'step':step, 
+                    'step_module':step_module, 
+                    'logger':self.run_logger, 
+                    'callbacks':callbacks}
             )
+            step_thread.start()
+            step_thread.join()
         return {"run_dir": self.run_log_dir}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:

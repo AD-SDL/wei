@@ -14,18 +14,16 @@ def __init_rclpy():
 
     if not rclpy.utilities.ok():
         rclpy.init()
-        print('Restarted RCLPY')
+        print('Started RCLPY')
         wei_execution_node = weiExecNode()
     else:
         print('RCLPY OK ')
     
-    # print(rclpy.utilities.ok())
- 
-    # try:
-    #     weiExecNode
-    # except ImportError as err:
-    #     print("No WEI executor found... Cannot use ROS")
-    #     wei_execution_node = None
+def __kill_node():
+    global wei_execution_node
+    print('killing node')
+    wei_execution_node.destroy_node()
+    rclpy.shutdown()
 
 
 # Callbacks
@@ -48,6 +46,8 @@ def wei_service_callback(step: Step, **kwargs):
     wei_execution_node.send_wei_command(
         msg["node"], msg["action_handle"], msg["action_vars"]
     )
+    __kill_node()
+
 
 
 def wei_camera_callback(step: Step, **kwargs):
@@ -59,7 +59,7 @@ def wei_camera_callback(step: Step, **kwargs):
         image_name=step.args["file_name"],
         path=step.args["save_location"],
     )
-
+    __kill_node()
 
 ### Executor mapping
 
