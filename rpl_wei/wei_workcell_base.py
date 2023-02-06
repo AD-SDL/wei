@@ -3,11 +3,11 @@ import logging
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Any
-from uuid import UUID
 
-from rpl_wei.data_classes import PathLike, WorkCell, Workflow
+from rpl_wei.data_classes import WorkCell
 from rpl_wei.publishers import PilotPublisher
 from rpl_wei.wei_workflow_base import WF_Client
+from rpl_wei.loggers import WEI_Logger
 
 
 class WEI:
@@ -51,29 +51,22 @@ class WEI:
             else:
                 self.log_dir = log_dir
         self.log_dir.mkdir(exist_ok=True, parents=True)
+        self.run_log_dir = self.log_dir / "runs"
+        self.run_log_dir.mkdir(exist_ok=True, parents=True)
 
-        # TODO this was originally wc_config, but since this is optional now this might
-        #      might have be handled elsewhere
-        self._setup_logger(
+        self.wc_logger = WEI_Logger.get_logger(
             "wcLogger",
-            log_file=self.log_dir / f"{wf_config.stem}.log",
-            level=self.workcell_log_level,
+            log_dir=self.log_dir,
+            log_level=self.workcell_log_level,
         )
-        self.wc_logger = self._get_logger(log_name="wcLogger")
 
-        # User can pass us a single file or a directory of files
-        if wf_config.is_file():
-            wf = WF_Client(
-                wf_config,
-                log_dir=self.log_dir,
-                workflow_log_level=self.workflow_log_level,
-            )
-            self.workflow = wf
-
-        elif wf_config.is_dir():
-            raise NotImplementedError(
-                "Directory of workflow configs not implemented yet"
-            )
+        self.wc_cofig_path = wf_config
+        self.workflow = WF_Client(
+            wf_config,
+            log_dir=self.log_dir,
+            workflow_log_level=self.workflow_log_level,
+        )
+        self.run_history = {}
 
     @property
     def workcell(self) -> Optional[WorkCell]:
@@ -87,24 +80,7 @@ class WEI:
         Optional[WorkCell]
             The workcell object if there is only one attatched to this client, otherwise None
         """
-        return self.wf.workcell
-
-    def _setup_logger(
-        self, logger_name: str, log_file: PathLike, level: int = logging.INFO
-    ):
-        logger = logging.getLogger(logger_name)
-        formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
-        fileHandler = logging.FileHandler(log_file, mode="a+")
-        fileHandler.setFormatter(formatter)
-        streamHandler = logging.StreamHandler()
-        streamHandler.setFormatter(formatter)
-
-        logger.setLevel(level)
-        logger.addHandler(fileHandler)
-        logger.addHandler(streamHandler)
-
-    def _get_logger(self, log_name: str) -> logging.Logger:
-        return logging.getLogger(log_name)
+        return self.workflow.workcell
 
     def run_workflow(
         self,
@@ -120,76 +96,23 @@ class WEI:
             The workflow ID you would like to run, by default None
         """
 
-        workflow: WF_Client = self.workflow
         self.wc_logger.info(f"Starting run with payload: {payload}")
-        run_info = workflow.run_flow(callbacks, payload=payload)
+        run_info = self.workflow.run_flow(callbacks, payload=payload)
+        run_id = run_info["run_id"]
         self.wc_logger.info(
-            f"Completed run with run id: {run_info['run_id']} and payload: {payload}"
+            f"Completed run with run id: {run_id} and payload: {payload}"
         )
 
+        run_info["payload"] = payload
+        self.run_history[run_id] = run_info
         if publish:
-            PilotPublisher.publish(workflow)
+            # TODO this is not the right param
+            PilotPublisher.publish(run_info)
 
         return run_info
 
-    def get_workflows(self) -> Dict:
-        """Return all workflows. Gets the workflow id and its path
-
-        Returns
-        -------
-        Dict
-            The workflow dictionary, keys are UUID of the run, values are a path to the config file and
-            whether or not it has been run (might contain more info later...)
-        """
-        return self.workflows
-
-    def get_workflow(self) -> Workflow:
-        """Get a workflow with a specific id
-
-        Parameters
-        ----------
-        run_id : UUID
-            The ID of the workflow you would like to retrieve
-
-        Returns
-        -------
-        Workflow
-            The workflow object which you can execute directly on
-        """
-        return self.workflow
-
-    def add_workflow(self, workflow_path: Path) -> None:
-        """Add a workflow file to be run
-
-        Parameters
-        ----------
-        workflow_path : Path
-            Path to the new workflow file. Must use same workcell as this object
-        """
-        new_workflow = WF_Client(
-            workflow_path, self.log_dir, workflow_log_level=self.workflow_log_level
-        )
-
-        self.workflows[new_workflow.run_id] = {"workflow": new_workflow}
-
-    def get_workflow_results(self, run_id: UUID) -> Optional[Any]:
-        ...
-
-
-def main(args):  # noqa: D103
-    wei = WEI(
-        args.workflow,
-        workcell_log_level=logging.DEBUG,
-        workflow_log_level=logging.DEBUG,
-    )
-
-    # get the workflow id (currently defaulting to first one available)
-    wf_id = list(wei.get_workflows().keys())[0]
-    print(wei.get_workflows())
-
-    wei.run_workflow(wf_id)
-
-    print(f"Workflows present: {wei.get_workflows()}")
+    def get_workflow_results(self, run_id: str) -> Optional[Dict[str, Any]]:
+        return self.run_history.get(run_id, None)
 
 
 if __name__ == "__main__":
@@ -207,4 +130,3 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(args)

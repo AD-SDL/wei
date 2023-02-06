@@ -3,13 +3,13 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
 
 from devtools import debug
 
-from rpl_wei.data_classes import Module, PathLike, WorkCell, Workflow
+from rpl_wei.data_classes import Module, WorkCell, Workflow
 from rpl_wei.validators import ModuleValidator, StepValidator
-from rpl_wei.executors import StepExecutor, __init_rclpy
+from rpl_wei.executors import StepExecutor
+from rpl_wei.loggers import WEI_Logger
 
 
 class WF_Client:
@@ -69,42 +69,6 @@ class WF_Client:
         # Setup executor
         self.executor = StepExecutor()
 
-    def setup_logs(self):
-        # Setup loggers and results
-        self.run_id = uuid4()
-        timestamp = datetime.now().strftime("%Y%m%d-%H%m%s")
-        run_log_dir = self.log_dir / f"run-{timestamp}-{self.run_id}"
-        run_log_dir.mkdir(exist_ok=True, parents=True)
-        self.log_dir = self.log_dir
-        self.run_log_dir = run_log_dir
-        self.result_dir = self.run_log_dir / "results"
-        self.result_dir.mkdir(exist_ok=True, parents=True)
-
-        self._setup_logger(
-            "runLogger",
-            run_log_dir / "runlog.log",
-            level=self.workflow_log_level,
-        )
-
-        self.run_logger = self._get_logger("runLogger")
-
-    def _setup_logger(
-        self, logger_name: str, log_file: PathLike, level: int = logging.INFO
-    ):
-        logger = logging.getLogger(logger_name)
-        formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
-        fileHandler = logging.FileHandler(log_file, mode="a+")
-        fileHandler.setFormatter(formatter)
-        streamHandler = logging.StreamHandler()
-        streamHandler.setFormatter(formatter)
-
-        logger.setLevel(level)
-        logger.addHandler(fileHandler)
-        logger.addHandler(streamHandler)
-
-    def _get_logger(self, log_name: str) -> logging.Logger:
-        return logging.getLogger(log_name)
-
     def check_modules(self):
         """Checks the modules required by the workflow"""
         for module in self.modules:
@@ -121,9 +85,14 @@ class WF_Client:
         payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Executes the flowdef commmands"""
-        # Setup logs for this run NOTE: sets self.run_id
-        # TODO make this less class dependent, currently relies on self
-        self.setup_logs()
+        # Setup run_id
+        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_dir = self.log_dir / run_id
+        run_logger = WEI_Logger.get_logger(
+            "runLogger",
+            log_dir=log_dir,
+            log_level=self.workflow_log_level,
+        )
 
         # Start executing the steps
         for step in self.flowdef:
@@ -177,11 +146,11 @@ class WF_Client:
                     step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
-            self.run_logger.info(f"Payload for step {step.name}: {payload}")
+            run_logger.info(f"Payload for step {step.name}: {payload}")
             self.executor.execute_step(
-                step, step_module, logger=self.run_logger, callbacks=callbacks
+                step, step_module, logger=run_logger, callbacks=callbacks
             )
-        return {"run_dir": self.run_log_dir, "run_id": self.run_id}
+        return {"run_dir": log_dir, "run_id": run_id}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
 

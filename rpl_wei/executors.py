@@ -67,6 +67,10 @@ def wei_camera_callback(step: Step, **kwargs):
     )
 
 
+def silent_callback(step: Step, **kwargs):
+    print(step)
+
+
 ### Executor mapping
 
 
@@ -74,6 +78,7 @@ class Executor_Map:
     function = {
         "wei_ros_node": wei_service_callback,
         "wei_ros_camera": wei_camera_callback,
+        "silent_callback": silent_callback,
     }
 
 
@@ -107,7 +112,10 @@ class StepExecutor:
         logger.debug(step)
 
         # map the correct executor function to the step_module
-        Executor_Map.function[step_module.type](step, step_module=step_module)
+        if rclpy is not None:
+            Executor_Map.function[step_module.type](step, step_module=step_module)
+        else:
+            Executor_Map.function["silent_callback"](step, step_module=step_module)
 
         # TODO: Allow for callbacks, disabled for now because we are switching to the in-package callbacks
         # if callbacks:

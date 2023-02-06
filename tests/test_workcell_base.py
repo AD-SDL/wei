@@ -27,13 +27,8 @@ class Test_Workcell_Base(TestWEI_Base):
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
         wei = WEI(wf_config=workflow_config_path)
 
-        run = list(wei.get_workflows().keys())[0]
-
         payload = {"thermocyle_time": 10, "thermocyle_temp": 175}
 
-        wei.run_workflow(workflow_id=run, payload=payload, callbacks=[silent_callback])
+        run_info = wei.run_workflow(payload=payload, callbacks=[silent_callback])
 
-        post_run = wei.get_workflow(run)
-        post_run_payload = post_run[list(post_run.keys())[-1]]
-
-        assert post_run_payload == payload
+        assert run_info["payload"] == payload

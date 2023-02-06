@@ -15,5 +15,5 @@ class TestDCValidation(TestWEI_Base):
             workflow_log_level=logging.ERROR,
         )
 
-        wf = wei.get_workflow()
+        wf = wei.workflow
         print(f"{wf.flowdef=}")
