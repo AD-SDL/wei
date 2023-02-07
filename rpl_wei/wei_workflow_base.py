@@ -157,17 +157,19 @@ class WF_Client:
                     step.args[step_arg_key] = str(result_dir)
 
             # execute the step
-            step_thread = Thread(
-                target=self.executor.execute_step,
-                kwargs={
+            arg_dict={
                     "step": step,
                     "step_module": step_module,
                     "logger": run_logger,
                     "callbacks": callbacks,
-                },
-            )
-            step_thread.start()
-            step_thread.join()
+                }
+            self.executor.execute_step(**arg_dict)
+            # step_thread = Thread(
+            #     target=self.executor.execute_step,
+            #     kwargs=arg_dict
+            # )
+            # step_thread.start()
+            # step_thread.join()
         return {"run_dir": log_dir, "run_id": run_id}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
