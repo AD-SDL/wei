@@ -45,7 +45,6 @@ class WEI:
         self.log_base = Path.home() / ".wei"
         self.log_dir = self.log_base / wf_config.stem
         self.log_dir.mkdir(exist_ok=True, parents=True)
-        self.run_log_dir = self.log_dir / "runs"
         self.run_log_dir.mkdir(exist_ok=True, parents=True)
 
         self.wc_logger = WEI_Logger.get_logger(
