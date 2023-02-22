@@ -9,7 +9,6 @@ from devtools import debug
 from rpl_wei.data_classes import Module, WorkCell, Workflow
 from rpl_wei.validators import ModuleValidator, StepValidator
 
-from threading import Thread
 from rpl_wei.executors import StepExecutor
 from rpl_wei.loggers import WEI_Logger
 
