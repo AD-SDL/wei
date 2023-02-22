@@ -157,12 +157,12 @@ class WF_Client:
                     step.args[step_arg_key] = str(result_dir)
 
             # execute the step
-            arg_dict={
-                    "step": step,
-                    "step_module": step_module,
-                    "logger": run_logger,
-                    "callbacks": callbacks,
-                }
+            arg_dict = {
+                "step": step,
+                "step_module": step_module,
+                "logger": run_logger,
+                "callbacks": callbacks,
+            }
             self.executor.execute_step(**arg_dict)
             # step_thread = Thread(
             #     target=self.executor.execute_step,

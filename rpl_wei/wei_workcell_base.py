@@ -19,7 +19,6 @@ class WEI:
     def __init__(
         self,
         wf_config: Path,
-        log_dir: Optional[Path] = None,
         workcell_log_level: int = logging.INFO,
         workflow_log_level: int = logging.INFO,
     ) -> None:
@@ -28,7 +27,7 @@ class WEI:
         Parameters
         ----------
         wf_configs : Path
-            path to the config/config folder
+            path to the config folder
         log_dir : Optional[Path], optional
             Path to the logdir, default None and will be created
         workcell_log_level : int, optional
@@ -43,13 +42,8 @@ class WEI:
         # Setup log files
         # TODO this was originally wc_config, but since this is optional now this might
         #      have to be handled in the workflow_client.py
-        if not log_dir:
-            self.log_dir = wf_config.parent / "logs/"
-        else:
-            if log_dir.is_file():
-                self.log_dir = log_dir.parent
-            else:
-                self.log_dir = log_dir
+        self.log_base = Path.home() / ".wei"
+        self.log_dir = self.log_base / wf_config.stem
         self.log_dir.mkdir(exist_ok=True, parents=True)
         self.run_log_dir = self.log_dir / "runs"
         self.run_log_dir.mkdir(exist_ok=True, parents=True)
