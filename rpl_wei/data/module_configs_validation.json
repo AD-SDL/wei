@@ -4,5 +4,9 @@
     ], 
     "wei_ros_camera": [
         "ros_node"
+    ],
+    "wei_tcp_node": [
+        "tcp_address",
+        "tcp_port"
     ]
 }
