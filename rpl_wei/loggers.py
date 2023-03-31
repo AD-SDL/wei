@@ -37,14 +37,30 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
-
-        logger = (
+        
+        if not logging.getLogger(log_name).hasHandlers():
+            logger = (
             WEI_Logger._create_logger(
                 log_name,
                 log_dir / f"{log_name}.log",
                 log_level,
             )
-            if not logging.getLogger(log_name).hasHandlers()
-            else logging.getLogger(log_name)
-        )
+        )      
+        else: 
+            
+            logger = logging.getLogger(log_name)
+            for handler in logger.handlers:
+                logger.removeHandler(handler)
+            log_file = log_dir / f"{log_name}.log"
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
+            fileHandler = logging.FileHandler(log_file, mode="a+")
+            fileHandler.setFormatter(formatter)
+            streamHandler = logging.StreamHandler()
+            streamHandler.setFormatter(formatter)
+
+            logger.setLevel(log_level)
+            logger.addHandler(fileHandler)
+            logger.addHandler(streamHandler)
+
         return logger
