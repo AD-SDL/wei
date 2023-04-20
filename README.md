@@ -50,7 +50,7 @@ python -m rpl_wei.processing.worker
 ```
 1. Start the server
 ```
-unvicorn rpl_wei.server:app --reload
+uvicorn rpl_wei.server:app --reload
 ```
 TODO: look at something like `systemd`, `supervisord`, or `Docker` to manage the processes
 
