@@ -3,7 +3,7 @@ from test_base import TestWEI_Base
 
 class TestWEI_Locations(TestWEI_Base):
     def test_workflow_replace_locations(self):
-        from rpl_wei.wei_workcell_base import WEI
+        from rpl_wei.core.wei_workcell_base import WEI
         from pathlib import Path
         import logging
 
@@ -12,7 +12,6 @@ class TestWEI_Locations(TestWEI_Base):
 
         wei = WEI(
             workflow_config_path,
-            log_dir=Path("logs"),
             workcell_log_level=logging.ERROR,
             workflow_log_level=logging.ERROR,
         )

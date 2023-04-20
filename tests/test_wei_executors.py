@@ -5,8 +5,8 @@ from test_base import TestWEI_Base
 
 class TestExecutors(TestWEI_Base):
     def test_validators(self):
-        from rpl_wei.executors import StepExecutor, StepStatus
-        from rpl_wei.wei_workcell_base import WEI
+        from rpl_wei.core.executors import StepExecutor, StepStatus
+        from rpl_wei.core.wei_workcell_base import WEI
 
         step_executor = StepExecutor()
 
@@ -19,7 +19,7 @@ class TestExecutors(TestWEI_Base):
             # TODO figure out a better way to do get the step the module requires (the `None`)
             try:
                 step_status = step_executor.execute_step(step, None, callbacks=None)
-            except Exception as e:
+            except Exception:
                 # TODO: oops don't care
                 step_status = StepStatus.FAILED
                 pass

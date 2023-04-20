@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Any
 
 from rpl_wei.core.data_classes import WorkCell
-from rpl_wei.core.publishers import PilotPublisher
 from rpl_wei.core.wei_workflow_base import WF_Client
 from rpl_wei.core.loggers import WEI_Logger
 
@@ -97,9 +96,6 @@ class WEI:
 
         run_info["payload"] = payload
         self.run_history[run_id] = run_info
-        if publish:
-            # TODO this is not the right param
-            PilotPublisher.publish(run_info)
 
         return run_info
 

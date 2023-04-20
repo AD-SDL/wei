@@ -11,7 +11,7 @@ def silent_callback(step, **kwargs):
 
 class Test_Workcell_Base(TestWEI_Base):
     def test_workcell_property(self):
-        from rpl_wei.wei_workcell_base import WEI
+        from rpl_wei.core.wei_workcell_base import WEI
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
         wei = WEI(wf_config=workflow_config_path)
@@ -22,7 +22,7 @@ class Test_Workcell_Base(TestWEI_Base):
         assert workcell is not None
 
     def test_payload(self):
-        from rpl_wei.wei_workcell_base import WEI
+        from rpl_wei.core.wei_workcell_base import WEI
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
         wei = WEI(wf_config=workflow_config_path)
