@@ -1,8 +1,10 @@
 """Precursor to the experiment module."""
-from argparse import ArgumentParser
-import requests
 import json
+from argparse import ArgumentParser
 from pathlib import Path
+
+import requests
+
 
 def put_job():
     url = "http://127.0.0.1:8000/job"
@@ -18,6 +20,7 @@ def put_job():
         )
 
     print(response.json())
+
 
 def query_job(job_id):
     url = f"http://127.0.0.1:8000/job/{job_id}"

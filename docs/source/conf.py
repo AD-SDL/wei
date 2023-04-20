@@ -6,26 +6,26 @@
 
 # -- Path setup --------------------------------------------------------------
 
+import datetime
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
 import sys
-import datetime
 
 sys.path.insert(0, os.path.abspath("../.."))
 import rpl_wei
 
-
 # -- Project information -----------------------------------------------------
 
-project = 'rpl_wei'
-copyright = '2022, Kyle Hippe'
-author = 'Kyle Hippe'
+project = "rpl_wei"
+copyright = "2022, Kyle Hippe"
+author = "Kyle Hippe"
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = "0.1.0"
 
 
 # -- General configuration ---------------------------------------------------

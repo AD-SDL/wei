@@ -1,9 +1,9 @@
-import yaml
 import json
 import time
+
+import yaml
 from redis import Redis
 from rq import Queue
-
 
 # TODO: insert core logic to run workflows, should follow something like found in wei_workflow_base.py
 # TODO figure out logging for tasks, and how to propogate them back to the client
@@ -31,5 +31,7 @@ if __name__ == "__main__":
     from rq import Worker
 
     # Start the RQ worker
-    worker = Worker([task_queue], connection=task_queue.connection, name="workflow_runner")
+    worker = Worker(
+        [task_queue], connection=task_queue.connection, name="workflow_runner"
+    )
     worker.work()

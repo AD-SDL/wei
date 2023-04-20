@@ -1,7 +1,6 @@
 from pathlib import Path
+
 from devtools import debug
-
-
 from test_base import TestWEI_Base
 
 

@@ -3,7 +3,7 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Type, TypeVar, Union, Any
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
 
 import yaml

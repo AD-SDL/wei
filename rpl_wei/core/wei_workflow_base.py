@@ -7,10 +7,9 @@ from typing import Any, Dict, List, Optional, Tuple
 from devtools import debug
 
 from rpl_wei.core.data_classes import Module, WorkCell, Workflow
-from rpl_wei.core.validators import ModuleValidator, StepValidator
-
 from rpl_wei.core.executors import StepExecutor
 from rpl_wei.core.loggers import WEI_Logger
+from rpl_wei.core.validators import ModuleValidator, StepValidator
 
 
 class WF_Client:

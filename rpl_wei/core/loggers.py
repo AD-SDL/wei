@@ -1,9 +1,8 @@
+import logging
 from pathlib import Path
 from typing import Optional
 
 from rpl_wei.core.data_classes import PathLike
-
-import logging
 
 
 class WEI_Logger:
@@ -37,17 +36,15 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
-        
+
         if not logging.getLogger(log_name).hasHandlers():
-            logger = (
-            WEI_Logger._create_logger(
+            logger = WEI_Logger._create_logger(
                 log_name,
                 log_dir / f"{log_name}.log",
                 log_level,
             )
-        )      
-        else: 
-            
+        else:
+
             logger = logging.getLogger(log_name)
             for handler in logger.handlers:
                 logger.removeHandler(handler)

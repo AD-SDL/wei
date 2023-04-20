@@ -3,9 +3,10 @@ from test_base import TestWEI_Base
 
 class TestWEI_Locations(TestWEI_Base):
     def test_workflow_replace_locations(self):
-        from rpl_wei.core.wei_workcell_base import WEI
-        from pathlib import Path
         import logging
+        from pathlib import Path
+
+        from rpl_wei.core.wei_workcell_base import WEI
 
         # workcell_config_path = Path("test_pcr_workcell.yaml")
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")

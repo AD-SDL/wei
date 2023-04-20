@@ -1,11 +1,13 @@
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import JSONResponse
-from rpl_wei.processing.worker import task_queue, run_workflow_task
 import json
-import rq
-from rq.job import Job
-from rq.registry import StartedJobRegistry, FinishedJobRegistry, FailedJobRegistry
 from contextlib import asynccontextmanager
+
+import rq
+from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.responses import JSONResponse
+from rq.job import Job
+from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
+
+from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server
@@ -24,17 +26,29 @@ async def lifespan(app: FastAPI):
     # Do any cleanup here
     pass
 
+
 app = FastAPI(lifespan=lifespan)
+
 
 @app.post("/job")
 async def run_workflow(workflow: UploadFile = File(...), payload: str = Form("{}")):
     workflow_content = await workflow.read()
-    workflow_content_str = workflow_content.decode("utf-8")  # Decode the bytes object to a string
+    workflow_content_str = workflow_content.decode(
+        "utf-8"
+    )  # Decode the bytes object to a string
     parsed_payload = json.loads(payload)
     try:
-        job = task_queue.enqueue(run_workflow_task, workflow_content_str, parsed_payload)
+        job = task_queue.enqueue(
+            run_workflow_task, workflow_content_str, parsed_payload
+        )
         jobs_ahead = len(task_queue.jobs)
-        return JSONResponse(content={"status": "success", "jobs_ahead": jobs_ahead, "job_id": job.get_id()})
+        return JSONResponse(
+            content={
+                "status": "success",
+                "jobs_ahead": jobs_ahead,
+                "job_id": job.get_id(),
+            }
+        )
     except Exception as e:
         return JSONResponse(content={"status": "failed", "error": str(e)})
 
@@ -63,9 +77,11 @@ async def queue_info():
     failed_registry = FailedJobRegistry(queue=task_queue)
     failed_jobs = len(failed_registry)
 
-    return JSONResponse(content={
-        "queued_jobs": queued_jobs,
-        "started_jobs": started_jobs,
-        "finished_jobs": finished_jobs,
-        "failed_jobs": failed_jobs
-    })
+    return JSONResponse(
+        content={
+            "queued_jobs": queued_jobs,
+            "started_jobs": started_jobs,
+            "finished_jobs": finished_jobs,
+            "failed_jobs": failed_jobs,
+        }
+    )
