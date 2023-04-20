@@ -4,10 +4,10 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Any
 
-from rpl_wei.data_classes import WorkCell
-from rpl_wei.publishers import PilotPublisher
-from rpl_wei.wei_workflow_base import WF_Client
-from rpl_wei.loggers import WEI_Logger
+from rpl_wei.core.data_classes import WorkCell
+from rpl_wei.core.publishers import PilotPublisher
+from rpl_wei.core.wei_workflow_base import WF_Client
+from rpl_wei.core.loggers import WEI_Logger
 
 
 class WEI:

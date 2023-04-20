@@ -6,11 +6,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from devtools import debug
 
-from rpl_wei.data_classes import Module, WorkCell, Workflow
-from rpl_wei.validators import ModuleValidator, StepValidator
+from rpl_wei.core.data_classes import Module, WorkCell, Workflow
+from rpl_wei.core.validators import ModuleValidator, StepValidator
 
-from rpl_wei.executors import StepExecutor
-from rpl_wei.loggers import WEI_Logger
+from rpl_wei.core.executors import StepExecutor
+from rpl_wei.core.loggers import WEI_Logger
 
 
 class WF_Client:
@@ -163,12 +163,7 @@ class WF_Client:
                 "callbacks": callbacks,
             }
             self.executor.execute_step(**arg_dict)
-            # step_thread = Thread(
-            #     target=self.executor.execute_step,
-            #     kwargs=arg_dict
-            # )
-            # step_thread.start()
-            # step_thread.join()
+
         return {"run_dir": log_dir, "run_id": run_id}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:

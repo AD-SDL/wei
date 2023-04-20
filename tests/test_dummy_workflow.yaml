@@ -1,0 +1,24 @@
+metadata:
+  name: Dummy workflow
+  author: Kyle 
+  info: Initial PCR workflow for RPL workcell
+  version: 0.2
+
+workcell: test_pcr_workcell.yaml
+
+modules:
+  - name: ot2_pcr_alpha
+  - name: pf400
+  - name: peeler
+  - name: sealer
+  - name: biometra
+  - name: sciclops
+
+flowdef:
+  - name: PCR Plate Exchange
+    module: sciclops
+    command: get_plate
+    args:
+      loc: "tower1"
+    checks: null
+    comment: Stage pcr plates

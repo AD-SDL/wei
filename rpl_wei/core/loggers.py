@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
-from rpl_wei.data_classes import PathLike
+from rpl_wei.core.data_classes import PathLike
 
 import logging
 
