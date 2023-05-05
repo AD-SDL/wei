@@ -210,7 +210,7 @@ class Metadata(BaseModel):
     """Version of interface used"""
 
 
-class WorkCell(BaseModel):
+class Workcell(BaseModel):
     """Container for information in a workcell"""
 
     modules: List[Module]
@@ -232,8 +232,6 @@ class Workflow(BaseModel):
     """Information about the flow"""
     payload: Optional[Dict]
     """input information for a given workflow run"""
-    id: UUID = Field(default_factory=uuid4)
-    """An instance of a workflow will be assigned a run_id"""
 
 
 class StepStatus(Enum):

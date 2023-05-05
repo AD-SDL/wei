@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 
 import rq
@@ -7,18 +9,25 @@ from fastapi.responses import JSONResponse
 from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
+from rpl_wei.core.data_classes import Workcell
 from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server
 # TODO consider sub-applications for different parts of the server (e.g. /job, /queue, /data, etc.)
+# TODO make the workcell live in the DATA_DIR and be coupled to the server
+#      This might entail making a rq object of the wei object and making that available to the workers
 
+workcell = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from rpl_wei.processing import DATA_DIR
+    global workcell
+    parser = ArgumentParser()
+    parser.add_argument("--workcell", type=Path, help="Path to workcell file")
 
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    args = parser.parse_args()
+    workcell = Workcell.from_yaml(args.workcell)
 
     # Yield control to the application
     yield
@@ -29,29 +38,60 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+def submit_job(experiment_id, workflow_content_str, parsed_payload):
+    print("Submitting job...")
+    base_response_content = {
+        "experiment_id": experiment_id,
+    }
+    try:
+        job = task_queue.enqueue(
+            run_workflow_task,
+            experiment_id,
+            workflow_content_str,
+            parsed_payload,
+            workcell.__dict__,
+        )
+        jobs_ahead = len(task_queue.jobs)
+        response_content = {
+            "status": "success",
+            "jobs_ahead": jobs_ahead,
+            "job_id": job.get_id(),
+            **base_response_content,
+        }
+        print("Job submitted successfully")
+        return JSONResponse(
+            content=response_content
+        )
+    except Exception as e:
+        response_content = {
+            "status": "failed",
+            "error": str(e),
+            **base_response_content,
+        }
+        print("Job submission failed", e)
+        return JSONResponse(content=response_content)
 
 @app.post("/job")
-async def run_workflow(workflow: UploadFile = File(...), payload: str = Form("{}")):
+async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}")):
     workflow_content = await workflow.read()
     workflow_content_str = workflow_content.decode(
         "utf-8"
     )  # Decode the bytes object to a string
     parsed_payload = json.loads(payload)
-    try:
-        job = task_queue.enqueue(
-            run_workflow_task, workflow_content_str, parsed_payload
-        )
-        jobs_ahead = len(task_queue.jobs)
-        return JSONResponse(
-            content={
-                "status": "success",
-                "jobs_ahead": jobs_ahead,
-                "job_id": job.get_id(),
-            }
-        )
-    except Exception as e:
-        return JSONResponse(content={"status": "failed", "error": str(e)})
 
+    # TODO create experiment ID
+    return submit_job("1", workflow_content_str, parsed_payload)
+
+@app.post("/job/{experiment_id}")
+async def process_job_with_id(experiment_id: str, workflow: UploadFile = File(...), payload: str = Form("{}")):
+    workflow_content = await workflow.read()
+    workflow_content_str = workflow_content.decode(
+        "utf-8"
+    )
+
+    parsed_payload = json.loads(payload)
+
+    return submit_job(experiment_id, workflow_content_str, parsed_payload)
 
 @app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
@@ -85,3 +125,9 @@ async def queue_info():
             "failed_jobs": failed_jobs,
         }
     )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("rpl_wei.server:app", reload=True)

@@ -19,7 +19,7 @@ def put_job():
             data={"payload": json.dumps(json_payload)},
         )
 
-    print(response.json())
+    print(f"Status:\t{response.status_code}\nJSON:\t{response.json()}")
 
 
 def query_job(job_id):

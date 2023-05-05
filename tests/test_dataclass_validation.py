@@ -6,7 +6,7 @@ from test_base import TestWEI_Base
 
 class TestDCValidation(TestWEI_Base):
     def test_dataclass_validation(self):
-        from rpl_wei.core.wei_workcell_base import WEI
+        from rpl_wei.core.workcell import WEI
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
         wei = WEI(

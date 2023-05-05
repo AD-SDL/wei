@@ -6,7 +6,7 @@ from test_base import TestWEI_Base
 class TestValidators(TestWEI_Base):
     def test_validators(self):
         from rpl_wei.core.validators import ModuleValidator
-        from rpl_wei.core.wei_workcell_base import WEI
+        from rpl_wei.core.workcell import WEI
 
         module_validator = ModuleValidator()
 

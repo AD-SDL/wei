@@ -6,7 +6,7 @@ class TestWEI_Locations(TestWEI_Base):
         import logging
         from pathlib import Path
 
-        from rpl_wei.core.wei_workcell_base import WEI
+        from rpl_wei.core.workcell import WEI
 
         # workcell_config_path = Path("test_pcr_workcell.yaml")
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")

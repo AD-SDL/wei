@@ -6,7 +6,7 @@ from test_base import TestWEI_Base
 class TestExecutors(TestWEI_Base):
     def test_validators(self):
         from rpl_wei.core.executors import StepExecutor, StepStatus
-        from rpl_wei.core.wei_workcell_base import WEI
+        from rpl_wei.core.workcell import WEI
 
         step_executor = StepExecutor()
 

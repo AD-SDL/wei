@@ -50,7 +50,7 @@ python -m rpl_wei.processing.worker
 ```
 1. Start the server
 ```
-uvicorn rpl_wei.server:app --reload
+python -m rpl_wei.server --workcell tests/test_pcr_workcell.yaml
 ```
 TODO: look at something like `systemd`, `supervisord`, or `Docker` to manage the processes
 

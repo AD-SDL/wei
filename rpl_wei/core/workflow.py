@@ -1,67 +1,25 @@
-"""Abstraction of a singular workflow. Wei client interacts with this to run workflows"""
 import logging
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 from devtools import debug
 
-from rpl_wei.core.data_classes import Module, WorkCell, Workflow
+from rpl_wei.core.workcell import Workcell
+from rpl_wei.core.data_classes import Workflow as WorkflowData
 from rpl_wei.core.executors import StepExecutor
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.validators import ModuleValidator, StepValidator
+from rpl_wei.core import DATA_DIR
 
 
-class WF_Client:
-    """Class for interacting with a specific workflow"""
-
+class WorkflowRunner:
     def __init__(
         self,
-        wf_config: Path,
-        wc_config: Optional[Path] = None,
-        log_dir: Optional[Path] = None,
-        workflow_log_level: int = logging.INFO,
-    ):
-        """Initialize a workflow client
-
-        Parameters
-        ----------
-        wc_config_file : Pathlike
-            The workflow config path
-        """
-
-        self.workflow = Workflow.from_yaml(wf_config)
-        self.run_id = self.workflow.id
-        self.modules = self.workflow.modules
-        self.flowdef = self.workflow.flowdef
-        self.log_dir = log_dir
-        self.workflow_log_level = workflow_log_level
-
-        if wc_config:
-            wc_config = wc_config.expanduser().resolve()
-            # if relative path used, resolve
-            if not self.workflow.workcell.is_absolute():
-                self.workflow.workcell = (
-                    (wf_config.parent / self.workflow.workcell).expanduser().resolve()
-                )
-
-            # TODO: Add flow_id and flow_name to self
-
-            # match the wc_config and workflow.workcell files, make sure they are the same
-            if not self.workflow.workcell.samefile(wc_config):
-                raise ValueError(
-                    f"Workcell file from workcell ({self.workflow.workcell}) is not the same file as the workcell from WEI ({wc_config})"
-                )
-        else:
-            if not self.workflow.workcell.is_absolute():
-                self.workflow.workcell = (
-                    (wf_config.parent / self.workflow.workcell).expanduser().resolve()
-                )
-        self.workcell = WorkCell.from_yaml(self.workflow.workcell)
-
-        # cache filenames for globus
-        self.wf_file = wf_config
-        self.wc_file = self.workflow.workcell
+        workflow_def: Dict[str, Any],
+        experiment_name: str,
+        log_level: int = logging.INFO,
+    ) -> None:
+        self.workflow = WorkflowData(**workflow_def)
 
         # Setup validators
         self.module_validator = ModuleValidator()
@@ -70,43 +28,41 @@ class WF_Client:
         # Setup executor
         self.executor = StepExecutor()
 
+        # Setup runner
+        self.run_id = uuid4()
+        self.log_dir = DATA_DIR / "runs" / experiment_name / str(self.run_id)
+        self.result_dir = self.log_dir / "results"
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.result_dir.mkdir(parents=True, exist_ok=True)
+        self.logger = WEI_Logger.get_logger(
+            "runLogger",
+            log_dir=self.log_dir,
+            log_level=log_level,
+        )
+
     def check_modules(self):
         """Checks the modules required by the workflow"""
-        for module in self.modules:
+        for module in self.workflow.modules:
             self.module_validator.check_module(module=module)
 
     def check_flowdef(self):
         """Checks the actions provided by the workflow"""
-        for step in self.flowdef:
+        for step in self.workflow.flowdef:
             self.step_validator.check_step(step=step)
-
-    def initialize_run(self) -> Tuple[str, Path, Path, logging.Logger]:
-        run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_dir = self.log_dir / f"run-{run_id}"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        result_dir = log_dir / "results"
-        result_dir.mkdir(parents=True, exist_ok=True)
-        run_logger = WEI_Logger.get_logger(
-            "runLogger",
-            log_dir=log_dir,
-            log_level=self.workflow_log_level,
-        )
-
-        return run_id, log_dir, result_dir, run_logger
 
     def run_flow(
         self,
+        workcell: Workcell,
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Executes the flowdef commmands"""
-        # Setup this run
-        run_id, log_dir, result_dir, run_logger = self.initialize_run()
+        # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # Start executing the steps
-        for step in self.flowdef:
+        for step in self.workflow.flowdef:
             # get module information from workcell file
-            step_module = self._find_step_module(step.module)
+            step_module = workcell.find_step_module(step.module)
             if not step_module:
                 raise ValueError(
                     f"No module found for step module: {step.module}, in step: {step}"
@@ -152,27 +108,18 @@ class WF_Client:
                 if "local_run_results" in arg_values:
                     idx = arg_values.index("local_run_results")
                     step_arg_key = arg_keys[idx]
-                    step.args[step_arg_key] = str(result_dir)
+                    step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
             arg_dict = {
                 "step": step,
                 "step_module": step_module,
-                "logger": run_logger,
+                "logger": self.logger,
                 "callbacks": callbacks,
             }
             self.executor.execute_step(**arg_dict)
 
-        return {"run_dir": log_dir, "run_id": run_id}
-
-    def _find_step_module(self, step_module: str) -> Optional[Module]:
-
-        for module in self.workcell.modules:
-            module_name = module.name
-            if module_name == step_module:
-                return module
-
-        return None
+        return {"run_dir": str(self.log_dir), "run_id": str(self.run_id)}
 
     def print_flow(self):
         """Prints the workflow dataclass, for debugging"""
