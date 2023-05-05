@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 
 import rq
+import ulid
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 from rq.job import Job
@@ -13,7 +14,7 @@ from rpl_wei.core.data_classes import Workcell
 from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
-# TODO logging for server
+# TODO logging for server and workcell
 # TODO consider sub-applications for different parts of the server (e.g. /job, /queue, /data, etc.)
 # TODO make the workcell live in the DATA_DIR and be coupled to the server
 #      This might entail making a rq object of the wei object and making that available to the workers
@@ -79,8 +80,10 @@ async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}"
     )  # Decode the bytes object to a string
     parsed_payload = json.loads(payload)
 
-    # TODO create experiment ID
-    return submit_job("1", workflow_content_str, parsed_payload)
+    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
+    experiment_id = ulid.new().str
+
+    return submit_job(experiment_id, workflow_content_str, parsed_payload)
 
 @app.post("/job/{experiment_id}")
 async def process_job_with_id(experiment_id: str, workflow: UploadFile = File(...), payload: str = Form("{}")):
