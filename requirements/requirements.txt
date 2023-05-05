@@ -2,3 +2,8 @@
 pydantic==1.8.2
 devtools==0.9.0
 PyYAML==6.0
+fastapi
+uvicorn
+python-multipart
+rq
+requests
