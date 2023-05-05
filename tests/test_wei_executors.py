@@ -1,3 +1,4 @@
+import yaml
 from pathlib import Path
 
 from test_base import TestWEI_Base
@@ -6,16 +7,15 @@ from test_base import TestWEI_Base
 class TestExecutors(TestWEI_Base):
     def test_validators(self):
         from rpl_wei.core.executors import StepExecutor, StepStatus
-        from rpl_wei.core.workcell import WEI
-
-        step_executor = StepExecutor()
+        from rpl_wei.core.workflow import WorkflowRunner
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
-        wei = WEI(wf_config=workflow_config_path)
+        worfklow_def = yaml.safe_load(workflow_config_path.read_text())
+        runner = WorkflowRunner(worfklow_def, "test_experiment")
 
+        step_executor = StepExecutor()
         # get run id (TODO: this is clunky...)
-        wf = wei.workflow
-        for step in wf.flowdef:
+        for step in runner.workflow.flowdef:
             # TODO figure out a better way to do get the step the module requires (the `None`)
             try:
                 step_status = step_executor.execute_step(step, None, callbacks=None)

@@ -1,4 +1,5 @@
 from pathlib import Path
+import yaml
 
 from test_base import TestWEI_Base
 
@@ -6,16 +7,14 @@ from test_base import TestWEI_Base
 class TestValidators(TestWEI_Base):
     def test_validators(self):
         from rpl_wei.core.validators import ModuleValidator
-        from rpl_wei.core.workcell import WEI
+        from rpl_wei.core.workflow import WorkflowRunner
 
         module_validator = ModuleValidator()
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
-        wei = WEI(wf_config=workflow_config_path)
+        worfklow_def = yaml.safe_load(workflow_config_path.read_text())
+        runner = WorkflowRunner(worfklow_def, "test_experiment")
 
-        # get run id (TODO: this is clunky...)
-
-        wf = wei.workflow
-        for module in wf.workcell.modules:
+        for module in runner.workflow.modules:
             valid, msg = module_validator.check_module(module)
             assert valid

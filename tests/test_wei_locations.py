@@ -1,23 +1,23 @@
+import yaml
 from test_base import TestWEI_Base
 
 
 class TestWEI_Locations(TestWEI_Base):
     def test_workflow_replace_locations(self):
-        import logging
         from pathlib import Path
 
-        from rpl_wei.core.workcell import WEI
+        from rpl_wei.core.workflow import WorkflowRunner
+        from rpl_wei.core.workcell import Workcell
 
-        # workcell_config_path = Path("test_pcr_workcell.yaml")
+        workcell_config_path = Path("tests/test_pcr_workcell.yaml")
+        workcell_def = yaml.safe_load(workcell_config_path.read_text())
+        workcell = Workcell(workcell_def)
+
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
+        worfklow_def = yaml.safe_load(workflow_config_path.read_text())
+        runner = WorkflowRunner(worfklow_def, "test_experiment")
+        workflow = runner.workflow
 
-        wei = WEI(
-            workflow_config_path,
-            workcell_log_level=logging.ERROR,
-            workflow_log_level=logging.ERROR,
-        )
-
-        workflow = wei.workflow
         # Test that the named locations are replaced with the actual locations
         arg_before_replace = workflow.flowdef[1].args
         self.assertEqual(arg_before_replace["source"], "sciclops.positions.exchange")
@@ -32,7 +32,7 @@ class TestWEI_Locations(TestWEI_Base):
         )
 
         # Changes happen during the running of workflow
-        wei.run_workflow()
+        runner.run_flow(workcell)
 
         arg_after_replace = workflow.flowdef[1].args
         self.assertListEqual(

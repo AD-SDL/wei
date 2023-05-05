@@ -73,7 +73,7 @@ class WorkflowRunner:
                 for key, value in step.args.items():
                     if hasattr(value, "__contains__") and "positions" in value:
                         module_name = value.split(".")[0]
-                        module = self._find_step_module(module_name)
+                        module = workcell.find_step_module(module_name)
 
                         if not module:
                             raise ValueError(
@@ -119,7 +119,7 @@ class WorkflowRunner:
             }
             self.executor.execute_step(**arg_dict)
 
-        return {"run_dir": str(self.log_dir), "run_id": str(self.run_id)}
+        return {"run_dir": str(self.log_dir), "run_id": str(self.run_id), "payload": payload}
 
     def print_flow(self):
         """Prints the workflow dataclass, for debugging"""
