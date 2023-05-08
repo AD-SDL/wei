@@ -5,6 +5,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
+import ulid
 
 import yaml
 from pydantic import BaseModel as _BaseModel
@@ -156,6 +157,9 @@ class SimpleModule(BaseModel):
 class Step(BaseModel):
     """Container for a single step"""
 
+    class Config:
+        arbitrary_types_allowed = True
+
     name: str
     """Name of step"""
     module: str
@@ -172,7 +176,7 @@ class Step(BaseModel):
     """Other steps required to be done before this can start"""
     priority: Optional[int]
     """For scheduling"""
-    id: UUID = Field(default_factory=uuid4)
+    id: ulid.ULID = Field(default_factory=ulid.new)
     """ID of step"""
     comment: Optional[str]
     """Notes about step"""

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
+from typing import Dict, Any
 
 import rq
 import ulid
@@ -39,8 +40,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-def submit_job(experiment_id, workflow_content_str, parsed_payload):
-    print("Submitting job...")
+def submit_job(experiment_id: str, workflow_content_str: str, parsed_payload: Dict[str, Any]):
+    # manually create job ulid (so we can use it for the loggign inside wei)
+    job_id = ulid.new().str
+
     base_response_content = {
         "experiment_id": experiment_id,
     }
@@ -51,6 +54,8 @@ def submit_job(experiment_id, workflow_content_str, parsed_payload):
             workflow_content_str,
             parsed_payload,
             workcell.__dict__,
+            job_id,
+            job_id=job_id,
         )
         jobs_ahead = len(task_queue.jobs)
         response_content = {
@@ -59,7 +64,6 @@ def submit_job(experiment_id, workflow_content_str, parsed_payload):
             "job_id": job.get_id(),
             **base_response_content,
         }
-        print("Job submitted successfully")
         return JSONResponse(
             content=response_content
         )
@@ -69,15 +73,15 @@ def submit_job(experiment_id, workflow_content_str, parsed_payload):
             "error": str(e),
             **base_response_content,
         }
-        print("Job submission failed", e)
         return JSONResponse(content=response_content)
 
 @app.post("/job")
 async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}")):
     workflow_content = await workflow.read()
+    # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode(
         "utf-8"
-    )  # Decode the bytes object to a string
+    )
     parsed_payload = json.loads(payload)
 
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)

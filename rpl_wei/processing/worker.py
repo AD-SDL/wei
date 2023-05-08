@@ -1,14 +1,15 @@
 import json
 import time
+from typing import Optional, Union
 
 import yaml
 from redis import Redis
 from rq import Queue
+import ulid
 
 from rpl_wei.core.workcell import Workcell
 from rpl_wei.core.workflow import WorkflowRunner
 
-# TODO: insert core logic to run workflows, should follow something like found in wei_workflow_base.py
 # TODO figure out logging for tasks, and how to propogate them back to the client
 # TODO error handling for tasks, how to propogate back to client, and retry for specific types of errors
 
@@ -25,10 +26,10 @@ Things to do in worker:
 """
 
 
-def run_workflow_task(experiment_id, workflow_def, parsed_payload, workcell_def):
-
+def run_workflow_task(experiment_id, workflow_def, parsed_payload, workcell_def, job_id: Optional[Union[ulid.ULID, str]] = None):
+    job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
-    workflow_runner = WorkflowRunner(yaml.safe_load(workflow_def), experiment_id)
+    workflow_runner = WorkflowRunner(yaml.safe_load(workflow_def), experiment_id=experiment_id, run_id=job_id)
 
     # Run validation
     workflow_runner.check_flowdef()

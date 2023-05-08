@@ -14,7 +14,7 @@ class Workcell:
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
-        # TODO redo logger with ULID and workcell hash https://pypi.org/project/python-ulid/
+        # TODO redo logger with ULID (and workcell hash?) https://pypi.org/project/python-ulid/
         self.wc_logger = WEI_Logger.get_logger(
             "wcLogger",
             log_dir=self.log_dir,

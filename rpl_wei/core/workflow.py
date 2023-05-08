@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
+import ulid
 
 from devtools import debug
 
@@ -16,7 +16,8 @@ class WorkflowRunner:
     def __init__(
         self,
         workflow_def: Dict[str, Any],
-        experiment_name: str,
+        experiment_id: str,
+        run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
     ) -> None:
         self.workflow = WorkflowData(**workflow_def)
@@ -29,8 +30,11 @@ class WorkflowRunner:
         self.executor = StepExecutor()
 
         # Setup runner
-        self.run_id = uuid4()
-        self.log_dir = DATA_DIR / "runs" / experiment_name / str(self.run_id)
+        if run_id:
+            self.run_id = run_id
+        else:
+            self.run_id = ulid.new()
+        self.log_dir = DATA_DIR / "runs" / experiment_id / str(self.run_id)
         self.result_dir = self.log_dir / "results"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.result_dir.mkdir(parents=True, exist_ok=True)
