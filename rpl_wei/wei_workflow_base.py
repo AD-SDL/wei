@@ -172,7 +172,6 @@ class WF_Client:
         return {"run_dir": log_dir, "run_id": run_id}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
-
         for module in self.workcell.modules:
             module_name = module.name
             if module_name == step_module:

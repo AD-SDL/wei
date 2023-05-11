@@ -20,12 +20,12 @@ import rpl_wei
 
 # -- Project information -----------------------------------------------------
 
-project = 'rpl_wei'
-copyright = '2022, Kyle Hippe'
-author = 'Kyle Hippe'
+project = "rpl_wei"
+copyright = "2022, Kyle Hippe"
+author = "Kyle Hippe"
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = "0.1.0"
 
 
 # -- General configuration ---------------------------------------------------

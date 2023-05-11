@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Any
 
 from rpl_wei.data_classes import WorkCell
-from rpl_wei.publishers import PilotPublisher
 from rpl_wei.wei_workflow_base import WF_Client
 from rpl_wei.loggers import WEI_Logger
 
@@ -78,7 +77,6 @@ class WEI:
         self,
         callbacks: Optional[List[Callable]] = None,
         payload: Dict = None,
-        publish: bool = False,
     ) -> Optional[bool]:
         """Run a workflow with a given workflow ID
 
@@ -97,9 +95,6 @@ class WEI:
 
         run_info["payload"] = payload
         self.run_history[run_id] = run_info
-        if publish:
-            # TODO this is not the right param
-            PilotPublisher.publish(run_info)
 
         return run_info
 
