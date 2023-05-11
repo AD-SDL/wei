@@ -21,7 +21,7 @@ import rpl_wei
 # -- Project information -----------------------------------------------------
 
 project = "rpl_wei"
-copyright = "2022, Kyle Hippe"
+copyright = "2023, Kyle Hippe"
 author = "Kyle Hippe"
 
 # The full version, including alpha/beta/rc tags
