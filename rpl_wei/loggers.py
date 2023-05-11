@@ -8,7 +8,7 @@ import logging
 
 
 class WEI_Logger:
-    """Handles logging for RPL. Creates a logger for the workcell and workflow classes, will 
+    """Handles logging for RPL. Creates a logger for the workcell and workflow classes, will
     resume master log for the Workcell and new logs for the workflows.
     """
     @staticmethod
