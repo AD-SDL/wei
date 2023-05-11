@@ -1,4 +1,4 @@
 # Documentation requirements 
-sphinx
+Sphinx==7.0.0
 sphinx-rtd-theme
 autodoc-pydantic
