@@ -1,4 +1,8 @@
 API 
 ===
 
-Coming soon!
+.. autosummary::
+    :toctree: _autosummary
+    :recursive:
+
+    rpl_wei
