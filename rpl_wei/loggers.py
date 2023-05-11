@@ -1,16 +1,16 @@
 """Logging for RPL, handles Workcell and Workflow logging."""
+import logging
 from pathlib import Path
 from typing import Optional
 
 from rpl_wei.data_classes import PathLike
-
-import logging
 
 
 class WEI_Logger:
     """Handles logging for RPL. Creates a logger for the workcell and workflow classes, will
     resume master log for the Workcell and new logs for the workflows.
     """
+
     @staticmethod
     def _create_logger(
         logger_name: str,
