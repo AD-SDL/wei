@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to rpl_wei's documentation!
+Welcome to RPL WEI documentation!
 ===========================================================
 
 .. toctree::
