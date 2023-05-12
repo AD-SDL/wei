@@ -10,6 +10,7 @@ Welcome to RPL WEI documentation!
    :maxdepth: 1
    :caption: Contents
 
+   pages/introduction
    pages/api
 
 
