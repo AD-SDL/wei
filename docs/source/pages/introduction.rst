@@ -97,7 +97,7 @@ The workcell file is organized into two main sections:
 2. ``modules``: Describes the list of modules available in the workcell, including their names, types, configurations, and positions.
 
 Workcell Configuration (`config`)
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The `config` section contains the following fields:
 
@@ -109,7 +109,7 @@ The `config` section contains the following fields:
 - ``globus_group``: The Globus group ID.
 
 Module Configuration (`modules`)
---------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Each module in the `modules` section is described by the following fields:
 
