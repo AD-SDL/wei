@@ -3,7 +3,7 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Type, TypeVar, Union, Any
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
 
 import yaml
@@ -112,24 +112,7 @@ class Module(BaseModel):
     # TODO: Think about new validators based on backend types, e.g rosnodes, docker containers
     @validator("config")
     def validate_config(cls, v, values, **kwargs):
-        """Validate the config field of the workcell config with special rules for each type of robot
-        Parameters
-        ----------
-        v : dict
-            the config dict being checked
-        values : dict
-            The other loaded values of this instance
-        Returns
-        -------
-        dict
-            If the config passes, it will be returned to the clss
-        Raises
-        ------
-        ValueError
-            If the configuration for the type of robot does not exist in database
-        ValueError
-            A field is missing from the configuration
-        """
+        """Validate the config field of the workcell config with special rules for each type of robot"""
         config_validation = json.load(values["config_validation"].open())
         robot_type = values.get("type", "").lower()
 
@@ -187,7 +170,6 @@ class Step(BaseModel):
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
                 if arg_path.exists():
-
                     yaml.safe_load(arg_path.open("r"))
                     v[key] = yaml.safe_load(arg_path.open("r"))
 

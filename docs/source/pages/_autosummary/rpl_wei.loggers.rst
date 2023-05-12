@@ -1,7 +1,7 @@
-rpl\_wei.data\_classes
-======================
+rpl\_wei.loggers
+================
 
-.. automodule:: rpl_wei.data_classes
+.. automodule:: rpl_wei.loggers
 
    
    
@@ -17,7 +17,7 @@ rpl\_wei.data\_classes
 
    .. autosummary::
    
-      StepStatus
+      WEI_Logger
    
    
 

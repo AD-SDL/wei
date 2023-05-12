@@ -20,12 +20,12 @@ import rpl_wei
 
 # -- Project information -----------------------------------------------------
 
-project = 'rpl_wei'
-copyright = '2022, Kyle Hippe'
-author = 'Kyle Hippe'
+project = "rpl_wei"
+copyright = "2023, Kyle Hippe"
+author = "Kyle Hippe"
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = "0.1.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -85,3 +85,6 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+# Testing master doc
+master_doc = "index"

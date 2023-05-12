@@ -69,12 +69,13 @@ def wei_camera_callback(step: Step, **kwargs):
     )
     __kill_node()
 
+
 def wei_tcp_callback(step: Step, **kwargs):
     import socket
 
     module: Module = kwargs["step_module"]
-    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
-    tcp_sock.connect((module.config["tcp_address"],int(module.config["tcp_port"])))
+    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_sock.connect((module.config["tcp_address"], int(module.config["tcp_port"])))
 
     msg = {
         "action_handle": step.command,
@@ -82,12 +83,13 @@ def wei_tcp_callback(step: Step, **kwargs):
     }
     # print(msg)
     print("Using TCP socket")
-    
+
     msg = str(msg)
     tcp_sock.send(msg.encode())
     answer = tcp_sock.recv(4096).decode("utf-8")
     print(answer)
-    return 
+    return
+
 
 def silent_callback(step: Step, **kwargs):
     print(step)
