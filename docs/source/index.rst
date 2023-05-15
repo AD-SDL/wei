@@ -12,6 +12,7 @@ Welcome to RPL WEI documentation!
 
    pages/introduction
    pages/api
+   pages/glossary
 
 
 
