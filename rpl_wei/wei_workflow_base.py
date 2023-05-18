@@ -161,13 +161,8 @@ class WF_Client:
                 "logger": run_logger,
                 "callbacks": callbacks,
             }
-            self.executor.execute_step(**arg_dict)
-            # step_thread = Thread(
-            #     target=self.executor.execute_step,
-            #     kwargs=arg_dict
-            # )
-            # step_thread.start()
-            # step_thread.join()
+            step_response = self.executor.execute_step(**arg_dict)
+
         return {"run_dir": log_dir, "run_id": run_id}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
