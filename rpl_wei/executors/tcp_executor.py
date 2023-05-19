@@ -13,6 +13,7 @@ def wei_tcp_callback(step: Step, **kwargs):
     }
 
     sock.send(str(msg).encode())
+    #TODO: add continuous monitoring on the response?
     tcp_response = sock.read().decode()
     tcp_response = eval(tcp_response)
     action_response = tcp_response.get('action_response')
