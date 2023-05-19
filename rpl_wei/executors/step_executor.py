@@ -52,10 +52,13 @@ class StepExecutor:
 
         # map the correct executor function to the step_module
         if silent:
-            step_response = Executor_Map.function["silent_callback"](step, step_module=step_module)
+            action_response, action_msg, action_log = Executor_Map.function["silent_callback"](step, step_module=step_module)
         else:
-            step_response = Executor_Map.function[step_module.type](step, step_module=step_module)
+            action_response, action_msg, action_log  = Executor_Map.function[step_module.type](step, step_module=step_module)
 
         logger.info(f"Finished running step with name: {step.name}")
 
-        return StepStatus.SUCCEEDED, step_response
+        if not action_response:
+            action_response=StepStatus.SUCCEEDED
+
+        return action_response, action_msg, action_log

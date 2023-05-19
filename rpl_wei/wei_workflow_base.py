@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from devtools import debug
 
-from rpl_wei.data_classes import Module, WorkCell, Workflow
+from rpl_wei.data_classes import Module, WorkCell, Workflow, StepStatus
 from rpl_wei.executors.step_executor import StepExecutor
 from rpl_wei.loggers import WEI_Logger
 from rpl_wei.validators import ModuleValidator, StepValidator
@@ -162,13 +162,14 @@ class WF_Client:
                 "logger": run_logger,
                 "callbacks": callbacks,
             }
-            step_status, step_response = self.executor.execute_step(**arg_dict)
-            step_history[step.name]= step_response
-            #TODO:fix history
-            #TODO:add log
+            step_status, step_response, step_log = self.executor.execute_step(**arg_dict)
+            step_history[step.name]['step_status'] = step_status
+            step_history[step.name]['step_response'] = step_response
+            step_history[step.name]['step_log'] = step_log
+            
             #TODO: add step complete check
-            # if step_status not StepStatus.SUCCEEDED:
-            #     raise?break
+            if step_status!=StepStatus.SUCCEEDED:
+                print('This step failed.. what now?')
 
         return {"run_dir": log_dir, "run_id": run_id, "hist": step_history}
 

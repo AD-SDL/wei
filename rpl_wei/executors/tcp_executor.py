@@ -13,7 +13,10 @@ def wei_tcp_callback(step: Step, **kwargs):
     }
 
     socket.send(str(msg).encode())
-    answer = socket.read().decode()
-    answer = eval(answer)
-    #TODO: assert dict
-    return answer
+    tcp_response = socket.read().decode()
+    tcp_response = eval(tcp_response)
+    action_response = tcp_response.get('action_response')
+    action_msg = tcp_response.get('action_msg')
+    action_log = tcp_response.get('action_log')
+    #TODO: assert all of the above. deal with edge cases?
+    return action_response, action_msg, action_log

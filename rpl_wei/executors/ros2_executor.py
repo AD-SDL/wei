@@ -42,15 +42,14 @@ def wei_ros2_service_callback(step: Step, **kwargs):
         print(msg)
         print()
 
-    res = wei_execution_node.send_wei_command(
+    action_response, action_msg, action_log = wei_execution_node.send_wei_command(
         msg["node"], msg["action_handle"], msg["action_vars"]
     )
-    if res:
-        print(res)
+    if action_msg:
+        print(action_msg)
 
     __kill_node()
-    #TODO: process res
-    return res
+    return action_response, action_msg, action_log
 
 
 def wei_ros2_camera_callback(step: Step, **kwargs):
