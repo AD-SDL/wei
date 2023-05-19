@@ -12,8 +12,8 @@ def wei_tcp_callback(step: Step, **kwargs):
         "action_vars": step.args,
     }
 
-    socket.send(str(msg).encode())
-    tcp_response = socket.read().decode()
+    sock.send(str(msg).encode())
+    tcp_response = sock.read().decode()
     tcp_response = eval(tcp_response)
     action_response = tcp_response.get('action_response')
     action_msg = tcp_response.get('action_msg')
