@@ -58,4 +58,4 @@ class StepExecutor:
 
         logger.info(f"Finished running step with name: {step.name}")
 
-        return step_response, StepStatus.SUCCEEDED
+        return StepStatus.SUCCEEDED, step_response

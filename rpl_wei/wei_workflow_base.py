@@ -103,7 +103,7 @@ class WF_Client:
         # Setup this run
         run_id, log_dir, result_dir, run_logger = self.initialize_run()
 
-        step_answers=[]
+        step_history={}
         # Start executing the steps
         for step in self.flowdef:
             # get module information from workcell file
@@ -162,16 +162,21 @@ class WF_Client:
                 "logger": run_logger,
                 "callbacks": callbacks,
             }
-            step_response = self.executor.execute_step(**arg_dict)
-            step_answers.append(step_response)
-        return {"run_dir": log_dir, "run_id": run_id, "returns": step_answers}
+            step_status, step_response = self.executor.execute_step(**arg_dict)
+            step_history[step.name]= step_response
+            #TODO:fix history
+            #TODO:add log
+            #TODO: add step complete check
+            # if step_status not StepStatus.SUCCEEDED:
+            #     raise?break
+
+        return {"run_dir": log_dir, "run_id": run_id, "hist": step_history}
 
     def _find_step_module(self, step_module: str) -> Optional[Module]:
         for module in self.workcell.modules:
             module_name = module.name
             if module_name == step_module:
                 return module
-
         return None
 
     def print_flow(self):
