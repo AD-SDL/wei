@@ -2,10 +2,10 @@
 import logging
 from typing import Callable, List, Optional
 
-from rpl_wei.core.data_classes import Module, Step, StepStatus
+from rpl_wei.data_classes import Module, Step, StepStatus
 
-from rpl_wei.core.executors.ros2_executor import wei_ros2_service_callback, wei_ros2_camera_callback
-from rpl_wei.core.executors.tcp_executor import wei_tcp_callback
+from rpl_wei.executors.ros2_executor import wei_ros2_service_callback, wei_ros2_camera_callback
+from rpl_wei.executors.tcp_executor import wei_tcp_callback
 
 
 def silent_callback(step: Step, **kwargs):
