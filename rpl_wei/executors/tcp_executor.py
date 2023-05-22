@@ -5,7 +5,7 @@ def wei_tcp_callback(step: Step, **kwargs):
     import socket
     module: Module = kwargs["step_module"]
     sock = socket.socket()
-    sock.connect((module.config["tcp_address"], module.config["tcp_port"]))
+    sock.connect((module.config["tcp_address"], int(module.config["tcp_port"])))
     msg = {
         "action_handle": step.command,
         "action_vars": step.args,
