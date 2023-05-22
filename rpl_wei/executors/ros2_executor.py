@@ -67,6 +67,5 @@ def wei_ros2_camera_callback(step: Step, **kwargs):
         path=step.args["save_location"],
     )
     __kill_node()
-    #TODO: process res
-    return res 
+    return 'succeded', res, None
 
