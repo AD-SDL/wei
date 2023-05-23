@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 from rpl_wei.data_classes import Module, Step
-
+import rclpy
 wei_execution_node = None
 
 
@@ -68,5 +68,5 @@ def wei_ros2_camera_callback(step: Step, **kwargs):
     )
     __kill_node()
     #TODO: process res
-    return res 
+    return 'action_response', 'action_msg', 'action_log'
 

@@ -1,5 +1,5 @@
 """Handling execution for steps in the RPL-SDL efforts"""
-from rpl_wei.data_classes import Module, Step
+from rpl_wei.data_classes import Module, Step, StepStatus
 
 def wei_tcp_callback(step: Step, **kwargs):
     import socket
@@ -16,7 +16,7 @@ def wei_tcp_callback(step: Step, **kwargs):
     tcp_response = sock.recv(1024).decode()
     tcp_response = eval(tcp_response)
     print(tcp_response)
-    action_response = tcp_response.get('action_response')
+    action_response = eval(tcp_response.get('action_response'))
     action_msg = tcp_response.get('action_msg')
     action_log = tcp_response.get('action_log')
     #TODO: assert all of the above. deal with edge cases?
