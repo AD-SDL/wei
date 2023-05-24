@@ -25,20 +25,3 @@ def wei_rest_callback(step: Step, **kwargs):
     action_log = rest_response.text
     #TODO: assert all of the above. deal with edge cases?
     return action_response, action_msg, action_log
-#import requests
-
-# url = "http://mirbase1.cels.anl.gov/api/v2.0.0/missions"
-# headers = {
-#     "accept": "application/json",
-#     "Authorization": "Basic ZGlzdHJpYnV0b3I6NjJmMmYwZjFlZmYxMGQzMTUyYzk1ZjZmMDU5NjU3NmU0ODJiYjhlNDQ4MDY0MzNmNGNmOTI5NzkyODM0YjAxNA==",
-#     "Accept-Language": "en_US"
-# }
-
-# response = requests.get(url, headers=headers)
-
-# if response.status_code == 200:
-#     data = response.json()
-#     # Process the response data as needed
-#     print(data)
-# else:
-#     print("Request failed with status code:", response.status_code)Z
