@@ -8,7 +8,9 @@ from rpl_wei.core import DATA_DIR
 
 
 class Workcell:
-    def __init__(self, workcell_def: Dict[str, Any], log_level: int = logging.INFO) -> None:
+    def __init__(
+        self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
+    ) -> None:
 
         self.workcell = WorkcellData(**workcell_def)
         self.log_dir = DATA_DIR / "workcell"

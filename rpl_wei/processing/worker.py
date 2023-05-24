@@ -26,10 +26,18 @@ Things to do in worker:
 """
 
 
-def run_workflow_task(experiment_id, workflow_def, parsed_payload, workcell_def, job_id: Optional[Union[ulid.ULID, str]] = None):
+def run_workflow_task(
+    experiment_id,
+    workflow_def,
+    parsed_payload,
+    workcell_def,
+    job_id: Optional[Union[ulid.ULID, str]] = None,
+):
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
-    workflow_runner = WorkflowRunner(yaml.safe_load(workflow_def), experiment_id=experiment_id, run_id=job_id)
+    workflow_runner = WorkflowRunner(
+        yaml.safe_load(workflow_def), experiment_id=experiment_id, run_id=job_id
+    )
 
     # Run validation
     workflow_runner.check_flowdef()

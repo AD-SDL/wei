@@ -4,6 +4,7 @@ from pathlib import Path
 from devtools import debug
 from test_base import TestWEI_Base
 
+
 class Test_Workcell_Base(TestWEI_Base):
     def test_workcell_property(self):
         from rpl_wei.core.workcell import Workcell

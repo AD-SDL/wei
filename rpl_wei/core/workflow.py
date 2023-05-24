@@ -123,7 +123,11 @@ class WorkflowRunner:
             }
             self.executor.execute_step(**arg_dict)
 
-        return {"run_dir": str(self.log_dir), "run_id": str(self.run_id), "payload": payload}
+        return {
+            "run_dir": str(self.log_dir),
+            "run_id": str(self.run_id),
+            "payload": payload,
+        }
 
     def print_flow(self):
         """Prints the workflow dataclass, for debugging"""

@@ -22,6 +22,7 @@ from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 workcell = None
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global workcell
@@ -40,7 +41,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-def submit_job(experiment_id: str, workflow_content_str: str, parsed_payload: Dict[str, Any]):
+
+def submit_job(
+    experiment_id: str, workflow_content_str: str, parsed_payload: Dict[str, Any]
+):
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
 
@@ -64,9 +68,7 @@ def submit_job(experiment_id: str, workflow_content_str: str, parsed_payload: Di
             "job_id": job.get_id(),
             **base_response_content,
         }
-        return JSONResponse(
-            content=response_content
-        )
+        return JSONResponse(content=response_content)
     except Exception as e:
         response_content = {
             "status": "failed",
@@ -75,13 +77,12 @@ def submit_job(experiment_id: str, workflow_content_str: str, parsed_payload: Di
         }
         return JSONResponse(content=response_content)
 
+
 @app.post("/job")
 async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}")):
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
-    workflow_content_str = workflow_content.decode(
-        "utf-8"
-    )
+    workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
 
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
@@ -89,16 +90,18 @@ async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}"
 
     return submit_job(experiment_id, workflow_content_str, parsed_payload)
 
+
 @app.post("/job/{experiment_id}")
-async def process_job_with_id(experiment_id: str, workflow: UploadFile = File(...), payload: str = Form("{}")):
+async def process_job_with_id(
+    experiment_id: str, workflow: UploadFile = File(...), payload: str = Form("{}")
+):
     workflow_content = await workflow.read()
-    workflow_content_str = workflow_content.decode(
-        "utf-8"
-    )
+    workflow_content_str = workflow_content.decode("utf-8")
 
     parsed_payload = json.loads(payload)
 
     return submit_job(experiment_id, workflow_content_str, parsed_payload)
+
 
 @app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
