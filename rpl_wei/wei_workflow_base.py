@@ -161,6 +161,7 @@ class WF_Client:
                 "step_module": step_module,
                 "logger": run_logger,
             }
+            step_history[step.name] = {}
             step_status, step_response, step_log = self.executor.execute_step(**arg_dict)
             step_history[step.name] = {}
             step_history[step.name]['step_status'] = step_status

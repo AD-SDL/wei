@@ -8,5 +8,9 @@
     "wei_tcp_node": [
         "tcp_address",
         "tcp_port"
+    ],
+    "wei_rest_node": [
+        "url",
+        "auth"
     ]
 }
