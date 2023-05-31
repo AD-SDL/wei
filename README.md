@@ -6,7 +6,7 @@
 
 RPL workcell execution interface
 
-For more details and specific examples of how to use rpl_wei, please see our [documentation](https://readthedocs.org/).
+For more details and specific examples of how to use rpl_wei, please see our [documentation](https://rpl-wei.readthedocs.io/en/latest/).
 
 ## Table of Contents
 - [rpl_wei](#rpl_wei)
