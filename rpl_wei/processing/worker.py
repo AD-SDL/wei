@@ -32,6 +32,7 @@ def run_workflow_task(
     parsed_payload,
     workcell_def,
     job_id: Optional[Union[ulid.ULID, str]] = None,
+    simulate: bool = False,
 ):
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
@@ -44,8 +45,11 @@ def run_workflow_task(
     workflow_runner.check_modules()
 
     # Run workflow
-    result_payload = workflow_runner.run_flow(workcell, payload=parsed_payload)
-    time.sleep(5)
+    result_payload = workflow_runner.run_flow(
+        workcell, payload=parsed_payload, simulate=simulate
+    )
+    if simulate:
+        time.sleep(5)
 
     print(f"Result payload:\t{json.dumps(result_payload)}")
 

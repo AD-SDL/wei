@@ -7,7 +7,7 @@ import requests
 
 
 def put_job():
-    url = "http://127.0.0.1:8000/job"
+    url = "http://127.0.0.1:8000/job/?simulate=True"
 
     yaml_file = Path(__file__).parent / "../tests/test_dummy_workflow.yaml"
     json_payload = {"data": {"key": "value"}}
