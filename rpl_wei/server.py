@@ -79,14 +79,14 @@ def submit_job(
 
 
 @app.post("/job")
-async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}")):
+async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = ""):
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
 
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    experiment_id = ulid.new().str
+    
 
     return submit_job(experiment_id, workflow_content_str, parsed_payload)
 

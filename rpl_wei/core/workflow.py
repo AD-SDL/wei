@@ -6,7 +6,7 @@ from devtools import debug
 
 from rpl_wei.core.workcell import Workcell
 from rpl_wei.core.data_classes import Workflow as WorkflowData
-from rpl_wei.core.executors import StepExecutor
+from rpl_wei.executors.step_executor import StepExecutor
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.validators import ModuleValidator, StepValidator
 from rpl_wei.core import DATA_DIR
@@ -53,18 +53,13 @@ class WorkflowRunner:
         """Checks the actions provided by the workflow"""
         for step in self.workflow.flowdef:
             self.step_validator.check_step(step=step)
-
-    def run_flow(
-        self,
+    def init_flow(self,
         workcell: Workcell,
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
-        """Executes the flowdef commmands"""
-        # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
-
-        # Start executing the steps
-        for step in self.workflow.flowdef:
+    ) -> List[Dict[str, Any]]:
+         steps = []
+         for step in self.workflow.flowdef:
             # get module information from workcell file
             step_module = workcell.find_step_module(step.module)
             if not step_module:
@@ -119,9 +114,24 @@ class WorkflowRunner:
                 "step": step,
                 "step_module": step_module,
                 "logger": self.logger,
-                "callbacks": callbacks,
+               # "callbacks": callbacks,
             }
-            self.executor.execute_step(**arg_dict)
+            steps.append(arg_dict)
+         return steps
+
+    def run_flow(
+        self,
+        workcell: Workcell,
+        callbacks: Optional[List[Any]] = None,
+        payload: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Executes the flowdef commmands"""
+        # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
+
+        # Start executing the steps
+        steps = self.init_flow(workcell, callbacks, payload)
+        for step in steps:
+            self.executor.execute_step(**step)
 
         return {
             "run_dir": str(self.log_dir),
