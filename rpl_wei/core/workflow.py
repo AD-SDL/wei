@@ -35,9 +35,9 @@ class WorkflowRunner:
         else:
             self.run_id = ulid.new()
         self.log_dir = DATA_DIR / "runs" / experiment_id / str(self.run_id)
-        self.result_dir = self.log_dir / "results"
+        #self.result_dir = self.log_dir / "results"
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.result_dir.mkdir(parents=True, exist_ok=True)
+        #self.result_dir.mkdir(parents=True, exist_ok=True)
         self.logger = WEI_Logger.get_logger(
             "runLogger",
             log_dir=self.log_dir,

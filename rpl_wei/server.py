@@ -3,6 +3,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from typing import Dict, Any
+from rpl_wei.core import DATA_DIR
 
 import rq
 import ulid
@@ -12,8 +13,8 @@ from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
 from rpl_wei.core.data_classes import Workcell
-from rpl_wei.processing.worker import run_workflow_task, task_queue
-
+from rpl_wei.processing.worker import run_workflow_task, start_experiment, task_queue
+from rpl_wei.core.loggers import WEI_Logger
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
 # TODO consider sub-applications for different parts of the server (e.g. /job, /queue, /data, etc.)
@@ -78,17 +79,62 @@ def submit_job(
         return JSONResponse(content=response_content)
 
 
+def start_exp(
+    experiment_id: str,
+    experiment_name: str
+):
+    base_response_content = {
+        "experiment_id": experiment_id,
+        "experiment_name": experiment_name
+    }
+    try:
+        job = task_queue.enqueue(
+            start_experiment(experiment_name, experiment_id)
+        )
+        jobs_ahead = len(task_queue.jobs)
+        response_content = {
+            "status": "success",
+            "jobs_ahead": jobs_ahead,
+            "job_id": job.get_id(),
+            **base_response_content,
+        }
+        return JSONResponse(content=response_content)
+    except Exception as e:
+        response_content = {
+            "status": "failed",
+            "error": str(e),
+            **base_response_content,
+        }
+        return JSONResponse(content=response_content)
+    
+
 @app.post("/job")
 async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = ""):
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
-
+    
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
     
 
     return submit_job(experiment_id, workflow_content_str, parsed_payload)
+
+@app.post("/log/{experiment_id}")
+async def log_experiment(experiment_id: str, log_value:str):
+    log_dir = DATA_DIR / "runs" /  experiment_id
+    logger = WEI_Logger.get_logger("log_"+ experiment_id)
+    logger.info(log_value)
+
+@app.post("/experiment")
+async def process_exp(experiment_name: str, experiment_id: str):
+    # Decode the bytes object to a string
+    
+
+    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
+    
+
+    return start_exp(experiment_id, experiment_name)
 
 
 @app.post("/job/{experiment_id}")
