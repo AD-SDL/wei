@@ -14,7 +14,8 @@ from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegist
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.loggers import WEI_Logger
-from rpl_wei.processing.worker import run_workflow_task, start_experiment, task_queue
+from rpl_wei.core.experiment import start_experiment
+from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
