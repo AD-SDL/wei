@@ -40,18 +40,17 @@ class Experiment:
         
         response = requests.post(
                 url,
-                params={"experiment_id": self.experiment_id, "experiment_name": self.experiment_name},
-                
+                params={"experiment_id": self.experiment_id, "experiment_name": self.experiment_name},            
             )
 
         return self._return_response(response)
+    
     def log_decision(self, dec_name: str, dec_value):
         url = f"{self.url}/log/{self.experiment_id}"
         
         response = requests.post(
                 url,
                 params={"log_value": "Checked "+ dec_name + " with result "+ str(dec_value)},
-                
             )
 
         return self._return_response(response)

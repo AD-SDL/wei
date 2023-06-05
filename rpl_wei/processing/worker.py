@@ -48,9 +48,9 @@ def run_workflow_task(
     exp_log = WEI_Logger.get_logger("log_"+str(experiment_id), log_dir)
     
     # Run workflow
-    exp_log.info("WEI:RUN WORKFLOW: " + str(workflow_runner.workflow.metadata.name) + ", RUN ID: " + str(job_id))
+    exp_log.info("WEI:WORKFLOW:RUN: " + str(workflow_runner.workflow.metadata.name) + ", RUN ID: " + str(job_id))
     result_payload = workflow_runner.run_flow(workcell, payload=parsed_payload)
-    exp_log.info("WEI:WORKFLOW COMPLETE: " + str(workflow_runner.workflow.metadata.name) + ",  RUN ID: " + str(job_id) )
+    exp_log.info("WEI:WORKFLOW:COMPLETE: " + str(workflow_runner.workflow.metadata.name) + ",  RUN ID: " + str(job_id) )
     time.sleep(5)
 
     print(f"Result payload:\t{json.dumps(result_payload)}")
@@ -64,7 +64,7 @@ def start_experiment(
     log_dir = DATA_DIR / "runs" /  experiment_id
     result_dir = log_dir / "results"
     exp_log = WEI_Logger.get_logger("log_"+str(experiment_id), log_dir)
-    exp_log.info("START EXPERIMENT: " + str(experiment_name) + ", EXPERIMENT ID: " + str(experiment_id))
+    exp_log.info("EXPERIMENT:START: " + str(experiment_name) + ", EXPERIMENT ID: " + str(experiment_id))
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parent=True, exist_ok=True)
     return {"exp_dir": log_dir}
