@@ -6,8 +6,8 @@ from pathlib import Path
 import requests
 
 
-def put_job():
-    url = "http://127.0.0.1:8000/job"
+def put_job(host='127.0.0.1', port='8000'):
+    url = f"http://{host}:{port}/job/?simulate=True"
 
     yaml_file = Path(__file__).parent / "../tests/test_dummy_workflow.yaml"
     json_payload = {"data": {"key": "value"}}
@@ -22,14 +22,14 @@ def put_job():
     print(f"Status:\t{response.status_code}\nJSON:\t{response.json()}")
 
 
-def query_job(job_id):
-    url = f"http://127.0.0.1:8000/job/{job_id}"
+def query_job(job_id, host='127.0.0.1', port='8000'):
+    url = f"http://{host}:{port}/job/{job_id}"
     response = requests.get(url)
     print(response.json())
 
 
-def query_queue():
-    url = "http://127.0.0.1:8000/queue/info"
+def query_queue(host='127.0.0.1', port='8000'):
+    url = f"http://{host}:{port}/queue/info"
     response = requests.get(url)
     print(response.json())
 

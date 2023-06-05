@@ -2,7 +2,7 @@ import requests
 from pathlib import Path
 from typing import Dict, Optional
 import ulid
-from rpl_wei.core.loggers import WEI_Logger
+
 
 class Experiment:
     def __init__(self, server_addr: str, server_port: str, experiment_name: str, experiment_id: Optional[str] = None) -> None:
@@ -14,7 +14,6 @@ class Experiment:
         self.loops = []
         if not self.experiment_id:
             self.experiment_id = ulid.new().str
-
 
     def _return_response(self, response: requests.Response):
         if response.status_code != 200:
@@ -34,55 +33,51 @@ class Experiment:
             )
 
         return self._return_response(response)
-    
+
     def register_exp(self):
         url = f"{self.url}/experiment"
-        
+
         response = requests.post(
                 url,
-                params={"experiment_id": self.experiment_id, "experiment_name": self.experiment_name},
-                
+                params={"experiment_id": self.experiment_id, "experiment_name": self.experiment_name},           
             )
 
         return self._return_response(response)
+
     def log_decision(self, dec_name: str, dec_value):
         url = f"{self.url}/log/{self.experiment_id}"
-        
+
         response = requests.post(
                 url,
-                params={"log_value": "Checked "+ dec_name + " with result "+ str(dec_value)},
-                
+                params={"log_value": "Checked " + dec_name + " with result " + str(dec_value)},
             )
-
         return self._return_response(response)
+
     def start_loop(self, loop_name: str):
         url = f"{self.url}/log/{self.experiment_id}"
         self.loops.append(loop_name)
         response = requests.post(
                 url,
                 params={"log_value": "LOOP:START: " + loop_name},
-                
             )
-
         return self._return_response(response)
+    
     def end_loop(self):
         url = f"{self.url}/log/{self.experiment_id}"
         loop_name = self.loops.pop()
         response = requests.post(
                 url,
-                params={"log_value": "LOOP:END: " + loop_name},
-                
+                params={"log_value": "LOOP:END: " + loop_name}
             )
-
         return self._return_response(response)
+
     def loop_check(self, condition, value):
         url = f"{self.url}/log/{self.experiment_id}"
         loop_name = self.loops[-1]
         response = requests.post(
                 url,
-                params={"log_value": "LOOP:CHECK CONDITION: " + loop_name + ", CONDITION: "+ condition + ", RESULT: " + str(value)},
-                
-            )
+                params={"log_value": "LOOP:CHECK CONDITION: " + loop_name + ", CONDITION: " + condition + ", RESULT: " + str(value)}
+                )
 
         return self._return_response(response)
 
