@@ -1,10 +1,10 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
+from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Module
 from rpl_wei.core.data_classes import Workcell as WorkcellData
 from rpl_wei.core.loggers import WEI_Logger
-from rpl_wei.core import DATA_DIR
 
 
 class Workcell:

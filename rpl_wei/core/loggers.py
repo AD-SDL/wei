@@ -61,6 +61,7 @@ class WEI_Logger:
             # logger.addHandler(streamHandler)
 
         return logger
+
     @staticmethod
     def to_json(
         log_name: str,

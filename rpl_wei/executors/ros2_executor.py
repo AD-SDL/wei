@@ -23,11 +23,13 @@ def __init_rclpy():
     else:
         print("RCLPY OK ")
 
+
 def __kill_node():
     global wei_execution_node
     print("killing node")
     wei_execution_node.destroy_node()
     rclpy.shutdown()
+
 
 def wei_ros2_service_callback(step: Step, **kwargs):
     try:
@@ -75,7 +77,9 @@ def wei_ros2_camera_callback(step: Step, **kwargs):
         path=step.args["save_location"],
     )
     __kill_node()
-    #TODO: process res
-    return 'StepStatus.SUCCEEDED', str({'img_path': step.args["save_location"]+"/" + step.args["file_name"]}), 'action_log'
-
-
+    # TODO: process res
+    return (
+        "StepStatus.SUCCEEDED",
+        str({"img_path": step.args["save_location"] + "/" + step.args["file_name"]}),
+        "action_log",
+    )

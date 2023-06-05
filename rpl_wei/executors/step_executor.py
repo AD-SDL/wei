@@ -3,15 +3,18 @@ import logging
 from typing import Callable, List, Optional
 
 from rpl_wei.core.data_classes import Module, Step, StepStatus
-
-from rpl_wei.executors.ros2_executor import wei_ros2_service_callback, wei_ros2_camera_callback
-from rpl_wei.executors.tcp_executor import wei_tcp_callback
 from rpl_wei.executors.rest_executor import wei_rest_callback
+from rpl_wei.executors.ros2_executor import (
+    wei_ros2_camera_callback,
+    wei_ros2_service_callback,
+)
+from rpl_wei.executors.tcp_executor import wei_tcp_callback
 
 
 def silent_callback(step: Step, **kwargs):
     print(step)
-    return 'a', 'b', 'c'
+    return "a", "b", "c"
+
 
 ### Executor mapping ###
 class Executor_Map:
@@ -23,7 +26,10 @@ class Executor_Map:
         "silent_callback": silent_callback,
     }
 
-silent=False
+
+silent = False
+
+
 class StepExecutor:
     """Class to handle executing steps"""
 
@@ -54,13 +60,17 @@ class StepExecutor:
 
         # map the correct executor function to the step_module
         if silent:
-            action_response, action_msg, action_log = Executor_Map.function["silent_callback"](step, step_module=step_module)
+            action_response, action_msg, action_log = Executor_Map.function[
+                "silent_callback"
+            ](step, step_module=step_module)
         else:
-            action_response, action_msg, action_log  = Executor_Map.function[step_module.type](step, step_module=step_module)
+            action_response, action_msg, action_log = Executor_Map.function[
+                step_module.type
+            ](step, step_module=step_module)
 
         logger.info(f"Finished running step with name: {step.name}")
 
         if not action_response:
-            action_response=StepStatus.SUCCEEDED
+            action_response = StepStatus.SUCCEEDED
 
         return action_response, action_msg, action_log

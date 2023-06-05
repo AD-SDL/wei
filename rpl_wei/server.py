@@ -1,9 +1,8 @@
 import json
-from pathlib import Path
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
-from typing import Dict, Any
-from rpl_wei.core import DATA_DIR
+from pathlib import Path
+from typing import Any, Dict
 
 import rq
 import ulid
@@ -12,9 +11,11 @@ from fastapi.responses import JSONResponse
 from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
+from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workcell
-from rpl_wei.processing.worker import run_workflow_task, start_experiment, task_queue
 from rpl_wei.core.loggers import WEI_Logger
+from rpl_wei.processing.worker import run_workflow_task, start_experiment, task_queue
+
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
 # TODO consider sub-applications for different parts of the server (e.g. /job, /queue, /data, etc.)
@@ -22,6 +23,7 @@ from rpl_wei.core.loggers import WEI_Logger
 #      This might entail making a rq object of the wei object and making that available to the workers
 
 workcell = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,10 +40,15 @@ async def lifespan(app: FastAPI):
     # Do any cleanup here
     pass
 
+
 app = FastAPI(lifespan=lifespan)
 
+
 def submit_job(
-    experiment_id: str, workflow_content_str: str, parsed_payload: Dict[str, Any], silent: bool
+    experiment_id: str,
+    workflow_content_str: str,
+    parsed_payload: Dict[str, Any],
+    silent: bool,
 ):
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
@@ -56,7 +63,7 @@ def submit_job(
             workflow_content_str,
             parsed_payload,
             workcell.__dict__,
-            silent, 
+            silent,
             job_id,
             job_id=job_id,
         )
@@ -77,18 +84,13 @@ def submit_job(
         return JSONResponse(content=response_content)
 
 
-def start_exp(
-    experiment_id: str,
-    experiment_name: str
-):
+def start_exp(experiment_id: str, experiment_name: str):
     base_response_content = {
         "experiment_id": experiment_id,
-        "experiment_name": experiment_name
+        "experiment_name": experiment_name,
     }
     try:
-        job = task_queue.enqueue(
-            start_experiment(experiment_name, experiment_id)
-        )
+        job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
         jobs_ahead = len(task_queue.jobs)
         response_content = {
             "status": "success",
@@ -104,10 +106,12 @@ def start_exp(
             **base_response_content,
         }
         return JSONResponse(content=response_content)
-    
+
 
 @app.post("/job")
-async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = ""):
+async def process_job(
+    workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = ""
+):
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode("utf-8")
@@ -119,13 +123,13 @@ async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}"
 
 @app.post("/log/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
-    logger = WEI_Logger.get_logger("log_"+ experiment_id)
+    logger = WEI_Logger.get_logger("log_" + experiment_id)
     logger.info(log_value)
 
 
 @app.post("/log/return/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
-    logger = WEI_Logger.get_logger("log_"+ experiment_id)
+    logger = WEI_Logger.get_logger("log_" + experiment_id)
     logger.info(log_value)
 
 
