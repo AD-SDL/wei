@@ -11,7 +11,6 @@ from fastapi.responses import JSONResponse
 from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
-from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.experiment import start_experiment

@@ -1,7 +1,0 @@
-{
-    "wei_ros_client": {
-        "iterable": true,
-        "type": "float",
-        "length": 6
-    }
-}
