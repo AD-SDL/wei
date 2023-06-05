@@ -23,7 +23,6 @@ from rpl_wei.core.loggers import WEI_Logger
 
 workcell = None
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global workcell
@@ -39,9 +38,7 @@ async def lifespan(app: FastAPI):
     # Do any cleanup here
     pass
 
-
 app = FastAPI(lifespan=lifespan)
-
 
 def submit_job(
     experiment_id: str, workflow_content_str: str, parsed_payload: Dict[str, Any]
@@ -114,32 +111,27 @@ async def process_job(workflow: UploadFile = File(...), payload: str = Form("{}"
     # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
-    
-    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    
 
+    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
     return submit_job(experiment_id, workflow_content_str, parsed_payload)
 
+
 @app.post("/log/{experiment_id}")
-async def log_experiment(experiment_id: str, log_value:str):
-    log_dir = DATA_DIR / "runs" /  experiment_id
+async def log_experiment(experiment_id: str, log_value: str):
     logger = WEI_Logger.get_logger("log_"+ experiment_id)
     logger.info(log_value)
 
+
 @app.post("/log/return/{experiment_id}")
-async def log_experiment(experiment_id: str, log_value:str):
-    log_dir = DATA_DIR / "runs" /  experiment_id
+async def log_experiment(experiment_id: str, log_value: str):
     logger = WEI_Logger.get_logger("log_"+ experiment_id)
     logger.info(log_value)
+
 
 @app.post("/experiment")
 async def process_exp(experiment_name: str, experiment_id: str):
     # Decode the bytes object to a string
-    
-
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    
-
     return start_exp(experiment_id, experiment_name)
 
 
