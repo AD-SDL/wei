@@ -1,16 +1,20 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 from rpl_wei.core.data_classes import Module, Step
 
-wei_execution_node = None
 try:
     import rclpy
 except ImportError:
     print("No RCLPY found... Cannot use ROS2")
     rclpy = None
-    
+
+try:
+    from wei_executor.weiExecutorNode import weiExecNode
+except ImportError:
+    wei_execution_node = None
+
+
 def __init_rclpy():
     global wei_execution_node
-    from wei_executor.weiExecutorNode import weiExecNode
 
     if not rclpy.utilities.ok():
         rclpy.init()
