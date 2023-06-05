@@ -10,76 +10,76 @@ modules:
     positions:
       final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-  # - name: pf400
-  #   model: pf400
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: "/pf400_client/PF400_Client_Node/action_handler"
-  #   positions:
-  #     final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  - name: pf400
+    model: pf400
+    type: wei_ros_node
+    config:
+      ros_node: "/pf400_client/PF400_Client_Node/action_handler"
+    positions:
+      final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-  # - name: sciclops
-  #   model: sciclops
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: "/sciclops_module/sciclopsNode/action_handler"
-  #   positions:
-  #     exchange: [262.550, 20.608, 119.290, 662.570, 0.0, 574.367]
+  - name: sciclops
+    model: sciclops
+    type: wei_ros_node
+    config:
+      ros_node: "/sciclops_module/sciclopsNode/action_handler"
+    positions:
+      exchange: [262.550, 20.608, 119.290, 662.570, 0.0, 574.367]
 
-  # - name: sealer
-  #   model: sealer
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: "/sp_module/sealerNode/action_handler"
-  #   positions:
-  #     default: [231.788, -27.154, 313.011, 342.317, 0.0, 683.702]
+  - name: sealer
+    model: sealer
+    type: wei_ros_node
+    config:
+      ros_node: "/sp_module/sealerNode/action_handler"
+    positions:
+      default: [231.788, -27.154, 313.011, 342.317, 0.0, 683.702]
 
-  # - name: peeler
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: "/sp_module/peelerNode/action_handler"
-  #   positions:
-  #     default: [264.584, -29.413, 284.376, 372.338, 0.0, 651.621]
+  - name: peeler
+    type: wei_ros_node
+    config:
+      ros_node: "/sp_module/peelerNode/action_handler"
+    positions:
+      default: [264.584, -29.413, 284.376, 372.338, 0.0, 651.621]
 
-  # - name: ot2_pcr_alpha ## correct? was ot2_alpha
-  #   model: ot2
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: "ot2_alpha/ot2Node/actions" ## ros node meaning ros service
-  #   positions: ## N/A
-  #     deck2: [195.99, 60.21, 92.13, 565.41, 82.24, -65.25] ## N/A
+  - name: ot2_pcr_alpha ## correct? was ot2_alpha
+    model: ot2
+    type: wei_ros_node
+    config:
+      ros_node: "ot2_alpha/ot2Node/actions" ## ros node meaning ros service
+    positions: ## N/A
+      deck2: [195.99, 60.21, 92.13, 565.41, 82.24, -65.25] ## N/A
 
-  # - name: ot2_growth_beta
-  #   model: ot2
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: "ot2_beta/ot2Node/actions" ## ros node meaning ros service
-  #   positions: ## N/A
-  #     deck2: [195.99, 60.21, 92.13, 565.41, 82.24, -65.25] ## N/A
+  - name: ot2_growth_beta
+    model: ot2
+    type: wei_ros_node
+    config:
+      ros_node: "ot2_beta/ot2Node/actions" ## ros node meaning ros service
+    positions: ## N/A
+      deck2: [195.99, 60.21, 92.13, 565.41, 82.24, -65.25] ## N/A
 
-  # - name: biometra
-  #   model: biometra
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: biometra rosnode
-  #   positions:
-  #     default: [277.638, 39.029, 74.413, 602.159, 78.980, -910.338]
+  - name: biometra
+    model: biometra
+    type: wei_ros_node
+    config:
+      ros_node: biometra rosnode
+    positions:
+      default: [277.638, 39.029, 74.413, 602.159, 78.980, -910.338]
 
-  # - name: hidex
-  #   model: hidex
-  #   type: wei_ros_node
-  #   config:
-  #     ros_node: hidex rosnode
-  #   positions:
-  #     default: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  - name: hidex
+    model: hidex
+    type: wei_ros_node
+    config:
+      ros_node: hidex rosnode
+    positions:
+      default: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-  # - name: camera_module
-  #   model: camera
-  #   type: wei_ros_camera
-  #   config:
-  #     ros_node: "/std_ns/camera_module"
-  #   positions:
-  #     plate_station: [90.597,26.416, 66.422, 714.811, 81.916, 995.074]
+  - name: camera_module
+    model: camera
+    type: wei_ros_camera
+    config:
+      ros_node: "/std_ns/camera_module"
+    positions:
+      plate_station: [90.597,26.416, 66.422, 714.811, 81.916, 995.074]
 
 
 search_index: abcd-efgh-ijkl-mnop
