@@ -75,6 +75,16 @@ class Experiment:
             )
 
         return self._return_response(response)
+    def loop_check(self, condition, value):
+        url = f"{self.url}/log/{self.experiment_id}"
+        loop_name = self.loops[-1]
+        response = requests.post(
+                url,
+                params={"log_value": "Check Loop: " + loop_name + ", Condition: "+ condition + ", Result: " + str(value)},
+                
+            )
+
+        return self._return_response(response)
 
     def query_job(self, job_id: str):
         url = f"{self.url}/job/{job_id}"

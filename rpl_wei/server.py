@@ -126,6 +126,12 @@ async def log_experiment(experiment_id: str, log_value:str):
     logger = WEI_Logger.get_logger("log_"+ experiment_id)
     logger.info(log_value)
 
+@app.post("/log/return/{experiment_id}")
+async def log_experiment(experiment_id: str, log_value:str):
+    log_dir = DATA_DIR / "runs" /  experiment_id
+    logger = WEI_Logger.get_logger("log_"+ experiment_id)
+    logger.info(log_value)
+
 @app.post("/experiment")
 async def process_exp(experiment_name: str, experiment_id: str):
     # Decode the bytes object to a string
