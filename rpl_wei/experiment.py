@@ -60,7 +60,7 @@ class Experiment:
         self.loops.append(loop_name)
         response = requests.post(
                 url,
-                params={"log_value": "Start Loop: " + loop_name},
+                params={"log_value": "LOOP:START: " + loop_name},
                 
             )
 
@@ -70,7 +70,7 @@ class Experiment:
         loop_name = self.loops.pop()
         response = requests.post(
                 url,
-                params={"log_value": "End Loop: " + loop_name},
+                params={"log_value": "LOOP:END: " + loop_name},
                 
             )
 
@@ -80,7 +80,7 @@ class Experiment:
         loop_name = self.loops[-1]
         response = requests.post(
                 url,
-                params={"log_value": "Check Loop: " + loop_name + ", Condition: "+ condition + ", Result: " + str(value)},
+                params={"log_value": "LOOP:CHECK CONDITION: " + loop_name + ", CONDITION: "+ condition + ", RESULT: " + str(value)},
                 
             )
 
