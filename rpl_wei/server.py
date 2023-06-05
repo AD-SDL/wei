@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 def submit_job(
-    experiment_id: str, workflow_content_str: str, parsed_payload: Dict[str, Any]
+    experiment_id: str, workflow_content_str: str, parsed_payload: Dict[str, Any], silent: bool
 ):
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
@@ -56,6 +56,7 @@ def submit_job(
             workflow_content_str,
             parsed_payload,
             workcell.__dict__,
+            silent, 
             job_id,
             job_id=job_id,
         )

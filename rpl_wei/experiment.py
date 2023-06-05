@@ -21,14 +21,14 @@ class Experiment:
 
         return response.json()
 
-    def run_job(self, workflow_file: Path, payload: Optional[Dict] = None):
+    def run_job(self, workflow_file: Path, payload: Optional[Dict] = None, silent: Optional[bool] = False):
         assert workflow_file.exists(), f"{workflow_file} does not exist"
 
         url = f"{self.url}/job"
         with open(workflow_file, "rb") as f:
             response = requests.post(
                 url,
-                params={"experiment_id": self.experiment_id, "payload": payload},
+                params={"experiment_id": self.experiment_id, "payload": payload, "silent": silent},
                 files={"workflow": (str(workflow_file), f, "application/x-yaml")}
             )
 
