@@ -1,7 +1,7 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import requests
 
-from rpl_wei.core.data_classes import Module, Step, StepStatus
+from rpl_wei.core.data_classes import Module, Step
 
 
 def wei_rest_callback(step: Step, **kwargs):

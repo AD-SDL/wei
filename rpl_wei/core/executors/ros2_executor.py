@@ -33,7 +33,7 @@ def __kill_node():
 
 def wei_ros2_service_callback(step: Step, **kwargs):
     try:
-        import rclpy
+        import rclpy  # noqa
     except ImportError:
         print("No RCLPY found... Cannot use ROS2")
 
@@ -64,14 +64,14 @@ def wei_ros2_service_callback(step: Step, **kwargs):
 
 def wei_ros2_camera_callback(step: Step, **kwargs):
     try:
-        import rclpy
+        import rclpy  # noqa
     except ImportError:
         print("No RCLPY found... Cannot use ROS2")
 
     __init_rclpy()
     module: Module = kwargs["step_module"]
 
-    res = wei_execution_node.capture_image(
+    res = wei_execution_node.capture_image(  # noqa
         node_name=module.config["ros_node"],
         image_name=step.args["file_name"],
         path=step.args["save_location"],

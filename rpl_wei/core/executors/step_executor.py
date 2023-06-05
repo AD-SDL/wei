@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import logging
-from typing import Callable, List, Optional
+from typing import Optional
 
 from rpl_wei.core.data_classes import Module, Step, StepStatus
 from rpl_wei.core.executors.rest_executor import wei_rest_callback
@@ -16,7 +16,7 @@ def silent_callback(step: Step, **kwargs):
     return "a", "b", "c"
 
 
-### Executor mapping ###
+# Executor mapping
 class Executor_Map:
     function = {
         "wei_ros_node": wei_ros2_service_callback,

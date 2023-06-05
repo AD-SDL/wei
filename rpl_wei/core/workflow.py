@@ -6,10 +6,10 @@ from devtools import debug
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
+from rpl_wei.core.executors.step_executor import StepExecutor
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.validators import ModuleValidator, StepValidator
 from rpl_wei.core.workcell import Workcell
-from rpl_wei.core.executors.step_executor import StepExecutor
 
 
 class WorkflowRunner:

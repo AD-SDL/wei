@@ -12,8 +12,8 @@ from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
 from rpl_wei.core.data_classes import Workcell
-from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.experiment import start_experiment
+from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
@@ -127,10 +127,10 @@ async def log_experiment(experiment_id: str, log_value: str):
     logger.info(log_value)
 
 
-@app.post("/log/return/{experiment_id}")
-async def log_experiment(experiment_id: str, log_value: str):
-    logger = WEI_Logger.get_logger("log_" + experiment_id)
-    logger.info(log_value)
+# @app.post("/log/return/{experiment_id}")
+# async def log_experiment(experiment_id: str, log_value: str):
+#     logger = WEI_Logger.get_logger("log_" + experiment_id)
+#     logger.info(log_value)
 
 
 @app.post("/experiment")
