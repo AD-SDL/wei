@@ -2,7 +2,7 @@
 import logging
 from typing import Optional, Tuple
 
-from rpl_wei.data_classes import SimpleModule, Step
+from rpl_wei.core.data_classes import SimpleModule, Step
 
 
 class StepValidator:

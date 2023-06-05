@@ -277,3 +277,6 @@ $RECYCLE.BIN/
 
 # Ignore logs folder that is created if user does not specify
 logs/
+
+# ignore redis dump file
+**/*.rbd

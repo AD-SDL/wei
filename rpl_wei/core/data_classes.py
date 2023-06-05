@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
 
+import ulid
 import yaml
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, validator
@@ -139,6 +140,9 @@ class SimpleModule(BaseModel):
 class Step(BaseModel):
     """Container for a single step"""
 
+    class Config:
+        arbitrary_types_allowed = True
+
     name: str
     """Name of step"""
     module: str
@@ -155,7 +159,7 @@ class Step(BaseModel):
     """Other steps required to be done before this can start"""
     priority: Optional[int]
     """For scheduling"""
-    id: UUID = Field(default_factory=uuid4)
+    id: ulid.ULID = Field(default_factory=ulid.new)
     """ID of step"""
     comment: Optional[str]
     """Notes about step"""
@@ -192,7 +196,7 @@ class Metadata(BaseModel):
     """Version of interface used"""
 
 
-class WorkCell(BaseModel):
+class Workcell(BaseModel):
     """Container for information in a workcell"""
 
     modules: List[Module]
@@ -214,8 +218,6 @@ class Workflow(BaseModel):
     """Information about the flow"""
     payload: Optional[Dict]
     """input information for a given workflow run"""
-    id: UUID = Field(default_factory=uuid4)
-    """An instance of a workflow will be assigned a run_id"""
 
 
 class StepStatus(Enum):

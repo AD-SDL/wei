@@ -22,14 +22,6 @@ For more details and specific examples of how to use rpl_wei, please see our [do
 
 ## Installation
 
-### Install latest version with PyPI 
-
-```
-git clone https://github.com/AD-SDL/rpl_wei.git
-pip3 install -r requirements/requirements.txt
-pip3 install .
-``` 
-
 ### Development install 
 ```
 conda create -n rpl-wei python=3.9
@@ -42,14 +34,26 @@ pip3 install -e .
 
 ## Testing
 
-Create unit tests under the `test` directory. Do not submit the code until all the tests passed. Run all the tests by entering the `test` directory and the following command.
-```
-python -m unittest test_rpl_wei.TestWEI
-```
+TODO under new design
 
 ## Usage
 
-TODO
+### Starting the server
+*\*Requires three terminals\**
+1. Start redis. I have a `redis.conf` file in the root of the repo. You can use it with `envsubst` to replace the environment variables with their values as redis does not support environment variables in the config file.
+```
+envsubst < redis.conf | redis-server -
+```
+1. Start rq worker
+```
+python -m rpl_wei.processing.worker
+```
+1. Start the server
+```
+python -m rpl_wei.server --workcell tests/test_pcr_workcell.yaml
+```
+TODO: look at something like `systemd`, `supervisord`, or `Docker` to manage the processes
+
 
 ## Contributing
 

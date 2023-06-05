@@ -1,6 +1,15 @@
 config: { "search_index": "endpoint" }
 
 modules:
+
+  - name: test
+    model: test
+    type: silent_callback
+    config:
+      foo: bar
+    positions:
+      final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
   - name: pf400
     model: pf400
     type: wei_ros_node
@@ -63,5 +72,14 @@ modules:
       ros_node: hidex rosnode
     positions:
       default: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+  - name: camera_module
+    model: camera
+    type: wei_ros_camera
+    config:
+      ros_node: "/std_ns/camera_module"
+    positions:
+      plate_station: [90.597,26.416, 66.422, 714.811, 81.916, 995.074]
+
 
 search_index: abcd-efgh-ijkl-mnop

@@ -95,7 +95,6 @@ flowdef:
   - name: Peal
     module: peeler
     command: peel
-    args: {}
     checks: null
     comment: null
 
