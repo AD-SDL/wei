@@ -33,12 +33,14 @@ def run_workflow_task(
     workflow_def,
     parsed_payload,
     workcell_def,
+    silent,
     job_id: Optional[Union[ulid.ULID, str]] = None,
+    
 ):
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
     workflow_runner = WorkflowRunner(
-        yaml.safe_load(workflow_def), experiment_id=experiment_id, run_id=job_id
+        yaml.safe_load(workflow_def), experiment_id=experiment_id, run_id=job_id, silent = silent
     )
 
     # Run validation

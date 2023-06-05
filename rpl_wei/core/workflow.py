@@ -19,9 +19,10 @@ class WorkflowRunner:
         experiment_id: str,
         run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
+        silent: bool = False
     ) -> None:
         self.workflow = WorkflowData(**workflow_def)
-
+        self.silent = silent
         # Setup validators
         self.module_validator = ModuleValidator()
         self.step_validator = StepValidator()
@@ -57,6 +58,7 @@ class WorkflowRunner:
         workcell: Workcell,
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
+        silent: bool = False,
     ) -> List[Dict[str, Any]]:
          steps = []
          for step in self.workflow.flowdef:
@@ -73,7 +75,8 @@ class WorkflowRunner:
                     if hasattr(value, "__contains__") and "positions" in value:
                         module_name = value.split(".")[0]
                         module = workcell.find_step_module(module_name)
-
+                        if silent:
+                            module.type = "silent_callback"
                         if not module:
                             raise ValueError(
                                 f"Module positon not found for module '{module_name}' and identifier '{value}'"
