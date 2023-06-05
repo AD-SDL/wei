@@ -6,7 +6,7 @@ from test_base import TestWEI_Base
 
 class TestExecutors(TestWEI_Base):
     def test_validators(self):
-        from rpl_wei.executors import StepExecutor, StepStatus
+        from rpl_wei.executors.step_executor import StepExecutor, StepStatus
         from rpl_wei.core.workflow import WorkflowRunner
 
         workflow_config_path = Path("tests/test_pcr_workflow.yaml")
