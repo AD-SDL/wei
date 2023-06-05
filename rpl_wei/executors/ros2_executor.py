@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 from rpl_wei.core.data_classes import Module, Step
-import rclpy
+
 wei_execution_node = None
 
 
