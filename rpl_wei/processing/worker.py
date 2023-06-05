@@ -2,10 +2,10 @@ import json
 import time
 from typing import Optional, Union
 
+import ulid
 import yaml
 from redis import Redis
 from rq import Queue
-import ulid
 
 from rpl_wei.core.workcell import Workcell
 from rpl_wei.core.workflow import WorkflowRunner

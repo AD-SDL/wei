@@ -1,8 +1,8 @@
 import json
-from pathlib import Path
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from pathlib import Path
+from typing import Any, Dict
 
 import rq
 import ulid
@@ -94,7 +94,9 @@ async def process_job(
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
     experiment_id = ulid.new().str
 
-    return submit_job(experiment_id, workflow_content_str, parsed_payload, simulate=simulate)
+    return submit_job(
+        experiment_id, workflow_content_str, parsed_payload, simulate=simulate
+    )
 
 
 @app.post("/job/{experiment_id}")
@@ -109,7 +111,9 @@ async def process_job_with_id(
 
     parsed_payload = json.loads(payload)
 
-    return submit_job(experiment_id, workflow_content_str, parsed_payload, simulate=simulate)
+    return submit_job(
+        experiment_id, workflow_content_str, parsed_payload, simulate=simulate
+    )
 
 
 @app.get("/job/{job_id}")

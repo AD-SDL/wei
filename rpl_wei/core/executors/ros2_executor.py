@@ -64,7 +64,7 @@ def wei_ros2_camera_callback(step: Step, **kwargs):
     __init_rclpy()
     module: Module = kwargs["step_module"]
 
-    res = wei_execution_node.capture_image(
+    res = wei_execution_node.capture_image(  # noqa
         node_name=module.config["ros_node"],
         image_name=step.args["file_name"],
         path=step.args["save_location"],

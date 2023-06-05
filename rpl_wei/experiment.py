@@ -1,6 +1,7 @@
-import requests
 from pathlib import Path
 from typing import Dict, Optional
+
+import requests
 
 
 class Experiment:
