@@ -61,7 +61,7 @@ def start_experiment(
     experiment_name,
     experiment_id: Optional[Union[ulid.ULID, str]] = None
 ):
-    log_dir = DATA_DIR / "runs" /  experiment_id
+    log_dir = DATA_DIR / "runs" / experiment_id
     result_dir = log_dir / "results"
     exp_log = WEI_Logger.get_logger("log_"+str(experiment_id), log_dir)
     exp_log.info("EXPERIMENT:START: " + str(experiment_name) + ", EXPERIMENT ID: " + str(experiment_id))
