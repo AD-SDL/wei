@@ -12,5 +12,7 @@
     "wei_rest_node": [
         "url",
         "auth"
+    ],
+    "silent_callback": [
     ]
 }

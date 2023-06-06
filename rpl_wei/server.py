@@ -12,6 +12,8 @@ from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
 from rpl_wei.core.data_classes import Workcell
+from rpl_wei.core.experiment import start_experiment
+from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
@@ -82,9 +84,33 @@ def submit_job(
         return JSONResponse(content=response_content)
 
 
+def start_exp(experiment_id: str, experiment_name: str):
+    base_response_content = {
+        "experiment_id": experiment_id,
+        "experiment_name": experiment_name,
+    }
+    try:
+        job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
+        jobs_ahead = len(task_queue.jobs)
+        response_content = {
+            "status": "success",
+            "jobs_ahead": jobs_ahead,
+            "job_id": job.get_id(),
+            **base_response_content,
+        }
+        return JSONResponse(content=response_content)
+    except Exception as e:
+        response_content = {
+            "status": "failed",
+            "error": str(e),
+            **base_response_content,
+        }
+        return JSONResponse(content=response_content)
+
+
 @app.post("/job")
 async def process_job(
-    workflow: UploadFile = File(...), payload: str = Form("{}"), simulate: bool = False
+    workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = "", simulate: bool = False
 ):
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
@@ -97,6 +123,26 @@ async def process_job(
     return submit_job(
         experiment_id, workflow_content_str, parsed_payload, simulate=simulate
     )
+
+
+
+@app.post("/log/{experiment_id}")
+async def log_experiment(experiment_id: str, log_value: str):
+    logger = WEI_Logger.get_logger("log_" + experiment_id)
+    logger.info(log_value)
+
+
+# @app.post("/log/return/{experiment_id}")
+# async def log_experiment(experiment_id: str, log_value: str):
+#     logger = WEI_Logger.get_logger("log_" + experiment_id)
+#     logger.info(log_value)
+
+
+@app.post("/experiment")
+async def process_exp(experiment_name: str, experiment_id: str):
+    # Decode the bytes object to a string
+    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
+    return start_exp(experiment_id, experiment_name)
 
 
 @app.post("/job/{experiment_id}")

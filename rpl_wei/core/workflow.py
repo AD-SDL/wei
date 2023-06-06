@@ -6,7 +6,7 @@ from devtools import debug
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
-from rpl_wei.core.executors import StepExecutor
+from rpl_wei.core.executors.step_executor import StepExecutor
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.validators import ModuleValidator, StepValidator
 from rpl_wei.core.workcell import Workcell
@@ -19,9 +19,10 @@ class WorkflowRunner:
         experiment_id: str,
         run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
+        silent: bool = False,
     ) -> None:
         self.workflow = WorkflowData(**workflow_def)
-
+        self.silent = silent
         # Setup validators
         self.module_validator = ModuleValidator()
         self.step_validator = StepValidator()
@@ -35,9 +36,9 @@ class WorkflowRunner:
         else:
             self.run_id = ulid.new()
         self.log_dir = DATA_DIR / "runs" / experiment_id / str(self.run_id)
-        self.result_dir = self.log_dir / "results"
+        # self.result_dir = self.log_dir / "results"
         self.log_dir.mkdir(parents=True, exist_ok=True)
-        self.result_dir.mkdir(parents=True, exist_ok=True)
+        # self.result_dir.mkdir(parents=True, exist_ok=True)
         self.logger = WEI_Logger.get_logger(
             "runLogger",
             log_dir=self.log_dir,
@@ -54,7 +55,7 @@ class WorkflowRunner:
         for step in self.workflow.flowdef:
             self.step_validator.check_step(step=step)
 
-    def run_flow(
+    def init_flow(
         self,
         workcell: Workcell,
         callbacks: Optional[List[Any]] = None,
@@ -65,6 +66,7 @@ class WorkflowRunner:
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # Start executing the steps
+        steps = []
         for step in self.workflow.flowdef:
             # get module information from workcell file
             step_module = workcell.find_step_module(step.module)
@@ -79,7 +81,8 @@ class WorkflowRunner:
                     if hasattr(value, "__contains__") and "positions" in value:
                         module_name = value.split(".")[0]
                         module = workcell.find_step_module(module_name)
-
+                        if silent:
+                            module.type = "silent_callback"
                         if not module:
                             raise ValueError(
                                 f"Module positon not found for module '{module_name}' and identifier '{value}'"
@@ -123,7 +126,22 @@ class WorkflowRunner:
                 "callbacks": callbacks,
                 "simulate": simulate,
             }
-            self.executor.execute_step(**arg_dict)
+            steps.append(arg_dict)
+        return steps
+
+    def run_flow(
+        self,
+        workcell: Workcell,
+        callbacks: Optional[List[Any]] = None,
+        payload: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Executes the flowdef commmands"""
+        # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
+
+        # Start executing the steps
+        steps = self.init_flow(workcell, callbacks, payload)
+        for step in steps:
+            self.executor.execute_step(**step)
 
         return {
             "run_dir": str(self.log_dir),

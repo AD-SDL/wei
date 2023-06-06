@@ -2,18 +2,19 @@
 from rpl_wei.core.data_classes import Module, Step
 
 try:
-    use_rclpy = True
     import rclpy
 except ImportError:
-    use_rclpy = False
     print("No RCLPY found... Cannot use ROS2")
+    rclpy = None
 
-wei_execution_node = None
+try:
+    from wei_executor.weiExecutorNode import weiExecNode
+except ImportError:
+    wei_execution_node = None
 
 
 def __init_rclpy():
     global wei_execution_node
-    from wei_executor.weiExecutorNode import weiExecNode
 
     if use_rclpy:
         if not rclpy.utilities.ok():
@@ -24,12 +25,19 @@ def __init_rclpy():
             print("RCLPY OK ")
 
 
+
 def __kill_node():
     global wei_execution_node
     print("killing node")
     wei_execution_node.destroy_node()
     rclpy.shutdown()
 
+
+def wei_ros2_service_callback(step: Step, **kwargs):
+    try:
+        import rclpy  # noqa
+    except ImportError:
+        print("No RCLPY found... Cannot use ROS2")
 
 def wei_ros2_service_callback(step: Step, **kwargs):
     assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
@@ -59,7 +67,10 @@ def wei_ros2_service_callback(step: Step, **kwargs):
 
 
 def wei_ros2_camera_callback(step: Step, **kwargs):
-    assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
+    try:
+        import rclpy  # noqa
+    except ImportError:
+        print("No RCLPY found... Cannot use ROS2")
 
     __init_rclpy()
     module: Module = kwargs["step_module"]
@@ -71,4 +82,8 @@ def wei_ros2_camera_callback(step: Step, **kwargs):
     )
     __kill_node()
     # TODO: process res
-    return "action_response", "action_msg", "action_log"
+    return (
+        "StepStatus.SUCCEEDED",
+        str({"img_path": step.args["save_location"] + "/" + step.args["file_name"]}),
+        "action_log",
+    )
