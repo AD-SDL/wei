@@ -13,10 +13,14 @@ from rpl_wei.core.executors.tcp_executor import wei_tcp_callback
 
 def silent_callback(step: Step, **kwargs):
     print(step)
-    return "a", "b", "c"
+    return "silent", step.command, ""
 
 
-# Executor mapping
+########################
+#   Executor mapping   #
+########################
+
+
 class Executor_Map:
     function = {
         "wei_ros_node": wei_ros2_service_callback,
@@ -27,9 +31,6 @@ class Executor_Map:
     }
 
 
-silent = False
-
-
 class StepExecutor:
     """Class to handle executing steps"""
 
@@ -37,7 +38,9 @@ class StepExecutor:
         self,
         step: Step,
         step_module: Module,
+        callbacks: Optional[List[Callable]] = None,
         logger: Optional[logging.Logger] = None,
+        simulate: bool = False,
     ) -> StepStatus:
         """Executes a single step from a workflow
 
@@ -59,7 +62,7 @@ class StepExecutor:
         logger.debug(step)
 
         # map the correct executor function to the step_module
-        if silent:
+        if simulate:
             action_response, action_msg, action_log = Executor_Map.function[
                 "silent_callback"
             ](step, step_module=step_module)

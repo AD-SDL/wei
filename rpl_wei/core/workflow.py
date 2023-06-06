@@ -60,8 +60,12 @@ class WorkflowRunner:
         workcell: Workcell,
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
-        silent: bool = False,
-    ) -> List[Dict[str, Any]]:
+        simulate: bool = False,
+    ) -> Dict[str, Any]:
+        """Executes the flowdef commmands"""
+        # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
+
+        # Start executing the steps
         steps = []
         for step in self.workflow.flowdef:
             # get module information from workcell file
@@ -119,7 +123,8 @@ class WorkflowRunner:
                 "step": step,
                 "step_module": step_module,
                 "logger": self.logger,
-                # "callbacks": callbacks,
+                "callbacks": callbacks,
+                "simulate": simulate,
             }
             steps.append(arg_dict)
         return steps

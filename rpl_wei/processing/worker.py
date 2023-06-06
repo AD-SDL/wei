@@ -35,6 +35,7 @@ def run_workflow_task(
     workcell_def,
     silent,
     job_id: Optional[Union[ulid.ULID, str]] = None,
+    simulate: bool = False,
 ):
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
@@ -52,21 +53,24 @@ def run_workflow_task(
     exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
 
     # Run workflow
+
     exp_log.info(
         "WEI:WORKFLOW:RUN: "
         + str(workflow_runner.workflow.metadata.name)
         + ", RUN ID: "
         + str(job_id)
     )
-    result_payload = workflow_runner.run_flow(workcell, payload=parsed_payload)
+    result_payload = workflow_runner.run_flow(
+        workcell, payload=parsed_payload, simulate=simulate
+    )
+    if simulate:
+        time.sleep(5)
     exp_log.info(
         "WEI:WORKFLOW:COMPLETE: "
         + str(workflow_runner.workflow.metadata.name)
         + ",  RUN ID: "
         + str(job_id)
     )
-    time.sleep(5)
-
     print(f"Result payload:\t{json.dumps(result_payload)}")
 
     return result_payload

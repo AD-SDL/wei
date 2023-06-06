@@ -48,7 +48,7 @@ def submit_job(
     experiment_id: str,
     workflow_content_str: str,
     parsed_payload: Dict[str, Any],
-    silent: bool,
+    simulate: bool,
 ):
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
@@ -63,8 +63,8 @@ def submit_job(
             workflow_content_str,
             parsed_payload,
             workcell.__dict__,
-            silent,
             job_id,
+            simulate,
             job_id=job_id,
         )
         jobs_ahead = len(task_queue.jobs)
@@ -110,7 +110,7 @@ def start_exp(experiment_id: str, experiment_name: str):
 
 @app.post("/job")
 async def process_job(
-    workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = ""
+    workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = "", simulate: bool = False
 ):
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
@@ -118,7 +118,12 @@ async def process_job(
     parsed_payload = json.loads(payload)
 
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    return submit_job(experiment_id, workflow_content_str, parsed_payload)
+    experiment_id = ulid.new().str
+
+    return submit_job(
+        experiment_id, workflow_content_str, parsed_payload, simulate=simulate
+    )
+
 
 
 @app.post("/log/{experiment_id}")
@@ -142,14 +147,19 @@ async def process_exp(experiment_name: str, experiment_id: str):
 
 @app.post("/job/{experiment_id}")
 async def process_job_with_id(
-    experiment_id: str, workflow: UploadFile = File(...), payload: str = Form("{}")
+    experiment_id: str,
+    workflow: UploadFile = File(...),
+    payload: str = Form("{}"),
+    simulate: bool = False,
 ):
     workflow_content = await workflow.read()
     workflow_content_str = workflow_content.decode("utf-8")
 
     parsed_payload = json.loads(payload)
 
-    return submit_job(experiment_id, workflow_content_str, parsed_payload)
+    return submit_job(
+        experiment_id, workflow_content_str, parsed_payload, simulate=simulate
+    )
 
 
 @app.get("/job/{job_id}")
