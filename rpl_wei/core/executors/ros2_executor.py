@@ -16,14 +16,13 @@ except ImportError:
 def __init_rclpy():
     global wei_execution_node
 
-    if use_rclpy:
+    if True:  # use_rclpy:
         if not rclpy.utilities.ok():
             rclpy.init()
             print("Started RCLPY")
             wei_execution_node = weiExecNode()
         else:
             print("RCLPY OK ")
-
 
 
 def __kill_node():
@@ -34,13 +33,7 @@ def __kill_node():
 
 
 def wei_ros2_service_callback(step: Step, **kwargs):
-    try:
-        import rclpy  # noqa
-    except ImportError:
-        print("No RCLPY found... Cannot use ROS2")
-
-def wei_ros2_service_callback(step: Step, **kwargs):
-    assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
+    # assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
     __init_rclpy()
 
     module: Module = kwargs["step_module"]

@@ -110,25 +110,25 @@ def start_exp(experiment_id: str, experiment_name: str):
 
 @app.post("/job")
 async def process_job(
-    workflow: UploadFile = File(...), payload: str = Form("{}"), experiment_id: str = "", simulate: bool = False
+    workflow: UploadFile = File(...),
+    payload: str = "{}",
+    experiment_id: str = "",
+    simulate: bool = False,
 ):
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
+    print(payload)
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
-
-    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    experiment_id = ulid.new().str
 
     return submit_job(
         experiment_id, workflow_content_str, parsed_payload, simulate=simulate
     )
 
 
-
 @app.post("/log/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
-    logger = WEI_Logger.get_logger("log_" + experiment_id)
+    logger = WEI_Logger.get_logger("log_" + experiment_id, Path("log_" + experiment_id))
     logger.info(log_value)
 
 

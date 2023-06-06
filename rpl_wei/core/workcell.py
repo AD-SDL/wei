@@ -11,7 +11,6 @@ class Workcell:
     def __init__(
         self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
     ) -> None:
-
         self.workcell = WorkcellData(**workcell_def)
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -27,7 +26,6 @@ class Workcell:
         return self.workcell.__repr__()
 
     def find_step_module(self, step_module: str) -> Optional[Module]:
-
         for module in self.workcell.modules:
             module_name = module.name
             if module_name == step_module:

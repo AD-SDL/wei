@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import logging
-from typing import Optional
+from typing import Optional, List, Callable
 
 from rpl_wei.core.data_classes import Module, Step, StepStatus
 from rpl_wei.core.executors.rest_executor import wei_rest_callback
@@ -27,7 +27,7 @@ class Executor_Map:
         "wei_ros_camera": wei_ros2_camera_callback,
         "wei_tcp_node": wei_tcp_callback,
         "wei_rest_node": wei_rest_callback,
-        "silent_callback": silent_callback,
+        "simulate_callback": silent_callback,
     }
 
 
@@ -64,7 +64,7 @@ class StepExecutor:
         # map the correct executor function to the step_module
         if simulate:
             action_response, action_msg, action_log = Executor_Map.function[
-                "silent_callback"
+                "simulate_callback"
             ](step, step_module=step_module)
         else:
             action_response, action_msg, action_log = Executor_Map.function[
