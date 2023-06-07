@@ -15,7 +15,7 @@ from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.experiment import start_experiment
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.processing.worker import run_workflow_task, task_queue
-
+from rpl_wei.core import DATA_DIR
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
 # TODO consider sub-applications for different parts of the server (e.g. /job, /queue, /data, etc.)
@@ -128,7 +128,8 @@ async def process_job(
 
 @app.post("/log/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
-    logger = WEI_Logger.get_logger("log_" + experiment_id, Path("log_" + experiment_id))
+    log_dir = DATA_DIR / "runs" / experiment_id
+    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
 
 

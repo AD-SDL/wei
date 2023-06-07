@@ -69,49 +69,6 @@ class Experiment:
 
         return self._return_response(response)
 
-    def log_decision(self, dec_name: str, dec_value):
-        url = f"{self.url}/log/{self.experiment_id}"
-
-        response = requests.post(
-            url,
-            params={
-                "log_value": "Checked " + dec_name + " with result " + str(dec_value)
-            },
-        )
-        return self._return_response(response)
-
-    def start_loop(self, loop_name: str):
-        url = f"{self.url}/log/{self.experiment_id}"
-        self.loops.append(loop_name)
-        response = requests.post(
-            url,
-            params={"log_value": "LOOP:START: " + loop_name},
-        )
-        return self._return_response(response)
-
-    def end_loop(self):
-        url = f"{self.url}/log/{self.experiment_id}"
-        loop_name = self.loops.pop()
-        response = requests.post(url, params={"log_value": "LOOP:END: " + loop_name})
-        return self._return_response(response)
-
-    def loop_check(self, condition, value):
-        url = f"{self.url}/log/{self.experiment_id}"
-        loop_name = self.loops[-1]
-        response = requests.post(
-            url,
-            params={
-                "log_value": "LOOP:CHECK CONDITION: "
-                + loop_name
-                + ", CONDITION: "
-                + condition
-                + ", RESULT: "
-                + str(value)
-            },
-        )
-
-        return self._return_response(response)
-
     def query_job(self, job_id: str):
         url = f"{self.url}/job/{job_id}"
         response = requests.get(url)
