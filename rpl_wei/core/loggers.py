@@ -36,7 +36,6 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
-
         if not logging.getLogger(log_name).hasHandlers():
             logger = WEI_Logger._create_logger(
                 log_name,
@@ -44,7 +43,6 @@ class WEI_Logger:
                 log_level,
             )
         else:
-
             logger = logging.getLogger(log_name)
             # for handler in logger.handlers:
             #     logger.removeHandler(handler)
@@ -68,7 +66,6 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
-
         if not logging.getLogger(log_name).hasHandlers():
             logger = WEI_Logger._create_logger(
                 log_name,
@@ -76,7 +73,6 @@ class WEI_Logger:
                 log_level,
             )
         else:
-
             logger = logging.getLogger(log_name)
             # for handler in logger.handlers:
             #     logger.removeHandler(handler)

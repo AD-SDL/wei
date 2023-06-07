@@ -16,7 +16,7 @@ from rpl_wei.core.workflow import WorkflowRunner
 # TODO error handling for tasks, how to propogate back to client, and retry for specific types of errors
 
 redis_conn = Redis()
-task_queue = Queue(connection=redis_conn)
+task_queue = Queue(connection=redis_conn, default_timeout=-1)
 
 """
 Things to do in worker:
@@ -33,7 +33,6 @@ def run_workflow_task(
     workflow_def,
     parsed_payload,
     workcell_def,
-    silent,
     job_id: Optional[Union[ulid.ULID, str]] = None,
     simulate: bool = False,
 ):
@@ -43,7 +42,7 @@ def run_workflow_task(
         yaml.safe_load(workflow_def),
         experiment_id=experiment_id,
         run_id=job_id,
-        silent=silent,
+        simulate=simulate,
     )
 
     # Run validation
