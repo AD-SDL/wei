@@ -4,12 +4,12 @@ Quickstart Guide
 Setting Up
 ----------
 
-#. WEI is still early in development, for installation instructions, please visit the `Github repository <https://github.com/AD-SDL/rpl_wei#development-install>`_. 
+#. To install the system and run the server, please follow the instructions `here <https://github.com/AD-SDL/rpl_wei#development-install>`_. 
 
 Creating a Workflow
 -------------------
 
-Workflows in ``rpl_wei`` are defined in YAML files. The structure of a workflow YAML file is as follows:
+Once you have the server up and running, it is time to define a Workflow! Workflows in ``rpl_wei`` are defined in YAML files. The structure of a workflow YAML file is as follows:
 
 - ``metadata``: Information about the workflow such as its name, author, version, and general info.
 - ``workcell``: The path to the workcell configuration file (another YAML file).
@@ -44,7 +44,7 @@ Here's a sample workflow YAML file:
 Running a Workflow
 ------------------
 
-To execute a workflow, you need to use the ``WEI`` class from ``rpl_wei`` and provide the path to your 
+To execute a workflow, you need to use the ``Experiment`` class from ``rpl_wei`` and provide the path to your 
 workflow file. Here's a basic script to run a workflow:
 
 .. code-block:: python
@@ -53,24 +53,19 @@ workflow file. Here's a basic script to run a workflow:
 
    import logging
    from pathlib import Path
-   from rpl_wei.wei_workcell_base import WEI
+   from rpl_wei.exp_app import Experiment
 
    def main():
-       wf_path = Path('./path_to_workflow.yaml')
-
-       wei_client = WEI(
-           wf_config=wf_path.resolve(), 
-           workcell_log_level=logging.ERROR, 
-           workflow_log_level=logging.ERROR,
-       )
-
-       payload={}
-       run_info = wei_client.run_workflow(payload=payload)
+      exp = Experiment('127.0.0.1', '8000', 'Test_Experiment')
+      exp.register_exp() #parser
+      payload={}
+      test = experiment.run_job(Path('path_to_workflow.yaml'),
+      payload=payload, simulate=True)
 
    if __name__ == "__main__":
        main()
 
-The above script will run the workflow defined in ``path_to_workflow.yaml``.
+The above script will run the workflow defined in ``path_to_workflow.yaml``. The simulate param
 
 Workcell Configuration
 ----------------------

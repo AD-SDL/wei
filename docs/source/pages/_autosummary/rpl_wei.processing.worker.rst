@@ -1,9 +1,15 @@
-rpl\_wei.processing.worker
+﻿rpl\_wei.processing.worker
 ==========================
 
 .. automodule:: rpl_wei.processing.worker
 
    
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      task_queue
    
    
 

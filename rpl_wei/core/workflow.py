@@ -62,7 +62,23 @@ class WorkflowRunner:
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
     ) -> Dict[str, Any]:
-        """Executes the flowdef commmands"""
+        """Pulls the workcell and builds a list of dictionary steps to be executed
+
+        Parameters
+        ----------
+        workcell : str
+           The Workcell data file loaded in from the workcell yaml file
+        
+        payload: bool
+            The input to the workflow
+        
+        simulate: bool
+            Whether or not to use real robots
+
+        Returns
+        -------
+        Dict
+           The JSON portion of the response from the server"""
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # Start executing the steps
