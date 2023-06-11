@@ -227,3 +227,54 @@ A Python program defines the process required to run an experiment. E.g., see `c
 * First, if needed, `cp_wf_newplate.yaml`
 * Then, the workflow given above, `cp_wf_mixcolor.yaml`
 * Finally, as needed, `cp_wf_trashplate.yaml`
+
+The experiment library also gives access to Event functions, which help to create a log of all functions and workflows run during the experiment. The code below shows a simplified version of the color picker, with experiment event annottations, and then the log produced. 
+
+.. code-block:: python
+
+   #!/usr/bin/env python3
+   from pathlib import Path
+   from rpl_wei.exp_app import Experiment
+
+   def main():
+      #Generates the experiment and assigns it an ID
+      exp = Experiment('127.0.0.1', '8000', 'Color_Picker')
+      #Logs the Experiment with the server
+      exp.register_exp() #parser
+      payload={}
+      #Logs the start of the main loop
+      exp.events.loop_start("Main Loop")
+      new_plate = True
+      exp_budget = 8
+      pop_size = 4
+      num_exps = 0
+      while num_exps + pop_size <= exp_budget:
+        #log the decision to get a new plate
+        exp.events.decision("Need New Plate", new_plate)
+        if (new_plate):
+            #Run the WEI workflow to get a new Plate
+            test = exp.run_job(Path('new_plate.yaml'),
+            payload=payload)
+            new_plate=False
+        #Log and note the solver run    
+        exp.events.log_local_compute("solver.run_iteration")
+        solver.run_iteration()
+        #Run the WEI Workflow to mix the colors
+        test = exp.run_job(Path('mix_colors.yaml'),
+        payload=payload)
+        #Log and note pulling the colors in  
+        exp.events.log_local_compute("get_colors_from_file")
+        get_colors_from_file(test.result_file)
+        #Publish the Color Picker data to a remote portal
+        publish_iter(test)
+        
+        num_exps += pop_size
+        #Mark the end of a loop iteration while checking the loop condition
+        exp.events.loop_check("Sufficient Wells In Well Plate", num_exps + pop_size <= exp_budget)
+    exp.events.loop_end()
+   if __name__ == "__main__":
+       main()
+
+This produces a log as below, which will in the future be made compatible with Kafka:
+
+.. image:: ../assets/Log.png
