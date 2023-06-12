@@ -12,18 +12,18 @@ def start_experiment(
     """Create the files for logging and results of the system and log the start of the Experiment
 
 
-        Parameters
-        ----------
-        experiment_name : str
-            The user-created name of the experiment
-        
-        value:  ulid, str
-            the auto-created ulid of the experiment
+    Parameters
+    ----------
+    experiment_name : str
+        The user-created name of the experiment
 
-        Returns
-        -------
-        Dict
-           A dictionary with the experiment log_dir value"""
+    value:  ulid, str
+        the auto-created ulid of the experiment
+
+    Returns
+    -------
+    Dict
+       A dictionary with the experiment log_dir value"""
     log_dir = DATA_DIR / "runs" / experiment_id
     result_dir = log_dir / "results"
     exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)

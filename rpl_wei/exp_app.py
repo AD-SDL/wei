@@ -1,14 +1,16 @@
+import json
 from pathlib import Path
 from typing import Dict, Optional
 
 import requests
 import ulid
-import json
+
 from rpl_wei.core.events import Events
 
 
 class Experiment:
     """Methods for the running and logging of a WEI Experiment including running WEI workflows and logging"""
+
     def __init__(
         self,
         server_addr: str,
@@ -40,16 +42,16 @@ class Experiment:
         payload: Optional[Dict] = None,
         simulate: Optional[bool] = False,
     ):
-        """Submits a workflow file to the server to be executed, and logs it in the overall event log. 
+        """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
         Parameters
         ----------
         workflow_file : str
            The path to the workflow file to be executed
-        
+
         payload: bool
             The input to the workflow
-        
+
         simulate: bool
             Whether or not to use real robots
 
@@ -103,7 +105,7 @@ class Experiment:
         -------
         Dict
            The JSON portion of the response from the server"""
-        
+
         url = f"{self.url}/job/{job_id}"
         response = requests.get(url)
 

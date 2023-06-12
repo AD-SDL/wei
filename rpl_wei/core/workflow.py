@@ -68,10 +68,10 @@ class WorkflowRunner:
         ----------
         workcell : str
            The Workcell data file loaded in from the workcell yaml file
-        
+
         payload: bool
             The input to the workflow
-        
+
         simulate: bool
             Whether or not to use real robots
 

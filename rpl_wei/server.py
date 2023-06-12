@@ -11,11 +11,12 @@ from fastapi.responses import JSONResponse
 from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
+from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.experiment import start_experiment
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.processing.worker import run_workflow_task, task_queue
-from rpl_wei.core import DATA_DIR
+
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
 # TODO consider sub-applications for different parts of the server (e.g. /job, /queue, /data, etc.)
