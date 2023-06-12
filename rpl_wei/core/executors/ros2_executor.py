@@ -51,14 +51,18 @@ def wei_ros2_service_callback(step: Step, **kwargs):
         print("\n Callback message:")
         print(msg)
         print()
+        action_response = ""
+        action_msg = ""
+        action_log = ""
+    if rclpy: 
+        action_response, action_msg, action_log = wei_execution_node.send_wei_command(
+            msg["node"], msg["action_handle"], msg["action_vars"]
+        )
+        
+        if action_msg and kwargs.get("verbose", False):
+            print(action_msg)
 
-    action_response, action_msg, action_log = wei_execution_node.send_wei_command(
-        msg["node"], msg["action_handle"], msg["action_vars"]
-    )
-    if action_msg and kwargs.get("verbose", False):
-        print(action_msg)
-
-    __kill_node()
+        __kill_node()
     return action_response, action_msg, action_log
 
 
