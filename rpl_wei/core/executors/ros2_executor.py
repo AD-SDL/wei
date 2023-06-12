@@ -17,7 +17,7 @@ def __init_rclpy():
     """Placeholder"""
     global wei_execution_node
 
-    if True:  # use_rclpy:
+    if rclpy:  # use_rclpy:
         if not rclpy.utilities.ok():
             rclpy.init()
             print("Started RCLPY")
