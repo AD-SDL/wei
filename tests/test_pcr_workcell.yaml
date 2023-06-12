@@ -64,7 +64,7 @@ modules:
       ros_node: "/std_ns/ot2_pcr_alpha"                      
     positions:                                                    
       deck1_cooler: [247.999, -30.702, 275.835, 381.513, 124.830, -585.403] 
-      deck2: [163.230, -59.032, 270.965, 415.013, 129.982, -951.510]  
+      deck2:  [262.550, 20.608, 119.290, 662.570, 0.0, 574.367]  
 
   - name: ot2_growth_beta 
     type: wei_ros_node 
