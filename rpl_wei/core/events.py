@@ -1,11 +1,11 @@
-from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import requests
 
 
 class Events:
     """Registers Events during the Experiment execution both in a cloud log and eventually on Kafka"""
+
     def __init__(
         self,
         server_addr: str,
@@ -65,7 +65,7 @@ class Events:
         dec_name : str
             a description of the decision being made
         dec_value: bool
-            the boolean value of that decision. 
+            the boolean value of that decision.
         Returns
         -------
         Any
@@ -95,8 +95,8 @@ class Events:
         Any
            The JSON portion of the response from the server"""
 
-        return self._log_event("LOCAL:COMPUTE: "+ func_name)
-    
+        return self._log_event("LOCAL:COMPUTE: " + func_name)
+
     def log_globus_compute(self, func_name):
         """logs a function running using Globus Compute
 
@@ -109,8 +109,8 @@ class Events:
         -------
         Any
            The JSON portion of the response from the server"""
-        return self._log_event("GLOBUS:COMPUTE: "+ func_name)
-    
+        return self._log_event("GLOBUS:COMPUTE: " + func_name)
+
     def log_gladier(self, flow_name: str, flow_id):
         """logs a function running using Globus Gladier
 
@@ -125,8 +125,10 @@ class Events:
         -------
         Any
            The JSON portion of the response from the server"""
-        return self._log_event("GLOBUS:GLADIER:RUNFLOW:" + flow_name + " with ID " + flow_id)
-    
+        return self._log_event(
+            "GLOBUS:GLADIER:RUNFLOW:" + flow_name + " with ID " + flow_id
+        )
+
     def loop_start(self, loop_name: str):
         """logs the start of a loop during an Experimet
 
@@ -139,7 +141,6 @@ class Events:
         -------
         Any
            The JSON portion of the response from the server"""
-        url = f"{self.url}/log/{self.experiment_id}"
         self.loops.append(loop_name)
         return self._log_event("LOOP:START:" + loop_name)
 
@@ -151,10 +152,8 @@ class Events:
         -------
         Any
            The JSON portion of the response from the server"""
-        url = f"{self.url}/log/{self.experiment_id}"
         loop_name = self.loops.pop()
         return self._log_event("LOOP:END:" + loop_name)
-        
 
     def loop_check(self, condition, value):
         """Peeks the most recent loop from the loop stack and logs its completion
@@ -164,7 +163,7 @@ class Events:
         ----------
         condition : str
             A value describing the condition being checked to see if the loop will continue.
-        
+
         value: bool
             Whether or not the condition was met.
 
@@ -172,11 +171,12 @@ class Events:
         -------
         Any
            The JSON portion of the response from the server"""
-        url = f"{self.url}/log/{self.experiment_id}"
         loop_name = self.loops[-1]
-        return self._log_event("LOOP:CHECK CONDITION: "
-                + loop_name
-                + ", CONDITION: "
-                + condition
-                + ", RESULT: "
-                + str(value))
+        return self._log_event(
+            "LOOP:CHECK CONDITION: "
+            + loop_name
+            + ", CONDITION: "
+            + condition
+            + ", RESULT: "
+            + str(value)
+        )
