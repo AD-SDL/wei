@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
+from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.experiment import start_experiment
 from rpl_wei.core.loggers import WEI_Logger
@@ -128,7 +129,8 @@ async def process_job(
 
 @app.post("/log/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
-    logger = WEI_Logger.get_logger("log_" + experiment_id, Path("log_" + experiment_id))
+    log_dir = DATA_DIR / "runs" / experiment_id
+    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
 
 

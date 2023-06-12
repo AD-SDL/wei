@@ -1,13 +1,16 @@
+import json
 from pathlib import Path
 from typing import Dict, Optional
 
 import requests
 import ulid
-import json
+
 from rpl_wei.core.events import Events
 
 
 class Experiment:
+    """Methods for the running and logging of a WEI Experiment including running WEI workflows and logging"""
+
     def __init__(
         self,
         server_addr: str,
@@ -39,6 +42,23 @@ class Experiment:
         payload: Optional[Dict] = None,
         simulate: Optional[bool] = False,
     ):
+        """Submits a workflow file to the server to be executed, and logs it in the overall event log.
+
+        Parameters
+        ----------
+        workflow_file : str
+           The path to the workflow file to be executed
+
+        payload: bool
+            The input to the workflow
+
+        simulate: bool
+            Whether or not to use real robots
+
+        Returns
+        -------
+        Dict
+           The JSON portion of the response from the server, including the ID of the job as job_id"""
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/job"
         with open(workflow_file, "rb") as f:
@@ -57,6 +77,12 @@ class Experiment:
         return self._return_response(response)
 
     def register_exp(self):
+        """Initializes an Experiment, and creates its log files
+
+        Returns
+        -------
+        Dict
+           The JSON portion of the response from the server"""
         url = f"{self.url}/experiment"
 
         response = requests.post(
@@ -69,50 +95,17 @@ class Experiment:
 
         return self._return_response(response)
 
-    def log_decision(self, dec_name: str, dec_value):
-        url = f"{self.url}/log/{self.experiment_id}"
-
-        response = requests.post(
-            url,
-            params={
-                "log_value": "Checked " + dec_name + " with result " + str(dec_value)
-            },
-        )
-        return self._return_response(response)
-
-    def start_loop(self, loop_name: str):
-        url = f"{self.url}/log/{self.experiment_id}"
-        self.loops.append(loop_name)
-        response = requests.post(
-            url,
-            params={"log_value": "LOOP:START: " + loop_name},
-        )
-        return self._return_response(response)
-
-    def end_loop(self):
-        url = f"{self.url}/log/{self.experiment_id}"
-        loop_name = self.loops.pop()
-        response = requests.post(url, params={"log_value": "LOOP:END: " + loop_name})
-        return self._return_response(response)
-
-    def loop_check(self, condition, value):
-        url = f"{self.url}/log/{self.experiment_id}"
-        loop_name = self.loops[-1]
-        response = requests.post(
-            url,
-            params={
-                "log_value": "LOOP:CHECK CONDITION: "
-                + loop_name
-                + ", CONDITION: "
-                + condition
-                + ", RESULT: "
-                + str(value)
-            },
-        )
-
-        return self._return_response(response)
-
     def query_job(self, job_id: str):
+        """Checks on a workflow run using the id given
+         Parameters
+        ----------
+        job_id : str
+           The id returned by the run_job function for this run
+        Returns
+        -------
+        Dict
+           The JSON portion of the response from the server"""
+
         url = f"{self.url}/job/{job_id}"
         response = requests.get(url)
 
@@ -123,6 +116,6 @@ class Experiment:
         response = requests.get(url)
 
         if response.status_code != 200:
-            return {"http_error": response.status_code}
+            return {"http_err   or": response.status_code}
 
         return self._return_response(response)

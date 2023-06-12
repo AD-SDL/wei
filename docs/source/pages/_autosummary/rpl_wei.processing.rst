@@ -1,7 +1,7 @@
-﻿rpl\_wei
-========
+rpl\_wei.processing
+===================
 
-.. automodule:: rpl_wei
+.. automodule:: rpl_wei.processing
 
    
    
@@ -27,8 +27,5 @@
    :toctree:
    :recursive:
 
-   rpl_wei.core
-   rpl_wei.exp_app
-   rpl_wei.processing
-   rpl_wei.server
+   rpl_wei.processing.worker
 

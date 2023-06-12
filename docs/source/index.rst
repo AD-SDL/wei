@@ -11,6 +11,7 @@ Welcome to RPL WEI documentation!
    :caption: Contents
 
    pages/introduction
+   pages/first_workflow
    pages/api
    pages/glossary
 
