@@ -4,6 +4,7 @@ from rpl_wei.core.data_classes import Module, Step
 
 
 def wei_zmq_callback(step: Step, **kwargs):
+    """Placeholder"""
     module: Module = kwargs["step_module"]
     context = zmq.Context()
     socket = context.socket(zmq.REQ)

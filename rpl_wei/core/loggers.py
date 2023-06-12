@@ -6,12 +6,14 @@ from rpl_wei.core.data_classes import PathLike
 
 
 class WEI_Logger:
+    """Placeholder"""
     @staticmethod
     def _create_logger(
         logger_name: str,
         log_file: Optional[PathLike] = None,
         level: int = logging.INFO,
     ):
+        """Placeholder"""
         if log_file is None:
             log_file = Path().resolve() / f"{logger_name}.log"
 
@@ -36,6 +38,7 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
+        """Placeholder"""
         if not logging.getLogger(log_name).hasHandlers():
             logger = WEI_Logger._create_logger(
                 log_name,
@@ -66,6 +69,8 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
+        """Placeholder"""
+
         if not logging.getLogger(log_name).hasHandlers():
             logger = WEI_Logger._create_logger(
                 log_name,

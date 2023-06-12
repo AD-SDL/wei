@@ -71,6 +71,17 @@ class Events:
         Any
            The JSON portion of the response from the server"""
         return self._log_event("CHECK:"+ str(dec_value).capitalize() +": " + dec_name)
+    def comment(self,comment: str):
+        """logs a comment on the run
+        Parameters
+        ----------
+        comment: str
+            the comment to be looged
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+        return self._log_event(comment)
     
     def log_local_compute(self, func_name):
         """Logs a local function running on the system.

@@ -14,6 +14,7 @@ except ImportError:
 
 
 def __init_rclpy():
+    """Placeholder"""
     global wei_execution_node
 
     if True:  # use_rclpy:
@@ -26,6 +27,7 @@ def __init_rclpy():
 
 
 def __kill_node():
+    """Placeholder"""
     global wei_execution_node
     print("killing node")
     wei_execution_node.destroy_node()
@@ -33,6 +35,7 @@ def __kill_node():
 
 
 def wei_ros2_service_callback(step: Step, **kwargs):
+    """Placeholder"""
     # assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
     __init_rclpy()
 
@@ -60,6 +63,7 @@ def wei_ros2_service_callback(step: Step, **kwargs):
 
 
 def wei_ros2_camera_callback(step: Step, **kwargs):
+    """Placeholder"""
     try:
         import rclpy  # noqa
     except ImportError:

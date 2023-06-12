@@ -8,6 +8,7 @@ from rpl_wei.core.loggers import WEI_Logger
 
 
 class Workcell:
+    """Placeholder"""
     def __init__(
         self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
     ) -> None:
@@ -23,9 +24,11 @@ class Workcell:
         )
 
     def __repr__(self) -> str:
+        """Placeholder"""
         return self.workcell.__repr__()
 
     def find_step_module(self, step_module: str) -> Optional[Module]:
+        """Placeholder"""
         for module in self.workcell.modules:
             module_name = module.name
             if module_name == step_module:

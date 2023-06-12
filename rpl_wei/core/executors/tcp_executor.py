@@ -3,6 +3,7 @@ from rpl_wei.core.data_classes import Module, Step
 
 
 def wei_tcp_callback(step: Step, **kwargs):
+    """Placeholder"""
     import socket
 
     module: Module = kwargs["step_module"]
