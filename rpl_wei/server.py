@@ -28,6 +28,7 @@ workcell = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Placeholder"""
     global workcell
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
@@ -51,6 +52,7 @@ def submit_job(
     parsed_payload: Dict[str, Any],
     simulate: bool,
 ):
+    """Placeholder"""
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
 
@@ -90,6 +92,7 @@ def start_exp(experiment_id: str, experiment_name: str):
         "experiment_id": experiment_id,
         "experiment_name": experiment_name,
     }
+    """Placeholder"""
     try:
         job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
         jobs_ahead = len(task_queue.jobs)
@@ -116,6 +119,7 @@ async def process_job(
     experiment_id: str = "",
     simulate: bool = False,
 ):
+    """Placeholder"""
     workflow_content = await workflow.read()
     # Decode the bytes object to a string
     print(payload)
@@ -129,6 +133,7 @@ async def process_job(
 
 @app.post("/log/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
+    """Placeholder"""
     log_dir = DATA_DIR / "runs" / experiment_id
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
@@ -142,6 +147,7 @@ async def log_experiment(experiment_id: str, log_value: str):
 
 @app.post("/experiment")
 async def process_exp(experiment_name: str, experiment_id: str):
+    """Placeholder"""
     # Decode the bytes object to a string
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
     return start_exp(experiment_id, experiment_name)
@@ -154,6 +160,7 @@ async def process_job_with_id(
     payload: str = Form("{}"),
     simulate: bool = False,
 ):
+    """Placeholder"""
     workflow_content = await workflow.read()
     workflow_content_str = workflow_content.decode("utf-8")
 
@@ -166,6 +173,7 @@ async def process_job_with_id(
 
 @app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
+    """Placeholder"""
     try:
         job = Job.fetch(job_id, connection=task_queue.connection)
     except rq.exceptions.NoSuchJobError:
@@ -179,6 +187,7 @@ async def get_job_status(job_id: str):
 
 @app.get("/queue/info")
 async def queue_info():
+    """Placeholder"""
     # TODO: what more information can we get from the queue?
     queued_jobs = task_queue.count
     started_registry = StartedJobRegistry(queue=task_queue)

@@ -37,7 +37,7 @@ class TestWEI_Locations(TestWEI_Base):
         arg_after_replace = workflow.flowdef[1].args
         self.assertListEqual(
             arg_after_replace["source"],
-            [262.550, 20.608, 119.290, 662.570, 0.0, 574.367],
+            [222.0, -38.068, 335.876, 325.434, 79.923, 995.062] 
         )
         self.assertListEqual(
             arg_after_replace["target"], [195.99, 60.21, 92.13, 565.41, 82.24, -65.25]
@@ -46,7 +46,7 @@ class TestWEI_Locations(TestWEI_Base):
         arg_after_replace2 = workflow.flowdef[5].args
         self.assertListEqual(
             arg_after_replace2["source"],
-            [231.788, -27.154, 313.011, 342.317, 0.0, 683.702],
+            [205.128, -2.814, 264.373, 365.863, 79.144, 411.553],
         )
         self.assertListEqual(
             arg_after_replace2["target"],

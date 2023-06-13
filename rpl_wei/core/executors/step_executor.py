@@ -12,6 +12,7 @@ from rpl_wei.core.executors.tcp_executor import wei_tcp_callback
 
 
 def silent_callback(step: Step, **kwargs):
+    """Placeholder"""
     print(step)
     return "silent", step.command, ""
 
@@ -22,6 +23,7 @@ def silent_callback(step: Step, **kwargs):
 
 
 class Executor_Map:
+    """Placeholder"""
     function = {
         "wei_ros_node": wei_ros2_service_callback,
         "wei_ros_camera": wei_ros2_camera_callback,

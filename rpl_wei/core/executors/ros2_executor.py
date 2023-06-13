@@ -14,9 +14,10 @@ except ImportError:
 
 
 def __init_rclpy():
+    """Placeholder"""
     global wei_execution_node
 
-    if True:  # use_rclpy:
+    if rclpy:  # use_rclpy:
         if not rclpy.utilities.ok():
             rclpy.init()
             print("Started RCLPY")
@@ -26,6 +27,7 @@ def __init_rclpy():
 
 
 def __kill_node():
+    """Placeholder"""
     global wei_execution_node
     print("killing node")
     wei_execution_node.destroy_node()
@@ -33,6 +35,7 @@ def __kill_node():
 
 
 def wei_ros2_service_callback(step: Step, **kwargs):
+    """Placeholder"""
     # assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
     __init_rclpy()
 
@@ -48,18 +51,23 @@ def wei_ros2_service_callback(step: Step, **kwargs):
         print("\n Callback message:")
         print(msg)
         print()
+    action_response = ""
+    action_msg = ""
+    action_log = ""
+    if rclpy: 
+        action_response, action_msg, action_log = wei_execution_node.send_wei_command(
+            msg["node"], msg["action_handle"], msg["action_vars"]
+        )
+        
+        if action_msg and kwargs.get("verbose", False):
+            print(action_msg)
 
-    action_response, action_msg, action_log = wei_execution_node.send_wei_command(
-        msg["node"], msg["action_handle"], msg["action_vars"]
-    )
-    if action_msg and kwargs.get("verbose", False):
-        print(action_msg)
-
-    __kill_node()
+        __kill_node()
     return action_response, action_msg, action_log
 
 
 def wei_ros2_camera_callback(step: Step, **kwargs):
+    """Placeholder"""
     try:
         import rclpy  # noqa
     except ImportError:

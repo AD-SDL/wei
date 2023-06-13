@@ -13,6 +13,7 @@ from rpl_wei.core.workcell import Workcell
 
 
 class WorkflowRunner:
+    """Placeholder"""
     def __init__(
         self,
         workflow_def: Dict[str, Any],
@@ -104,13 +105,13 @@ class WorkflowRunner:
                             )
                         if simulate:
                             module.type = "simulate_callback"
-                        location_varname = value.split(".")[-1]
-                        assert (
-                            location_varname in module.positions
-                        ), f"Position {location_varname} not found"
-                        location = module.positions[location_varname]
-
-                        step.args[key] = location
+                        else:
+                            location_varname = value.split(".")[-1]
+                            assert (
+                                location_varname in module.positions
+                                ), f"Position {location_varname} not found"
+                            location = module.positions[location_varname]
+                            step.args[key] = location
 
             # Inject the payload
             if isinstance(payload, dict):

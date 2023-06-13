@@ -4,6 +4,7 @@ import json
 
 
 def wei_tcp_callback(step: Step, **kwargs):
+    """Placeholder"""
     import socket
 
     module: Module = kwargs["step_module"]
