@@ -1,4 +1,4 @@
-"""RPL worcell execution interface"""
-__version__ = "0.0.1a"
+__version__ = 0.2
 
-from .wei_workcell_base import WEI
+
+from rpl_wei.exp_app import Experiment

@@ -2,7 +2,7 @@
 import logging
 from typing import Optional, Tuple
 
-from rpl_wei.data_classes import SimpleModule, Step
+from rpl_wei.core.data_classes import SimpleModule, Step
 
 
 class StepValidator:
@@ -11,6 +11,7 @@ class StepValidator:
     def __init__(
         self, run_logger: Optional[logging.Logger] = None
     ) -> None:  # noqa: D103, D107
+        
         self.run_logger = run_logger
 
     def check_step(self, step: Step) -> Tuple[bool, str]:
