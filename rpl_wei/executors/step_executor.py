@@ -7,6 +7,7 @@ from rpl_wei.data_classes import Module, Step, StepStatus
 from rpl_wei.executors.ros2_executor import wei_ros2_service_callback, wei_ros2_camera_callback
 from rpl_wei.executors.tcp_executor import wei_tcp_callback
 from rpl_wei.executors.rest_executor import wei_rest_callback
+from rpl_wei.executors.zmq_executor import wei_zmq_callback
 
 
 def silent_callback(step: Step, **kwargs):
@@ -20,6 +21,7 @@ class Executor_Map:
         "wei_ros_camera": wei_ros2_camera_callback,
         "wei_tcp_node": wei_tcp_callback,
         "wei_rest_node": wei_rest_callback,
+        "wei_zmq_node": wei_zmq_callback,
         "silent_callback": silent_callback,
     }
 
