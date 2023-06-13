@@ -1,7 +1,7 @@
 #!/bin/bash
 
 session="WEI"
-folder="/mnt/c/Users/tgins/Documents/rpl_wei"
+folder="~/workspace/rpl_wei"
 tmux new-session -d -s $session
 tmux set -g mouse on
 

@@ -61,17 +61,23 @@ class Experiment:
            The JSON portion of the response from the server, including the ID of the job as job_id"""
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/job"
-        with open(workflow_file, "rb") as f:
+        with open('/home/rpl/.wei/runs/payload.txt', "w") as f2:
+            payload = json.dump(payload,f2)
+            f2.close()
+        with (open(workflow_file, "rb")) as (f):
+            f2 = open('/home/rpl/.wei/runs/payload.txt', "rb")
             params = {
-                "payload": json.dumps(payload),
+
                 "experiment_id": self.experiment_id,
                 "simulate": simulate,
             }
-
+            
+            #print(params["payload"])
             response = requests.post(
                 url,
                 params=params,
-                files={"workflow": (str(workflow_file), f, "application/x-yaml")},
+                json = payload,
+                files={"workflow": (str(workflow_file), f, "application/x-yaml"), "payload": (str("payload_file.txt"), f2, "text"), },
             )
 
         return self._return_response(response)
