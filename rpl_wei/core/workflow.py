@@ -160,7 +160,7 @@ class WorkflowRunner:
         steps = self.init_flow(workcell, callbacks, payload=payload, simulate=simulate)
         for step in steps:
             action_response, action_msg, action_log = self.executor.execute_step(**step)
-            hist[step["step"].name] = {"action_response": action_response, "action_msg": action_msg, "action_log": action_log}
+            hist[step["step"].name] = {"action_response": str(action_response), "action_msg": str(action_msg), "action_log": str(action_log)}
         return {
             "run_dir": str(self.log_dir),
             "run_id": str(self.run_id),
