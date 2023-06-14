@@ -9,6 +9,7 @@ from rpl_wei.core.executors.ros2_executor import (
     wei_ros2_service_callback,
 )
 from rpl_wei.core.executors.tcp_executor import wei_tcp_callback
+from rpl_wei.core.executors.zmq_executor import wei_zmq_callback
 
 
 def silent_callback(step: Step, **kwargs):
@@ -29,6 +30,7 @@ class Executor_Map:
         "wei_ros_camera": wei_ros2_camera_callback,
         "wei_tcp_node": wei_tcp_callback,
         "wei_rest_node": wei_rest_callback,
+        "wei_zmq_node": wei_zmq_callback,
         "simulate_callback": silent_callback,
     }
 

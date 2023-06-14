@@ -2,7 +2,7 @@ import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import rq
 import ulid
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     pass
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, )
 
 
 def submit_job(
@@ -115,16 +115,19 @@ def start_exp(experiment_id: str, experiment_name: str):
 @app.post("/job")
 async def process_job(
     workflow: UploadFile = File(...),
-    payload: str = "{}",
+    payload: UploadFile = File(...),
     experiment_id: str = "",
     simulate: bool = False,
 ):
     """Placeholder"""
+    print(payload)
     workflow_content = await workflow.read()
+    payload = await payload.read()
     # Decode the bytes object to a string
     print(payload)
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
+    print(parsed_payload)
 
     return submit_job(
         experiment_id, workflow_content_str, parsed_payload, simulate=simulate
@@ -209,5 +212,5 @@ async def queue_info():
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("rpl_wei.server:app", reload=True)
+    print("asdfsaf")
+    uvicorn.run("rpl_wei.server:app", reload=True, ws_max_size=10000000000000000000000000000000000000000000000000000000000000000000000000,)
