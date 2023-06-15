@@ -9,7 +9,7 @@ class Test_Workcell_Base(TestWEI_Base):
     def test_workcell_property(self):
         from rpl_wei.core.workcell import Workcell
 
-        workcell_config_path = Path("tests/test_pcr_workcell.yaml")
+        workcell_config_path = Path("tests/test_workcell.yaml")
         workcell_def = yaml.safe_load(workcell_config_path.read_text())
         workcell = Workcell(workcell_def)
 
