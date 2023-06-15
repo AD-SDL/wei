@@ -37,7 +37,7 @@ pip3 install -e .
 ## Usage
 
 ### Starting the server
-*\*Requires three terminals\**
+
 from a new terminal run
 ```
 cd ~/workspace/rpl_wei 
