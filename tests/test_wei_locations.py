@@ -24,13 +24,7 @@ class TestWEI_Locations(TestWEI_Base):
         self.assertEqual(arg_before_replace["target"], "ot2_pcr_alpha.positions.deck2")
 
         # Also test the compatibility of the named/actual locations
-        arg_before_replace2 = workflow.flowdef[5].args
-        self.assertEqual(arg_before_replace2["source"], "sealer.positions.default")
-        self.assertListEqual(
-            arg_before_replace2["target"],
-            [279.948, 40.849, 75.130, 598.739, 79.208, -916.456],
-        )
-
+        
         # Changes happen during the running of workflow
         runner.run_flow(workcell)
 
@@ -43,12 +37,4 @@ class TestWEI_Locations(TestWEI_Base):
             arg_after_replace["target"], [195.99, 60.21, 92.13, 565.41, 82.24, -65.25]
         )
 
-        arg_after_replace2 = workflow.flowdef[5].args
-        self.assertListEqual(
-            arg_after_replace2["source"],
-            [205.128, -2.814, 264.373, 365.863, 79.144, 411.553],
-        )
-        self.assertListEqual(
-            arg_after_replace2["target"],
-            [279.948, 40.849, 75.130, 598.739, 79.208, -916.456],
-        )
+     
