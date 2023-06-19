@@ -4,7 +4,7 @@ modules:
 
   - name: test
     model: test
-    type: silent_callback
+    type: simulate_callback
     config:
       foo: bar
     positions:

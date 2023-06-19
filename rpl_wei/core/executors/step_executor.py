@@ -9,26 +9,10 @@ from rpl_wei.core.executors.ros2_executor import (
     wei_ros2_service_callback,
 )
 from rpl_wei.core.executors.tcp_executor import wei_tcp_callback
+from rpl_wei.core.executors.zmq_executor import wei_zmq_callback
 
 
 def silent_callback(step: Step, **kwargs):
-    """Executes a single step from a workflow without making any message calls
-
-        Parameters
-        ----------
-        step : Step
-            A single step from a workflow definition
-
-        Returns
-        -------
-        action_response: StepStatus
-            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
-        action_msg: str
-            the data or informtaion returned from running the step.
-        action_log: str
-            A record of the exeution of the step
-
-         """
     print(step)
     return "silent", step.command, ""
 
@@ -39,12 +23,12 @@ def silent_callback(step: Step, **kwargs):
 
 
 class Executor_Map:
-    """a collection that maps the human readable names in the workflow to the callback name used in code"""
     function = {
         "wei_ros_node": wei_ros2_service_callback,
         "wei_ros_camera": wei_ros2_camera_callback,
         "wei_tcp_node": wei_tcp_callback,
         "wei_rest_node": wei_rest_callback,
+        "wei_zmq_node": wei_zmq_callback,
         "simulate_callback": silent_callback,
     }
 

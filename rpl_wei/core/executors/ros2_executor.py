@@ -50,7 +50,7 @@ def __kill_node():
 
 
 def wei_ros2_service_callback(step: Step, **kwargs):
-    """Executes a single step from a workflow using a REST messaging framework
+    """Executes a single step from a workflow using a ROS messaging framework
 
         Parameters
         ----------

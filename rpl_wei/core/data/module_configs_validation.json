@@ -9,10 +9,14 @@
         "tcp_address",
         "tcp_port"
     ],
+    "wei_zmq_node": [
+        "tcp_address",
+        "tcp_port"
+    ],
     "wei_rest_node": [
         "url",
         "auth"
     ],
-    "silent_callback": [
+    "simulate_callback": [
     ]
 }

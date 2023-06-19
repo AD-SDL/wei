@@ -3,7 +3,7 @@ import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import rq
 import ulid
@@ -30,6 +30,7 @@ workcell = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Placeholder"""
+    """Placeholder"""
     global workcell
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
@@ -44,7 +45,7 @@ async def lifespan(app: FastAPI):
     pass
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, )
 
 
 def submit_job(
@@ -53,7 +54,7 @@ def submit_job(
     parsed_payload: Dict[str, Any],
     simulate: bool,
 ):
-    """ """
+    """Placeholder"""
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
 
@@ -94,6 +95,7 @@ def start_exp(experiment_id: str, experiment_name: str):
         "experiment_name": experiment_name,
     }
     """Placeholder"""
+    """Placeholder"""
     try:
         job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
         jobs_ahead = len(task_queue.jobs)
@@ -116,16 +118,19 @@ def start_exp(experiment_id: str, experiment_name: str):
 @app.post("/job")
 async def process_job(
     workflow: UploadFile = File(...),
-    payload: str = "{}",
+    payload: UploadFile = File(...),
     experiment_id: str = "",
     simulate: bool = False,
 ):
     """Placeholder"""
+    print(payload)
     workflow_content = await workflow.read()
+    payload = await payload.read()
     # Decode the bytes object to a string
     print(payload)
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
+    print(parsed_payload)
 
     return submit_job(
         experiment_id, workflow_content_str, parsed_payload, simulate=simulate
@@ -134,6 +139,7 @@ async def process_job(
 
 @app.post("/log/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
+    """Placeholder"""
     """Placeholder"""
     log_dir = DATA_DIR / "runs" / experiment_id
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
@@ -175,6 +181,7 @@ async def process_job_with_id(
 @app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
     """Placeholder"""
+    """Placeholder"""
     try:
         job = Job.fetch(job_id, connection=task_queue.connection)
     except rq.exceptions.NoSuchJobError:
@@ -188,6 +195,7 @@ async def get_job_status(job_id: str):
 
 @app.get("/queue/info")
 async def queue_info():
+    """Placeholder"""
     """Placeholder"""
     # TODO: what more information can we get from the queue?
     queued_jobs = task_queue.count
@@ -210,5 +218,5 @@ async def queue_info():
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("rpl_wei.server:app", reload=True)
+    print("asdfsaf")
+    uvicorn.run("rpl_wei.server:app", reload=True, ws_max_size=10000000000000000000000000000000000000000000000000000000000000000000000000,)
