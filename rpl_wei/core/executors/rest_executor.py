@@ -5,7 +5,7 @@ from rpl_wei.core.data_classes import Module, Step
 
 
 def wei_rest_callback(step: Step, **kwargs):
-    """Placeholder"""
+    """A function that use REST requests to communicate with a module"""
     module: Module = kwargs["step_module"]
     base_url = module.config["url"]
     url = base_url + step.args["endpoint"]

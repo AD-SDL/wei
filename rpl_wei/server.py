@@ -1,3 +1,4 @@
+"""The server that takes incoming WEI flow requests from the experiment application"""
 import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
@@ -52,7 +53,7 @@ def submit_job(
     parsed_payload: Dict[str, Any],
     simulate: bool,
 ):
-    """Placeholder"""
+    """ """
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
 

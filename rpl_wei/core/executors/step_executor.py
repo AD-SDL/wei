@@ -12,7 +12,23 @@ from rpl_wei.core.executors.tcp_executor import wei_tcp_callback
 
 
 def silent_callback(step: Step, **kwargs):
-    """Placeholder"""
+    """Executes a single step from a workflow without making any message calls
+
+        Parameters
+        ----------
+        step : Step
+            A single step from a workflow definition
+
+        Returns
+        -------
+        action_response: StepStatus
+            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
+        action_msg: str
+            the data or informtaion returned from running the step.
+        action_log: str
+            A record of the exeution of the step
+
+         """
     print(step)
     return "silent", step.command, ""
 
@@ -23,7 +39,7 @@ def silent_callback(step: Step, **kwargs):
 
 
 class Executor_Map:
-    """Placeholder"""
+    """a collection that maps the human readable names in the workflow to the callback name used in code"""
     function = {
         "wei_ros_node": wei_ros2_service_callback,
         "wei_ros_camera": wei_ros2_camera_callback,
@@ -44,7 +60,7 @@ class StepExecutor:
         logger: Optional[logging.Logger] = None,
         simulate: bool = False,
     ) -> StepStatus:
-        """Executes a single step from a workflow
+        """Executes a single step from a workflow without making any message calls
 
         Parameters
         ----------
@@ -53,9 +69,14 @@ class StepExecutor:
 
         Returns
         -------
-        StepStatus
+        action_response: StepStatus
             A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
-        """
+        action_msg: str
+            the data or informtaion returned from running the step.
+        action_log: str
+            A record of the exeution of the step
+
+         """
         assert (
             step_module.type in Executor_Map.function
         ), f"Executor not found for {step_module.type}"

@@ -3,7 +3,23 @@ from rpl_wei.core.data_classes import Module, Step
 
 
 def wei_tcp_callback(step: Step, **kwargs):
-    """Placeholder"""
+    """Executes a single step from a workflow using a TCP messaging framework
+
+        Parameters
+        ----------
+        step : Step
+            A single step from a workflow definition
+
+        Returns
+        -------
+        action_response: StepStatus
+            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
+        action_msg: str
+            the data or informtaion returned from running the step.
+        action_log: str
+            A record of the exeution of the step
+
+         """
     import socket
 
     module: Module = kwargs["step_module"]
