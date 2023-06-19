@@ -1,3 +1,5 @@
+
+"""Contains the Experiment class that manages WEI flows and helpes annotate the experiment run"""
 import json
 from pathlib import Path
 from typing import Dict, Optional
@@ -85,9 +87,14 @@ class Experiment:
     def register_exp(self):
         """Initializes an Experiment, and creates its log files
 
+        Parameters
+        ----------
+        None
+
         Returns
         -------
-        Dict
+
+        response: Dict
            The JSON portion of the response from the server"""
         url = f"{self.url}/experiment"
 
@@ -103,13 +110,17 @@ class Experiment:
 
     def query_job(self, job_id: str):
         """Checks on a workflow run using the id given
-         Parameters
+
+        Parameters
         ----------
+
         job_id : str
            The id returned by the run_job function for this run
+
         Returns
         -------
-        Dict
+        
+        response: Dict
            The JSON portion of the response from the server"""
 
         url = f"{self.url}/job/{job_id}"

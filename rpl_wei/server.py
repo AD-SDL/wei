@@ -1,3 +1,4 @@
+"""The server that takes incoming WEI flow requests from the experiment application"""
 import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
@@ -28,6 +29,7 @@ workcell = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Placeholder"""
     """Placeholder"""
     global workcell
     parser = ArgumentParser()
@@ -93,6 +95,7 @@ def start_exp(experiment_id: str, experiment_name: str):
         "experiment_name": experiment_name,
     }
     """Placeholder"""
+    """Placeholder"""
     try:
         job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
         jobs_ahead = len(task_queue.jobs)
@@ -137,6 +140,7 @@ async def process_job(
 @app.post("/log/{experiment_id}")
 async def log_experiment(experiment_id: str, log_value: str):
     """Placeholder"""
+    """Placeholder"""
     log_dir = DATA_DIR / "runs" / experiment_id
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
@@ -177,6 +181,7 @@ async def process_job_with_id(
 @app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
     """Placeholder"""
+    """Placeholder"""
     try:
         job = Job.fetch(job_id, connection=task_queue.connection)
     except rq.exceptions.NoSuchJobError:
@@ -190,6 +195,7 @@ async def get_job_status(job_id: str):
 
 @app.get("/queue/info")
 async def queue_info():
+    """Placeholder"""
     """Placeholder"""
     # TODO: what more information can we get from the queue?
     queued_jobs = task_queue.count

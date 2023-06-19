@@ -1,3 +1,4 @@
+"""Contains the Events class for logging experiment steps"""
 from typing import Optional
 
 import requests
