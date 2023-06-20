@@ -168,8 +168,8 @@ class WorkflowRunner:
 
         Returns
         -------
-        Dict
-           T    r"""
+       response: Dict
+           The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results"""
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
