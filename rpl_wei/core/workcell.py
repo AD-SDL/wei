@@ -1,3 +1,5 @@
+
+"""A Class to represent a workcell object that contains the different WEI modules"""
 import logging
 from typing import Any, Dict, Optional
 
@@ -6,9 +8,8 @@ from rpl_wei.core.data_classes import Module
 from rpl_wei.core.data_classes import Workcell as WorkcellData
 from rpl_wei.core.loggers import WEI_Logger
 
-
 class Workcell:
-    """Placeholder"""
+    """A Class to represent a workcell object that contains the different WEI modules"""
     def __init__(
         self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
     ) -> None:
@@ -24,11 +25,31 @@ class Workcell:
         )
 
     def __repr__(self) -> str:
-        """Placeholder"""
+        """representation of the workcell
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        str
+            a string representation of the workcell
+        """
         return self.workcell.__repr__()
 
     def find_step_module(self, step_module: str) -> Optional[Module]:
-        """Placeholder"""
+        """finds the full module information based on just it's name
+
+        Parameters
+        ----------
+        step_module : str
+            the name of the module
+        Returns
+        -------
+        module: Module
+            The class with full information about the given module
+        """
         for module in self.workcell.modules:
             module_name = module.name
             if module_name == step_module:

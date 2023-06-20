@@ -36,7 +36,33 @@ def run_workflow_task(
     job_id: Optional[Union[ulid.ULID, str]] = None,
     simulate: bool = False,
 ):
-    """Placeholder"""
+    """Pulls a workflow job from the queue to the server to be executed, and logs it in the overall event log.
+
+        Parameters
+        ----------
+        experiment_id : str
+           The id of the experiment for the workflow
+
+        workflow_def: str
+            The defintion of the workflow from the workflow yaml file
+
+        parsed_payload: Dict
+            The data input to the workflow
+        
+        workcell_def: Dict
+            the parsed workcell file to use for the workflow
+        
+        job_id: ULIT
+            the id for the workflow on the queue
+        
+        simulate: bool
+            whether to use real robots or not
+        
+
+        Returns
+        -------
+        reuslt_payload Dict
+           The resulting data from the run including the response from each module and the state of the run"""
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
     workflow_runner = WorkflowRunner(

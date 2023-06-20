@@ -1,3 +1,4 @@
+"""The module that initilizes and runs the step by step WEI workflow"""
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -13,7 +14,7 @@ from rpl_wei.core.workcell import Workcell
 
 
 class WorkflowRunner:
-    """Placeholder"""
+    """Initilizes and runs the step by step WEI workflow"""
     def __init__(
         self,
         workflow_def: Dict[str, Any],
@@ -67,10 +68,10 @@ class WorkflowRunner:
 
         Parameters
         ----------
-        workcell : str
+        workcell : Workcell
            The Workcell data file loaded in from the workcell yaml file
 
-        payload: bool
+        payload: Dict
             The input to the workflow
 
         simulate: bool
@@ -78,8 +79,8 @@ class WorkflowRunner:
 
         Returns
         -------
-        Dict
-           The JSON portion of the response from the server"""
+        steps: List[Dict]
+           a list of steps and the metadata relevant to execute them"""
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # Start executing the steps
@@ -149,11 +150,28 @@ class WorkflowRunner:
     def run_flow(
         self,
         workcell: Workcell,
-        callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
     ) -> Dict[str, Any]:
-        """Executes the flowdef commmands"""
+        """Runs through the steps of the workflow and sends the necessary 
+
+        Parameters
+        ----------
+        workcell : Workcell
+           The Workcell data file loaded in from the workcell yaml file
+
+        payload: bool
+            The input to the workflow
+
+        simulate: bool
+            Whether or not to use real robots
+
+        Returns
+        -------
+        Dict
+           T    r"""
+        # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
+
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
         # Start executing the steps
         hist = {}
