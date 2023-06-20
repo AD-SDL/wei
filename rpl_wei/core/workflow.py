@@ -150,6 +150,7 @@ class WorkflowRunner:
     def run_flow(
         self,
         workcell: Workcell,
+        callbacks: Optional[Dict[str, Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
     ) -> Dict[str, Any]:
