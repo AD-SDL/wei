@@ -131,7 +131,7 @@ modules:
     type: wei_ros_node
     model: ur5
     config:
-      ros_node: '/ur5_client/UR5_Client_Node'
+      ros_node: '/std_ns/UR5_Client_Node'
 
 
 
