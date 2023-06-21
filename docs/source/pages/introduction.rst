@@ -2,7 +2,7 @@
 Introduction to RPL WEI
 =======================
 
-WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular workcell environment.
+WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular environment in which a variety of hardware and software components implement common interfaces.
 This tool leverages ROS (`Robot Operating System <https://www.ros.org>`_) for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a 
 function-as-a-service platform, for distributed computation. It is particularly geared towards managing 
 complex workflows in scientific research and laboratory environments.
@@ -28,6 +28,7 @@ We define conventional hardware and software configurations for robotic equipmen
 A **workcell definition** (a YAML file, see below) defines the modules that comprise a workcell, and associated static infrastructure that are to be used by the workflow.
 
 The software associated with a workflow is then defined by three types of files:
+
 * A **driver program**, in Python, sets up to call one or more workflows
 * A **workflow definition**, in YAML, define a set of **actions** to be executed, in order, on one or more of the modules in the workcell
 * A **protocol definition**, in YAML, defines a set of steps to be performed, in order, on a specified OpenTrons OT2
