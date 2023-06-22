@@ -2,13 +2,13 @@
 Introduction to RPL WEI
 =======================
 
-WEI is a Python-based tool designed to automate and manage workflows in a modular workcell environment.
-This tool leverages ROS (Robot Operating System) for inter-module communication and FuncX, a 
+WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular environment in which a variety of hardware and software components implement common interfaces.
+This tool leverages ROS (`Robot Operating System <https://www.ros.org>`_) for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a 
 function-as-a-service platform, for distributed computation. It is particularly geared towards managing 
 complex workflows in scientific research and laboratory environments.
 
-WEI allows you to define workflows in YAML format. Each workflow comprises a sequence of actions 
-(commands), each performed by a specific module. A module represents an individual hardware or 
+WEI allows you to define **workflows** in YAML format. Each workflow comprises a sequence of actions 
+(commands), each performed by a specific module. A **module** represents an individual hardware or 
 software component in the workcell. This modular approach provides the flexibility to design and 
 implement diverse workflows across a variety of domains. 
 
@@ -19,8 +19,8 @@ Overview and Terminology
 We define conventional hardware and software configurations for robotic equipment and control software in order to simplify the assembly, modification, and scaling of experimental systems. The following figure shows our hardware conventions:
 
 * A **cart** is a cart with zero or more modules 
-* A **module** is an hardware component with a name, type, position, etc. (e.g., Pealer, Sealer, OT2 liquid handling robot, plate handler, plate mover, camera)
-* A **workcell**, as show on the left of the image, is formed from multiple (8 in the photo on the left) carts that typically hold multiple modules (12 in the example, as described below).
+* A **module** is a hardware component with a name, type, position, etc. (e.g., Pealer, Sealer, OT2 liquid handling robot, plate handler, plate mover, camera)
+* A **workcell**, as shown in the photo on the left of the image below, is formed from multiple (eight in the photo) carts, each typically holding one or more modules (a total of 12 in the example, as described below).
 * Multiple workcells and other components can be linked via mobile robots
 
 .. image:: ../assets/AD_Fig.jpg
@@ -28,6 +28,7 @@ We define conventional hardware and software configurations for robotic equipmen
 A **workcell definition** (a YAML file, see below) defines the modules that comprise a workcell, and associated static infrastructure that are to be used by the workflow.
 
 The software associated with a workflow is then defined by three types of files:
+
 * A **driver program**, in Python, sets up to call one or more workflows
 * A **workflow definition**, in YAML, define a set of **actions** to be executed, in order, on one or more of the modules in the workcell
 * A **protocol definition**, in YAML, defines a set of steps to be performed, in order, on a specified OpenTrons OT2

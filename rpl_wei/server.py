@@ -1,4 +1,5 @@
 """The server that takes incoming WEI flow requests from the experiment application"""
+"""The server that takes incoming WEI flow requests from the experiment application"""
 import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
@@ -202,7 +203,12 @@ async def process_job(
     )
 
 
-
+@app.post("/log/{experiment_id}")
+async def log_experiment(experiment_id: str, log_value: str):
+    """Placeholder"""
+    log_dir = DATA_DIR / "runs" / experiment_id
+    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+    logger.info(log_value)
 
 
 # @app.post("/log/return/{experiment_id}")
