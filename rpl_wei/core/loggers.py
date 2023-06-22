@@ -74,7 +74,7 @@ class WEI_Logger:
         if not logging.getLogger(log_name).hasHandlers():
             logger = WEI_Logger._create_logger(
                 log_name,
-                log_dir / f"{log_name}.log",
+                Path(log_dir) / f"{log_name}.log",
                 log_level,
             )
         else:

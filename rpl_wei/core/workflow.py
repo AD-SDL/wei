@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 import ulid
 from devtools import debug
+from pathlib import Path
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
@@ -18,10 +19,11 @@ class WorkflowRunner:
     def __init__(
         self,
         workflow_def: Dict[str, Any],
-        experiment_id: str,
+        experiment_path: str,
         run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
         simulate: bool = False,
+        workflow_name: str = ""
     ) -> None:
         self.workflow = WorkflowData(**workflow_def)
         self.simulate = simulate
@@ -37,7 +39,7 @@ class WorkflowRunner:
             self.run_id = run_id
         else:
             self.run_id = ulid.new()
-        self.log_dir = DATA_DIR / "runs" / experiment_id / str(self.run_id)
+        self.log_dir = Path(experiment_path) /"wei_runs"/ (workflow_name +"_" + str(self.run_id))
         self.result_dir = self.log_dir / "results"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.result_dir.mkdir(parents=True, exist_ok=True)

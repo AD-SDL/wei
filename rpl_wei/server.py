@@ -57,10 +57,11 @@ app = FastAPI(lifespan=lifespan, )
 
 
 def submit_job(
-    experiment_id: str,
+    experiment_path: str,
     workflow_content_str: str,
     parsed_payload: Dict[str, Any],
     simulate: bool,
+    workflow_name: str
 ):
     
     """puts a workflow job onto the redis queue
@@ -87,19 +88,22 @@ def submit_job(
            a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
-
+    path = Path(experiment_path)
+    experiment_id = path.name.split("_")[-1]
     base_response_content = {
-        "experiment_id": experiment_id,
+        "experiment_id": experiment_path,
     }
     try:
         job = task_queue.enqueue(
             run_workflow_task,
+            experiment_path,
             experiment_id,
             workflow_content_str,
             parsed_payload,
             workcell.__dict__,
             job_id,
             simulate,
+            workflow_name,
             job_id=job_id,
         )
         jobs_ahead = len(task_queue.jobs)
@@ -141,16 +145,21 @@ def start_exp(experiment_id: str, experiment_name: str):
         -------
          response: Dict
            a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
+    
     try:
-        job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
-        jobs_ahead = len(task_queue.jobs)
-        response_content = {
-            "status": "success",
-            "jobs_ahead": jobs_ahead,
-            "job_id": job.get_id(),
-            **base_response_content,
-        }
-        return JSONResponse(content=response_content)
+       
+        exp_data = start_experiment(experiment_name, experiment_id)
+        # jobs_ahead = len(task_queue.jobs)
+        # response_content = {
+        #     "status": "success",
+        #     "exp_id": experiment_id,
+        #     "experiment_path"
+        #     "jobs_ahead": jobs_ahead,
+        #     "job_id": job.get_id(),
+        #     **base_response_content,
+        # }
+        return JSONResponse(content=exp_data)
+       
     except Exception as e:
         response_content = {
             "status": "failed",
@@ -164,7 +173,7 @@ def start_exp(experiment_id: str, experiment_name: str):
 async def process_job(
     workflow: UploadFile = File(...),
     payload: UploadFile = File(...),
-    experiment_id: str = "",
+    experiment_path: str = "",
     simulate: bool = False,
 ):
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
@@ -189,34 +198,37 @@ async def process_job(
         -------
         response: Dict
            a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
-    print(payload)
+    workflow_path = Path(workflow.filename)
+    workflow_name = workflow_path.name.split(".")[0]
+  
     workflow_content = await workflow.read()
     payload = await payload.read()
     # Decode the bytes object to a string
-    print(payload)
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
-    print(parsed_payload)
-
+    
     return submit_job(
-        experiment_id, workflow_content_str, parsed_payload, simulate=simulate
+        experiment_path, workflow_content_str, parsed_payload, workflow_name=workflow_name, simulate=simulate, 
     )
 
 
 @app.post("/log/{experiment_id}")
-async def log_experiment(experiment_id: str, log_value: str):
+async def log_experiment(experiment_path: str, log_value: str):
     """Placeholder"""
-    log_dir = DATA_DIR / "runs" / experiment_id
+    log_dir = Path(experiment_path)
+    experiment_id = log_dir.name.spit("_")[-1]
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
 
 
-# @app.post("/log/return/{experiment_id}")
-# async def log_experiment(experiment_id: str, log_value: str):
-#     logger = WEI_Logger.get_logger("log_" + experiment_id)
-#     logger.info(log_value)
+@app.get("/log/return")
+async def log_experiment(experiment_path: str):
+    log_dir = Path(experiment_path)
+    experiment_id = log_dir.name.spit("_")[-1]
+    with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
+        return(f.read())
 
-
+   
 @app.post("/experiment")
 async def process_exp(experiment_name: str, experiment_id: str):
     """ Pulls an experiment and creates the files and logger for it
