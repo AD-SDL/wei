@@ -22,5 +22,6 @@ tmux new-window -t $session:$window -n 'server'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
 tmux send-keys -t $session:$window 'python3 -m rpl_wei.server --workcell ./tests/test_workcell.yaml' C-m
 
+
 tmux attach-session -t $session
 

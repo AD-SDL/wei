@@ -16,6 +16,7 @@ from rpl_wei.core.workcell import Workcell
 
 class WorkflowRunner:
     """Initilizes and runs the step by step WEI workflow"""
+
     def __init__(
         self,
         workflow_def: Dict[str, Any],
@@ -112,7 +113,7 @@ class WorkflowRunner:
                             location_varname = value.split(".")[-1]
                             assert (
                                 location_varname in module.positions
-                                ), f"Position {location_varname} not found"
+                            ), f"Position {location_varname} not found"
                             location = module.positions[location_varname]
                             step.args[key] = location
 
@@ -181,13 +182,16 @@ class WorkflowRunner:
         steps = self.init_flow(workcell, callbacks, payload=payload, simulate=simulate)
         for step in steps:
             action_response, action_msg, action_log = self.executor.execute_step(**step)
-            hist[step["step"].name] = {"action_response": str(action_response), "action_msg": str(action_msg), "action_log": str(action_log)}
+            hist[step["step"].name] = {
+                "action_response": str(action_response),
+                "action_msg": str(action_msg),
+                "action_log": str(action_log),
+            }
         return {
             "run_dir": str(self.log_dir),
             "run_id": str(self.run_id),
             "payload": payload,
-            "hist": hist
-
+            "hist": hist,
         }
 
     def print_flow(self):

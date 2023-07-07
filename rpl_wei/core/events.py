@@ -56,6 +56,15 @@ class Events:
             url,
             params={"log_value": log_value},
         )
+        kafka = False
+        if kafka:
+            from kafka import KafkaProducer
+
+            producer = KafkaProducer(
+                bootstrap_servers="ec2-54-160-200-147.compute-1.amazonaws.com:9092"
+            )
+            producer.send(log_value, b"some_message_bytes")
+
         return self._return_response(response)
 
     def decision(self, dec_name: str, dec_value: bool):
@@ -71,8 +80,9 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        return self._log_event("CHECK:"+ str(dec_value).capitalize() +": " + dec_name)
-    def comment(self,comment: str):
+        return self._log_event("CHECK:" + str(dec_value).capitalize() + ": " + dec_name)
+
+    def comment(self, comment: str):
         """logs a comment on the run
         Parameters
         ----------
@@ -83,7 +93,7 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         return self._log_event(comment)
-    
+
     def log_local_compute(self, func_name):
         """Logs a local function running on the system.
         Parameters
