@@ -20,7 +20,7 @@ tmux send-keys -t $session:$window 'python3 -m rpl_wei.processing.worker' C-m
 window=2
 tmux new-window -t $session:$window -n 'server'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
-tmux send-keys -t $session:$window 'python3 -m rpl_wei.server --workcell tests/test_workcell.yaml' C-m
+tmux send-keys -t $session:$window 'python3 -m rpl_wei.server --workcell /home/rpl/workspace/rpl_workcell/pcr_workcell/pcr_workcell.yaml' C-m
 
 tmux attach-session -t $session
 
