@@ -199,17 +199,23 @@ class Metadata(BaseModel):
 class Workcell(BaseModel):
     """Container for information in a workcell"""
 
-    modules: List[Module]
-    """The modules available to a workcell"""
+    name: str
+    """Name of the workflow"""
     config: Optional[Dict[str, Any]]
     """Globus search index, needed for publishing"""
+    modules: List[Module]
+    """The modules available to a workcell"""
+    locations: Optional[Dict[str, Any]]
+    """Locations used by the workcell"""
 
 
 class Workflow(BaseModel):
     """Grand container that pulls all info of a workflow together"""
 
-    workcell: Path
-    """The path to the workcell required by this workflow"""
+    name: str
+    """Name of the workflow"""
+    # workcell: Path
+    # """The path to the workcell required by this workflow"""
     modules: List[SimpleModule]
     """List of modules needed for the workflow"""
     flowdef: List[Step]
