@@ -22,7 +22,11 @@ class Experiment:
     ) -> None:
         self.server_addr = server_addr
         self.server_port = server_port
-        self.experiment_id = experiment_id
+        self.experiment_path = ""
+        if experiment_id == None:
+            self.experiment_id = ulid.new().str
+        else:
+            self.experiment_id = experiment_id
         self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
         self.loops = []
@@ -31,6 +35,7 @@ class Experiment:
         self.events = Events(
             self.server_addr, self.server_port, self.experiment_name, self.experiment_id
         )
+        print(self.experiment_id)
 
     def _return_response(self, response: requests.Response):
         if response.status_code != 200:
@@ -70,7 +75,7 @@ class Experiment:
             f2 = open('/home/rpl/.wei/runs/payload.txt', "rb")
             params = {
 
-                "experiment_id": self.experiment_id,
+                "experiment_path": self.experiment_path,
                 "simulate": simulate,
             }
             
@@ -97,7 +102,8 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server"""
         url = f"{self.url}/experiment"
-
+        print(self.experiment_id)
+        self.experiment_path
         response = requests.post(
             url,
             params={
@@ -105,6 +111,8 @@ class Experiment:
                 "experiment_name": self.experiment_name,
             },
         )
+        print(response.json())
+        self.experiment_path = response.json()["exp_dir"]
 
         return self._return_response(response)
 
@@ -127,7 +135,11 @@ class Experiment:
         response = requests.get(url)
 
         return self._return_response(response)
+    def get_log(self):
+        url = f"{self.url}/log/return"
+        response = requests.get(url, params={"experiment_path": self.experiment_path})
 
+        return self._return_response(response)
     def query_queue(self):
         url = f"{self.url}/queue/info"
         response = requests.get(url)

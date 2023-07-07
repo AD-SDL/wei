@@ -2,6 +2,14 @@ config: { "search_index": "endpoint" }
 
 modules:
 
+  - name: sealer_rest
+    model: sealer
+    type: wei_rest_node
+    config:
+      url: "http://127.0.0.1:2000"
+      auth: "/home/rpl/Documents/mirauth.txt"
+    positions:
+      final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   - name: test
     model: test
     type: simulate_callback

@@ -98,7 +98,22 @@ def wei_ros2_service_callback(step: Step, **kwargs):
 
 
 def wei_ros2_camera_callback(step: Step, **kwargs):
-    """Placeholder"""
+    """Executes a single step from a workflow to take a picture using a ROS connected camera
+        Parameters
+        ----------
+        step : Step
+            A single step from a workflow definition
+
+        Returns
+        -------
+        action_response: StepStatus
+            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
+        action_msg: str
+            The location where the image was saved
+        action_log: str
+            A record of the exeution of the step
+
+    """
     try:
         import rclpy  # noqa
     except ImportError:
