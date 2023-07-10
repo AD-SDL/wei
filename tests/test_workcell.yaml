@@ -1,5 +1,5 @@
+name: Test Workcell
 config: { "search_index": "endpoint" }
-
 modules:
 
   - name: sealer_rest
