@@ -1,5 +1,5 @@
+name: Test - Workflow
 metadata:
-  name: Test - Workflow
   author: Tobias Ginsburg, Kyle Hippe
   info: Example workflow for WEI
   version: 0.1
