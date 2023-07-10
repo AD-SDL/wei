@@ -17,6 +17,6 @@
         "url",
         "auth"
     ],
-    "silent_callback": [
+    "simulate_callback": [
     ]
 }

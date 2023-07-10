@@ -14,7 +14,14 @@ except ImportError:
 
 
 def __init_rclpy():
-    """Placeholder"""
+    """stops the execution node
+     Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
     global wei_execution_node
 
     if rclpy:  # use_rclpy:
@@ -27,7 +34,15 @@ def __init_rclpy():
 
 
 def __kill_node():
-    """Placeholder"""
+    """stops the execution node
+     Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+    
     global wei_execution_node
     print("killing node")
     wei_execution_node.destroy_node()
@@ -35,7 +50,23 @@ def __kill_node():
 
 
 def wei_ros2_service_callback(step: Step, **kwargs):
-    """Placeholder"""
+    """Executes a single step from a workflow using a ROS messaging framework
+
+        Parameters
+        ----------
+        step : Step
+            A single step from a workflow definition
+
+        Returns
+        -------
+        action_response: StepStatus
+            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
+        action_msg: str
+            the data or informtaion returned from running the step.
+        action_log: str
+            A record of the exeution of the step
+
+         """
     # assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
     __init_rclpy()
 
@@ -67,7 +98,22 @@ def wei_ros2_service_callback(step: Step, **kwargs):
 
 
 def wei_ros2_camera_callback(step: Step, **kwargs):
-    """Placeholder"""
+    """Executes a single step from a workflow to take a picture using a ROS connected camera
+        Parameters
+        ----------
+        step : Step
+            A single step from a workflow definition
+
+        Returns
+        -------
+        action_response: StepStatus
+            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
+        action_msg: str
+            The location where the image was saved
+        action_log: str
+            A record of the exeution of the step
+
+    """
     try:
         import rclpy  # noqa
     except ImportError:

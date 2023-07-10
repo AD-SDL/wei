@@ -1,0 +1,72 @@
+metadata:
+  name: Test - Workflow
+  author: Tobias Ginsburg, Kyle Hippe
+  info: Example workflow for WEI
+  version: 0.1
+
+workcell: test_workcell.yaml
+
+modules:
+  - name: ot2_pcr_alpha
+  - name: pf400
+  - name: peeler
+  - name: sealer
+  - name: biometra
+  - name: sciclops
+
+flowdef:
+  # #This defines a step in the workflow. Each step represents an action on a single module
+  # #This is a human legible name for the step
+  # - name: Sciclops gets plate from stacks
+  # #This defines which module the action will run on, in this case, a Huson Sciclops PlateCrane robot that has stacks to store wellplates
+  #   module: sciclops
+  # #This tells the module which action in its library to run, in this case grabbing a wellplate from one of the storage tower
+  #   command: get_plate
+  # #These arguments specify the parameters for the action above, in this case, which tower the arm will pull a plate from. 
+  #   args:
+  #     loc: "tower1"
+  # #This represents checks that will take place before the system runs, in this case, there are none specified
+  #   checks: null
+  # #This is a place for additional notes
+  #   comment: Stage pcr plates
+  
+  - name: PF400 Moves plate from Sciclops to OT2
+    module: sealer_rest
+    command: seal
+    args:
+      source: sciclops.positions.exchange
+      target: ot2_pcr_alpha.positions.deck2
+      source_plate_rotation: narrow
+      target_plate_rotation: wide
+    checks: null
+  #   comment: Place plate in ot2
+
+  # - name: PF400 Moves plate from Sciclops to OT2
+  #   module: pf400
+  #   command: transfer
+  #   args:
+  #     source: sciclops.positions.exchange
+  #     target: ot2_pcr_alpha.positions.deck2
+  #     source_plate_rotation: narrow
+  #     target_plate_rotation: wide
+  #   checks: null
+  #   comment: Place plate in ot2
+
+  # - name: The OT2 runs its protocol
+  #   module: ot2_pcr_alpha
+  #   command: run_protocol
+  #   args:
+  #     config_path: tests/test_ot2_protocol.yaml
+  #   checks: RESOURCE_CHECK
+  #   comment: Run a protocol on the OT2
+
+  # - name: Move the plate from OT2 to Sciclops
+  #   module: pf400
+  #   command: transfer
+  #   args:
+  #     source: ot2_pcr_alpha.positions.deck2
+  #     target: sciclops.positions.exchange
+  #     source_plate_rotation: wide
+  #     target_plate_rotation: narrow
+  #   checks: null
+  #   comment: Move from the OT2 back to the Sciclops

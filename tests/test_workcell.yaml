@@ -2,9 +2,17 @@ config: { "search_index": "endpoint" }
 
 modules:
 
+  - name: sealer_rest
+    model: sealer
+    type: wei_rest_node
+    config:
+      url: "http://127.0.0.1:2000"
+      auth: "/home/rpl/Documents/mirauth.txt"
+    positions:
+      final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
   - name: test
     model: test
-    type: silent_callback
+    type: simulate_callback
     config:
       foo: bar
     positions:
@@ -131,7 +139,29 @@ modules:
     type: wei_ros_node
     model: ur5
     config:
-      ros_node: '/ur5_client/UR5_Client_Node'
+      ros_node: '/std_ns/UR5_Client_Node'
+      
+  - name: chemspeed
+    type: wei_tcp_node
+    model: chemspeed
+    config:
+      tcp_address: "146.139.48.77"
+      tcp_port: "5556"
+    positions:
+      entry: [0.1443982476771353, 0.23224652474284782, 0.4578526573194748, 2.64925218571153, -1.6678398871472704, 0.08816791404852323]
+      entry_height: [0.4578526573194748]
+      cartesian: [-0.05595381953305448, 0.8503024836167845, 0.08059559616050552, -2.5852067124695184, 1.696619366309323, -0.03925570389832646]
+      joint_angles: [1.801013708114624, -2.5434171162047328, -0.814492404460907, -1.322988824253418, 1.5479660034179688, 0.264820396900177]
+
+  - name: tecan
+    type: wei_tcp_node
+    model: tecan
+    config:
+      tcp_address: "146.139.48.69"
+      tcp_port: "5557"
+    positions:
+      cartesian: [1.801013708114624, -2.5434171162047328, -0.814492404460907, -1.322988824253418, 1.5479660034179688, 0.264820396900177]
+      joint_angles: [1.801013708114624, -2.5434171162047328, -0.814492404460907, -1.322988824253418, 1.5479660034179688, 0.264820396900177]
 
 
 

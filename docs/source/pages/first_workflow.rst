@@ -20,52 +20,106 @@ Here's a sample workflow YAML file:
 
 .. code-block:: yaml
 
-   metadata:
-     name: Sample Workflow
-     author: John Doe
-     info: A basic workflow for demonstration
-     version: 1.0
+  metadata:
+  name: PCR - Workflow
+  author: Casey Stone, Rafael Vescovi
+  info: Initial PCR workflow for RPL workcell
+  version: 0.1
 
-   workcell: /path/to/workcell.yaml
+  workcell: test_workcell.yaml
 
-   modules:
-     - name: module1
-     - name: module2
-     - name: module3
+  modules:
+    - name: ot2_pcr_alpha
+    - name: pf400
+    - name: peeler
+    - name: sealer
+    - name: biometra
+    - name: sciclops
 
-   flowdef:
-     - name: Command 1
-       module: module1
-       command: start
-       args: null
-       checks: null
-       comment: Run a command on module1
+  flowdef:
+    #This defines a step in the workflow. Each step represents an action on a single module
+    #This is a human legible name for the step
+    - name: Sciclops gets plate from stacks
+    #This defines which module the action will run on, in this case, a Huson Sciclops PlateCrane robot that has stacks to store wellplates
+      module: sciclops
+    #This tells the module which action in its library to run, in this case grabbing a wellplate from one of the storage tower
+      command: get_plate
+    #These arguments specify the parameters for the action above, in this case, which tower the arm will pull a plate from. 
+      args:
+        loc: "tower1"
+    #This represents checks that will take place before the system runs, in this case, there are none specified
+      checks: null
+    #This is a place for additional notes
+      comment: Stage pcr plates
+    
+    - name: PF400 Moves plate from Sciclops to OT2
+      module: pf400
+      command: transfer
+      args:
+        source: sciclops.positions.exchange
+        target: ot2_pcr_alpha.positions.deck2
+        source_plate_rotation: narrow
+        target_plate_rotation: wide
+      checks: null
+      comment: Place plate in ot2
+
+    - name: The OT2 runs its protocol
+      module: ot2_pcr_alpha
+      command: run_protocol
+      args:
+        config_path: tests/test_ot2_protocol.yaml
+      checks: RESOURCE_CHECK
+      comment: Run a protocol on the OT2
+  
+    - name: Move the plate from OT2 to Sciclops
+      module: pf400
+      command: transfer
+      args:
+        source: ot2_pcr_alpha.positions.deck2
+        target: sciclops.positions.exchange
+        source_plate_rotation: wide
+        target_plate_rotation: narrow
+      checks: null
+      comment: Move from the OT2 back to the Sciclops
+
 
 Running a Workflow
 ------------------
 
 To execute a workflow, you need to use the ``Experiment`` class from ``rpl_wei`` and provide the path to your 
-workflow file. Here's a basic script to run a workflow:
+workflow file. This script is defined in rpl_wei/examples/run_example.py, and runs the workflow above while simulating communication with the real robots. 
 
 .. code-block:: python
 
-   #!/usr/bin/env python3
+  #!/usr/bin/env python3
 
-   import logging
-   from pathlib import Path
-   from rpl_wei.exp_app import Experiment
+  from pathlib import Path
+  from rpl_wei import Experiment
 
-   def main():
-      exp = Experiment('127.0.0.1', '8000', 'Test_Experiment')
-      exp.register_exp() #parser
-      payload={}
-      test = experiment.run_job(Path('path_to_workflow.yaml'),
-      payload=payload, simulate=True)
+  def main():
+      #The path to the Workflow definition yaml file
+      wf_path = Path('../tests/test_workflow.yaml')
+      #This defines the Experiment object that will communicate with the server for workflows
+      exp = Experiment('127.0.0.1', '8000', 'Example Program')
+      #This initilizes the connection to the server and the logs for this run of the program. 
+      exp.register_exp()
+      #This runs the simulated_workflow a simulated workflow
+      flow_info = exp.run_job(wf_path.resolve(), simulate=True)
+      print(flow_info)
+      #This checks the state of the experiment in the queue
+      flow_status = exp.query_job(flow_info['job_id'])
+      #This will print out the queued job
+      print(flow_status)
+      #This will wait until the flow has run and then print out the final result of the flow
+      while flow_status["status"] != "finished":
+      flow_status = exp.query_job(flow_info['job_id'])
+      print(flow_status)
 
-   if __name__ == "__main__":
-       main()
+  if __name__ == "__main__":
+      main()
 
-The above script will run the workflow defined in ``path_to_workflow.yaml``. The simulate param
+  
+
 
 Workcell Configuration
 ----------------------

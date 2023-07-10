@@ -1,3 +1,5 @@
+"""Code for managing the Experiment logs on the server side"""
+
 from typing import Optional, Union
 
 import ulid
@@ -24,7 +26,10 @@ def start_experiment(
     -------
     Dict
        A dictionary with the experiment log_dir value"""
-    log_dir = DATA_DIR / "runs" / experiment_id
+    
+    log_dir = DATA_DIR / (str(experiment_name) + "_" + experiment_id)
+    print(log_dir)
+    runs_dir = log_dir /"wei_runs"
     result_dir = log_dir / "results"
     exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
     exp_log.info(
@@ -33,6 +38,10 @@ def start_experiment(
         + ", EXPERIMENT ID: "
         + str(experiment_id)
     )
+    
     log_dir.mkdir(parents=True, exist_ok=True)
-    result_dir.mkdir(parent=True, exist_ok=True)
-    return {"exp_dir": log_dir}
+    result_dir.mkdir(parents=True, exist_ok=True)
+    runs_dir.mkdir(parents=True, exist_ok=True)  
+   
+    return {"exp_dir": str(log_dir)}
+

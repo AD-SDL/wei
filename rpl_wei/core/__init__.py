@@ -1,3 +1,4 @@
-from pathlib import Path
+"""The module responsible for the code for maddnaging and executing WEI flows"""
 
-DATA_DIR = Path.home() / ".wei"
+from pathlib import Path
+DATA_DIR = Path.home() / ".wei/experiments"

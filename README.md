@@ -21,8 +21,9 @@ For more details and specific examples of how to use rpl_wei, please see our [do
   - [License](#license)
 
 ## Installation
+ 1. Clone the repository into the desired location. This tutorial will assume it is installed in a folder called `~/workspace/rpl_wei`
+ 2. within `~/workspace/rpl_wei` run the following code block: 
 
-### Development install 
 ```
 conda create -n rpl-wei python=3.9
 conda activate rpl-wei
@@ -32,28 +33,19 @@ pip3 install -r requirements/requirements.txt
 pip3 install -e .
 ```
 
-## Testing
-
-TODO under new design
 
 ## Usage
 
 ### Starting the server
-*\*Requires three terminals\**
-1. Start redis. I have a `redis.conf` file in the root of the repo. You can use it with `envsubst` to replace the environment variables with their values as redis does not support environment variables in the config file.
-```
-envsubst < redis.conf | redis-server -
-```
-1. Start rq worker
-```
-python -m rpl_wei.processing.worker
-```
-1. Start the server
-```
-python -m rpl_wei.server --workcell tests/test_pcr_workcell.yaml
-```
-TODO: look at something like `systemd`, `supervisord`, or `Docker` to manage the processes
 
+from a new terminal run
+```
+cd ~/workspace/rpl_wei 
+sudo apt install tmux
+bash scripts/run_wei_server.sh
+```
+
+This will run 3 programs, a redis queue system (window 0), a worker that pulls workflows from the redis queue (window 1), and a server that takes incoming workflows from the client and puts them onto the redis queue(window 2).  
 
 ## Contributing
 
