@@ -3,7 +3,7 @@ config: { "search_index": "endpoint" }
 modules:
 
   - name: sealer_rest
-    model: sealer
+    model: a4s_sealer
     type: wei_rest_node
     config:
       url: "http://127.0.0.1:2000"
@@ -46,7 +46,7 @@ modules:
 
   - name: sealer
     type: wei_ros_node
-    model: sealer
+    model: a4s_sealer
     config:
       ros_node: "/std_ns/SealerNode"
     positions:
@@ -54,7 +54,7 @@ modules:
       
   - name: peeler
     type: wei_ros_node
-    model: peeler
+    model: brooks_xpeel
     config:
       ros_node: "/std_ns/PeelerNode"
     positions:
