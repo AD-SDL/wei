@@ -5,18 +5,12 @@ modules:
   - name: test
     model: test
     type: simulate_callback
-    config:
-      foo: bar
-    positions:
-      final_destination: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
   - name: pf400
     type: wei_ros_node
     model: pf400
     config:
       ros_node: "/std_ns/pf400Node"
-    positions:
-      trash: [218.457, -2.408, 38.829, 683.518, 89.109, 995.074]
 
   - name: pf400_camera_right
     type: wei_ros_camera
@@ -97,64 +91,3 @@ modules:
       ros_node: "/std_ns/camera_module"
     positions:
       plate_station: [90.597,26.416, 66.422, 714.811, 81.916, 995.074]
-
-  - name: hidex
-    type: wei_tcp_node
-    model: Hidex
-    config:
-      tcp_address: "146.137.240.22"
-      tcp_port: 2000
-    positions:
-      default: []
-  - name: MiR_base
-    type: wei_rest_node
-    model: MiR250
-    config:
-      url: "http://mirbase1.cels.anl.gov/api/v2.0.0/"
-      auth: "/home/rpl/Documents/mirauth.txt"
-    positions:
-     default: []
-  # - name: hidex
-  #   type: wei_ros_node
-  #   model: hidex
-  #   config:
-  #     ros_node: hidex rosnode
-  #   positions:
-  #     default: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-  # - name: ur5
-  #   type: wei_ros_node
-  #   model: ur5
-  #   config:
-  #     ros_node: '/ur5_client/UR5_Client_Node'
-  - name: ur5
-    type: wei_ros_node
-    model: ur5
-    config:
-      ros_node: '/std_ns/UR5_Client_Node'
-      
-  - name: chemspeed
-    type: wei_tcp_node
-    model: chemspeed
-    config:
-      tcp_address: "146.139.48.77"
-      tcp_port: "5556"
-    positions:
-      entry: [0.1443982476771353, 0.23224652474284782, 0.4578526573194748, 2.64925218571153, -1.6678398871472704, 0.08816791404852323]
-      entry_height: [0.4578526573194748]
-      cartesian: [-0.05595381953305448, 0.8503024836167845, 0.08059559616050552, -2.5852067124695184, 1.696619366309323, -0.03925570389832646]
-      joint_angles: [1.801013708114624, -2.5434171162047328, -0.814492404460907, -1.322988824253418, 1.5479660034179688, 0.264820396900177]
-
-  - name: tecan
-    type: wei_tcp_node
-    model: tecan
-    config:
-      tcp_address: "146.139.48.69"
-      tcp_port: "5557"
-    positions:
-      cartesian: [1.801013708114624, -2.5434171162047328, -0.814492404460907, -1.322988824253418, 1.5479660034179688, 0.264820396900177]
-      joint_angles: [1.801013708114624, -2.5434171162047328, -0.814492404460907, -1.322988824253418, 1.5479660034179688, 0.264820396900177]
-
-
-
-search_index: abcd-efgh-ijkl-mnop
