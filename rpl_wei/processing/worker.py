@@ -12,14 +12,13 @@ from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.workcell import Workcell
 from rpl_wei.core.workflow import WorkflowRunner
 
-# TODO figure out logging for tasks, and how to propogate them back to the client
-# TODO error handling for tasks, how to propogate back to client, and retry for specific types of errors
 
 redis_conn = Redis()
 task_queue = Queue(connection=redis_conn, default_timeout=-1)
 
 """
-Things to do in worker:
+# TODO figure out logging for tasks, and how to propogate them back to the client
+# TODO error handling for tasks, how to propogate back to client, and retry for specific types of errors
 
 1. create a workcell object from the workcell yaml file
 3. run validation steps on modules and resources (not yet implemented)
@@ -53,7 +52,7 @@ def run_workflow_task(
     exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
 
     # Run workflow
-
+    # exp.events.wei_flow_run()
     exp_log.info(
         "WEI:WORKFLOW:RUN: "
         + str(workflow_runner.workflow.name)
