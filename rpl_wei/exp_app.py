@@ -1,4 +1,3 @@
-
 """Contains the Experiment class that manages WEI flows and helpes annotate the experiment run"""
 import json
 from pathlib import Path
@@ -29,7 +28,10 @@ class Experiment:
         if not self.experiment_id:
             self.experiment_id = ulid.new().str
         self.events = Events(
-            self.server_addr, self.server_port, self.experiment_name, self.experiment_id
+            self.server_addr,
+            self.server_port,
+            self.experiment_name,
+            self.experiment_id,
         )
 
     def _return_response(self, response: requests.Response):
@@ -60,26 +62,29 @@ class Experiment:
         Returns
         -------
         Dict
-           The JSON portion of the response from the server, including the ID of the job as job_id"""
+           The JSON portion of the response from the server, including the ID of the job as job_id
+        """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/job"
-        with open('/home/rpl/.wei/runs/payload.txt', "w") as f2:
-            payload = json.dump(payload,f2)
+        with open("/home/rpl/.wei/runs/payload.txt", "w") as f2:
+            payload = json.dump(payload, f2)
             f2.close()
-        with (open(workflow_file, "rb")) as (f):
-            f2 = open('/home/rpl/.wei/runs/payload.txt', "rb")
+        with open(workflow_file, "rb") as (f):
+            f2 = open("/home/rpl/.wei/runs/payload.txt", "rb")
             params = {
-
                 "experiment_id": self.experiment_id,
                 "simulate": simulate,
             }
-            
-            #print(params["payload"])
+
+            # print(params["payload"])
             response = requests.post(
                 url,
                 params=params,
-                json = payload,
-                files={"workflow": (str(workflow_file), f, "application/x-yaml"), "payload": (str("payload_file.txt"), f2, "text"), },
+                json=payload,
+                files={
+                    "workflow": (str(workflow_file), f, "application/x-yaml"),
+                    "payload": (str("payload_file.txt"), f2, "text"),
+                },
             )
 
         return self._return_response(response)
@@ -119,7 +124,7 @@ class Experiment:
 
         Returns
         -------
-        
+
         response: Dict
            The JSON portion of the response from the server"""
 

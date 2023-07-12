@@ -97,10 +97,10 @@ class Module(BaseModel):
     # Public
     name: str
     """name of the module, should be opentrons api compatible"""
-    type: str
-    """Type of client (e.g ros_wei_client)"""
     model: Optional[str]
     """type of the robot (e.g OT2, pf400, etc.) """
+    type: str
+    """Type of client (e.g ros_wei_client)"""
     config: Dict
     """the necessary configuration for the robot, arbitrary dict"""
     positions: Optional[dict]
@@ -137,6 +137,13 @@ class SimpleModule(BaseModel):
     """Name, should correspond with a module rosnode"""
 
 
+class Interface(BaseModel):
+    """"""
+
+    name: str
+    """"""
+
+
 class Step(BaseModel):
     """Container for a single step"""
 
@@ -147,7 +154,7 @@ class Step(BaseModel):
     """Name of step"""
     module: str
     """Module used in the step"""
-    command: str
+    action: str
     """The command type to get executed by the robot"""
     args: Optional[Dict]
     """Arguments for instruction"""
@@ -186,8 +193,6 @@ class Step(BaseModel):
 class Metadata(BaseModel):
     """Metadata container"""
 
-    name: Optional[str]
-    """Name of workflow"""
     author: Optional[str]
     """Who authored this workflow"""
     info: Optional[str]
@@ -214,8 +219,6 @@ class Workflow(BaseModel):
 
     name: str
     """Name of the workflow"""
-    # workcell: Path
-    # """The path to the workcell required by this workflow"""
     modules: List[SimpleModule]
     """List of modules needed for the workflow"""
     flowdef: List[Step]
@@ -233,3 +236,12 @@ class StepStatus(Enum):
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+
+
+class NodeStatus(Enum):
+    """Status for the state of a Node"""
+
+    IDLE = "idle"
+    BUSY = "busy"
+    ERROR = "error"
+    UNKNOWN = "unknown"

@@ -1,22 +1,21 @@
 {
     "wei_ros_node": [
-        "ros_node"
-    ], 
+        "ros_node_address"
+    ],
     "wei_ros_camera": [
-        "ros_node"
+        "ros_node_address"
     ],
     "wei_tcp_node": [
-        "tcp_address",
-        "tcp_port"
+        "tcp_node_address",
+        "tcp_node_port"
     ],
     "wei_zmq_node": [
-        "tcp_address",
-        "tcp_port"
+        "zmq_node_address",
+        "zmq_node_port"
     ],
     "wei_rest_node": [
-        "url",
-        "auth"
+        "rest_node_address",
+        "rest_node_auth"
     ],
-    "simulate_callback": [
-    ]
+    "simulate_callback": []
 }

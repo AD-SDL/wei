@@ -6,28 +6,28 @@ from rpl_wei.core.data_classes import Module, Step
 def wei_zmq_callback(step: Step, **kwargs):
     """Executes a single step from a workflow using a TCP messaging framework with the ZMQ library
 
-        Parameters
-        ----------
-        step : Step
-            A single step from a workflow definition
+    Parameters
+    ----------
+    step : Step
+        A single step from a workflow definition
 
-        Returns
-        -------
-        action_response: StepStatus
-            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
-        action_msg: str
-            the data or informtaion returned from running the step.
-        action_log: str
-            A record of the exeution of the step
+    Returns
+    -------
+    action_response: StepStatus
+        A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
+    action_msg: str
+        the data or informtaion returned from running the step.
+    action_log: str
+        A record of the exeution of the step
 
-         """
+    """
     module: Module = kwargs["step_module"]
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect(f"tcp://{module.config['tcp_address']}:{module.config['tcp_port']}")
 
     msg = {
-        "action_handle": step.command,
+        "action_handle": step.action,
         "action_vars": step.args,
     }
     msg = json.dumps(msg)

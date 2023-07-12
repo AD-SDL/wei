@@ -4,6 +4,21 @@ from typing import Optional
 import requests
 
 
+class Event:
+    pass
+    # event = {
+    #     "experiment_name":"",
+    #     "experiment_id":"",
+    #     "name": "NAME",
+    # }
+
+    # def log_event_local():
+    #     return str(event.name, event)
+
+    # def log_event_kafka(event, producer):
+    #     producer.send(event, channel=event.experiment_id b"some_message_bytes")
+
+
 class Events:
     """Registers Events during the Experiment execution both in a cloud log and eventually on Kafka"""
 

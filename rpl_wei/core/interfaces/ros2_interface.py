@@ -15,13 +15,13 @@ except ImportError:
 
 def __init_rclpy():
     """stops the execution node
-     Parameters
-        ----------
-        None
-        Returns
-        -------
-        None
-        """
+    Parameters
+       ----------
+       None
+       Returns
+       -------
+       None
+    """
     global wei_execution_node
 
     if rclpy:  # use_rclpy:
@@ -35,14 +35,14 @@ def __init_rclpy():
 
 def __kill_node():
     """stops the execution node
-     Parameters
-        ----------
-        None
-        Returns
-        -------
-        None
-        """
-    
+    Parameters
+       ----------
+       None
+       Returns
+       -------
+       None
+    """
+
     global wei_execution_node
     print("killing node")
     wei_execution_node.destroy_node()
@@ -52,21 +52,21 @@ def __kill_node():
 def wei_ros2_service_callback(step: Step, **kwargs):
     """Executes a single step from a workflow using a ROS messaging framework
 
-        Parameters
-        ----------
-        step : Step
-            A single step from a workflow definition
+    Parameters
+    ----------
+    step : Step
+        A single step from a workflow definition
 
-        Returns
-        -------
-        action_response: StepStatus
-            A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
-        action_msg: str
-            the data or informtaion returned from running the step.
-        action_log: str
-            A record of the exeution of the step
+    Returns
+    -------
+    action_response: StepStatus
+        A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
+    action_msg: str
+        the data or informtaion returned from running the step.
+    action_log: str
+        A record of the exeution of the step
 
-         """
+    """
     # assert use_rclpy, "No RCLPY found... Cannot send messages using ROS2"
     __init_rclpy()
 
@@ -74,7 +74,7 @@ def wei_ros2_service_callback(step: Step, **kwargs):
 
     msg = {
         "node": module.config["ros_node"],
-        "action_handle": step.command,
+        "action_handle": step.action,
         "action_vars": step.args,
     }
 
@@ -85,11 +85,11 @@ def wei_ros2_service_callback(step: Step, **kwargs):
     action_response = ""
     action_msg = ""
     action_log = ""
-    if rclpy: 
+    if rclpy:
         action_response, action_msg, action_log = wei_execution_node.send_wei_command(
             msg["node"], msg["action_handle"], msg["action_vars"]
         )
-        
+
         if action_msg and kwargs.get("verbose", False):
             print(action_msg)
 

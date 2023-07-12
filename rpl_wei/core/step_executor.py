@@ -3,18 +3,14 @@ import logging
 from typing import Callable, List, Optional
 
 from rpl_wei.core.data_classes import Module, Step, StepStatus
-from rpl_wei.core.executors.rest_executor import wei_rest_callback
-from rpl_wei.core.executors.ros2_executor import (
+from rpl_wei.core.interfaces.rest_interface import wei_rest_callback
+from rpl_wei.core.interfaces.ros2_interface import (
     wei_ros2_camera_callback,
     wei_ros2_service_callback,
 )
-from rpl_wei.core.executors.tcp_executor import wei_tcp_callback
-from rpl_wei.core.executors.zmq_executor import wei_zmq_callback
-
-
-def silent_callback(step: Step, **kwargs):
-    print(step)
-    return "silent", step.command, ""
+from rpl_wei.core.interfaces.tcp_interface import wei_tcp_callback
+from rpl_wei.core.interfaces.zmq_interface import wei_zmq_callback
+from rpl_wei.core.interfaces.simulate_interface import silent_callback
 
 
 ########################
@@ -60,7 +56,7 @@ class StepExecutor:
         action_log: str
             A record of the exeution of the step
 
-         """
+        """
         assert (
             step_module.type in Executor_Map.function
         ), f"Executor not found for {step_module.type}"
