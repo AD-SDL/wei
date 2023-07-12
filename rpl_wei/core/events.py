@@ -10,6 +10,10 @@ class Event:
     #     "experiment_name":"",
     #     "experiment_id":"",
     #     "name": "NAME",
+    #   "action":{
+    #    "type":"globus-compute",
+    #   "action_id":"action_id"
+    #   }
     # }
 
     # def log_event_local():
@@ -28,6 +32,7 @@ class Events:
         server_port: str,
         experiment_name: str,
         experiment_id: Optional[str] = None,
+        kafka_server: Optional[str] = None,
     ) -> None:
         self.server_addr = server_addr
         self.server_port = server_port
@@ -71,8 +76,8 @@ class Events:
             url,
             params={"log_value": log_value},
         )
-        kafka = False
-        if kafka:
+
+        if self.kafka_server:
             from kafka import KafkaProducer
 
             producer = KafkaProducer(
