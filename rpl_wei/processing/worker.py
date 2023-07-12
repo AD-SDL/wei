@@ -11,7 +11,7 @@ from rpl_wei.core import DATA_DIR
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.workcell import Workcell
 from rpl_wei.core.workflow import WorkflowRunner
-
+from rpl_wei.core.events import Events
 
 redis_conn = Redis()
 task_queue = Queue(connection=redis_conn, default_timeout=-1)
@@ -29,6 +29,7 @@ task_queue = Queue(connection=redis_conn, default_timeout=-1)
 
 def run_workflow_task(
     experiment_id,
+    experiment_name,
     workflow_def,
     parsed_payload,
     workcell_def,
@@ -36,6 +37,7 @@ def run_workflow_task(
     simulate: bool = False,
 ):
     """Placeholder"""
+    events = Events("localhost", "8000", experiment_name, experiment_id, 'ec2-54-160-200-147.compute-1.amazonaws.com:9092')
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
     workflow_runner = WorkflowRunner(
@@ -53,23 +55,14 @@ def run_workflow_task(
 
     # Run workflow
     # exp.events.wei_flow_run()
-    exp_log.info(
-        "WEI:WORKFLOW:RUN: "
-        + str(workflow_runner.workflow.name)
-        + ", RUN ID: "
-        + str(job_id)
-    )
+    events.log_wf_start(str(workflow_runner.workflow.name), str(job_id))
+        
     result_payload = workflow_runner.run_flow(
         workcell, payload=parsed_payload, simulate=simulate
     )
     if simulate:
         time.sleep(5)
-    exp_log.info(
-        "WEI:WORKFLOW:COMPLETE: "
-        + str(workflow_runner.workflow.name)
-        + ",  RUN ID: "
-        + str(job_id)
-    )
+    events.log_wf_end(str(workflow_runner.workflow.name), str(job_id))
     print(f"Result payload:\t{json.dumps(result_payload)}")
 
     return result_payload

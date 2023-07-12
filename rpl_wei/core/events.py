@@ -39,6 +39,8 @@ class Events:
         self.experiment_id = experiment_id
         self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
+        if kafka_server:
+            self.kafka_server = kafka_server
         self.loops = []
 
     def _return_response(self, response: requests.Response):
@@ -81,9 +83,9 @@ class Events:
             from kafka import KafkaProducer
 
             producer = KafkaProducer(
-                bootstrap_servers="ec2-54-160-200-147.compute-1.amazonaws.com:9092"
+                bootstrap_servers=self.kafka_server
             )
-            producer.send(log_value, b"some_message_bytes")
+            producer.send("rpl", bytes(self.experiment_id, "utf-8"), bytes(log_value, "utf-8"))
 
         return self._return_response(response)
 
@@ -210,4 +212,49 @@ class Events:
             + condition
             + ", RESULT: "
             + str(value)
+        )
+    def log_wf_start(self, wf_name, job_id):
+        """Peeks the most recent loop from the loop stack and logs its completion
+
+
+        Parameters
+        ----------
+        condition : str
+            A value describing the condition being checked to see if the loop will continue.
+
+        value: bool
+            Whether or not the condition was met.
+
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+     
+        return self._log_event(
+            "WEI:WORKFLOW:START: "
+        + str(wf_name)
+        + ", RUN ID: "
+        + str(job_id)
+        )
+    def log_wf_end(self, wf_name, job_id):
+        """Peeks the most recent loop from the loop stack and logs its completion
+
+
+        Parameters
+        ----------
+        condition : str
+            A value describing the condition being checked to see if the loop will continue.
+
+        value: bool
+            Whether or not the condition was met.
+
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+        return self._log_event(
+            "WEI:WORKFLOW:END: "
+        + str(wf_name)
+        + ", RUN ID: "
+        + str(job_id)
         )

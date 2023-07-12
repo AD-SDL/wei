@@ -108,10 +108,10 @@ class WorkflowRunner:
                             module.interface = "simulate_callback"
                         else:
                             location_varname = value.split(".")[-1]
-                            assert (
-                                location_varname in module.positions
-                            ), f"Position {location_varname} not found"
-                            location = module.positions[location_varname]
+                            # assert (
+                            #     location_varname in module.positions
+                            # ), f"Position {location_varname} not found"
+                            location = workcell.locations[module_name][location_varname]
                             step.args[key] = location
 
             # Inject the payload

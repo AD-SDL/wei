@@ -13,10 +13,11 @@ class Workcell:
     def __init__(
         self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
     ) -> None:
+        print(workcell_def)
         self.workcell = WorkcellData(**workcell_def)
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)
-
+        self.locations = self.workcell.locations
         # TODO redo logger with ULID (and workcell hash?) https://pypi.org/project/python-ulid/
         self.wc_logger = WEI_Logger.get_logger(
             "wcLogger",

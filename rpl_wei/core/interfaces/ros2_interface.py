@@ -73,7 +73,7 @@ def wei_ros2_service_callback(step: Step, **kwargs):
     module: Module = kwargs["step_module"]
 
     msg = {
-        "node": module.config["ros_node"],
+        "node": module.config["ros_node_address"],
         "action_handle": step.action,
         "action_vars": step.args,
     }

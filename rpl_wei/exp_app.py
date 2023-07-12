@@ -32,6 +32,7 @@ class Experiment:
             self.server_port,
             self.experiment_name,
             self.experiment_id,
+            'ec2-54-160-200-147.compute-1.amazonaws.com:9092'
         )
 
     def _return_response(self, response: requests.Response):
@@ -73,6 +74,7 @@ class Experiment:
             f2 = open("/home/rpl/.wei/runs/payload.txt", "rb")
             params = {
                 "experiment_id": self.experiment_id,
+                "experiment_name": self.experiment_name,
                 "simulate": simulate,
             }
 
