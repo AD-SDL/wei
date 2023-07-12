@@ -68,7 +68,7 @@ def submit_job(
         job = task_queue.enqueue(
             run_workflow_task,
             experiment_id,
-            experiment_name, 
+            experiment_name,
             workflow_content_str,
             parsed_payload,
             workcell.__dict__,
@@ -138,7 +138,11 @@ async def process_job(
     print(parsed_payload)
 
     return submit_job(
-        experiment_id, experiment_name, workflow_content_str, parsed_payload, simulate=simulate
+        experiment_id,
+        experiment_name,
+        workflow_content_str,
+        parsed_payload,
+        simulate=simulate,
     )
 
 
@@ -168,7 +172,7 @@ async def process_exp(experiment_name: str, experiment_id: str):
 @app.post("/job/{experiment_id}")
 async def process_job_with_id(
     experiment_id: str,
-    experiment_name:str, 
+    experiment_name: str,
     workflow: UploadFile = File(...),
     payload: str = Form("{}"),
     simulate: bool = False,
@@ -179,7 +183,11 @@ async def process_job_with_id(
 
     parsed_payload = json.loads(payload)
     return submit_job(
-        experiment_id, experiment_name, workflow_content_str, parsed_payload, simulate=simulate
+        experiment_id,
+        experiment_name,
+        workflow_content_str,
+        parsed_payload,
+        simulate=simulate,
     )
 
 
