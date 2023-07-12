@@ -9,6 +9,7 @@ from rpl_wei.core.loggers import WEI_Logger
 
 class Workcell:
     """Placeholder"""
+
     def __init__(
         self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
     ) -> None:

@@ -56,7 +56,7 @@ def run_workflow_task(
 
     exp_log.info(
         "WEI:WORKFLOW:RUN: "
-        + str(workflow_runner.workflow.metadata.name)
+        + str(workflow_runner.workflow.name)
         + ", RUN ID: "
         + str(job_id)
     )
@@ -67,7 +67,7 @@ def run_workflow_task(
         time.sleep(5)
     exp_log.info(
         "WEI:WORKFLOW:COMPLETE: "
-        + str(workflow_runner.workflow.metadata.name)
+        + str(workflow_runner.workflow.name)
         + ",  RUN ID: "
         + str(job_id)
     )

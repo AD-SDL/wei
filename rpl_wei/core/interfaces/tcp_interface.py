@@ -1,6 +1,7 @@
 """Handling execution for steps in the RPL-SDL efforts"""
-from rpl_wei.core.data_classes import Module, Step
 import json
+
+from rpl_wei.core.data_classes import Module, Step
 
 
 def wei_tcp_callback(step: Step, **kwargs):

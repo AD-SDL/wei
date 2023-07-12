@@ -6,8 +6,8 @@ from devtools import debug
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
-from rpl_wei.core.step_executor import StepExecutor
 from rpl_wei.core.loggers import WEI_Logger
+from rpl_wei.core.step_executor import StepExecutor
 from rpl_wei.core.validators import ModuleValidator, StepValidator
 from rpl_wei.core.workcell import Workcell
 
@@ -105,7 +105,7 @@ class WorkflowRunner:
                                 f"Module positon not found for module '{module_name}' and identifier '{value}'"
                             )
                         if simulate:
-                            module.type = "simulate_callback"
+                            module.interface = "simulate_callback"
                         else:
                             location_varname = value.split(".")[-1]
                             assert (

@@ -7,6 +7,7 @@ from rpl_wei.core.data_classes import PathLike
 
 class WEI_Logger:
     """Placeholder"""
+
     @staticmethod
     def _create_logger(
         logger_name: str,

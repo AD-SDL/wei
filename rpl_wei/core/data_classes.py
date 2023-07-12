@@ -99,7 +99,7 @@ class Module(BaseModel):
     """name of the module, should be opentrons api compatible"""
     model: Optional[str]
     """type of the robot (e.g OT2, pf400, etc.) """
-    type: str
+    interface: str
     """Type of client (e.g ros_wei_client)"""
     config: Dict
     """the necessary configuration for the robot, arbitrary dict"""
@@ -115,14 +115,14 @@ class Module(BaseModel):
     def validate_config(cls, v, values, **kwargs):
         """Validate the config field of the workcell config with special rules for each type of robot"""
         config_validation = json.load(values["config_validation"].open())
-        robot_type = values.get("type", "").lower()
+        interface_type = values.get("interface", "").lower()
 
-        if robot_type.lower() not in config_validation:
+        if interface_type.lower() not in config_validation:
             raise ValueError(
-                f"Module type {robot_type} not in configuration validators"
+                f"Module type {interface_type} not in configuration validators"
             )
 
-        req_fields = config_validation[robot_type]
+        req_fields = config_validation[interface_type]
         for field in req_fields:
             if field not in v:
                 raise ValueError(f"Required field `{field}` not in values")

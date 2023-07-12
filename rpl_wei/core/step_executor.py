@@ -8,10 +8,9 @@ from rpl_wei.core.interfaces.ros2_interface import (
     wei_ros2_camera_callback,
     wei_ros2_service_callback,
 )
+from rpl_wei.core.interfaces.simulate_interface import silent_callback
 from rpl_wei.core.interfaces.tcp_interface import wei_tcp_callback
 from rpl_wei.core.interfaces.zmq_interface import wei_zmq_callback
-from rpl_wei.core.interfaces.simulate_interface import silent_callback
-
 
 ########################
 #   Executor mapping   #
@@ -58,8 +57,8 @@ class StepExecutor:
 
         """
         assert (
-            step_module.type in Executor_Map.function
-        ), f"Executor not found for {step_module.type}"
+            step_module.interface in Executor_Map.function
+        ), f"Executor not found for {step_module.interface}"
 
         logger.info(f"Started running step with name: {step.name}")
         logger.debug(step)
@@ -71,7 +70,7 @@ class StepExecutor:
             ](step, step_module=step_module)
         else:
             action_response, action_msg, action_log = Executor_Map.function[
-                step_module.type
+                step_module.interface
             ](step, step_module=step_module)
 
         logger.info(f"Finished running step with name: {step.name}")

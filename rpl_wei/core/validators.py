@@ -11,7 +11,6 @@ class StepValidator:
     def __init__(
         self, run_logger: Optional[logging.Logger] = None
     ) -> None:  # noqa: D103, D107
-        
         self.run_logger = run_logger
 
     def check_step(self, step: Step) -> Tuple[bool, str]:

@@ -3,7 +3,7 @@ import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict  # , List
 
 import rq
 import ulid
@@ -45,7 +45,9 @@ async def lifespan(app: FastAPI):
     pass
 
 
-app = FastAPI(lifespan=lifespan, )
+app = FastAPI(
+    lifespan=lifespan,
+)
 
 
 def submit_job(
@@ -218,5 +220,10 @@ async def queue_info():
 
 if __name__ == "__main__":
     import uvicorn
+
     print("asdfsaf")
-    uvicorn.run("rpl_wei.server:app", reload=True, ws_max_size=10000000000000000000000000000000000000000000000000000000000000000000000000,)
+    uvicorn.run(
+        "rpl_wei.server:app",
+        reload=True,
+        ws_max_size=10000000000000000000000000000000000000000000000000000000000000000000000000,
+    )

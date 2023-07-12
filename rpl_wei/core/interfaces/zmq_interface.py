@@ -1,5 +1,7 @@
-import zmq
 import json
+
+import zmq
+
 from rpl_wei.core.data_classes import Module, Step
 
 
