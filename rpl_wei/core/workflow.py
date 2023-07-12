@@ -93,27 +93,15 @@ class WorkflowRunner:
                     f"No module found for step module: {step.module}, in step: {step}"
                 )
 
+                
             # replace position names with actual positions
             if isinstance(step.args, dict) and len(step.args) > 0:
                 for key, value in step.args.items():
-                    if hasattr(value, "__contains__") and "positions" in value:
-                        module_name = value.split(".")[0]
-                        module = workcell.find_step_module(module_name)
+                    #if hasattr(value, "__contains__") and "positions" in value:
+                    if value in workcell.locations[step.module].keys():
+                        step.args[key] = workcell.locations[step.module][value]
 
-                        if not module:
-                            raise ValueError(
-                                f"Module positon not found for module '{module_name}' and identifier '{value}'"
-                            )
-                        if simulate:
-                            module.interface = "simulate_callback"
-                        else:
-                            location_varname = value.split(".")[-1]
-                            # assert (
-                            #     location_varname in module.positions
-                            # ), f"Position {location_varname} not found"
-                            location = workcell.locations[module_name][location_varname]
-                            step.args[key] = location
-
+            
             # Inject the payload
             if isinstance(payload, dict):
                 if not isinstance(step.args, dict) or len(step.args) == 0:
