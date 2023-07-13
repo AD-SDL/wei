@@ -30,7 +30,6 @@ workcell = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Placeholder"""
-    """Placeholder"""
     global workcell
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
@@ -92,35 +91,6 @@ def submit_job(
         }
         return JSONResponse(content=response_content)
 
-
-def start_exp(experiment_id: str, experiment_name: str):
-    base_response_content = {
-        "experiment_id": experiment_id,
-        "experiment_name": experiment_name,
-    }
-    """Placeholder"""
-    """Placeholder"""
-    print("testing")
-    return(start_experiment(experiment_name, experiment_id))
-    try:
-        job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
-        jobs_ahead = len(task_queue.jobs)
-        response_content = {
-            "status": "success",
-            "jobs_ahead": jobs_ahead,
-            "job_id": job.get_id(),
-            **base_response_content,
-        }
-        return JSONResponse(content=response_content)
-    except Exception as e:
-        response_content = {
-            "status": "failed",
-            "error": str(e),
-            **base_response_content,
-        }
-        return JSONResponse(content=response_content)
-
-
 @app.post("/job")
 async def process_job(
     workflow: UploadFile = File(...),
@@ -151,7 +121,6 @@ async def process_job(
 @app.post("/log/{experiment_id}")
 def log_experiment(experiment_id: str, log_value: str):
     """Placeholder"""
-    """Placeholder"""
     log_dir = DATA_DIR / "runs" / experiment_id
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
@@ -168,7 +137,7 @@ def process_exp(experiment_name: str, experiment_id: str):
     """Placeholder"""
     # Decode the bytes object to a string
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    return start_exp(experiment_id, experiment_name)
+    return start_experiment(experiment_id, experiment_name)
 
 
 @app.post("/job/{experiment_id}")
@@ -196,7 +165,6 @@ async def process_job_with_id(
 @app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
     """Placeholder"""
-    """Placeholder"""
     try:
         job = Job.fetch(job_id, connection=task_queue.connection)
     except rq.exceptions.NoSuchJobError:
@@ -210,7 +178,6 @@ async def get_job_status(job_id: str):
 
 @app.get("/queue/info")
 async def queue_info():
-    """Placeholder"""
     """Placeholder"""
     # TODO: what more information can we get from the queue?
     queued_jobs = task_queue.count
@@ -233,8 +200,6 @@ async def queue_info():
 
 if __name__ == "__main__":
     import uvicorn
-
-    print("asdfsaf")
     uvicorn.run(
         "rpl_wei.server:app",
         reload=True,

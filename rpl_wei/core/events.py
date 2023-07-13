@@ -39,8 +39,7 @@ class Events:
         self.experiment_id = experiment_id
         self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
-        if kafka_server:
-            self.kafka_server = kafka_server
+        self.kafka_server = None
         self.loops = []
 
     def _return_response(self, response: requests.Response):
@@ -79,6 +78,7 @@ class Events:
             params={"log_value": log_value},
         )
 
+        print(self.kafka_server)
         if self.kafka_server:
             from kafka import KafkaProducer
 

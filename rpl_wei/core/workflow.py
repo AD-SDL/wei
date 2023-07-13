@@ -95,10 +95,11 @@ class WorkflowRunner:
 
             # replace position names with actual positions
             if isinstance(step.args, dict) and len(step.args) > 0:
-                for key, value in step.args.items():
-                    # if hasattr(value, "__contains__") and "positions" in value:
-                    if value in workcell.locations[step.module].keys():
-                        step.args[key] = workcell.locations[step.module][value]
+                if step.module in workcell.locations.keys():
+                    for key, value in step.args.items():
+                        # if hasattr(value, "__contains__") and "positions" in value:
+                        if value in workcell.locations[step.module].keys():
+                            step.args[key] = workcell.locations[step.module][value]
 
             # Inject the payload
             if isinstance(payload, dict):

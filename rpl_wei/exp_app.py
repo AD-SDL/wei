@@ -18,12 +18,14 @@ class Experiment:
         server_port: str,
         experiment_name: str,
         experiment_id: Optional[str] = None,
+        kafka_server: Optional[str] = None
     ) -> None:
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_id = experiment_id
         self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
+        self.kafka_server = kafka_server
         self.loops = []
         if not self.experiment_id:
             self.experiment_id = ulid.new().str
@@ -32,7 +34,7 @@ class Experiment:
             self.server_port,
             self.experiment_name,
             self.experiment_id,
-            "ec2-54-160-200-147.compute-1.amazonaws.com:9092",
+            self.kafka_server,
         )
 
     def _return_response(self, response: requests.Response):

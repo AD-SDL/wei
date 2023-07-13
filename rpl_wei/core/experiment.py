@@ -5,7 +5,6 @@ from typing import Optional, Union
 import ulid
 
 from rpl_wei.core import DATA_DIR
-from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.events import Events
 
 def start_experiment(
@@ -31,10 +30,8 @@ def start_experiment(
         "8000",
         experiment_name,
         experiment_id,
-        "ec2-54-160-200-147.compute-1.amazonaws.com:9092",
+        None,
     )
-
-    print("makingdiers")
     
     log_dir = DATA_DIR / "runs" / experiment_id
     result_dir = log_dir / "results"
@@ -42,6 +39,5 @@ def start_experiment(
     
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)
-    print("done")
     events.start_experiment()
     return {"exp_dir": log_dir}
