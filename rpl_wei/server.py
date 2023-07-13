@@ -92,6 +92,7 @@ def submit_job(
     job_id = ulid.new().str
     path = Path(experiment_path)
     experiment_id = path.name.split("_")[-1]
+    experiment_name = path.name.split("_")[0]
     base_response_content = {
         "experiment_id": experiment_path,
     }
@@ -219,7 +220,7 @@ async def process_job(
 def log_experiment(experiment_path: str, log_value: str):
     """Placeholder"""
     log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.spit("_")[-1]
+    experiment_id = log_dir.name.split("_")[-1]
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
 
@@ -233,7 +234,7 @@ async def log_experiment(experiment_path: str):
 
    
 @app.post("/experiment")
-async def process_exp(experiment_name: str, experiment_id: str):
+def process_exp(experiment_name: str, experiment_id: str):
     """ Pulls an experiment and creates the files and logger for it
 
         Parameters

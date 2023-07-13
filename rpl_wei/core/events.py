@@ -76,7 +76,7 @@ class Events:
 
         response = requests.post(
             url,
-            params={"log_value": log_value},
+            params={"log_value": log_value, "experiment_path": str(self.experiment_name) + "_" + self.experiment_id},
         )
 
         if self.kafka_server:

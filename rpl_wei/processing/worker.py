@@ -66,6 +66,13 @@ def run_workflow_task(
         -------
         result_payload Dict
            The resulting data from the run including the response from each module and the state of the run"""
+    events = Events(
+        "localhost",
+        "8000",
+        experiment_name,
+        experiment_id,
+        "ec2-54-160-200-147.compute-1.amazonaws.com:9092",
+    )
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
     workflow_runner = WorkflowRunner(
@@ -80,7 +87,7 @@ def run_workflow_task(
     workflow_runner.check_flowdef()
     workflow_runner.check_modules()
     log_dir = experiment_path
-    exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
+    
 
     # Run workflow
     # exp.events.wei_flow_run()

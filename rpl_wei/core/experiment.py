@@ -34,14 +34,12 @@ def start_experiment(
         "ec2-54-160-200-147.compute-1.amazonaws.com:9092",
     )
 
-    print("makingdiers")
-    
-    log_dir = DATA_DIR / "runs" / experiment_id
+    log_dir = DATA_DIR / (str(experiment_name) + "_" + experiment_id)
+    runs_dir = log_dir /"wei_runs"
     result_dir = log_dir / "results"
-    
-    
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)
+    runs_dir.mkdir(parents=True, exist_ok=True)  
     print("done")
     events.start_experiment()
-    return {"exp_dir": log_dir}
+    return {"exp_dir": str(log_dir)}
