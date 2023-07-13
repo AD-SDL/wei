@@ -1,7 +1,7 @@
 #!/bin/bash
 
 session="WEI"
-folder="~/workspace/rpl_wei"
+folder="~/mnt/c/Users/tgins/Documents/rpl_wei"
 tmux new-session -d -s $session
 tmux set -g mouse on
 
@@ -13,7 +13,8 @@ tmux send-keys -t $session:$window 'envsubst < redis.conf | redis-server -' C-m
 window=1
 tmux new-window -t $session:$window -n 'server'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
-tmux send-keys -t $session:$window 'python3 -m rpl_wei.server --workcell tests/test_workcell.yaml' C-m
+tmux send-keys -t $session:$window 'python3 -m rpl_wei.server --workcell ./tests/test_workcell.yaml' C-m
+
 
 window=2
 tmux new-window -t $session:$window -n 'worker'

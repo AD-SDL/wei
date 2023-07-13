@@ -53,7 +53,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the request"""
         if response.status_code != 200:
             return {"http_error": response.status_code}
@@ -70,7 +70,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         url = f"{self.url}/log/{self.experiment_id}"
 
@@ -117,7 +117,7 @@ class Events:
             the boolean value of that decision.
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         return self._log_event("CHECK:" + str(dec_value).capitalize() + ": " + dec_name)
 
@@ -129,7 +129,7 @@ class Events:
             the comment to be looged
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         return self._log_event(comment)
 
@@ -142,7 +142,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
 
         return self._log_event("LOCAL:COMPUTE: " + func_name)
@@ -157,7 +157,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         return self._log_event("GLOBUS:COMPUTE: " + func_name)
 
@@ -173,7 +173,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         return self._log_event(
             "GLOBUS:GLADIER:RUNFLOW:" + flow_name + " with ID " + flow_id
@@ -189,7 +189,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         self.loops.append(loop_name)
         return self._log_event("LOOP:START:" + loop_name)
@@ -200,7 +200,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         loop_name = self.loops.pop()
         return self._log_event("LOOP:END:" + loop_name)
@@ -219,7 +219,7 @@ class Events:
 
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         loop_name = self.loops[-1]
         return self._log_event(

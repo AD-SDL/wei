@@ -1,8 +1,10 @@
+"""The module that initilizes and runs the step by step WEI workflow"""
 import logging
 from typing import Any, Dict, List, Optional
 
 import ulid
 from devtools import debug
+from pathlib import Path
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
@@ -13,15 +15,16 @@ from rpl_wei.core.workcell import Workcell
 
 
 class WorkflowRunner:
-    """Placeholder"""
+    """Initilizes and runs the step by step WEI workflow"""
 
     def __init__(
         self,
         workflow_def: Dict[str, Any],
-        experiment_id: str,
+        experiment_path: str,
         run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
         simulate: bool = False,
+        workflow_name: str = ""
     ) -> None:
         self.workflow = WorkflowData(**workflow_def)
         self.simulate = simulate
@@ -37,7 +40,7 @@ class WorkflowRunner:
             self.run_id = run_id
         else:
             self.run_id = ulid.new()
-        self.log_dir = DATA_DIR / "runs" / experiment_id / str(self.run_id)
+        self.log_dir = Path(experiment_path) /"wei_runs"/ (workflow_name +"_" + str(self.run_id))
         self.result_dir = self.log_dir / "results"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.result_dir.mkdir(parents=True, exist_ok=True)
@@ -68,10 +71,10 @@ class WorkflowRunner:
 
         Parameters
         ----------
-        workcell : str
+        workcell : Workcell
            The Workcell data file loaded in from the workcell yaml file
 
-        payload: bool
+        payload: Dict
             The input to the workflow
 
         simulate: bool
@@ -79,8 +82,8 @@ class WorkflowRunner:
 
         Returns
         -------
-        Dict
-           The JSON portion of the response from the server"""
+        steps: List[Dict]
+           a list of steps and the metadata relevant to execute them"""
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # Start executing the steps
@@ -136,11 +139,29 @@ class WorkflowRunner:
     def run_flow(
         self,
         workcell: Workcell,
-        callbacks: Optional[List[Any]] = None,
+        callbacks: Optional[Dict[str, Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
     ) -> Dict[str, Any]:
-        """Executes the flowdef commmands"""
+        """Runs through the steps of the workflow and sends the necessary 
+
+        Parameters
+        ----------
+        workcell : Workcell
+           The Workcell data file loaded in from the workcell yaml file
+
+        payload: bool
+            The input to the workflow
+
+        simulate: bool
+            Whether or not to use real robots
+
+        Returns
+        -------
+       response: Dict
+           The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results"""
+        # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
+
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
         # Start executing the steps
         hist = {}
@@ -152,10 +173,16 @@ class WorkflowRunner:
                 "action_msg": str(action_msg),
                 "action_log": str(action_log),
             }
+            hist[step["step"].name] = {
+                "action_response": str(action_response),
+                "action_msg": str(action_msg),
+                "action_log": str(action_log),
+            }
         return {
             "run_dir": str(self.log_dir),
             "run_id": str(self.run_id),
             "payload": payload,
+            "hist": hist,
             "hist": hist,
         }
 

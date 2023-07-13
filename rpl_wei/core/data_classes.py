@@ -206,8 +206,14 @@ class Workcell(BaseModel):
 
     name: str
     """Name of the workflow"""
+    name: str
+    """Name of the workflow"""
     config: Optional[Dict[str, Any]]
     """Globus search index, needed for publishing"""
+    modules: List[Module]
+    """The modules available to a workcell"""
+    locations: Optional[Dict[str, Any]]
+    """Locations used by the workcell"""
     modules: List[Module]
     """The modules available to a workcell"""
     locations: Optional[Dict[str, Any]]

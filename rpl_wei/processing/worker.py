@@ -26,6 +26,7 @@ task_queue = Queue(connection=redis_conn, default_timeout=-1)
 
 
 def run_workflow_task(
+    experiment_path,
     experiment_id,
     experiment_name,
     workflow_def,
@@ -33,27 +34,53 @@ def run_workflow_task(
     workcell_def,
     job_id: Optional[Union[ulid.ULID, str]] = None,
     simulate: bool = False,
+    workflow_name: str = ""
 ):
-    """Placeholder"""
-    events = Events(
-        "localhost",
-        "8000",
-        experiment_name,
-        experiment_id,
-        "ec2-54-160-200-147.compute-1.amazonaws.com:9092",
-    )
+    """Pulls a workflow job from the queue to the server to be executed, and logs it in the overall event log.
+
+        Parameters
+        ----------
+        experiment_path : str
+           The path to the logs of the experiment for the workflow
+
+        experiment_id : str
+           The id of the experiment for the workflow
+
+        workflow_def: str
+            The defintion of the workflow from the workflow yaml file
+
+        parsed_payload: Dict
+            The data input to the workflow
+        
+        workcell_def: Dict
+            the parsed workcell file to use for the workflow
+        
+        job_id: ULIT
+            the id for the workflow on the queue
+        
+        simulate: bool
+            whether to use real robots or not
+        
+
+        Returns
+        -------
+        result_payload Dict
+           The resulting data from the run including the response from each module and the state of the run"""
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
     workflow_runner = WorkflowRunner(
         yaml.safe_load(workflow_def),
-        experiment_id=experiment_id,
+        experiment_path=experiment_path,
         run_id=job_id,
         simulate=simulate,
+        workflow_name=workflow_name
     )
 
     # Run validation
     workflow_runner.check_flowdef()
     workflow_runner.check_modules()
+    log_dir = experiment_path
+    exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
 
     # Run workflow
     # exp.events.wei_flow_run()
