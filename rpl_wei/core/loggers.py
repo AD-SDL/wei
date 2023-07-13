@@ -1,4 +1,3 @@
-
 """The logging system that helps track events for the system"""
 import logging
 from pathlib import Path
@@ -15,22 +14,22 @@ class WEI_Logger:
         log_file: Optional[PathLike] = None,
         level: int = logging.INFO,
     ):
-        """ Creates a logger that attaches to the given file 
+        """Creates a logger that attaches to the given file
 
-        Parameters
-        ----------
-        logger_name : str
-            The name that will refer to this unique loger
-        log_file: Optional[PathLike]
-            The file that the log will reference
-        level:
-            The output level of the log, INFO, ERROR etc, which describes which what will be logged.
-        Returns
-        -------
-       logger: Logger
-            The logging object with the appropriate handlers
+         Parameters
+         ----------
+         logger_name : str
+             The name that will refer to this unique loger
+         log_file: Optional[PathLike]
+             The file that the log will reference
+         level:
+             The output level of the log, INFO, ERROR etc, which describes which what will be logged.
+         Returns
+         -------
+        logger: Logger
+             The logging object with the appropriate handlers
 
-         """
+        """
         if log_file is None:
             log_file = Path().resolve() / f"{logger_name}.log"
 
@@ -57,20 +56,20 @@ class WEI_Logger:
     ) -> logging.Logger:
         """Finds the existing logger with teh gien name or creates a new one if it doesn't exist
 
-        Parameters
-        ----------
-        logger_name : str
-            The name that will refer to this unique loger
-        log_dir: Optional[PathLike]
-            The path to file that the log will reference
-        level:
-            The output level of the log, INFO, ERROR etc, which describes which what will be logged.
-        Returns
-        -------
-       logger: Logger
-            The logging object with the appropriate handlers
+         Parameters
+         ----------
+         logger_name : str
+             The name that will refer to this unique loger
+         log_dir: Optional[PathLike]
+             The path to file that the log will reference
+         level:
+             The output level of the log, INFO, ERROR etc, which describes which what will be logged.
+         Returns
+         -------
+        logger: Logger
+             The logging object with the appropriate handlers
 
-         """
+        """
         if not logging.getLogger(log_name).hasHandlers():
             logger = WEI_Logger._create_logger(
                 log_name,
@@ -101,21 +100,21 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
-        """ Returns a JSON blob processed from the given logs
-        Parameters
-        ----------
-        logger_name : str
-            The name that will refer to this unique loger
-        log_file: Optional[PathLike]
-            The file that the log will reference
-        level:
-            The output level of the log, INFO, ERROR etc, which describes which what will be logged.
-        Returns
-        -------
-       logger: Logger
-            The logging object with the appropriate handlers
+        """Returns a JSON blob processed from the given logs
+         Parameters
+         ----------
+         logger_name : str
+             The name that will refer to this unique loger
+         log_file: Optional[PathLike]
+             The file that the log will reference
+         level:
+             The output level of the log, INFO, ERROR etc, which describes which what will be logged.
+         Returns
+         -------
+        logger: Logger
+             The logging object with the appropriate handlers
 
-         """
+        """
 
         if not logging.getLogger(log_name).hasHandlers():
             logger = WEI_Logger._create_logger(

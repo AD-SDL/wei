@@ -1,4 +1,3 @@
-
 """Contains the Experiment class that manages WEI flows and helpes annotate the experiment run"""
 import json
 from pathlib import Path
@@ -19,6 +18,7 @@ class Experiment:
         server_port: str,
         experiment_name: str,
         experiment_id: Optional[str] = None,
+        kafka_server: Optional[str] = None,
     ) -> None:
         self.server_addr = server_addr
         self.server_port = server_port
@@ -29,11 +29,16 @@ class Experiment:
             self.experiment_id = experiment_id
         self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
+        self.kafka_server = kafka_server
         self.loops = []
         if not self.experiment_id:
             self.experiment_id = ulid.new().str
         self.events = Events(
-            self.server_addr, self.server_port, self.experiment_name, self.experiment_id
+            self.server_addr,
+            self.server_port,
+            self.experiment_name,
+            self.experiment_id,
+            self.kafka_server,
         )
         print(self.experiment_id)
 
@@ -65,26 +70,30 @@ class Experiment:
         Returns
         -------
         Dict
-           The JSON portion of the response from the server, including the ID of the job as job_id"""
+           The JSON portion of the response from the server, including the ID of the job as job_id
+        """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/job"
-        with open('/home/rpl/.wei/runs/payload.txt', "w") as f2:
-            payload = json.dump(payload,f2)
+        with open("/home/rpl/.wei/runs/payload.txt", "w") as f2:
+            payload = json.dump(payload, f2)
             f2.close()
-        with (open(workflow_file, "rb")) as (f):
-            f2 = open('/home/rpl/.wei/runs/payload.txt', "rb")
+        with open(workflow_file, "rb") as (f):
+            f2 = open("/home/rpl/.wei/runs/payload.txt", "rb")
             params = {
-
-                "experiment_path": self.experiment_path,
+                "experiment_id": self.experiment_id,
+                "experiment_name": self.experiment_name,
                 "simulate": simulate,
             }
-            
-            #print(params["payload"])
+
+            # print(params["payload"])
             response = requests.post(
                 url,
                 params=params,
-                json = payload,
-                files={"workflow": (str(workflow_file), f, "application/x-yaml"), "payload": (str("payload_file.txt"), f2, "text"), },
+                json=payload,
+                files={
+                    "workflow": (str(workflow_file), f, "application/x-yaml"),
+                    "payload": (str("payload_file.txt"), f2, "text"),
+                },
             )
 
         return self._return_response(response)
@@ -127,7 +136,7 @@ class Experiment:
 
         Returns
         -------
-        
+
         response: Dict
            The JSON portion of the response from the server"""
 
@@ -139,7 +148,12 @@ class Experiment:
         url = f"{self.url}/log/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
+    def get_log(self):
+        url = f"{self.url}/log/return"
+        response = requests.get(url, params={"experiment_path": self.experiment_path})
+
         return self._return_response(response)
+
     def query_queue(self):
         url = f"{self.url}/queue/info"
         response = requests.get(url)

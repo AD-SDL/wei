@@ -1,5 +1,6 @@
 """The module that initilizes and runs the step by step WEI workflow"""
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import ulid
@@ -8,8 +9,8 @@ from pathlib import Path
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
-from rpl_wei.core.executors.step_executor import StepExecutor
 from rpl_wei.core.loggers import WEI_Logger
+from rpl_wei.core.step_executor import StepExecutor
 from rpl_wei.core.validators import ModuleValidator, StepValidator
 from rpl_wei.core.workcell import Workcell
 
@@ -24,7 +25,7 @@ class WorkflowRunner:
         run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
         simulate: bool = False,
-        workflow_name: str = ""
+        workflow_name: str = "",
     ) -> None:
         self.workflow = WorkflowData(**workflow_def)
         self.simulate = simulate
@@ -40,7 +41,11 @@ class WorkflowRunner:
             self.run_id = run_id
         else:
             self.run_id = ulid.new()
-        self.log_dir = Path(experiment_path) /"wei_runs"/ (workflow_name +"_" + str(self.run_id))
+        self.log_dir = (
+            Path(experiment_path)
+            / "wei_runs"
+            / (workflow_name + "_" + str(self.run_id))
+        )
         self.result_dir = self.log_dir / "results"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.result_dir.mkdir(parents=True, exist_ok=True)
@@ -98,24 +103,11 @@ class WorkflowRunner:
 
             # replace position names with actual positions
             if isinstance(step.args, dict) and len(step.args) > 0:
-                for key, value in step.args.items():
-                    if hasattr(value, "__contains__") and "positions" in value:
-                        module_name = value.split(".")[0]
-                        module = workcell.find_step_module(module_name)
-
-                        if not module:
-                            raise ValueError(
-                                f"Module positon not found for module '{module_name}' and identifier '{value}'"
-                            )
-                        if simulate:
-                            module.type = "simulate_callback"
-                        else:
-                            location_varname = value.split(".")[-1]
-                            assert (
-                                location_varname in module.positions
-                            ), f"Position {location_varname} not found"
-                            location = module.positions[location_varname]
-                            step.args[key] = location
+                if step.module in workcell.locations.keys():
+                    for key, value in step.args.items():
+                        # if hasattr(value, "__contains__") and "positions" in value:
+                        if value in workcell.locations[step.module].keys():
+                            step.args[key] = workcell.locations[step.module][value]
 
             # Inject the payload
             if isinstance(payload, dict):
@@ -157,23 +149,23 @@ class WorkflowRunner:
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
     ) -> Dict[str, Any]:
-        """Runs through the steps of the workflow and sends the necessary 
+        """Runs through the steps of the workflow and sends the necessary
 
-        Parameters
-        ----------
-        workcell : Workcell
-           The Workcell data file loaded in from the workcell yaml file
+         Parameters
+         ----------
+         workcell : Workcell
+            The Workcell data file loaded in from the workcell yaml file
 
-        payload: bool
-            The input to the workflow
+         payload: bool
+             The input to the workflow
 
-        simulate: bool
-            Whether or not to use real robots
+         simulate: bool
+             Whether or not to use real robots
 
-        Returns
-        -------
-       response: Dict
-           The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results"""
+         Returns
+         -------
+        response: Dict
+            The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results"""
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now

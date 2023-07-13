@@ -5,7 +5,7 @@ from typing import Optional, Union
 import ulid
 
 from rpl_wei.core import DATA_DIR
-from rpl_wei.core.loggers import WEI_Logger
+from rpl_wei.core.events import Events
 
 
 def start_experiment(
@@ -26,22 +26,18 @@ def start_experiment(
     -------
     Dict
        A dictionary with the experiment log_dir value"""
-    
-    log_dir = DATA_DIR / (str(experiment_name) + "_" + experiment_id)
-    print(log_dir)
-    runs_dir = log_dir /"wei_runs"
-    result_dir = log_dir / "results"
-    exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
-    exp_log.info(
-        "EXPERIMENT:START: "
-        + str(experiment_name)
-        + ", EXPERIMENT ID: "
-        + str(experiment_id)
+    events = Events(
+        "localhost",
+        "8000",
+        experiment_name,
+        experiment_id,
+        None,
     )
-    
+
+    log_dir = DATA_DIR / "runs" / experiment_id
+    result_dir = log_dir / "results"
+
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)
-    runs_dir.mkdir(parents=True, exist_ok=True)  
-   
-    return {"exp_dir": str(log_dir)}
-
+    events.start_experiment()
+    return {"exp_dir": log_dir}

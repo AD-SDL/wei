@@ -4,6 +4,25 @@ from typing import Optional
 import requests
 
 
+class Event:
+    pass
+    # event = {
+    #     "experiment_name":"",
+    #     "experiment_id":"",
+    #     "name": "NAME",
+    #   "action":{
+    #    "type":"globus-compute",
+    #   "action_id":"action_id"
+    #   }
+    # }
+
+    # def log_event_local():
+    #     return str(event.name, event)
+
+    # def log_event_kafka(event, producer):
+    #     producer.send(event, channel=event.experiment_id b"some_message_bytes")
+
+
 class Events:
     """Registers Events during the Experiment execution both in a cloud log and eventually on Kafka"""
 
@@ -13,12 +32,14 @@ class Events:
         server_port: str,
         experiment_name: str,
         experiment_id: Optional[str] = None,
+        kafka_server: Optional[str] = None,
     ) -> None:
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_id = experiment_id
         self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
+        self.kafka_server = None
         self.loops = []
 
     def _return_response(self, response: requests.Response):
@@ -56,16 +77,37 @@ class Events:
             url,
             params={"log_value": log_value},
         )
-        kafka = False
-        if kafka:
+
+        print(self.kafka_server)
+        if self.kafka_server:
             from kafka import KafkaProducer
 
-            producer = KafkaProducer(
-                bootstrap_servers="ec2-54-160-200-147.compute-1.amazonaws.com:9092"
+            producer = KafkaProducer(bootstrap_servers=self.kafka_server)
+            producer.send(
+                "rpl", bytes(self.experiment_id, "utf-8"), bytes(log_value, "utf-8")
             )
-            producer.send(log_value, b"some_message_bytes")
 
         return self._return_response(response)
+
+    def start_experiment(self):
+        """logs an event in the proper place for the given experiment
+
+        Parameters
+        ----------
+        dec_name : str
+            a description of the decision being made
+        dec_value: bool
+            the boolean value of that decision.
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        return self._log_event(
+            "EXPERIMENT:START: "
+            + str(self.experiment_name)
+            + ", EXPERIMENT ID: "
+            + str(self.experiment_id)
+        )
 
     def decision(self, dec_name: str, dec_value: bool):
         """logs an event in the proper place for the given experiment
@@ -190,4 +232,45 @@ class Events:
             + condition
             + ", RESULT: "
             + str(value)
+        )
+
+    def log_wf_start(self, wf_name, job_id):
+        """Peeks the most recent loop from the loop stack and logs its completion
+
+
+        Parameters
+        ----------
+        condition : str
+            A value describing the condition being checked to see if the loop will continue.
+
+        value: bool
+            Whether or not the condition was met.
+
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+
+        return self._log_event(
+            "WEI:WORKFLOW:START: " + str(wf_name) + ", RUN ID: " + str(job_id)
+        )
+
+    def log_wf_end(self, wf_name, job_id):
+        """Peeks the most recent loop from the loop stack and logs its completion
+
+
+        Parameters
+        ----------
+        condition : str
+            A value describing the condition being checked to see if the loop will continue.
+
+        value: bool
+            Whether or not the condition was met.
+
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+        return self._log_event(
+            "WEI:WORKFLOW:END: " + str(wf_name) + ", RUN ID: " + str(job_id)
         )
