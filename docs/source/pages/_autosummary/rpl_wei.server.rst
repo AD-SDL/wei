@@ -1,4 +1,4 @@
-rpl\_wei.server
+﻿rpl\_wei.server
 ===============
 
 .. automodule:: rpl_wei.server
@@ -15,7 +15,6 @@ rpl\_wei.server
    
       get_job_status
       lifespan
-      log_experiment
       process_exp
       process_job
       process_job_with_id
