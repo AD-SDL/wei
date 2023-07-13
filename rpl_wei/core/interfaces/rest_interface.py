@@ -29,22 +29,13 @@ def wei_rest_callback(step: Step, **kwargs):
     url = base_url + "/action"  # step.args["endpoint"]
     headers = {}
 
-    # with open(module.config["auth"]) as f:
-    #     headers = {
-    #         "accept": "application/json",
-    #         "Authorization": f.read().strip(),
-    #         "Accept-Language": "en_US",
-    #     }
-    payload = {}
-    if "payload" in step.args:
-        payload = step.args["payload"]
     rest_response = requests.post(
         url,
         headers=headers,
-        params={"action_handle": step.command, "action_vars": json.dumps(step.args)},
+        params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
     ).json()
     action_response = rest_response["action_response"]
     action_msg = rest_response["action_msg"]
     action_log = rest_response["action_log"]
-    # TODO: assert all of the above. deal with edge cases?
+
     return action_response, action_msg, action_log

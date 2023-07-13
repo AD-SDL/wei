@@ -7,9 +7,7 @@ import yaml
 from redis import Redis
 from rq import Queue
 
-from rpl_wei.core import DATA_DIR
 from rpl_wei.core.events import Events
-from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.workcell import Workcell
 from rpl_wei.core.workflow import WorkflowRunner
 
@@ -56,8 +54,6 @@ def run_workflow_task(
     # Run validation
     workflow_runner.check_flowdef()
     workflow_runner.check_modules()
-    log_dir = DATA_DIR / "runs" / experiment_id
-    exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
 
     # Run workflow
     # exp.events.wei_flow_run()
