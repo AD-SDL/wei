@@ -6,7 +6,7 @@ import ulid
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.loggers import WEI_Logger
-
+from rpl_wei.core.events import Events
 
 def start_experiment(
     experiment_name, experiment_id: Optional[Union[ulid.ULID, str]] = None
@@ -26,15 +26,22 @@ def start_experiment(
     -------
     Dict
        A dictionary with the experiment log_dir value"""
+    events = Events(
+        "localhost",
+        "8000",
+        experiment_name,
+        experiment_id,
+        "ec2-54-160-200-147.compute-1.amazonaws.com:9092",
+    )
+
+    print("makingdiers")
+    
     log_dir = DATA_DIR / "runs" / experiment_id
     result_dir = log_dir / "results"
-    exp_log = WEI_Logger.get_logger("log_" + str(experiment_id), log_dir)
-    exp_log.info(
-        "EXPERIMENT:START: "
-        + str(experiment_name)
-        + ", EXPERIMENT ID: "
-        + str(experiment_id)
-    )
+    
+    
     log_dir.mkdir(parents=True, exist_ok=True)
-    result_dir.mkdir(parent=True, exist_ok=True)
+    result_dir.mkdir(parents=True, exist_ok=True)
+    print("done")
+    events.start_experiment()
     return {"exp_dir": log_dir}

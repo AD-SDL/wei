@@ -82,12 +82,29 @@ class Events:
         if self.kafka_server:
             from kafka import KafkaProducer
 
-            producer = KafkaProducer(
-                bootstrap_servers=self.kafka_server
+            producer = KafkaProducer(bootstrap_servers=self.kafka_server)
+            producer.send(
+                "rpl", bytes(self.experiment_id, "utf-8"), bytes(log_value, "utf-8")
             )
-            producer.send("rpl", bytes(self.experiment_id, "utf-8"), bytes(log_value, "utf-8"))
 
         return self._return_response(response)
+    def start_experiment(self):
+        """logs an event in the proper place for the given experiment
+
+        Parameters
+        ----------
+        dec_name : str
+            a description of the decision being made
+        dec_value: bool
+            the boolean value of that decision.
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+        return self._log_event("EXPERIMENT:START: "
+        + str(self.experiment_name)
+        + ", EXPERIMENT ID: "
+        + str(self.experiment_id))
 
     def decision(self, dec_name: str, dec_value: bool):
         """logs an event in the proper place for the given experiment
@@ -213,6 +230,7 @@ class Events:
             + ", RESULT: "
             + str(value)
         )
+
     def log_wf_start(self, wf_name, job_id):
         """Peeks the most recent loop from the loop stack and logs its completion
 
@@ -229,13 +247,11 @@ class Events:
         -------
         Any
            The JSON portion of the response from the server"""
-     
+
         return self._log_event(
-            "WEI:WORKFLOW:START: "
-        + str(wf_name)
-        + ", RUN ID: "
-        + str(job_id)
+            "WEI:WORKFLOW:START: " + str(wf_name) + ", RUN ID: " + str(job_id)
         )
+
     def log_wf_end(self, wf_name, job_id):
         """Peeks the most recent loop from the loop stack and logs its completion
 
@@ -253,8 +269,5 @@ class Events:
         Any
            The JSON portion of the response from the server"""
         return self._log_event(
-            "WEI:WORKFLOW:END: "
-        + str(wf_name)
-        + ", RUN ID: "
-        + str(job_id)
+            "WEI:WORKFLOW:END: " + str(wf_name) + ", RUN ID: " + str(job_id)
         )

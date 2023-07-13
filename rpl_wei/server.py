@@ -68,7 +68,7 @@ def submit_job(
         job = task_queue.enqueue(
             run_workflow_task,
             experiment_id,
-            experiment_name, 
+            experiment_name,
             workflow_content_str,
             parsed_payload,
             workcell.__dict__,
@@ -100,6 +100,8 @@ def start_exp(experiment_id: str, experiment_name: str):
     }
     """Placeholder"""
     """Placeholder"""
+    print("testing")
+    return(start_experiment(experiment_name, experiment_id))
     try:
         job = task_queue.enqueue(start_experiment(experiment_name, experiment_id))
         jobs_ahead = len(task_queue.jobs)
@@ -138,12 +140,16 @@ async def process_job(
     print(parsed_payload)
 
     return submit_job(
-        experiment_id, experiment_name, workflow_content_str, parsed_payload, simulate=simulate
+        experiment_id,
+        experiment_name,
+        workflow_content_str,
+        parsed_payload,
+        simulate=simulate,
     )
 
 
 @app.post("/log/{experiment_id}")
-async def log_experiment(experiment_id: str, log_value: str):
+def log_experiment(experiment_id: str, log_value: str):
     """Placeholder"""
     """Placeholder"""
     log_dir = DATA_DIR / "runs" / experiment_id
@@ -158,7 +164,7 @@ async def log_experiment(experiment_id: str, log_value: str):
 
 
 @app.post("/experiment")
-async def process_exp(experiment_name: str, experiment_id: str):
+def process_exp(experiment_name: str, experiment_id: str):
     """Placeholder"""
     # Decode the bytes object to a string
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
@@ -168,7 +174,7 @@ async def process_exp(experiment_name: str, experiment_id: str):
 @app.post("/job/{experiment_id}")
 async def process_job_with_id(
     experiment_id: str,
-    experiment_name:str, 
+    experiment_name: str,
     workflow: UploadFile = File(...),
     payload: str = Form("{}"),
     simulate: bool = False,
@@ -179,7 +185,11 @@ async def process_job_with_id(
 
     parsed_payload = json.loads(payload)
     return submit_job(
-        experiment_id, experiment_name, workflow_content_str, parsed_payload, simulate=simulate
+        experiment_id,
+        experiment_name,
+        workflow_content_str,
+        parsed_payload,
+        simulate=simulate,
     )
 
 
