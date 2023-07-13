@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import ulid
 from devtools import debug
+from pathlib import Path
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData

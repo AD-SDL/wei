@@ -100,7 +100,7 @@ class Events:
             the boolean value of that decision.
         Returns
         -------
-        Any
+        response: Dict
            The JSON portion of the response from the server"""
         return self._log_event(
             "EXPERIMENT:START: "

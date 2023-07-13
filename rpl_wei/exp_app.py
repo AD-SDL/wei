@@ -144,6 +144,9 @@ class Experiment:
         response = requests.get(url)
 
         return self._return_response(response)
+    def get_log(self):
+        url = f"{self.url}/log/return"
+        response = requests.get(url, params={"experiment_path": self.experiment_path})
 
     def get_log(self):
         url = f"{self.url}/log/return"
