@@ -18,7 +18,7 @@ class Experiment:
         server_port: str,
         experiment_name: str,
         experiment_id: Optional[str] = None,
-        kafka_server: Optional[str] = None
+        kafka_server: Optional[str] = None,
     ) -> None:
         self.server_addr = server_addr
         self.server_port = server_port
@@ -144,11 +144,13 @@ class Experiment:
         response = requests.get(url)
 
         return self._return_response(response)
+
     def get_log(self):
         url = f"{self.url}/log/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
         return self._return_response(response)
+
     def query_queue(self):
         url = f"{self.url}/queue/info"
         response = requests.get(url)

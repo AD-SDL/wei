@@ -7,6 +7,7 @@ import ulid
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.events import Events
 
+
 def start_experiment(
     experiment_name, experiment_id: Optional[Union[ulid.ULID, str]] = None
 ):
@@ -32,11 +33,10 @@ def start_experiment(
         experiment_id,
         None,
     )
-    
+
     log_dir = DATA_DIR / "runs" / experiment_id
     result_dir = log_dir / "results"
-    
-    
+
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)
     events.start_experiment()

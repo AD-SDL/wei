@@ -1,4 +1,3 @@
-
 """A Class to represent a workcell object that contains the different WEI modules"""
 import logging
 from typing import Any, Dict, Optional
@@ -8,8 +7,10 @@ from rpl_wei.core.data_classes import Module
 from rpl_wei.core.data_classes import Workcell as WorkcellData
 from rpl_wei.core.loggers import WEI_Logger
 
+
 class Workcell:
     """A Class to represent a workcell object that contains the different WEI modules"""
+
     def __init__(
         self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
     ) -> None:

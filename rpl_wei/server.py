@@ -55,31 +55,31 @@ def submit_job(
     workflow_content_str: str,
     parsed_payload: Dict[str, Any],
     simulate: bool,
-    workflow_name: str
+    workflow_name: str,
 ):
-    
+
     """puts a workflow job onto the redis queue
 
-        Parameters
-        ----------
-        experiment_id : str
-           The id of the experiment for the workflow
+    Parameters
+    ----------
+    experiment_id : str
+       The id of the experiment for the workflow
 
-        workflow_content_str: str
-            The defintion of the workflow from the workflow yaml file
+    workflow_content_str: str
+        The defintion of the workflow from the workflow yaml file
 
-        parsed_payload: Dict
-            The data input to the workflow
-        
-        
-        simulate: bool
-            whether to use real robots or not
-        
+    parsed_payload: Dict
+        The data input to the workflow
 
-        Returns
-        -------
-        response: Dict
-           a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
+
+    simulate: bool
+        whether to use real robots or not
+
+
+    Returns
+    -------
+    response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
     path = Path(experiment_path)
@@ -153,35 +153,35 @@ async def process_job(
 ):
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
 
-        Parameters
-        ----------
-        experiment_id : str
-           The id of the experiment for the workflow
+    Parameters
+    ----------
+    experiment_id : str
+       The id of the experiment for the workflow
 
-        workflow: UploadFile
-            The workflow yaml file
+    workflow: UploadFile
+        The workflow yaml file
 
-        payload: UploadFile
-            The data input file to the workflow
-        
-        
-        simulate: bool
-            whether to use real robots or not
-        
+    payload: UploadFile
+        The data input file to the workflow
 
-        Returns
-        -------
-        response: Dict
-           a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
+
+    simulate: bool
+        whether to use real robots or not
+
+
+    Returns
+    -------
+    response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
     workflow_path = Path(workflow.filename)
     workflow_name = workflow_path.name.split(".")[0]
-  
+
     workflow_content = await workflow.read()
     payload = await payload.read()
     # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
-    
+
     return submit_job(
         experiment_id, workflow_content_str, parsed_payload, simulate=simulate
     )
@@ -201,9 +201,9 @@ async def log_experiment(experiment_path: str):
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.spit("_")[-1]
     with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
-        return(f.read())
+        return f.read()
 
-   
+
 @app.post("/experiment")
 async def process_exp(experiment_name: str, experiment_id: str):
     """Placeholder"""
@@ -222,26 +222,26 @@ async def process_job_with_id(
 ):
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
 
-        Parameters
-        ----------
-        experiment_id : str
-           The id of the experiment for the workflow
+    Parameters
+    ----------
+    experiment_id : str
+       The id of the experiment for the workflow
 
-        workflow: UploadFile
-            The workflow yaml file
+    workflow: UploadFile
+        The workflow yaml file
 
-        payload: UploadFile
-            The data input file to the workflow
-        
-        
-        simulate: bool
-            whether to use real robots or not
-        
+    payload: UploadFile
+        The data input file to the workflow
 
-        Returns
-        -------
-        response: Dict
-           a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
+
+    simulate: bool
+        whether to use real robots or not
+
+
+    Returns
+    -------
+    response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
     workflow_content = await workflow.read()
     workflow_content_str = workflow_content.decode("utf-8")
 
@@ -295,6 +295,7 @@ async def queue_info():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "rpl_wei.server:app",
         reload=True,

@@ -88,6 +88,7 @@ class Events:
             )
 
         return self._return_response(response)
+
     def start_experiment(self):
         """logs an event in the proper place for the given experiment
 
@@ -101,10 +102,12 @@ class Events:
         -------
         Any
            The JSON portion of the response from the server"""
-        return self._log_event("EXPERIMENT:START: "
-        + str(self.experiment_name)
-        + ", EXPERIMENT ID: "
-        + str(self.experiment_id))
+        return self._log_event(
+            "EXPERIMENT:START: "
+            + str(self.experiment_name)
+            + ", EXPERIMENT ID: "
+            + str(self.experiment_id)
+        )
 
     def decision(self, dec_name: str, dec_value: bool):
         """logs an event in the proper place for the given experiment

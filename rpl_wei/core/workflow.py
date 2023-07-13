@@ -1,10 +1,10 @@
 """The module that initilizes and runs the step by step WEI workflow"""
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import ulid
 from devtools import debug
-from pathlib import Path
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
@@ -24,7 +24,7 @@ class WorkflowRunner:
         run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
         simulate: bool = False,
-        workflow_name: str = ""
+        workflow_name: str = "",
     ) -> None:
         self.workflow = WorkflowData(**workflow_def)
         self.simulate = simulate
@@ -40,7 +40,11 @@ class WorkflowRunner:
             self.run_id = run_id
         else:
             self.run_id = ulid.new()
-        self.log_dir = Path(experiment_path) /"wei_runs"/ (workflow_name +"_" + str(self.run_id))
+        self.log_dir = (
+            Path(experiment_path)
+            / "wei_runs"
+            / (workflow_name + "_" + str(self.run_id))
+        )
         self.result_dir = self.log_dir / "results"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.result_dir.mkdir(parents=True, exist_ok=True)
@@ -144,23 +148,23 @@ class WorkflowRunner:
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
     ) -> Dict[str, Any]:
-        """Runs through the steps of the workflow and sends the necessary 
+        """Runs through the steps of the workflow and sends the necessary
 
-        Parameters
-        ----------
-        workcell : Workcell
-           The Workcell data file loaded in from the workcell yaml file
+         Parameters
+         ----------
+         workcell : Workcell
+            The Workcell data file loaded in from the workcell yaml file
 
-        payload: bool
-            The input to the workflow
+         payload: bool
+             The input to the workflow
 
-        simulate: bool
-            Whether or not to use real robots
+         simulate: bool
+             Whether or not to use real robots
 
-        Returns
-        -------
-       response: Dict
-           The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results"""
+         Returns
+         -------
+        response: Dict
+            The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results"""
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now

@@ -34,38 +34,38 @@ def run_workflow_task(
     workcell_def,
     job_id: Optional[Union[ulid.ULID, str]] = None,
     simulate: bool = False,
-    workflow_name: str = ""
+    workflow_name: str = "",
 ):
     """Pulls a workflow job from the queue to the server to be executed, and logs it in the overall event log.
 
-        Parameters
-        ----------
-        experiment_path : str
-           The path to the logs of the experiment for the workflow
+    Parameters
+    ----------
+    experiment_path : str
+       The path to the logs of the experiment for the workflow
 
-        experiment_id : str
-           The id of the experiment for the workflow
+    experiment_id : str
+       The id of the experiment for the workflow
 
-        workflow_def: str
-            The defintion of the workflow from the workflow yaml file
+    workflow_def: str
+        The defintion of the workflow from the workflow yaml file
 
-        parsed_payload: Dict
-            The data input to the workflow
-        
-        workcell_def: Dict
-            the parsed workcell file to use for the workflow
-        
-        job_id: ULIT
-            the id for the workflow on the queue
-        
-        simulate: bool
-            whether to use real robots or not
-        
+    parsed_payload: Dict
+        The data input to the workflow
 
-        Returns
-        -------
-        result_payload Dict
-           The resulting data from the run including the response from each module and the state of the run"""
+    workcell_def: Dict
+        the parsed workcell file to use for the workflow
+
+    job_id: ULIT
+        the id for the workflow on the queue
+
+    simulate: bool
+        whether to use real robots or not
+
+
+    Returns
+    -------
+    result_payload Dict
+       The resulting data from the run including the response from each module and the state of the run"""
     events = Events(
         "localhost",
         "8000",
@@ -80,7 +80,7 @@ def run_workflow_task(
         experiment_path=experiment_path,
         run_id=job_id,
         simulate=simulate,
-        workflow_name=workflow_name
+        workflow_name=workflow_name,
     )
 
     # Run validation

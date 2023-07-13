@@ -26,7 +26,9 @@ def wei_zmq_callback(step: Step, **kwargs):
     module: Module = kwargs["step_module"]
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-    socket.connect(f"tcp://{module.config['zmq_node_address']}:{module.config['zmq_node_port']}")
+    socket.connect(
+        f"tcp://{module.config['zmq_node_address']}:{module.config['zmq_node_port']}"
+    )
 
     msg = {
         "action_handle": step.action,
