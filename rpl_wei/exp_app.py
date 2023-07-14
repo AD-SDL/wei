@@ -42,6 +42,7 @@ class Experiment:
         )
         print(self.experiment_id)
         print("asdfas")
+
     def _return_response(self, response: requests.Response):
         if response.status_code != 200:
             return {"http_error": response.status_code}
@@ -143,6 +144,7 @@ class Experiment:
         response = requests.get(url)
 
         return self._return_response(response)
+
     def get_log(self):
         url = f"{self.url}/log/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})

@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 
 import ulid
 from devtools import debug
-from pathlib import Path
 
 from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workflow as WorkflowData
@@ -165,7 +164,8 @@ class WorkflowRunner:
          Returns
          -------
         response: Dict
-            The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results"""
+            The result of running the workflow, including the log directory, the run_id the payload and the hist, which is the list of steps and their individual results
+        """
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now

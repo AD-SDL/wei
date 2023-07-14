@@ -36,11 +36,11 @@ def start_experiment(
     print(experiment_name)
     print(experiment_id)
     log_dir = DATA_DIR / (str(experiment_name) + "_id_" + experiment_id)
-    runs_dir = log_dir /"wei_runs"
+    runs_dir = log_dir / "wei_runs"
     result_dir = log_dir / "results"
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)
-    runs_dir.mkdir(parents=True, exist_ok=True)  
+    runs_dir.mkdir(parents=True, exist_ok=True)
     print("done")
     events.start_experiment()
     return {"exp_dir": log_dir}

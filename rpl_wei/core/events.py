@@ -91,7 +91,7 @@ class Events:
 
         return self._return_response(response)
 
-    def start_experiment(self, log_dir: Optional[str]=""):
+    def start_experiment(self, log_dir: Optional[str] = ""):
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -108,7 +108,8 @@ class Events:
             "EXPERIMENT:START: "
             + str(self.experiment_name)
             + ", EXPERIMENT ID: "
-            + str(self.experiment_id), log_dir
+            + str(self.experiment_id),
+            log_dir,
         )
 
     def decision(self, dec_name: str, dec_value: bool):
