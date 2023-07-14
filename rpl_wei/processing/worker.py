@@ -65,7 +65,8 @@ def run_workflow_task(
     Returns
     -------
     result_payload Dict
-       The resulting data from the run including the response from each module and the state of the run"""
+       The resulting data from the run including the response from each module and the state of the run
+    """
     events = Events(
         "localhost",
         "8000",

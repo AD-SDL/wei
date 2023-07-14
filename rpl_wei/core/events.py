@@ -38,6 +38,7 @@ class Events:
         self.server_port = server_port
         self.experiment_id = experiment_id
         self.experiment_name = experiment_name
+        self.experiment_path = ""
         self.url = f"http://{self.server_addr}:{self.server_port}"
         self.kafka_server = None
         self.loops = []
@@ -59,7 +60,7 @@ class Events:
 
         return response.json()
 
-    def _log_event(self, log_value: str):
+    def _log_event(self, log_value: str, log_dir=""):
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -72,10 +73,11 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         url = f"{self.url}/log/{self.experiment_id}"
-
+        if log_dir:
+            self.experiment_path = log_dir
         response = requests.post(
             url,
-            params={"log_value": log_value},
+            params={"log_value": log_value, "experiment_path": self.experiment_path},
         )
 
         print(self.kafka_server)
@@ -89,7 +91,7 @@ class Events:
 
         return self._return_response(response)
 
-    def start_experiment(self):
+    def start_experiment(self, log_dir: Optional[str] = ""):
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -106,7 +108,8 @@ class Events:
             "EXPERIMENT:START: "
             + str(self.experiment_name)
             + ", EXPERIMENT ID: "
-            + str(self.experiment_id)
+            + str(self.experiment_id),
+            log_dir,
         )
 
     def decision(self, dec_name: str, dec_value: bool):

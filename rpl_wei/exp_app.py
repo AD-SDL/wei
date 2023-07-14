@@ -40,7 +40,6 @@ class Experiment:
             self.experiment_id,
             self.kafka_server,
         )
-        print(self.experiment_id)
 
     def _return_response(self, response: requests.Response):
         if response.status_code != 200:
@@ -80,8 +79,7 @@ class Experiment:
         with open(workflow_file, "rb") as (f):
             f2 = open("/home/rpl/.wei/runs/payload.txt", "rb")
             params = {
-                "experiment_id": self.experiment_id,
-                "experiment_name": self.experiment_name,
+                "experiment_path": self.experiment_path,
                 "simulate": simulate,
             }
 
@@ -122,7 +120,7 @@ class Experiment:
         )
         print(response.json())
         self.experiment_path = response.json()["exp_dir"]
-
+        self.events.experiment_path = self.experiment_path
         return self._return_response(response)
 
     def query_job(self, job_id: str):
@@ -144,6 +142,7 @@ class Experiment:
         response = requests.get(url)
 
         return self._return_response(response)
+
     def get_log(self):
         url = f"{self.url}/log/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})

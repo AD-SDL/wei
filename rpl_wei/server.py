@@ -31,14 +31,14 @@ workcell = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initial run function for the app, parses the worcell argument
-        Parameters
-        ----------
-        app : FastApi
-           The REST API app being initialized
+    Parameters
+    ----------
+    app : FastApi
+       The REST API app being initialized
 
-        Returns
-        -------
-        None"""
+    Returns
+    -------
+    None"""
     global workcell
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
@@ -65,7 +65,6 @@ def submit_job(
     simulate: bool,
     workflow_name: str,
 ):
-
     """puts a workflow job onto the redis queue
 
     Parameters
@@ -87,11 +86,14 @@ def submit_job(
     Returns
     -------
     response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
     # manually create job ulid (so we can use it for the loggign inside wei)
     job_id = ulid.new().str
     path = Path(experiment_path)
-    experiment_id = path.name.split("_")[-1]
+    experiment_id = path.name.split("_id_")[-1]
+    experiment_name = path.name.split("_id_")[-1]
+
     base_response_content = {
         "experiment_id": experiment_path,
     }
@@ -131,7 +133,7 @@ def start_exp(experiment_id: str, experiment_name: str):
         "experiment_id": experiment_id,
         "experiment_name": experiment_name,
     }
-    
+
     """Pulls an experiment and creates the files and logger for it
 
         Parameters
@@ -148,9 +150,8 @@ def start_exp(experiment_id: str, experiment_name: str):
         -------
          response: Dict
            a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
-    
+
     try:
-       
         exp_data = start_experiment(experiment_name, experiment_id)
         # jobs_ahead = len(task_queue.jobs)
         # response_content = {
@@ -162,7 +163,7 @@ def start_exp(experiment_id: str, experiment_name: str):
         #     **base_response_content,
         # }
         return JSONResponse(content=exp_data)
-       
+
     except Exception as e:
         response_content = {
             "status": "failed",
@@ -200,7 +201,8 @@ async def process_job(
     Returns
     -------
     response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
     workflow_path = Path(workflow.filename)
     workflow_name = workflow_path.name.split(".")[0]
 
@@ -210,15 +212,19 @@ async def process_job(
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
     return submit_job(
-        experiment_path, workflow_content_str, parsed_payload, workflow_name=workflow_name, simulate=simulate, 
+        experiment_path,
+        workflow_content_str,
+        parsed_payload,
+        workflow_name=workflow_name,
+        simulate=simulate,
     )
 
 
 @app.post("/log/{experiment_id}")
-async def log_experiment(experiment_path: str, log_value: str):
+def log_experiment(experiment_path: str, log_value: str):
     """Placeholder"""
     log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.spit("_")[-1]
+    experiment_id = log_dir.name.split("_")[-1]
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info(log_value)
 
@@ -231,29 +237,29 @@ async def log_experiment(experiment_path: str):
         return f.read()
 
 
-   
 @app.post("/experiment")
-async def process_exp(experiment_name: str, experiment_id: str):
-    """ Pulls an experiment and creates the files and logger for it
+def process_exp(experiment_name: str, experiment_id: str):
+    """Pulls an experiment and creates the files and logger for it
 
-        Parameters
-        ----------
-        experiment_id : str
-           The progromatically generated id of the experiment for the workflow
+    Parameters
+    ----------
+    experiment_id : str
+       The progromatically generated id of the experiment for the workflow
 
-        experiment_name: str
-            The human created name of the experiment
+    experiment_name: str
+        The human created name of the experiment
 
-        
 
-        Returns
-        -------
-         response: Dict
-           a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
-    
+
+    Returns
+    -------
+     response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
+
     # Decode the bytes object to a string
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    return start_experiment(experiment_id, experiment_name)
+    return start_experiment(experiment_name, experiment_id)
 
 
 @app.post("/job/{experiment_id}")
@@ -285,7 +291,8 @@ async def process_job_with_id(
     Returns
     -------
     response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
     workflow_content = await workflow.read()
     workflow_content_str = workflow_content.decode("utf-8")
 
@@ -301,19 +308,20 @@ async def process_job_with_id(
 
 @app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
-    """ Pulls the status of a job on the queue
-        
-        Parameters
-        ----------
-        job_id : str
-           The progromatically generated id of the experiment for the workflow
+    """Pulls the status of a job on the queue
+
+    Parameters
+    ----------
+    job_id : str
+       The progromatically generated id of the experiment for the workflow
 
 
-        Returns
-        -------
-         response: Dict
-           a dictionary including the status on the queueing, and the result of the job if it's done"""
-    
+    Returns
+    -------
+     response: Dict
+       a dictionary including the status on the queueing, and the result of the job if it's done
+    """
+
     try:
         job = Job.fetch(job_id, connection=task_queue.connection)
     except rq.exceptions.NoSuchJobError:
@@ -327,17 +335,18 @@ async def get_job_status(job_id: str):
 
 @app.get("/queue/info")
 async def queue_info():
-    """ Pulls the status of the queue
-        
-        Parameters
-        ----------
-        None
+    """Pulls the status of the queue
+
+    Parameters
+    ----------
+    None
 
 
-        Returns
-        -------
-         response: Dict
-           the number of jobs on the queue, the number that have been started, the number that have been completed on this run, and the number that have failed."""
+    Returns
+    -------
+     response: Dict
+       the number of jobs on the queue, the number that have been started, the number that have been completed on this run, and the number that have failed.
+    """
     # TODO: what more information can we get from the queue?
     queued_jobs = task_queue.count
     started_registry = StartedJobRegistry(queue=task_queue)
