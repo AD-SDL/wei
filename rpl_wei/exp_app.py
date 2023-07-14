@@ -40,8 +40,6 @@ class Experiment:
             self.experiment_id,
             self.kafka_server,
         )
-        print(self.experiment_id)
-        print("asdfas")
 
     def _return_response(self, response: requests.Response):
         if response.status_code != 200:
