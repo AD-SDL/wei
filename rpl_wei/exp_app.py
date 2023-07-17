@@ -38,7 +38,7 @@ class Experiment:
             self.server_port,
             self.experiment_name,
             self.experiment_id,
-            self.kafka_server,
+            kafka_server= self.kafka_server,
         )
 
     def _return_response(self, response: requests.Response):
@@ -116,6 +116,7 @@ class Experiment:
             params={
                 "experiment_id": self.experiment_id,
                 "experiment_name": self.experiment_name,
+                "kafka_server": self.kafka_server
             },
         )
         print(response.json())

@@ -9,7 +9,7 @@ from rpl_wei.core.events import Events
 
 
 def start_experiment(
-    experiment_name, experiment_id: Optional[Union[ulid.ULID, str]] = None
+    experiment_name, experiment_id: Optional[Union[ulid.ULID, str]] = None, kakfa_server: str = None
 ):
     """Create the files for logging and results of the system and log the start of the Experiment
 
@@ -31,7 +31,7 @@ def start_experiment(
         "8000",
         experiment_name,
         experiment_id,
-        None,
+        kafka_server=kakfa_server,
     )
     print(experiment_name)
     print(experiment_id)
@@ -42,5 +42,5 @@ def start_experiment(
     result_dir.mkdir(parents=True, exist_ok=True)
     runs_dir.mkdir(parents=True, exist_ok=True)
     print("done")
-    events.start_experiment()
+    events.start_experiment(log_dir)
     return {"exp_dir": log_dir}
