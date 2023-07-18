@@ -9,7 +9,9 @@ from rpl_wei.core.events import Events
 
 
 def start_experiment(
-    experiment_name, experiment_id: Optional[Union[ulid.ULID, str]] = None, kakfa_server: str = None
+    experiment_name,
+    experiment_id: Optional[Union[ulid.ULID, str]] = None,
+    kakfa_server: str = None,
 ):
     """Create the files for logging and results of the system and log the start of the Experiment
 

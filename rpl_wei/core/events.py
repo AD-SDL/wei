@@ -33,7 +33,7 @@ class Events:
         experiment_name: str,
         experiment_id: Optional[str] = None,
         kafka_server: Optional[str] = None,
-        experiment_path: Optional[str] = None
+        experiment_path: Optional[str] = None,
     ) -> None:
         self.server_addr = server_addr
         self.server_port = server_port
@@ -41,9 +41,14 @@ class Events:
         self.experiment_name = experiment_name
         self.experiment_path = experiment_path
         self.url = f"http://{self.server_addr}:{self.server_port}"
-        print(kafka_server)
-        print("hereedfsdf")
-        self.kafka_server = kafka_server
+        self.kafka_producer = None
+        if kafka_server:
+            try:
+                from kafka import KafkaProducer
+
+                self.kafka_producer = KafkaProducer(bootstrap_servers=kafka_server)
+            except Exception:
+                print("Kafka Unvavailable")
         self.loops = []
 
     def _return_response(self, response: requests.Response):
@@ -83,17 +88,12 @@ class Events:
             params={"log_value": log_value, "experiment_path": self.experiment_path},
         )
 
-        print(self.kafka_server)
-        if self.kafka_server:
-            try:
-                from kafka import KafkaProducer
-
-                producer = KafkaProducer(bootstrap_servers=self.kafka_server)
-                producer.send(
-                    "rpl", bytes(self.experiment_id, "utf-8"), bytes(log_value, "utf-8")
-                )
-            except:
-                print("Kafka Unvavailable") 
+        try:
+            self.kafka_producer.send(
+                "rpl", bytes(self.experiment_id, "utf-8"), bytes(log_value, "utf-8")
+            )
+        except Exception:
+            print("Kafka Unvavailable")
 
         return self._return_response(response)
 
@@ -168,7 +168,6 @@ class Events:
         func_name : str
             the name of the function run
 
-        Returns
         -------
         response: Dict
            The JSON portion of the response from the server"""

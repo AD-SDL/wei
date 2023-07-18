@@ -1,5 +1,4 @@
 """The server that takes incoming WEI flow requests from the experiment application"""
-"""The server that takes incoming WEI flow requests from the experiment application"""
 import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
@@ -13,7 +12,6 @@ from fastapi.responses import JSONResponse
 from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
 
-from rpl_wei.core import DATA_DIR
 from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.experiment import start_experiment
 from rpl_wei.core.loggers import WEI_Logger
@@ -43,7 +41,9 @@ async def lifespan(app: FastAPI):
     global workcell, kafka_server
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
-    parser.add_argument("--kafka-server", type=str, help="Kafka server for logging", default = None)
+    parser.add_argument(
+        "--kafka-server", type=str, help="Kafka server for logging", default=None
+    )
 
     args = parser.parse_args()
     workcell = Workcell.from_yaml(args.workcell)
@@ -97,10 +97,8 @@ def submit_job(
     path = Path(experiment_path)
     experiment_id = path.name.split("_id_")[-1]
     experiment_name = path.name.split("_id_")[0]
-    print(kafka_server)
-    print("hererere")
     base_response_content = {
-        "experiment_id": experiment_path,
+        "experiment_path": experiment_path,
     }
     try:
         job = task_queue.enqueue(
@@ -115,7 +113,7 @@ def submit_job(
             simulate,
             workflow_name,
             job_id=job_id,
-            kafka_server = kafka_server
+            kafka_server=kafka_server,
         )
         jobs_ahead = len(task_queue.jobs)
         response_content = {
@@ -150,8 +148,6 @@ def start_exp(experiment_id: str, experiment_name: str):
 
         experiment_name: str
             The human created name of the experiment
-
-        
 
         Returns
         -------
@@ -237,7 +233,7 @@ def log_experiment(experiment_path: str, log_value: str):
 
 
 @app.get("/log/return")
-async def log_experiment(experiment_path: str):
+async def log_return(experiment_path: str):
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.spit("_")[-1]
     with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:

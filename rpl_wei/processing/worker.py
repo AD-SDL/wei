@@ -35,7 +35,7 @@ def run_workflow_task(
     job_id: Optional[Union[ulid.ULID, str]] = None,
     simulate: bool = False,
     workflow_name: str = "",
-     kafka_server: str = None,
+    kafka_server: str = None,
 ):
     """Pulls a workflow job from the queue to the server to be executed, and logs it in the overall event log.
 
@@ -75,7 +75,7 @@ def run_workflow_task(
         experiment_name,
         experiment_id,
         kafka_server=kafka_server,
-        experiment_path=experiment_path
+        experiment_path=experiment_path,
     )
     job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
     workcell = Workcell(workcell_def)
