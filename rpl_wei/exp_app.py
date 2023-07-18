@@ -23,7 +23,7 @@ class Experiment:
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_path = ""
-        if experiment_id == None:
+        if experiment_id is None:
             self.experiment_id = ulid.new().str
         else:
             self.experiment_id = experiment_id
@@ -38,7 +38,7 @@ class Experiment:
             self.server_port,
             self.experiment_name,
             self.experiment_id,
-            self.kafka_server,
+            kafka_server=self.kafka_server,
         )
 
     def _return_response(self, response: requests.Response):
@@ -116,6 +116,7 @@ class Experiment:
             params={
                 "experiment_id": self.experiment_id,
                 "experiment_name": self.experiment_name,
+                "kafka_server": self.kafka_server,
             },
         )
         print(response.json())
@@ -142,10 +143,6 @@ class Experiment:
         response = requests.get(url)
 
         return self._return_response(response)
-
-    def get_log(self):
-        url = f"{self.url}/log/return"
-        response = requests.get(url, params={"experiment_path": self.experiment_path})
 
     def get_log(self):
         url = f"{self.url}/log/return"
