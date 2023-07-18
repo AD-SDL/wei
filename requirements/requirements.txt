@@ -6,6 +6,6 @@ fastapi==0.95.1
 uvicorn==0.21.1
 python-multipart==0.0.6
 rq==1.13.0
-requests==2.28.1
+requests==2.31.0
 ulid-py==1.1.0
 zmq
