@@ -80,7 +80,7 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        url = f"{self.url}/log/{self.experiment_id}"
+        url = f"{self.url}/exp/{self.experiment_id}/log"
         if log_dir:
             self.experiment_path = log_dir
         response = requests.post(
@@ -119,7 +119,29 @@ class Events:
             log_dir,
         )
 
-    def decision(self, dec_name: str, dec_value: bool):
+    def end_experiment(self, log_dir: Optional[str] = ""):
+        """logs an event in the proper place for the given experiment
+
+        Parameters
+        ----------
+        dec_name : str
+            a description of the decision being made
+        dec_value: bool
+            the boolean value of that decision.
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        self.experiment_path = log_dir
+        return self._log_event(
+            "EXPERIMENT:END: "
+            + str(self.experiment_name)
+            + ", EXPERIMENT ID: "
+            + str(self.experiment_id),
+            log_dir,
+        )
+
+    def log_decision(self, dec_name: str, dec_value: bool):
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -134,7 +156,7 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event("CHECK:" + str(dec_value).capitalize() + ": " + dec_name)
 
-    def comment(self, comment: str):
+    def log_comment(self, comment: str):
         """logs a comment on the run
         Parameters
         ----------
@@ -173,7 +195,7 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event("GLOBUS:COMPUTE: " + func_name)
 
-    def log_gladier(self, flow_name: str, flow_id):
+    def log_globus_flow(self, flow_name: str, flow_id):
         """logs a function running using Globus Gladier
 
         Parameters
@@ -191,7 +213,7 @@ class Events:
             "GLOBUS:GLADIER:RUNFLOW:" + flow_name + " with ID " + flow_id
         )
 
-    def loop_start(self, loop_name: str):
+    def log_loop_start(self, loop_name: str):
         """logs the start of a loop during an Experimet
 
         Parameters
@@ -206,7 +228,7 @@ class Events:
         self.loops.append(loop_name)
         return self._log_event("LOOP:START:" + loop_name)
 
-    def loop_end(self):
+    def log_loop_end(self):
         """Pops the most recent loop from the loop stack and logs its completion
 
 
@@ -217,7 +239,7 @@ class Events:
         loop_name = self.loops.pop()
         return self._log_event("LOOP:END:" + loop_name)
 
-    def loop_check(self, condition, value):
+    def log_loop_check(self, condition, value):
         """Peeks the most recent loop from the loop stack and logs its completion
 
 

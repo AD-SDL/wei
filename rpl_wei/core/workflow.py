@@ -3,6 +3,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import copy
+import requests
 import ulid
 from devtools import debug
 
@@ -92,6 +94,7 @@ class WorkflowRunner:
         # Start executing the steps
         steps = []
         for step in self.workflow.flowdef:
+            arg_dict = {"locations": {}}
             # get module information from workcell file
             step_module = workcell.find_step_module(step.module)
             if not step_module:
@@ -103,8 +106,11 @@ class WorkflowRunner:
             if isinstance(step.args, dict) and len(step.args) > 0:
                 if step.module in workcell.locations.keys():
                     for key, value in step.args.items():
+
                         # if hasattr(value, "__contains__") and "positions" in value:
                         if value in workcell.locations[step.module].keys():
+                            arg_dict["locations"][key] = value
+                            
                             step.args[key] = workcell.locations[step.module][value]
 
             # Inject the payload
@@ -130,13 +136,14 @@ class WorkflowRunner:
                     step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
-            arg_dict = {
+            arg_dict.update({
                 "step": step,
                 "step_module": step_module,
                 "logger": self.logger,
                 "callbacks": callbacks,
                 "simulate": simulate,
-            }
+            })
+            print(arg_dict)
             steps.append(arg_dict)
         return steps
 
@@ -172,12 +179,23 @@ class WorkflowRunner:
         hist = {}
         steps = self.init_flow(workcell, callbacks, payload=payload, simulate=simulate)
         for step in steps:
+            
             action_response, action_msg, action_log = self.executor.execute_step(**step)
             hist[step["step"].name] = {
                 "action_response": str(action_response),
                 "action_msg": str(action_msg),
                 "action_log": str(action_log),
             }
+            if "source" in step["locations"]:
+                    url = "http://localhost:8000/wc/locations/" + step["locations"]["source"] + "/set"
+                    requests.post(url, 
+            params={"run_id": ""})
+            if "target" in step["locations"]: 
+                    url = "http://localhost:8000/wc/locations/" + step["locations"]["target"] + "/set"
+                    requests.post(url, 
+            
+            params={"run_id": self.run_id}
+        )
         return {
             "run_dir": str(self.log_dir),
             "run_id": str(self.run_id),

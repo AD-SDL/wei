@@ -72,7 +72,7 @@ class Experiment:
            The JSON portion of the response from the server, including the ID of the job as job_id
         """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
-        url = f"{self.url}/job"
+        url = f"{self.url}/job/run"
         with open("/home/rpl/.wei/runs/payload.txt", "w") as f2:
             payload = json.dump(payload, f2)
             f2.close()
@@ -108,7 +108,7 @@ class Experiment:
 
         response: Dict
            The JSON portion of the response from the server"""
-        url = f"{self.url}/experiment"
+        url = f"{self.url}/exp/start"
         print(self.experiment_id)
         self.experiment_path
         response = requests.post(
@@ -116,7 +116,6 @@ class Experiment:
             params={
                 "experiment_id": self.experiment_id,
                 "experiment_name": self.experiment_name,
-                "kafka_server": self.kafka_server,
             },
         )
         print(response.json())
@@ -139,19 +138,24 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server"""
 
-        url = f"{self.url}/job/{job_id}"
+        url = f"{self.url}/job/{job_id}/state"
         response = requests.get(url)
 
         return self._return_response(response)
 
     def get_log(self):
-        url = f"{self.url}/log/return"
+        url = f"{self.url}/exp/{self.experiment_id}/log"
+        response = requests.get(url, params={"experiment_path": self.experiment_path})
+
+        return self._return_response(response)
+    def get_job_log(self, job_id):
+        url = f"{self.url}/job/{job_id}/log"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
         return self._return_response(response)
 
     def query_queue(self):
-        url = f"{self.url}/queue/info"
+        url = f"{self.url}/queue/state"
         response = requests.get(url)
 
         if response.status_code != 200:

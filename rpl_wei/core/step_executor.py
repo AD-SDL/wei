@@ -35,6 +35,7 @@ class StepExecutor:
         self,
         step: Step,
         step_module: Module,
+        locations: Optional[dict] = None,
         callbacks: Optional[List[Callable]] = None,
         logger: Optional[logging.Logger] = None,
         simulate: bool = False,

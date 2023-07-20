@@ -4,8 +4,12 @@ from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict  # , List
+import os
+import re
 
 import rq
+import requests
+import time
 import ulid
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
@@ -15,7 +19,11 @@ from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegist
 from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.experiment import start_experiment
 from rpl_wei.core.loggers import WEI_Logger
+from rpl_wei.core.interfaces.rest_interface import RestInterface
+from rpl_wei.core.interfaces.ros2_interface import ROS2Interface
 from rpl_wei.processing.worker import run_workflow_task, task_queue
+
+import threading
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
@@ -25,7 +33,22 @@ from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 workcell = None
 kafka_server = None
+wc_state = {"locations": {}, "modules": {}}
+INTERFACES = {"wei_rest_node": RestInterface, "wei_ros_node": ROS2Interface}
 
+def update_state():
+    global wc_state, workcell
+    while workcell:
+        
+        for module in workcell.modules:
+                if module.interface in INTERFACES:
+                    interface = INTERFACES[module.interface]
+                    state = interface.get_state(module.config)
+                    if not(state == ""):
+                        wc_state["modules"][module.name] = state 
+                else:
+                    print("module interface not found")
+        time.sleep(1)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,19 +57,22 @@ async def lifespan(app: FastAPI):
     ----------
     app : FastApi
        The REST API app being initialized
-
+, timeout_sec=10
     Returns
     -------
     None"""
-    global workcell, kafka_server
+    global workcell, kafka_server, wc_state
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
     parser.add_argument(
         "--kafka-server", type=str, help="Kafka server for logging", default=None
     )
-
     args = parser.parse_args()
     workcell = Workcell.from_yaml(args.workcell)
+    for location in workcell.locations["workcell"]:
+            wc_state["locations"][location] = "Empty"
+    thread = threading.Thread(target=update_state)
+    thread.start()
     kafka_server = args.kafka_server
 
     # Yield control to the application
@@ -176,7 +202,50 @@ def start_exp(experiment_id: str, experiment_name: str):
         return JSONResponse(content=response_content)
 
 
-@app.post("/job")
+
+@app.post("/exp/{experiment_id}/log")
+def log_experiment(experiment_path: str, log_value: str):
+    """Placeholder"""
+    log_dir = Path(experiment_path)
+    experiment_id = log_dir.name.split("_id_")[-1]
+    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+    logger.info(log_value)
+
+
+@app.get("/exp/{experiment_id}/log")
+async def log_return(experiment_path: str):
+    log_dir = Path(experiment_path)
+    experiment_id = log_dir.name.split("_")[-1]
+    with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
+        return f.read()
+
+
+@app.post("/exp/start")
+def process_exp(experiment_name: str, experiment_id: str):
+    """Pulls an experiment and creates the files and logger for it
+
+    Parameters
+    ----------
+    experiment_id : str
+       The progromatically generated id of the experiment for the workflow
+
+    experiment_name: str
+        The human created name of the experiment
+
+
+
+    Returns
+    -------
+     response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
+    global kafka_server
+    # Decode the bytes object to a string
+    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
+    return start_experiment(experiment_name, experiment_id, kafka_server)
+
+
+@app.post("/job/run")
 async def process_job(
     workflow: UploadFile = File(...),
     payload: UploadFile = File(...),
@@ -222,94 +291,7 @@ async def process_job(
         simulate=simulate,
     )
 
-
-@app.post("/log/{experiment_id}")
-def log_experiment(experiment_path: str, log_value: str):
-    """Placeholder"""
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.split("_id_")[-1]
-    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
-    logger.info(log_value)
-
-
-@app.get("/log/return")
-async def log_return(experiment_path: str):
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.spit("_")[-1]
-    with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
-        return f.read()
-
-
-@app.post("/experiment")
-def process_exp(experiment_name: str, experiment_id: str, kafka_server: str):
-    """Pulls an experiment and creates the files and logger for it
-
-    Parameters
-    ----------
-    experiment_id : str
-       The progromatically generated id of the experiment for the workflow
-
-    experiment_name: str
-        The human created name of the experiment
-
-
-
-    Returns
-    -------
-     response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
-    """
-
-    # Decode the bytes object to a string
-    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
-    return start_experiment(experiment_name, experiment_id, kafka_server)
-
-
-@app.post("/job/{experiment_id}")
-async def process_job_with_id(
-    experiment_id: str,
-    experiment_name: str,
-    workflow: UploadFile = File(...),
-    payload: str = Form("{}"),
-    simulate: bool = False,
-):
-    """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
-
-    Parameters
-    ----------
-    experiment_id : str
-       The id of the experiment for the workflow
-
-    workflow: UploadFile
-        The workflow yaml file
-
-    payload: UploadFile
-        The data input file to the workflow
-
-
-    simulate: bool
-        whether to use real robots or not
-
-
-    Returns
-    -------
-    response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
-    """
-    workflow_content = await workflow.read()
-    workflow_content_str = workflow_content.decode("utf-8")
-
-    parsed_payload = json.loads(payload)
-    return submit_job(
-        experiment_id,
-        experiment_name,
-        workflow_content_str,
-        parsed_payload,
-        simulate=simulate,
-    )
-
-
-@app.get("/job/{job_id}")
+@app.get("/job/{job_id}/state")
 async def get_job_status(job_id: str):
     """Pulls the status of a job on the queue
 
@@ -335,8 +317,16 @@ async def get_job_status(job_id: str):
 
     return JSONResponse(content={"status": job_status, "result": result})
 
-
-@app.get("/queue/info")
+@app.get("/job/{job_id}/log")
+async def log_return(job_id: str,  experiment_path: str):
+    log_dir = Path(experiment_path)
+    for file in os.listdir( log_dir / 
+                           'wei_runs' ):
+        if re.match(".*"+job_id, file):
+             with open(log_dir /"wei_runs"/ file  / "runLogger.log") as f:
+                           return f.read()
+    
+@app.get("/job/queue")
 async def queue_info():
     """Pulls the status of the queue
 
@@ -367,6 +357,44 @@ async def queue_info():
             "failed_jobs": failed_jobs,
         }
     )
+
+
+
+
+
+
+@app.get("/wc/state")
+def show():
+    global wc_state
+    
+    return JSONResponse(content={"State": wc_state })
+
+@app.get("/wc/locations/all_states")
+def show_states():
+    global wc_state
+
+    
+    return JSONResponse(content={"location_states": wc_state["locations"] })
+
+@app.get("/wc/locations/{location}/state")
+def update(location: str):
+    global wc_state
+    
+
+    
+    return JSONResponse(content={str(location): wc_state["locations"][location] })
+
+@app.post("/wc/locations/{location}/set")
+def update(location: str, run_id: str):
+    global wc_state
+    if run_id == "":
+         wc_state["locations"][location] = "Empty"
+    else:
+         wc_state["locations"][location] = run_id
+
+    
+    return JSONResponse(content={"State": wc_state })
+
 
 
 if __name__ == "__main__":
