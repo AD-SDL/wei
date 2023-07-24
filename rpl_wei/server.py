@@ -11,10 +11,14 @@ import rq
 import requests
 import time
 import ulid
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile, Request    
 from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from rq.job import Job
 from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegistry
+from fastapi.templating import Jinja2Templates
+
 
 from rpl_wei.core.data_classes import Workcell
 from rpl_wei.core.experiment import start_experiment
@@ -34,6 +38,9 @@ import threading
 workcell = None
 kafka_server = None
 wc_state = {"locations": {}, "modules": {}}
+
+templates = Jinja2Templates(directory="templates")
+
 INTERFACES = {"wei_rest_node": RestInterface, "wei_ros_node": ROS2Interface}
 
 def update_state():
@@ -48,7 +55,8 @@ def update_state():
                         wc_state["modules"][module.name] = state 
                 else:
                     print("module interface not found")
-        time.sleep(1)
+        
+        time.sleep(0.3)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -85,7 +93,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     lifespan=lifespan,
 )
-
+script_dir = os.path.dirname(__file__)
+st_abs_file_path = os.path.join(script_dir, "static/")
+app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
+templates = Jinja2Templates(directory=script_dir+"/templates")
 
 def submit_job(
     experiment_path: str,
@@ -363,11 +374,10 @@ async def queue_info():
 
 
 
-@app.get("/wc/state")
-def show():
+@app.get("/wc/state", response_class=HTMLResponse)
+def show(request: Request):
     global wc_state
-    
-    return JSONResponse(content={"State": wc_state })
+    return JSONResponse(content={"wc_state": json.dumps(wc_state)}) #templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
 
 @app.get("/wc/locations/all_states")
 def show_states():

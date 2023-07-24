@@ -1,0 +1,19 @@
+
+<html>
+<head>
+    <title>Item Details</title>
+    
+</head>
+<body>
+    <div style="border-style: solid; border-color: black; border-width: 3px; width: 500px; height: 300px">
+    {% for item in wc_state.locations %}
+    <h1 style="">{{item}}: {{wc_state.locations[item]}}</h1>
+    {% endfor %}
+    </div>
+    <div style="border-style: solid; border-color: black; border-width: 3px; width: 500px; height: 300px">
+        {% for item in wc_state.modules %}
+        <h1>{{item}} {{wc_state.modules[item]}}</h1>
+        {% endfor %}
+        </div>
+</body>
+</html>
