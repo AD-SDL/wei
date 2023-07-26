@@ -133,11 +133,6 @@ def submit_job(
 
 
 def start_exp(experiment_id: str, experiment_name: str):
-    global kafka_server
-    base_response_content = {
-        "experiment_id": experiment_id,
-        "experiment_name": experiment_name,
-    }
     """Pulls an experiment and creates the files and logger for it
 
         Parameters
@@ -152,7 +147,11 @@ def start_exp(experiment_id: str, experiment_name: str):
         -------
          response: Dict
            a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
-
+    global kafka_server
+    base_response_content = {
+        "experiment_id": experiment_id,
+        "experiment_name": experiment_name,
+    }
     try:
         exp_data = start_experiment(experiment_name, experiment_id, kafka_server)
         # jobs_ahead = len(task_queue.jobs)

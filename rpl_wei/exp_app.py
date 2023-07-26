@@ -20,6 +20,26 @@ class Experiment:
         experiment_id: Optional[str] = None,
         kafka_server: Optional[str] = None,
     ) -> None:
+        """Initializes an Experiment, and creates its log files
+
+        Parameters
+        ----------
+        server_addr: str
+            address for WEI server
+        
+        server_port: str
+            port for WEI server
+
+        experiment_name: str
+            Human chosen name for experiment
+        
+        experiment_id: Optional[str]
+            Programatially generated experiment id, can be reused if needed
+        
+        kafka_server: Optional[str]
+            Url of kafka server for logging
+        """
+        
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_path = ""

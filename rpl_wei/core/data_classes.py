@@ -59,6 +59,9 @@ class BaseModel(_BaseModel):
         ----------
         cfg_path : PathLike
             Path to dump the yaml file.
+        Returns
+        -------
+        None
         """
         with open(cfg_path, mode="w") as fp:
             yaml.dump(json.loads(self.json()), fp, indent=4, sort_keys=False)
