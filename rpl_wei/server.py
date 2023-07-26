@@ -41,7 +41,7 @@ wc_state = {"locations": {}, "modules": {}}
 
 templates = Jinja2Templates(directory="templates")
 
-INTERFACES = {"wei_rest_node": RestInterface, "wei_ros_node": ROS2Interface}
+INTERFACES = {"wei_rest_node": RestInterface}, #"wei_ros_node": ROS2Interface}
 
 def update_state():
     global wc_state, workcell
@@ -54,7 +54,8 @@ def update_state():
                     if not(state == ""):
                         wc_state["modules"][module.name] = state 
                 else:
-                    print("module interface not found")
+                   # print("module interface not found")
+                   pass
         
         time.sleep(0.3)
 
@@ -109,8 +110,8 @@ def submit_job(
 
     Parameters
     ----------
-    experiment_id : str
-       The id of the experiment for the workflow
+    experiment_path : str
+       The path of the data fort experiment for the workflow
 
     workflow_content_str: str
         The defintion of the workflow from the workflow yaml file
@@ -267,8 +268,7 @@ async def process_job(
 
     Parameters
     ----------
-    experiment_id : str
-       The id of the experiment for the workflow
+   
 
     workflow: UploadFile
         The workflow yaml file
@@ -276,6 +276,8 @@ async def process_job(
     payload: UploadFile
         The data input file to the workflow
 
+    experiment_path : str
+       The path to the data forthe experiment for the workflow
 
     simulate: bool
         whether to use real robots or not
@@ -330,6 +332,20 @@ async def get_job_status(job_id: str):
 
 @app.get("/job/{job_id}/log")
 async def log_return(job_id: str,  experiment_path: str):
+    """Parameters
+    ----------
+   
+
+    job_id: str
+        The queue job id for the job being logged
+        
+    experiment_path : str
+       The path to the data forthe experiment for the workflow
+
+    Returns
+    -------
+    response: str
+       a string with the log data for the run requested"""
     log_dir = Path(experiment_path)
     for file in os.listdir( log_dir / 
                            'wei_runs' ):
@@ -375,19 +391,57 @@ async def queue_info():
 
 
 @app.get("/wc/state", response_class=HTMLResponse)
-def show(request: Request):
+def show():
+    """
+     
+     Describes the state of the whole workcell including locations and daemon states
+
+    Parameters
+    ----------
+    None
+    
+     Returns
+    -------
+     response: Dict
+       the state of the workcell
+    """
+     
     global wc_state
     return JSONResponse(content={"wc_state": json.dumps(wc_state)}) #templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
 
 @app.get("/wc/locations/all_states")
 def show_states():
     global wc_state
-
+    """
+     
+     Describes the state of the workcell locations 
+    Parameters
+    ----------
+    None
+    
+     Returns
+    -------
+     response: Dict
+       the state of the workcell locations, with the id of the run that last filled the location
+    """
+    
     
     return JSONResponse(content={"location_states": wc_state["locations"] })
 
 @app.get("/wc/locations/{location}/state")
 def update(location: str):
+    """
+     
+    Describes the state of the workcell locations 
+    Parameters
+    ----------
+    None
+    
+     Returns
+    -------
+     response: Dict
+       the state of the workcell locations, with the id of the run that last filled the location
+     """
     global wc_state
     
 

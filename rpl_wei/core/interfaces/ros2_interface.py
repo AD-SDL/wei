@@ -13,7 +13,6 @@ try:
 except ImportError  as e:
     print(e)
     wei_execution_node = None
-    print('as;ldkfjasl;kdfja;lsdkfj;alskdjl;zfkj ')
 
 
 def __init_rclpy():
