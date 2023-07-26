@@ -14,7 +14,7 @@ config:
 #List of all components accessible in this workcell
 modules:
   
-  Human-legible name specific to an individual component 
+  #Human-legible name specific to an individual component 
   - name: sealer
 
     #Type of device being connected to, might be multiple components of same
