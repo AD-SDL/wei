@@ -47,6 +47,9 @@ def run_workflow_task(
     experiment_id : str
        The id of the experiment for the workflow
 
+    experiment_name : str
+       The human generated name of the experiment for the workflow
+
     workflow_def: str
         The defintion of the workflow from the workflow yaml file
 
