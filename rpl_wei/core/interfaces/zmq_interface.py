@@ -38,8 +38,6 @@ def wei_zmq_callback(step: Step, **kwargs):
     socket.send_string(msg)
     zmq_response = socket.recv().decode()  # does this need to be decoded with "utf-8"?
     zmq_response = json.loads(zmq_response)
-    print(zmq_response)
-
     action_response = zmq_response.get("action_response")
     action_msg = zmq_response.get("action_msg")
     action_log = zmq_response.get("action_log")

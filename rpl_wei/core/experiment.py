@@ -35,14 +35,11 @@ def start_experiment(
         experiment_id,
         kafka_server=kakfa_server,
     )
-    print(experiment_name)
-    print(experiment_id)
     log_dir = DATA_DIR / (str(experiment_name) + "_id_" + experiment_id)
     runs_dir = log_dir / "wei_runs"
     result_dir = log_dir / "results"
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)
     runs_dir.mkdir(parents=True, exist_ok=True)
-    print("done")
     events.start_experiment(log_dir)
     return {"exp_dir": log_dir}

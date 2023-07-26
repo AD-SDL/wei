@@ -82,8 +82,6 @@ class Experiment:
                 "experiment_path": self.experiment_path,
                 "simulate": simulate,
             }
-
-            # print(params["payload"])
             response = requests.post(
                 url,
                 params=params,
@@ -109,8 +107,6 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server"""
         url = f"{self.url}/experiment"
-        print(self.experiment_id)
-        self.experiment_path
         response = requests.post(
             url,
             params={
@@ -119,7 +115,6 @@ class Experiment:
                 "kafka_server": self.kafka_server,
             },
         )
-        print(response.json())
         self.experiment_path = response.json()["exp_dir"]
         self.events.experiment_path = self.experiment_path
         return self._return_response(response)

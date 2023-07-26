@@ -71,7 +71,6 @@ def run_workflow_task(
     result_payload Dict
        The resulting data from the run including the response from each module and the state of the run
     """
-    print(kafka_server)
     events = Events(
         "localhost",
         "8000",
