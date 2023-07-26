@@ -138,7 +138,6 @@ def start_exp(experiment_id: str, experiment_name: str):
         "experiment_id": experiment_id,
         "experiment_name": experiment_name,
     }
-
     """Pulls an experiment and creates the files and logger for it
 
         Parameters
@@ -187,7 +186,7 @@ async def process_job(
 
     Parameters
     ----------
-    
+
 
     workflow: UploadFile
         The workflow yaml file
@@ -229,7 +228,7 @@ def log_experiment(experiment_path: str, log_value: str):
     """Logs a value to the experiment log fo the given path
     Parameters
     ----------
-    
+
 
     experiment_path: str
        The path to the data of the experiment for the workflow
@@ -253,7 +252,7 @@ async def log_return(experiment_path: str):
     """Returns a string containing the log files for a given experiment
     Parameters
     ----------
-    
+
 
     experiment_path: str
        The path to the data of the experiment for the workflow
@@ -263,7 +262,7 @@ async def log_return(experiment_path: str):
     Returns
     -------
     None"""
-        
+
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.spit("_")[-1]
     with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
@@ -274,20 +273,20 @@ async def log_return(experiment_path: str):
 def process_exp(experiment_name: str, experiment_id: str):
     """Pulls an experiment and creates the files and logger for it
 
-    Parameters
-    ----------
-    
-    experiment_name: str
-        The human created name of the experiment
+        Parameters
+        ----------
 
-experiment_id : str
-       The programatically generated id of the experiment for the workflow
+        experiment_name: str
+            The human created name of the experiment
+
+    experiment_id : str
+           The programatically generated id of the experiment for the workflow
 
 
-    Returns
-    -------
-     response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+        Returns
+        -------
+         response: Dict
+           a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
 
     # Decode the bytes object to a string

@@ -145,12 +145,36 @@ class Experiment:
         return self._return_response(response)
 
     def get_log(self):
+        """Returns the log for this experiment as a string
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           The JSON portion of the response from the server with the experiment log"""
         url = f"{self.url}/log/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
         return self._return_response(response)
 
     def query_queue(self):
+        """Returns the queue info for this experiment as a string
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           The JSON portion of the response from the server with the queue info"""
         url = f"{self.url}/queue/info"
         response = requests.get(url)
 

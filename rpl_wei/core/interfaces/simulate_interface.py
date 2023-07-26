@@ -13,7 +13,7 @@ def silent_callback(step: Step, **kwargs):
     -------
     response: str
     A dummy string
-    
+
     """
     print(step)
     return "silent", step.action, ""

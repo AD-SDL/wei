@@ -118,7 +118,7 @@ class Events:
             + str(self.experiment_id),
             log_dir,
         )
-    
+
     def end_experiment(self, log_dir: Optional[str] = ""):
         """logs the end of an experiment
 
