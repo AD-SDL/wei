@@ -37,17 +37,17 @@ flowdef:
       source_plate_rotation: narrow
       target_plate_rotation: wide
 
-  # - name: The OT2 runs its protocol
-  #   module: ot2_pcr_alpha
-  #   action: run_protocol
-  #   args:
-  #     config_path: tests/test_ot2_protocol.yaml
+  - name: The OT2 runs its protocol
+    module: ot2_pcr_alpha
+    action: run_protocol
+    args:
+      config_path: tests/test_ot2_protocol.yaml
 
-  # - name: Move the plate from OT2 to Sciclops
-  #   module: pf400
-  #   action: transfer
-  #   args:
-  #     source: ot2_pcr_alpha.deck2
-  #     target: sciclops.exchange
-  #     source_plate_rotation: wide
-  #     target_plate_rotation: narrow
+  - name: Move the plate from OT2 to Sciclops
+    module: pf400
+    action: transfer
+    args:
+      source: ot2_pcr_alpha.deck2
+      target: sciclops.exchange
+      source_plate_rotation: wide
+      target_plate_rotation: narrow
