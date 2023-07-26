@@ -19,6 +19,7 @@ class TestWEI_Locations(TestWEI_Base):
         workflow = runner.workflow
 
         # Test that the named locations are replaced with the actual locations
+        print(workflow)
         arg_before_replace = workflow.flowdef[1].args
         self.assertEqual(arg_before_replace["source"], "sciclops.exchange")
         self.assertEqual(arg_before_replace["target"], "ot2_pcr_alpha.deck2")
