@@ -13,7 +13,7 @@ config:
 
 #List of all components accessible in this workcell
 modules:
-  
+ 
   #Human-legible name specific to an individual component 
   - name: sealer
 
@@ -33,6 +33,13 @@ modules:
     # X, Y, Z, Q0, Q1, Q2, Q3 relative to workcell_origin_coordinates
     workcell_coordinates: [0.8209, 0.7264, 1.0514, 0.7071, 0, 0, 0.7071] 
     
+  - name: sciclops
+    model: sciclops
+    interface: wei_ros_node
+    config:
+      ros_node_address: "/std_ns/SciclopsNode"
+    workcell_coordinates: [0.5713, 1.0934, 1.0514, 0.9831, 0, 0, 0.1826] 
+
   - name: pf400
     model: pf400
     interface: wei_ros_node
@@ -40,13 +47,7 @@ modules:
       ros_node_address: "/std_ns/pf400Node"
     workcell_coordinates: [0, -0.0321, 0.8420, 0.7071, 0, 0, 0.7071] 
 
-  - name: sealer
-    model: A4S_sealer
-    interface: wei_ros_node
-    config:
-      ros_node_address: "/std_ns/SealerNode"
-    workcell_coordinates: [0.8209, 0.7264, 1.0514, 0.7071, 0, 0, 0.7071] 
-
+  
   - name: peeler
     model: brooks_xpeel
     interface: wei_ros_node
