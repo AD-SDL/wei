@@ -8,6 +8,9 @@ from setuptools.config import read_configuration
 
 setup_cfg = Path(__file__).parent.joinpath("setup.cfg")
 conf_dict = read_configuration(setup_cfg)
+path_test = Path("~/.wei/runs").expanduser()
+path_test.mkdir(parents=True, exist_ok=True)
+
 
 url = conf_dict["metadata"]["url"]
 version = conf_dict["metadata"]["version"]
