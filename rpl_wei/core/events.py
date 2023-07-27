@@ -25,6 +25,7 @@ class Event:
 
 class Events:
     """Registers Events during the Experiment execution both in a cloud log and eventually on Kafka"""
+
     def __init__(
         self,
         server_addr: str,
@@ -41,6 +42,7 @@ class Events:
         self.experiment_path = experiment_path
         self.url = f"http://{self.server_addr}:{self.server_port}"
         self.kafka_producer = None
+
         """Initializes an Event Logging object
 
         Parameters
