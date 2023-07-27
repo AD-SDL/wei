@@ -93,7 +93,7 @@ class Experiment:
         """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/job"
-        payload_path = Path("~/.wei/runs/payload.txt")
+        payload_path = Path("~/.wei/temp/payload.txt")
         with open(payload_path.expanduser(), "w") as f2:
             payload = json.dump(payload, f2)
             f2.close()
