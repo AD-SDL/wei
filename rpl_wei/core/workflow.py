@@ -100,7 +100,7 @@ class WorkflowRunner:
                 )
 
             # replace position names with actual positions
-            if isinstance(step.args, dict) and len(step.args) > 0:
+            if isinstance(step.args, dict) and len(step.args) > 0 and workcell.locations:
                 if step.module in workcell.locations.keys():
                     for key, value in step.args.items():
                         # if hasattr(value, "__contains__") and "positions" in value:
