@@ -25,7 +25,6 @@ class Event:
 
 class Events:
     """Registers Events during the Experiment execution both in a cloud log and eventually on Kafka"""
-
     def __init__(
         self,
         server_addr: str,
