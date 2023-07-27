@@ -141,7 +141,7 @@ class SimpleModule(BaseModel):
 
 
 class Interface(BaseModel):
-    """"""
+    """standardizes communications with different damons"""
 
     name: str
     """"""
@@ -151,6 +151,8 @@ class Step(BaseModel):
     """Container for a single step"""
 
     class Config:
+        """Config for the step"""
+
         arbitrary_types_allowed = True
 
     name: str
@@ -178,6 +180,7 @@ class Step(BaseModel):
     # TODO consider if we want any other files given to the workflow files
     @validator("args")
     def validate_args_dict(cls, v, **kwargs):
+        """asserts that args dict is assembled correctly"""
         assert isinstance(v, dict), "Args is not a dictionary"
         for key, arg_data in v.items():
             try:

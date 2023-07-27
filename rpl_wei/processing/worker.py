@@ -1,3 +1,4 @@
+"""Worker for pulling workflow jobs from Redis queue and executing them"""
 import json
 import time
 from typing import Optional, Union

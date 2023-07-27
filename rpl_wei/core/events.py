@@ -3,24 +3,23 @@ from typing import Optional
 
 import requests
 
+# class Event:
+#     pass
+# event = {
+#     "experiment_name":"",
+#     "experiment_id":"",
+#     "name": "NAME",
+#   "action":{
+#    "type":"globus-compute",
+#   "action_id":"action_id"
+#   }
+# }
 
-class Event:
-    pass
-    # event = {
-    #     "experiment_name":"",
-    #     "experiment_id":"",
-    #     "name": "NAME",
-    #   "action":{
-    #    "type":"globus-compute",
-    #   "action_id":"action_id"
-    #   }
-    # }
+# def log_event_local():
+#     return str(event.name, event)
 
-    # def log_event_local():
-    #     return str(event.name, event)
-
-    # def log_event_kafka(event, producer):
-    #     producer.send(event, channel=event.experiment_id b"some_message_bytes")
+# def log_event_kafka(event, producer):
+#     producer.send(event, channel=event.experiment_id b"some_message_bytes")
 
 
 class Events:
@@ -35,6 +34,28 @@ class Events:
         kafka_server: Optional[str] = None,
         experiment_path: Optional[str] = None,
     ) -> None:
+        """Initializes an Event Logging object
+
+        Parameters
+        ----------
+        server_addr: str
+            address for WEI server
+
+        server_port: str
+            port for WEI server
+
+        experiment_name: str
+            Human chosen name for experiment
+
+        experiment_id: Optional[str]
+            Programatially generated experiment id, can be reused if needed
+
+        kafka_server: Optional[str]
+            Url of kafka server for logging
+
+        experiment_path: Optional[str]
+            Path for loggin the experiment on the server
+        """
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_id = experiment_id
@@ -42,30 +63,6 @@ class Events:
         self.experiment_path = experiment_path
         self.url = f"http://{self.server_addr}:{self.server_port}"
         self.kafka_producer = None
-
-        """Initializes an Event Logging object
-
-        Parameters
-        ----------
-        server_addr: str
-            address for WEI server
-        
-        server_port: str
-            port for WEI server
-
-        experiment_name: str
-            Human chosen name for experiment
-        
-        experiment_id: Optional[str]
-            Programatially generated experiment id, can be reused if needed
-        
-        kafka_server: Optional[str]
-            Url of kafka server for logging
-
-         experiment_path: Optional[str]
-            Path for loggin the experiment on the server
-        
-        """
         if kafka_server:
             try:
                 from kafka import KafkaProducer

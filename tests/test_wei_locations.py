@@ -26,17 +26,15 @@ class TestWEI_Locations(TestWEI_Base):
         self.assertEqual(arg_before_replace["target"], "ot2_pcr_alpha.deck2")
 
         # Also test the compatibility of the named/actual locations
-        
+
         # Changes happen during the running of workflow
         runner.run_flow(workcell)
 
         arg_after_replace = workflow.flowdef[1].args
         self.assertListEqual(
             arg_after_replace["source"],
-            [222.0, -38.068, 335.876, 325.434, 79.923, 995.062] 
+            [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
         )
         self.assertListEqual(
             arg_after_replace["target"], [195.99, 60.21, 92.13, 565.41, 82.24, -65.25]
         )
-
-     
