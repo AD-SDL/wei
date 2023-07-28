@@ -45,7 +45,8 @@ class WorkflowRunner:
             Whether or not to use real robots
 
         workflow_name: str
-            Human-created name of the workflow"""
+            Human-created name of the workflow
+        """
 
         self.workflow = WorkflowData(**workflow_def)
         self.simulate = simulate
@@ -108,7 +109,8 @@ class WorkflowRunner:
         Returns
         -------
         steps: List[Dict]
-           a list of steps and the metadata relevant to execute them"""
+           a list of steps and the metadata relevant to execute them
+        """
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # Start executing the steps

@@ -29,7 +29,6 @@ class WEI_Logger:
          -------
         logger: Logger
              The logging object with the appropriate handlers
-
         """
         
         if log_file is None:
@@ -56,7 +55,7 @@ class WEI_Logger:
         log_dir: Optional[Path] = None,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
-        """Finds the existing logger with teh gien name or creates a new one if it doesn't exist
+        """Finds the existing logger with the given name or creates a new one if it doesn't exist
 
         Parameters
         ----------
@@ -66,12 +65,10 @@ class WEI_Logger:
             The path to file that the log will reference
         level:
             The output level of the log, INFO, ERROR etc, which describes which what will be logged.
-
         Returns
         -------
         logger: Logger
             The logging object with the appropriate handlers
-
         """
 
         if not logging.getLogger(log_name).hasHandlers():
@@ -120,7 +117,6 @@ class WEI_Logger:
          -------
         logger: Logger
              The logging object with the appropriate handlers
-
         """
 
         if not logging.getLogger(log_name).hasHandlers():

@@ -11,6 +11,7 @@ Welcome to WEI documentation!
    :caption: Contents
 
    pages/introduction
+   pages/installation
    pages/first_workflow
    pages/api
    pages/glossary
