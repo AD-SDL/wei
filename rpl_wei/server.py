@@ -249,6 +249,7 @@ async def log_return(experiment_path: str):
     None
     """
 
+
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.spit("_")[-1]
     with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
@@ -269,6 +270,7 @@ def process_exp(experiment_name: str, experiment_id: str):
     -------
      response: Dict
        a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+
     """
     
     # Decode the bytes object to a string
