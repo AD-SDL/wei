@@ -246,7 +246,8 @@ async def log_return(experiment_path: str):
 
     Returns
     -------
-    None"""
+    None
+    """
 
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.spit("_")[-1]
@@ -269,7 +270,7 @@ def process_exp(experiment_name: str, experiment_id: str):
      response: Dict
        a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
-
+    
     # Decode the bytes object to a string
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
     global kafka_server
