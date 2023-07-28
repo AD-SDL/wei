@@ -79,12 +79,9 @@ class WEI_Logger:
             )
         else:
             logger = logging.getLogger(log_name)
-            print(logger.handlers)
             while not (logger.handlers == []):
                 for handler in logger.handlers:
                     logger.removeHandler(handler)
-
-            print(logger.handlers)
             log_file = log_dir / f"{log_name}.log"
             log_file.parent.mkdir(parents=True, exist_ok=True)
             formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")

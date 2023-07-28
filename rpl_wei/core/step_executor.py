@@ -18,6 +18,8 @@ from rpl_wei.core.interfaces.zmq_interface import wei_zmq_callback
 
 
 class Executor_Map:
+    """Mapping of YAML names to functions from interfaces"""
+
     function = {
         "wei_ros_node": wei_ros2_service_callback,
         "wei_ros_camera": wei_ros2_camera_callback,

@@ -38,7 +38,6 @@ def wei_tcp_callback(step: Step, **kwargs):
     # TODO: add continuous monitoring on the response?
     tcp_response = sock.recv(1024).decode()
     tcp_response = json.loads(tcp_response)
-    print(tcp_response)
     action_response = tcp_response.get("action_response")
     action_msg = tcp_response.get("action_msg")
     action_log = tcp_response.get("action_log")

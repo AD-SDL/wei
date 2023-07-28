@@ -133,27 +133,26 @@ def submit_job(
 
 
 def start_exp(experiment_id: str, experiment_name: str):
+    """Pulls an experiment and creates the files and logger for it
+
+    Parameters
+    ----------
+    experiment_id : str
+       The programatically generated id of the experiment for the workflow
+
+    experiment_name: str
+        The human created name of the experiment
+
+    Returns
+    -------
+     response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
     global kafka_server
     base_response_content = {
         "experiment_id": experiment_id,
         "experiment_name": experiment_name,
     }
-
-    """Pulls an experiment and creates the files and logger for it
-
-        Parameters
-        ----------
-        experiment_id : str
-           The progromatically generated id of the experiment for the workflow
-
-        experiment_name: str
-            The human created name of the experiment
-
-        Returns
-        -------
-         response: Dict
-           a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
-
     try:
         exp_data = start_experiment(experiment_name, experiment_id, kafka_server)
         # jobs_ahead = len(task_queue.jobs)
@@ -187,8 +186,7 @@ async def process_job(
 
     Parameters
     ----------
-    experiment_id : str
-       The id of the experiment for the workflow
+
 
     workflow: UploadFile
         The workflow yaml file
@@ -196,6 +194,8 @@ async def process_job(
     payload: UploadFile
         The data input file to the workflow
 
+    experiment_path: str
+       The path to the data of the experiment for the workflow
 
     simulate: bool
         whether to use real robots or not
@@ -225,7 +225,22 @@ async def process_job(
 
 @app.post("/log/{experiment_id}")
 def log_experiment(experiment_path: str, log_value: str):
-    """Placeholder"""
+    """Logs a value to the experiment log fo the given path
+    Parameters
+    ----------
+
+
+    experiment_path: str
+       The path to the data of the experiment for the workflow
+
+    log_value: str
+        the value to write to the experiment log
+
+
+    Returns
+    -------
+        None
+    """
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.split("_id_")[-1]
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
@@ -234,6 +249,20 @@ def log_experiment(experiment_path: str, log_value: str):
 
 @app.get("/log/return")
 async def log_return(experiment_path: str):
+    """Returns a string containing the log files for a given experiment
+    Parameters
+    ----------
+
+
+    experiment_path: str
+       The path to the data of the experiment for the workflow
+
+
+
+    Returns
+    -------
+    None"""
+
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.spit("_")[-1]
     with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
@@ -241,27 +270,28 @@ async def log_return(experiment_path: str):
 
 
 @app.post("/experiment")
-def process_exp(experiment_name: str, experiment_id: str, kafka_server: str):
+def process_exp(experiment_name: str, experiment_id: str):
     """Pulls an experiment and creates the files and logger for it
 
-    Parameters
-    ----------
+        Parameters
+        ----------
+
+        experiment_name: str
+            The human created name of the experiment
+
     experiment_id : str
-       The progromatically generated id of the experiment for the workflow
-
-    experiment_name: str
-        The human created name of the experiment
+           The programatically generated id of the experiment for the workflow
 
 
-
-    Returns
-    -------
-     response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+        Returns
+        -------
+         response: Dict
+           a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
 
     # Decode the bytes object to a string
     # Generate ULID for the experiment, really this should be done by the client (Experiment class)
+    global kafka_server
     return start_experiment(experiment_name, experiment_id, kafka_server)
 
 
@@ -316,7 +346,7 @@ async def get_job_status(job_id: str):
     Parameters
     ----------
     job_id : str
-       The progromatically generated id of the experiment for the workflow
+       The programatically generated id of the experiment for the workflow
 
 
     Returns

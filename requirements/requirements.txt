@@ -1,5 +1,5 @@
 # Place your requirements here
-pydantic==1.8.2
+pydantic==1.10
 devtools==0.9.0
 PyYAML==6.0
 fastapi==0.95.1
@@ -9,3 +9,4 @@ rq==1.13.0
 requests==2.31.0
 ulid-py==1.1.0
 zmq
+redis

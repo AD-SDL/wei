@@ -1,13 +1,138 @@
-name: WEI - Test Workcell
+name: RPL_Modular_workcell
 
+#Info about data processing and location of the workcell
+config:
+  funcx_local_ep: "299edea0-db9a-4693-84ba-babfa655b1be"
+  globus_local_ep: ""
+  ##
+  globus_search_index: "aefcecc6-e554-4f8c-a25b-147f23091944"
+  globus_portal_ep: "bb8d048a-2cad-4029-a9c7-671ec5d1f84d"
+  ##
+  globus_group: "dda56f31-53d1-11ed-bd8b-0db7472df7d6"
+  workcell_origin_coordinates: [9.4307, -10.4176, 0, 1, 0, 0, 0]
+
+#List of all components accessible in this workcell
 modules:
+ 
+  #Human-legible name specific to an individual component 
+  - name: sealer
+
+    #Type of device being connected to, might be multiple components of same
+    #model with different names in a workcell
+    model: A4S_sealer
+
+    #Method of communication with the device
+    interface: wei_ros_node
+
+    #Relevant communication configuration
+    config:
+      
+      #In this case, the ROS service used to send actions to the component
+      ros_node_address: "/std_ns/SealerNode"
+
+    # X, Y, Z, Q0, Q1, Q2, Q3 relative to workcell_origin_coordinates
+    workcell_coordinates: [0.8209, 0.7264, 1.0514, 0.7071, 0, 0, 0.7071] 
+    
+  - name: sciclops
+    model: sciclops
+    interface: wei_ros_node
+    config:
+      ros_node_address: "/std_ns/SciclopsNode"
+    workcell_coordinates: [0.5713, 1.0934, 1.0514, 0.9831, 0, 0, 0.1826] 
+
   - name: pf400
     model: pf400
     interface: wei_ros_node
     config:
       ros_node_address: "/std_ns/pf400Node"
-    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
+    workcell_coordinates: [0, -0.0321, 0.8420, 0.7071, 0, 0, 0.7071] 
+
+  
+  - name: peeler
+    model: brooks_xpeel
+    interface: wei_ros_node
+    config:
+      ros_node_address: "/std_ns/PeelerNode"
+    workcell_coordinates: [0.7464, 0.3862, 1.0514, 0.7071, 0, 0, 0.7071] 
+
+  - name: ot2_pcr_alpha
+    model: ot2
+    interface: wei_ros_node 
+    config:
+      ros_node_address: "/std_ns/ot2_pcr_alpha"                      
+    workcell_coordinates: [0.7400, -0.2678, 1.0514, 0.7071, 0, 0, 0.7071] 
+
+  - name: ot2_growth_beta
+    model: ot2
+    interface: wei_ros_node 
+    config:
+      ros_node_address: "/std_ns/ot2_growth_beta"                      
+    workcell_coordinates: [0.7071, 0, 0, 0.7071, 0.7071, 0, 0, 0.7071] 
+
+  - name: ot2_cp_gamma
+    model: ot2
+    interface: wei_ros_node 
+    config:
+      ros_node_address: "/std_ns/ot2_cp_gamma"             
+    workcell_coordinates: [-0.7315, -1.0018, 1.0514, -0.7071, 0, 0, 0.7071] 
+      
+  - name: biometra
+    model: biometra (96well)
+    interface: wei_ros_node
+    config:
+      ros_node_address: "/std_ns/biometra96"
+    workcell_coordinates: [-0.6283, 0.6415, 1.0514, 0.7071, 0, 0, -0.7071] 
+
+  - name: biometra_192
+    model: biometra (192well)
+    interface: wei_ros_node
+    config:
+      ros_node_address: "/std_ns/biometra_192"
+    workcell_coordinates: [-0.6283, 0.3481, 1.0514, 0.7071, 0, 0, -0.7071] 
+
+  - name: camera_module
+    model: camera (logitech)
+    interface: wei_ros_camera
+    config:
+      ros_node_address: "/std_ns/camera_module"
+    workcell_coordinates: [0,0,0,1,0,0,0] 
+
+  - name: hidex
+    model: Hidex
+    interface: wei_tcp_node
+    workcell_coordinates: [0,0,0,1,0,0,0] 
+    config:
+      tcp_node_address: "146.137.240.22"
+      tcp_node_port: 2000
+
+  - name: ur5
+    model: ur5
+    interface: wei_ros_node
+    workcell_coordinates: [0,0,0,1,0,0,0] 
+    config:
+      ros_node_address: '/ur5_client/UR5_Client_Node'
  
 locations:
-  pf400:
-    pf400.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
+  pf400: #Joint angles for the PF400 Plate Handler
+    sciclops.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
+    sealer.default: [205.128, -2.814, 264.373, 365.863, 79.144, 411.553]
+    peeler.default: [225.521, -24.846, 244.836, 406.623, 80.967, 398.778]
+    ot2_pcr_alpha.deck1_cooler: [247.999, -30.702, 275.835, 381.513, 124.830, -585.403] 
+    ot2_pcr_alpha.deck2: [195.99, 60.21, 92.13, 565.41, 82.24, -65.25]
+    ot2_growth_beta.deck2: [163.230, -59.032, 270.965, 415.013, 129.982, -951.510]  
+    ot2_cp_gamma.deck2: [156, 66.112, 83.90, 656.404, 119.405, -946.818]
+    biometra.default: [247.0, 40.698, 38.294, 728.332, 123.077, 301.082]
+    camera_module.plate_station: [90.597,26.416, 66.422, 714.811, 81.916, 995.074]
+    wc.trash: [218.457, -2.408, 38.829, 683.518, 89.109, 995.074]
+  sciclops: #Joint angles for the Sciclops Plate Crane
+    sciclops.exchange: [0,0,0,0]
+  workcell: #Coordinates relative to the workcell origin
+    sciclops.exchange: [0.7400, -0.2678, 1.0514, 0.7071, 0, 0, 0.7071]
+    sealer.default: [0, 0, 0, 0, 0, 0, 0]
+    peeler.default: [0, 0, 0, 0, 0, 0, 0]
+    ot2_pcr_alpha.deck1_cooler: [0, 0, 0, 0, 0, 0, 0]
+    ot2_growth_beta.deck2: [0, 0, 0, 0, 0, 0, 0]
+    ot2_cp_gamma.deck2: [0, 0, 0, 0, 0, 0, 0]
+    biometra.default: [0, 0, 0, 0, 0, 0, 0]
+    camera_module.plate_station: [0, 0, 0, 0, 0, 0, 0]
+    wc.trash: [0, 0, 0, 0, 0, 0, 0]
