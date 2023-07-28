@@ -7,6 +7,7 @@ from rpl_wei.core.interfaces.rest_interface import wei_rest_callback
 from rpl_wei.core.interfaces.ros2_interface import (
     wei_ros2_camera_callback,
     wei_ros2_service_callback,
+    ROS2Interface
 )
 from rpl_wei.core.interfaces.simulate_interface import silent_callback
 from rpl_wei.core.interfaces.tcp_interface import wei_tcp_callback
@@ -15,11 +16,11 @@ from rpl_wei.core.interfaces.zmq_interface import wei_zmq_callback
 ########################
 #   Executor mapping   #
 ########################
-
+wei_exec = ROS2Interface("weiExecNode")
 
 class Executor_Map:
     function = {
-        "wei_ros_node": wei_ros2_service_callback,
+        "wei_ros_node": wei_exec.send_action,
         "wei_ros_camera": wei_ros2_camera_callback,
         "wei_tcp_node": wei_tcp_callback,
         "wei_rest_node": wei_rest_callback,

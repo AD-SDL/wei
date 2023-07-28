@@ -41,7 +41,8 @@ wc_state = {"locations": {}, "modules": {}}
 
 templates = Jinja2Templates(directory="templates")
 
-INTERFACES = {"wei_rest_node": RestInterface}, #"wei_ros_node": ROS2Interface}
+INTERFACES = {"wei_rest_node": RestInterface} #"wei_ros_node": ROS2Interface("stateNode")}
+print(INTERFACES)
 
 def update_state():
     global wc_state, workcell
@@ -49,8 +50,11 @@ def update_state():
         
         for module in workcell.modules:
                 if module.interface in INTERFACES:
+                    print("initing rclpy")
                     interface = INTERFACES[module.interface]
                     state = interface.get_state(module.config)
+                    print(interface.wei_execution_node.state)
+                    print("asdfasdfsfd")
                     if not(state == ""):
                         wc_state["modules"][module.name] = state 
                 else:
@@ -466,6 +470,6 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "rpl_wei.server:app",
-        reload=True,
+        reload=False,
         ws_max_size=10000000000000000000000000000000000000000000000000000000000000000000000000,
     )

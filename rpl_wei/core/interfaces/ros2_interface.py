@@ -27,10 +27,11 @@ def __init_rclpy():
     global wei_execution_node
 
     if rclpy:  # use_rclpy:
+
         if not rclpy.utilities.ok():
             rclpy.init()
             print("Started RCLPY")
-            wei_execution_node = weiExecNode()
+            wei_execution_node = weiExecNode("execNode")
         else:
             print("RCLPY OK ")
     return wei_execution_node
@@ -137,35 +138,82 @@ def wei_ros2_camera_callback(step: Step, **kwargs):
         "action_log",
     )
 class ROS2Interface(Interface):
-    def __init__(self) -> None:
-        pass
-    def __init_rclpy():
-        if rclpy:  # use_rclpy:
-            if not rclpy.utilities.ok():
-                rclpy.init()
-                #print("Started RCLPY")
-                wei_execution_node = weiExecNode()
+    def __init__(self, name) -> None:
+      
+       try:
+            import rclpy as test
+       except ImportError:
+            print("No RCLPY found... Cannot use ROS2")
+            test = None
+
+       try:
+            from wei_executor.weiExecutorNode import weiExecNode as weiExecTest
+       except:
+           pass
+       self.rclpy = test
+       self.wei_exec_test=weiExecTest
+       self.wei_execution_node =  self.__init_rclpy(name)
+
+
+    def __init_rclpy(self, name):
+        if  self.rclpy :  # use_rclpy:
+            if not  self.rclpy .utilities.ok():
+                self.rclpy.init()
+                print("Started RCLPY")
+                wei_execution_node =self.wei_exec_test(name)
             else:
                 print("RCLPY OK ")
+                wei_execution_node = self.wei_exec_test(name)
         return wei_execution_node
 
 
-    def __kill_node(wei_execution_node):
+    def __kill_node(self, wei_execution_node):
         #print("killing node")
-        wei_execution_node.destroy_node()
-        rclpy.shutdown()
+        self.wei_execution_node.destroy_node()
+        self.rclpy.shutdown()
         
-    def send_action(step: Step, **kwargs):
-        pass
+    def send_action(self, step: Step, **kwargs):
+        module: Module = kwargs["step_module"]
+        msg = {
+            "node": module.config["ros_node_address"],
+            "action_handle": step.action,
+            "action_vars": step.args,
+          }
 
+        if kwargs.get("verbose", False):
+            print("\n Callback message:")
+            print(msg)
+            print()
+        action_response = ""
+        action_msg = ""
+        action_log = ""
+        if self.rclpy :
+            print("rosstart")
+            print(  self.rclpy.utilities.ok())
+            #$print(rclpy.get_global_executor().add_node(self.wei_execution_node   ))
+            print(self.wei_execution_node.context.ok())
+            # while self.rclpy.utilities.ok():
+            #   self.rclpy.spin_once(self.wei_execution_node, timeout_sec=0.3)
+            #   print(  self.rclpy.utilities.ok())
+            #   #$print(rclpy.get_global_executor().add_node(self.wei_execution_node   ))
+            #   print(self.wei_execution_node.context.ok())
+            action_response, action_msg, action_log = self.wei_execution_node.send_wei_command(
+                msg["node"], msg["action_handle"], msg["action_vars"]
+            )
+            print("roseend")
+            if action_msg and kwargs.get("verbose", False):
+                print(action_msg)
+            rclpy.spin_once(self.wei_execution_node)
+        return action_response, action_msg, action_log
     def get_about(config):
         pass
 
-    def get_state(config):
-        wei_execution_node = ROS2Interface.__init_rclpy()
-        state = wei_execution_node.get_state(config["ros_node_address"])
+    def get_state(self, config):
+        #wei_execution_node = ROS2Interface.__init_rclpy()
+        state = self.wei_execution_node.get_state(config["ros_node_address"])
+        rclpy.spin_once(self.wei_execution_node)
         print(state)
-        ROS2Interface.__kill_node(wei_execution_node)
+        #ROS2Interface.__kill_node(wei_execution_node)
         return str(state)
     def get_resources(config):
         pass
