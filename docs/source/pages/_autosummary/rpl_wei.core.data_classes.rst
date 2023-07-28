@@ -17,6 +17,7 @@ rpl\_wei.core.data\_classes
 
    .. autosummary::
    
+      NodeStatus
       StepStatus
    
    

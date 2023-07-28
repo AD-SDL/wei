@@ -1,7 +1,7 @@
-rpl\_wei.loggers
-================
+rpl\_wei.core.interface
+=======================
 
-.. automodule:: rpl_wei.loggers
+.. automodule:: rpl_wei.core.interface
 
    
    
@@ -17,7 +17,7 @@ rpl\_wei.loggers
 
    .. autosummary::
    
-      WEI_Logger
+      Interface
    
    
 

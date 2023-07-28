@@ -1,6 +1,6 @@
-=======================
-Introduction to RPL WEI
-=======================
+===================
+Introduction to WEI
+===================
 
 WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular environment in which a variety of hardware and software components implement common interfaces.
 This tool leverages ROS (`Robot Operating System <https://www.ros.org>`_) for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a 
@@ -14,7 +14,7 @@ implement diverse workflows across a variety of domains.
 
 
 Overview and Terminology
-======================
+========================
 
 We define conventional hardware and software configurations for robotic equipment and control software in order to simplify the assembly, modification, and scaling of experimental systems. The following figure shows our hardware conventions:
 
@@ -38,20 +38,19 @@ The figure illustrates the three components for a simple "Color Picker" applicat
 .. image:: ../assets/ColorPicker.jpg
 
 Workcell definition
-------------------
+-------------------
 
-A workcell definition is a YAML file (e.g., `pcr_workcell.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/pcr_workcell.yaml>`_) comprising two sections, *config* and *modules*:
+A workcell definition is a YAML file (e.g., `pcr_workcell.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/rpl_modular_workcell.yaml>`_) comprising two sections, *config* and *modules*:
 
 The **config** section defines various infrastructure services that may be used elsewhere in the workcell. For example, here is the config from the example just listed.
 
 .. code-block:: yaml
 
-  ros_namespace: rpl_workcell                                 # ROS variable namespace name
-  funcx_local_ep: "299edea0-db9a-4693-84ba-babfa655b1be"      # UUID for funcX endpoint used for local computations
-  globus_local_ep: ""                                         # 
-  globus_search_index: "aefcecc6-e554-4f8c-a25b-147f23091944" # UUID for the Globus Search instance
-  globus_portal_ep: "bb8d048a-2cad-4029-a9c7-671ec5d1f84d"    # UUID for the portal to which data may be published
-  globus_group: "dda56f31-53d1-11ed-bd8b-0db7472df7d6"        # 
+  globus_local_ep: ""                                         # UUID for Globus Transfer endpoint used for local storage
+  compute_local_ep: ""                                        # UUID for Globus Compute endpoint used for local computations
+  globus_search_index: ""                                     # UUID for the Globus Search instance
+  globus_portal_ep: ""                                        # UUID for the portal to which data may be published
+  globus_group: "dda56f31-53d1-11ed-bd8b-0db7472df7d6"        # UUID for the group that shares permissions to all UUID's above
 
 
 The **modules** section lists the *modules* that are included in the workcell. In the example just listed, there are 12 in total: 
@@ -66,18 +65,14 @@ The **modules** section lists the *modules* that are included in the workcell. I
 For example, this module specification included in `pcr_workcell.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/pcr_workcell.yaml>`_ described the Sealer module:
 
 .. code-block:: yaml
+
   - name: sealer                     # A name used for the module in the workflow: its "alias"
-    type: wei_ros_node               # Indicates that module uses ROS2
     model: sealer                    # Not used at present
+    interface: wei_ros_node               # Indicates that module uses ROS2
     config:
-      ros_node: "/std_ns/SealerNode" # ROS2 network name (in name space)
-    positions:                       # One or more spatial locations, with name 
-      default: [205.128, -2.814, 264.373, 365.863, 79.144, 411.553]
+      ros_node_address: "/std_ns/SealerNode" # ROS2 network name (in name space)
 
-
-The positions here refer to the joint angles the PF400 uses to reach a specific position on the cart. So the sealer default position defines the PF400 angles needed to place a plate on the sealer tray. 
-
-For other modules, a module specification could include things like protocol and IP port.
+For other interfaces, a module specification could include things like protocol and IP port.
 
 Workflow definition
 -------------------
@@ -92,13 +87,12 @@ This is specified by a YAML file that defines the sequence of actions that will 
 
 .. code-block:: yaml
 
-    metadata:
     name: PCR - Workflow
-    author: Casey Stone, Rafael Vescovi
-    info: Initial PCR workflow for RPL workcell
-    version: 0.1
 
-    workcell: /home/rpl/workspace/rpl_workcell/pcr_workcell/pcr_workcell.yaml
+    metadata:
+    - author: Casey Stone, Rafael Vescovi
+    - info: Initial PCR workflow for RPL workcell
+    - version: 0.1
 
     modules:
     - name: ot2_cp_gamma
@@ -108,7 +102,7 @@ This is specified by a YAML file that defines the sequence of actions that will 
     flowdef:
     - name: Move from Camera Module to OT2
         module: pf400
-        command: transfer
+        action: transfer
         args:
         source: camera_module.positions.plate_station
         target: ot2_cp_gamma.positions.deck2
@@ -118,7 +112,7 @@ This is specified by a YAML file that defines the sequence of actions that will 
 
     - name: Mix all colors
         module: ot2_cp_gamma
-        command: run_protocol
+        action: run_protocol
         args:
         config_path:  /home/rpl/workspace/rpl_workcell/color_picker/protocol_files/combined_protocol.yaml
         red_volumes: payload.red_volumes
@@ -130,7 +124,7 @@ This is specified by a YAML file that defines the sequence of actions that will 
 
     - name: Move to Picture
         module: pf400
-        command: transfer
+        action: transfer
         args:
         source: ot2_cp_gamma.positions.deck2
         target: camera_module.positions.plate_station
@@ -139,7 +133,7 @@ This is specified by a YAML file that defines the sequence of actions that will 
 
     - name: Take Picture
         module: camera_module
-        command: take_picture
+        action: take_picture
         args:
         save_location: local_run_results
         file_name: "final_image.jpg"
@@ -158,7 +152,7 @@ It comprises four steps:
 > While a workflow and a protocol both specify a sequence of actions to be performed, they are quite different in role and syntax. A **workflow** uses a hardware-independent notation to specify actions to perform on one or more modules (e.g., action A1 on module M1, action A2 on module M2); a **protocol** uses a hardware-specific notation to specify steps to be performed on a single module (e.g., OT2). Why *workflow* and *protocol*? Perhaps because this technology was developed by a partnership of computer scientists ("module", "workflow") and biologists ("protocol")
  
 Protocol definition
---------------------
+-------------------
 
 A protocol file gives the device-specific instructions to be executed on a specific piece of hardware to implement an intended action. For example, `ot2_pcr_config.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/protocol_files/ot2_pcr_config.yaml>`_ gives instructions for an OpenTrons OT2. A protocol file specifies a list of **equipment** within the hardware component; a sequence of **commands** to be executed on the equipment; and some describptive **metadata**. For example, the following shows the contents of `combined_protocol.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/color_picker/protocol_files/combined_protocol.yaml>`_, which comprise the equipment section, three commands, and the metadata section. 
 
@@ -168,6 +162,7 @@ The "location" argument here is OT2-specific: it indicates one of 11 plate locat
 
 .. image:: ../assets/DeckMapEmpty.jpg
     :width: 200px
+    
 An "alias" argument defines a string that can be used to refer to a position later in the specifrication: e.g., the fourth line in the YAML below specifies that location "7" can be referred to as "source". 
 
 The wells within a plate are referred to via their column and row, e.g., A1. 
@@ -221,7 +216,7 @@ The following specification describes an OT2 with the following components:
     apiLevel: "2.12"
 
 Experiment Application
-----------
+----------------------
 
 A Python program defines the process required to run an experiment. E.g., see `color_picker_application.py <https://github.com/AD-SDL/rpl_workcell/blob/dev_tobias/color_picker/color_picker_application.py>`_ for a color picker program, which calls three workflows: 
 

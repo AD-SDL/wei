@@ -1,7 +1,7 @@
-rpl\_wei.wei\_workflow\_base
+rpl\_wei.core.step\_executor
 ============================
 
-.. automodule:: rpl_wei.wei_workflow_base
+.. automodule:: rpl_wei.core.step_executor
 
    
    
@@ -17,7 +17,8 @@ rpl\_wei.wei\_workflow\_base
 
    .. autosummary::
    
-      WF_Client
+      Executor_Map
+      StepExecutor
    
    
 
