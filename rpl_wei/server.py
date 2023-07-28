@@ -183,23 +183,16 @@ async def process_job(
     simulate: bool = False,
 ):
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
-
     Parameters
     ----------
-
-
     workflow: UploadFile
         The workflow yaml file
-
     payload: UploadFile
         The data input file to the workflow
-
     experiment_path: str
        The path to the data of the experiment for the workflow
-
     simulate: bool
         whether to use real robots or not
-
 
     Returns
     -------
@@ -228,14 +221,10 @@ def log_experiment(experiment_path: str, log_value: str):
     """Logs a value to the experiment log fo the given path
     Parameters
     ----------
-
-
     experiment_path: str
        The path to the data of the experiment for the workflow
-
     log_value: str
         the value to write to the experiment log
-
 
     Returns
     -------
@@ -252,12 +241,8 @@ async def log_return(experiment_path: str):
     """Returns a string containing the log files for a given experiment
     Parameters
     ----------
-
-
     experiment_path: str
        The path to the data of the experiment for the workflow
-
-
 
     Returns
     -------
@@ -273,20 +258,16 @@ async def log_return(experiment_path: str):
 def process_exp(experiment_name: str, experiment_id: str):
     """Pulls an experiment and creates the files and logger for it
 
-        Parameters
-        ----------
-
-        experiment_name: str
-            The human created name of the experiment
-
+    Parameters
+    ----------
+    experiment_name: str
+        The human created name of the experiment
     experiment_id : str
-           The programatically generated id of the experiment for the workflow
-
-
-        Returns
-        -------
-         response: Dict
-           a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+       The programatically generated id of the experiment for the workflow
+    Returns
+    -------
+     response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
 
     # Decode the bytes object to a string
