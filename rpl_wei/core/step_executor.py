@@ -16,11 +16,11 @@ from rpl_wei.core.interfaces.zmq_interface import wei_zmq_callback
 ########################
 #   Executor mapping   #
 ########################
-wei_exec = ROS2Interface("weiExecNode")
+#wei_exec = ROS2Interface("weiExecNode")
 
 class Executor_Map:
     function = {
-        "wei_ros_node": wei_exec.send_action,
+        "wei_ros_node": wei_ros2_service_callback,
         "wei_ros_camera": wei_ros2_camera_callback,
         "wei_tcp_node": wei_tcp_callback,
         "wei_rest_node": wei_rest_callback,

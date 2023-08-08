@@ -41,7 +41,7 @@ wc_state = {"locations": {}, "modules": {}}
 
 templates = Jinja2Templates(directory="templates")
 
-INTERFACES = {"wei_rest_node": RestInterface} #"wei_ros_node": ROS2Interface("stateNode")}
+INTERFACES = {"wei_rest_node": RestInterface,  "wei_ros_node": ROS2Interface("stateNode")}
 print(INTERFACES)
 
 def update_state():
@@ -50,13 +50,15 @@ def update_state():
         
         for module in workcell.modules:
                 if module.interface in INTERFACES:
-                    print("initing rclpy")
-                    interface = INTERFACES[module.interface]
-                    state = interface.get_state(module.config)
-                    print(interface.wei_execution_node.state)
-                    print("asdfasdfsfd")
-                    if not(state == ""):
-                        wc_state["modules"][module.name] = state 
+
+                    try:
+                     interface = INTERFACES[module.interface]
+                     state = interface.get_state(module.config)
+                   
+                     if not(state == ""):
+                         wc_state["modules"][module.name] = state
+                    except:
+                         wc_state["modules"][module.name] = "UNKNOWN"
                 else:
                    # print("module interface not found")
                    pass

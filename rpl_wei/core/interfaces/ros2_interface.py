@@ -146,12 +146,8 @@ class ROS2Interface(Interface):
             print("No RCLPY found... Cannot use ROS2")
             test = None
 
-       try:
-            from wei_executor.weiExecutorNode import weiExecNode as weiExecTest
-       except:
-           pass
+      
        self.rclpy = test
-       self.wei_exec_test=weiExecTest
        self.wei_execution_node =  self.__init_rclpy(name)
 
 
@@ -160,10 +156,10 @@ class ROS2Interface(Interface):
             if not  self.rclpy .utilities.ok():
                 self.rclpy.init()
                 print("Started RCLPY")
-                wei_execution_node =self.wei_exec_test(name)
+                wei_execution_node = weiExecNode(name)
             else:
                 print("RCLPY OK ")
-                wei_execution_node = self.wei_exec_test(name)
+                wei_execution_node = weiExecNode(name)
         return wei_execution_node
 
 
