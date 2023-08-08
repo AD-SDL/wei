@@ -177,27 +177,26 @@ def submit_job(
 
 
 def start_exp(experiment_id: str, experiment_name: str):
+    """Pulls an experiment and creates the files and logger for it
+
+    Parameters
+    ----------
+    experiment_id : str
+       The programatically generated id of the experiment for the workflow
+
+    experiment_name: str
+        The human created name of the experiment
+
+    Returns
+    -------
+     response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
     global kafka_server
     base_response_content = {
         "experiment_id": experiment_id,
         "experiment_name": experiment_name,
     }
-
-    """Pulls an experiment and creates the files and logger for it
-
-        Parameters
-        ----------
-        experiment_id : str
-           The progromatically generated id of the experiment for the workflow
-
-        experiment_name: str
-            The human created name of the experiment
-
-        Returns
-        -------
-         response: Dict
-           a dictionary including the succesfulness of the queueing, the jobs ahead and the id"""
-
     try:
         exp_data = start_experiment(experiment_name, experiment_id, kafka_server)
         # jobs_ahead = len(task_queue.jobs)
@@ -271,23 +270,16 @@ async def process_job(
     simulate: bool = False,
 ):
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
-
     Parameters
     ----------
-   
-
     workflow: UploadFile
         The workflow yaml file
-
     payload: UploadFile
         The data input file to the workflow
-
-    experiment_path : str
-       The path to the data forthe experiment for the workflow
-
+    experiment_path: str
+       The path to the data of the experiment for the workflow
     simulate: bool
         whether to use real robots or not
-
 
     Returns
     -------
@@ -310,14 +302,122 @@ async def process_job(
         simulate=simulate,
     )
 
-@app.get("/job/{job_id}/state")
+
+@app.post("/log/{experiment_id}")
+def log_experiment(experiment_path: str, log_value: str):
+    """Logs a value to the experiment log fo the given path
+    Parameters
+    ----------
+    experiment_path: str
+       The path to the data of the experiment for the workflow
+    log_value: str
+        the value to write to the experiment log
+
+    Returns
+    -------
+        None
+    """
+    log_dir = Path(experiment_path)
+    experiment_id = log_dir.name.split("_id_")[-1]
+    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+    logger.info(log_value)
+
+
+@app.get("/log/return")
+async def log_return(experiment_path: str):
+    """Returns a string containing the log files for a given experiment
+    Parameters
+    ----------
+    experiment_path: str
+       The path to the data of the experiment for the workflow
+
+    Returns
+    -------
+    None
+    """
+
+
+    log_dir = Path(experiment_path)
+    experiment_id = log_dir.name.spit("_")[-1]
+    with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
+        return f.read()
+
+
+@app.post("/experiment")
+def process_exp(experiment_name: str, experiment_id: str):
+    """Pulls an experiment and creates the files and logger for it
+
+    Parameters
+    ----------
+    experiment_name: str
+        The human created name of the experiment
+    experiment_id : str
+       The programatically generated id of the experiment for the workflow
+    Returns
+    -------
+     response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+
+    """
+    
+    # Decode the bytes object to a string
+    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
+    global kafka_server
+    return start_experiment(experiment_name, experiment_id, kafka_server)
+
+
+@app.post("/job/{experiment_id}")
+async def process_job_with_id(
+    experiment_id: str,
+    experiment_name: str,
+    workflow: UploadFile = File(...),
+    payload: str = Form("{}"),
+    simulate: bool = False,
+):
+    """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
+
+    Parameters
+    ----------
+    experiment_id : str
+       The id of the experiment for the workflow
+
+    workflow: UploadFile
+        The workflow yaml file
+
+    payload: UploadFile
+        The data input file to the workflow
+
+
+    simulate: bool
+        whether to use real robots or not
+
+
+    Returns
+    -------
+    response: Dict
+       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+    """
+    workflow_content = await workflow.read()
+    workflow_content_str = workflow_content.decode("utf-8")
+
+    parsed_payload = json.loads(payload)
+    return submit_job(
+        experiment_id,
+        experiment_name,
+        workflow_content_str,
+        parsed_payload,
+        simulate=simulate,
+    )
+
+
+@app.get("/job/{job_id}")
 async def get_job_status(job_id: str):
     """Pulls the status of a job on the queue
 
     Parameters
     ----------
     job_id : str
-       The progromatically generated id of the experiment for the workflow
+       The programatically generated id of the experiment for the workflow
 
 
     Returns

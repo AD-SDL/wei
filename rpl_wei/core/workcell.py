@@ -14,7 +14,17 @@ class Workcell:
     def __init__(
         self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
     ) -> None:
-        print(workcell_def)
+        """Defines a workcell object loaded from a yaml file
+
+        Parameters
+        ----------
+        workcell_def: Dict[str, Any]
+           data from workcell yaml file
+
+        log_level: int
+            level for logging
+
+        """
         self.workcell = WorkcellData(**workcell_def)
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)

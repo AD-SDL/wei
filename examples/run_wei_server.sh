@@ -13,7 +13,11 @@ tmux send-keys -t $session:$window 'envsubst < redis.conf | redis-server -' C-m
 window=1
 tmux new-window -t $session:$window -n 'server'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
+<<<<<<< HEAD
 tmux send-keys -t $session:$window 'python3 -m rpl_wei.server --workcell ../tests/test_workcell.yaml --kafka-server=0.0.0.0:9092' C-m
+=======
+tmux send-keys -t $session:$window 'python3 -m rpl_wei.server --workcell ../tests/test_workcell.yaml' C-m
+>>>>>>> 3c67810da061d23adde46add408e844f79859622
 
 
 window=2

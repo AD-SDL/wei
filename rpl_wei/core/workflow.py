@@ -27,6 +27,29 @@ class WorkflowRunner:
         simulate: bool = False,
         workflow_name: str = "",
     ) -> None:
+        """Manages the execution of a workflow
+
+        Parameters
+        ----------
+        workflow_def : Dict[str, Any]
+           The list of workflow steps to complete
+
+        experiment_path: str
+            Path for logging the experiment
+
+        run_id: str
+            id for the specific workflow
+
+        log_level: int
+            Level for logging the workflow
+
+        simulate: bool
+            Whether or not to use real robots
+
+        workflow_name: str
+            Human-created name of the workflow
+        """
+
         self.workflow = WorkflowData(**workflow_def)
         self.simulate = simulate
         # Setup validators
@@ -88,7 +111,8 @@ class WorkflowRunner:
         Returns
         -------
         steps: List[Dict]
-           a list of steps and the metadata relevant to execute them"""
+           a list of steps and the metadata relevant to execute them
+        """
         # TODO: configure the exceptions in such a way that they get thrown here, will be client job to handle these for now
 
         # Start executing the steps
@@ -103,7 +127,11 @@ class WorkflowRunner:
                 )
 
             # replace position names with actual positions
-            if isinstance(step.args, dict) and len(step.args) > 0:
+            if (
+                isinstance(step.args, dict)
+                and len(step.args) > 0
+                and workcell.locations
+            ):
                 if step.module in workcell.locations.keys():
                     for key, value in step.args.items():
 

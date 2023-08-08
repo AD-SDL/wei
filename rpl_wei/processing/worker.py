@@ -1,3 +1,4 @@
+"""Worker for pulling workflow jobs from Redis queue and executing them"""
 import json
 import time
 from typing import Optional, Union
@@ -47,6 +48,9 @@ def run_workflow_task(
     experiment_id : str
        The id of the experiment for the workflow
 
+    experiment_name : str
+       The human generated name of the experiment for the workflow
+
     workflow_def: str
         The defintion of the workflow from the workflow yaml file
 
@@ -68,7 +72,6 @@ def run_workflow_task(
     result_payload Dict
        The resulting data from the run including the response from each module and the state of the run
     """
-    print(kafka_server)
     events = Events(
         "localhost",
         "8000",

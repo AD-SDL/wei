@@ -16,7 +16,7 @@ except ImportError  as e:
 
 
 def __init_rclpy():
-    """stops the execution node
+    """starts the execution node
     Parameters
        ----------
        None

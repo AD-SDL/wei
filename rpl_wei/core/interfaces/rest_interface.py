@@ -1,4 +1,4 @@
-"""Handling execution for steps in the RPL-SDL efforts"""
+"""Handling REST execution for steps in the RPL-SDL efforts"""
 import json
 
 import requests
