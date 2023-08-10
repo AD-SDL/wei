@@ -1,5 +1,5 @@
 """Contains the Events class for logging experiment steps"""
-from typing import Optional
+from typing import Optional, Any
 
 import requests
 import json
@@ -89,7 +89,7 @@ class Events:
 
         return response.json()
 
-    def _log_event(self, log_value: str, log_dir=""):
+    def _log_event(self, event_type, event_name, event_info: Optional[Any] = "", log_dir=""):
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -102,17 +102,18 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         url = f"{self.url}/exp/{self.experiment_id}/log"
+        log_value = {"experiment_id": self.experiment_id, "event_type": event_type, "event_name": event_name, "event_info": event_info}
         if log_dir:
             self.experiment_path = log_dir
         response = requests.post(
             url,
-            params={"log_value": log_value, "experiment_path": self.experiment_path},
+            params={"log_value": str(log_value), "experiment_path": self.experiment_path},
         )
 
         try:
-            value = {"exp_id": self.experiment_id, "value": log_value}
+           
             self.kafka_producer.send(
-                "rpl", bytes(json.dumps(value), "utf-8"), bytes(self.experiment_id, "utf-8"))
+                "rpl", bytes(json.dumps(log_value), "utf-8"), bytes(self.experiment_id, "utf-8"))
             
         except Exception:
             print("Kafka Unvavailable")
@@ -133,13 +134,8 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         self.experiment_path = log_dir
-        return self._log_event(
-            "EXPERIMENT:START: "
-            + str(self.experiment_name)
-            + ", EXPERIMENT ID: "
-            + str(self.experiment_id),
-            log_dir,
-        )
+        
+        return self._log_event("EXPERIMENT", "START")
 
     def end_experiment(self, log_dir: Optional[str] = ""):
         """logs the end of an experiment
@@ -155,13 +151,7 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         self.experiment_path = log_dir
-        return self._log_event(
-            "EXPERIMENT:END: "
-            + str(self.experiment_name)
-            + ", EXPERIMENT ID: "
-            + str(self.experiment_id),
-            log_dir,
-        )
+        return self._log_event("EXPERIMENT", "END")
 
     def log_decision(self, dec_name: str, dec_value: bool):
         """logs an decision in the proper place for the given experiment
@@ -176,7 +166,7 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        return self._log_event("CHECK:" + str(dec_value).capitalize() + ": " + dec_name)
+        return self._log_event("CHECK",  dec_name.capitalize(), {"dec_value": str(dec_value)})
 
     def log_comment(self, comment: str):
         """logs a comment on the run
@@ -188,7 +178,7 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        return self._log_event(comment)
+        return self._log_event("COMMENT", comment)
 
     def log_local_compute(self, func_name):
         """Logs a local function running on the system.
@@ -202,7 +192,7 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
 
-        return self._log_event("LOCAL:COMPUTE: " + func_name)
+        return self._log_event("LOCAL", "COMPUTE", {"function_name": func_name})
 
     def log_globus_compute(self, func_name):
         """logs a function running using Globus Compute
@@ -215,7 +205,7 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        return self._log_event("GLOBUS:COMPUTE: " + func_name)
+        return self._log_event("GLOBUS", "COMPUTE", {"function_name": func_name})
 
     def log_globus_flow(self, flow_name: str, flow_id):
         """logs a function running using Globus Gladier
@@ -231,9 +221,8 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        return self._log_event(
-            "GLOBUS:GLADIER:RUNFLOW:" + flow_name + " with ID " + flow_id
-        )
+        return self._log_event("GLOBUS", "GLADIER_RUNFLOW", {"flow_id": flow_id})
+
 
     def log_loop_start(self, loop_name: str):
         """logs the start of a loop during an Experimet
@@ -248,7 +237,7 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         self.loops.append(loop_name)
-        return self._log_event("LOOP:START:" + loop_name)
+        return self._log_event("LOOP", "START", {"loop_name": loop_name})
 
     def log_loop_end(self):
         """Pops the most recent loop from the loop stack and logs its completion
@@ -259,7 +248,7 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         loop_name = self.loops.pop()
-        return self._log_event("LOOP:END:" + loop_name)
+        return self._log_event("LOOP", "END", {"loop_name": loop_name})
 
     def log_loop_check(self, condition, value):
         """Peeks the most recent loop from the loop stack and logs its completion
@@ -279,12 +268,10 @@ class Events:
            The JSON portion of the response from the server"""
         loop_name = self.loops[-1]
         return self._log_event(
-            "LOOP:CHECK CONDITION: "
-            + loop_name
-            + ", CONDITION: "
-            + condition
-            + ", RESULT: "
-            + str(value)
+            "LOOP", "CHECK CONDITION",
+            {"loop_name": loop_name,
+            "condition": condition,
+            "result": str(value)}
         )
 
     def log_wf_start(self, wf_name, job_id):
@@ -305,7 +292,7 @@ class Events:
            The JSON portion of the response from the server"""
 
         return self._log_event(
-            "WEI:WORKFLOW:START: " + str(wf_name) + ", RUN ID: " + str(job_id)
+            "WEI", "WORKFLOW_START", {"wf_name": str(wf_name), "run_id": str(job_id)}
         )
 
     def log_wf_end(self, wf_name, job_id):
@@ -325,5 +312,6 @@ class Events:
         Any
            The JSON portion of the response from the server"""
         return self._log_event(
-            "WEI:WORKFLOW:END: " + str(wf_name) + ", RUN ID: " + str(job_id)
-        )
+
+            "WEI", "WORKFLOW_END", {"wf_name": str(wf_name), "run_id": str(job_id)}
+        )        
