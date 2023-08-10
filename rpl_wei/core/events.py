@@ -2,7 +2,7 @@
 from typing import Optional
 
 import requests
-
+import json
 # class Event:
 #     pass
 # event = {
@@ -110,9 +110,10 @@ class Events:
         )
 
         try:
+            value = {"exp_id": self.experiment_id, "value": log_value}
             self.kafka_producer.send(
-                "rpl", bytes(self.experiment_id, "utf-8"), bytes(log_value, "utf-8")
-            )
+                "rpl", bytes(json.dumps(value), "utf-8"), bytes(self.experiment_id, "utf-8"))
+            
         except Exception:
             print("Kafka Unvavailable")
 
@@ -162,7 +163,7 @@ class Events:
             log_dir,
         )
 
-    def decision(self, dec_name: str, dec_value: bool):
+    def log_decision(self, dec_name: str, dec_value: bool):
         """logs an decision in the proper place for the given experiment
 
         Parameters

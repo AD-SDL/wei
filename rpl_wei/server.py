@@ -410,7 +410,7 @@ async def process_job_with_id(
     )
 
 
-@app.get("/job/{job_id}")
+@app.get("/job/{job_id}/state")
 async def get_job_status(job_id: str):
     """Pulls the status of a job on the queue
 

@@ -92,7 +92,7 @@ class Experiment:
            The JSON portion of the response from the server, including the ID of the job as job_id
         """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
-        url = f"{self.url}/job"
+        url = f"{self.url}/job/run"
         payload_path = Path("~/.wei/temp/payload.txt")
         with open(payload_path.expanduser(), "w") as f2:
             payload = json.dump(payload, f2)
@@ -159,7 +159,7 @@ class Experiment:
 
         return self._return_response(response)
 
-    def get_log(self):
+    def get_job_log(self):
         """Returns the log for this experiment as a string
 
         Parameters
