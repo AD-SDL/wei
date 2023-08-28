@@ -10,6 +10,7 @@ import yaml
 
 import rq
 import requests
+import multiprocessing as mpr
 import time
 import ulid
 from fastapi import FastAPI, File, Form, UploadFile, Request    
@@ -42,7 +43,7 @@ kafka_server = None
 wc_state = {"locations": {}, "modules": {}, "workflows": []}
 wf_queue = []
 templates = Jinja2Templates(directory="templates")
-
+running_wfs = []
 INTERFACES = {"wei_rest_node": RestInterface,  "wei_ros_node": ROS2Interface("stateNode")}
 print(INTERFACES)
 
@@ -67,7 +68,11 @@ def update_state():
                 else:
                    # print("module interface not found")
                    pass
-        
+        for wf in wf_queue:
+            if wf.check_step():
+                pc = mpr.Process(wf.run_step())
+                pc.start()
+
         time.sleep(0.3)
 
 @asynccontextmanager
@@ -90,7 +95,7 @@ async def lifespan(app: FastAPI):
     args = parser.parse_args()
     workcell = Workcell.from_yaml(args.workcell)
     for location in workcell.locations["workcell"]:
-            wc_state["locations"][location] = "Empty"
+            wc_state["locations"][location] = {"state": "Empty", "queue": []}
     thread = threading.Thread(target=update_state)
     thread.start()
     kafka_server = args.kafka_server
@@ -110,7 +115,7 @@ st_abs_file_path = os.path.join(script_dir, "static/")
 app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
 templates = Jinja2Templates(directory=script_dir+"/templates")
 
-def submit_job(
+async def submit_job(
     experiment_path: str,
     workflow_content_str: str,
     parsed_payload: Dict[str, Any],
@@ -141,7 +146,7 @@ def submit_job(
        a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
     # manually create job ulid (so we can use it for the loggign inside wei)
-    global kafka_server, workcell, wf_queue
+    global kafka_server, workcell, wf_queue, wc_state
     try:
         job_id = ulid.new().str
         path = Path(experiment_path)
@@ -167,8 +172,12 @@ def submit_job(
             run_id=job_id,
             simulate=simulate,
             workflow_name=workflow_name,
+        
         )
-        wf_queue.append(WorkflowRunner)
+        for step in workflow_runner.steps:
+            wc_state["modules"]["queue"].append(workflow_runner.run_id)
+        wf_queue.append(workflow_runner)
+        
 
         # Run validation
         workflow_runner.check_flowdef()
@@ -540,7 +549,24 @@ async def queue_info():
     )
 
 
+@app.get("/wc/state", response_class=HTMLResponse)
+def show():
+    """
+     
+     Describes the state of the whole workcell including locations and daemon states
 
+    Parameters
+    ----------
+    None
+    
+     Returns
+    -------
+     response: Dict
+       the state of the workcell
+    """
+     
+    global wc_state
+    return JSONResponse(content={"wc_state": json.dumps(wc_state)}) #templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
 
 
 

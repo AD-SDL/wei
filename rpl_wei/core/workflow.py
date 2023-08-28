@@ -185,20 +185,16 @@ class WorkflowRunner:
         if "target" in step["locations"]: 
                     url = "http://localhost:8000/wc/locations/" + step["locations"]["target"] + "/state"
                     state = requests.get(url).json()[step["locations"]["target"]]
-                    if not(state == "Empty"):
+                    if not(state == "Empty") or not(state["queue"][0] == self.run_id):
                          return False
         if "source" in step["locations"]:
                     url = "http://localhost:8000/wc/locations/" + step["locations"]["source"] + "/state"
                     state = requests.get(url).json()[step["locations"]["source"]]
                     if not(state == self.experiment_id):
                          return False
-        url = "http://localhost:8000/wc/locations/" + step["locations"]["source"] + "/state"
-        state = requests.get(url).json()[step["locations"]["source"]]
-        if not(state == self.experiment_id):
-                         return False
         url = "http://localhost:8000/wc/modules/" + step["step_module"] + "/state"
-        state = requests.get(url).json()[step["locations"]["source"]]
-        if not(state == self.experiment_id):
+        state = requests.get(url).json()[step["step_module"]]
+        if not(state["queue"][0] == self.run_id):
                          return False
         return True
         
