@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict  # , List
 import os
 import re
+import yaml
 
 import rq
 import requests
@@ -25,6 +26,7 @@ from rpl_wei.core.experiment import start_experiment
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.interfaces.rest_interface import RestInterface
 from rpl_wei.core.interfaces.ros2_interface import ROS2Interface
+from rpl_wei.core.workflow import WorkflowRunner, WorkflowData
 from rpl_wei.processing.worker import run_workflow_task, task_queue
 
 import threading
@@ -38,7 +40,7 @@ import threading
 workcell = None
 kafka_server = None
 wc_state = {"locations": {}, "modules": {}, "workflows": []}
-
+wf_queue = []
 templates = Jinja2Templates(directory="templates")
 
 INTERFACES = {"wei_rest_node": RestInterface,  "wei_ros_node": ROS2Interface("stateNode")}
@@ -139,14 +141,57 @@ def submit_job(
        a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
     # manually create job ulid (so we can use it for the loggign inside wei)
-    global kafka_server
-    job_id = ulid.new().str
-    path = Path(experiment_path)
-    experiment_id = path.name.split("_id_")[-1]
-    experiment_name = path.name.split("_id_")[0]
-    base_response_content = {
-        "experiment_path": experiment_path,
-    }
+    global kafka_server, workcell, wf_queue
+    try:
+        job_id = ulid.new().str
+        path = Path(experiment_path)
+        experiment_id = path.name.split("_id_")[-1]
+        experiment_name = path.name.split("_id_")[0]
+        base_response_content = {
+            "experiment_path": experiment_path,
+        }
+
+        #  events = Events(
+        #     "localhost",
+        #     "8000",
+        #     experiment_name,
+        #     experiment_id,
+        #     kafka_server=kafka_server,
+        #     experiment_path=experiment_path,
+        # )
+        job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
+        workflow_runner = WorkflowRunner(
+            yaml.safe_load(workflow_content_str),
+            payload=parsed_payload,
+            experiment_path=experiment_path,
+            run_id=job_id,
+            simulate=simulate,
+            workflow_name=workflow_name,
+        )
+        wf_queue.append(WorkflowRunner)
+
+        # Run validation
+        workflow_runner.check_flowdef()
+        workflow_runner.check_modules()
+    except Exception as e:
+        response_content = {
+            "status": "failed",
+            "error": str(e),
+            **base_response_content,
+        }
+        return JSONResponse(content=response_content)
+    # Run workflow
+    # exp.events.wei_flow_run()
+    #events.log_wf_start(str(workflow_runner.workflow.name), str(job_id))
+
+    # result_payload = workflow_runner.run_flow(
+    #     workcell, payload=parsed_payload, simulate=simulate
+    # )
+    if simulate:
+        time.sleep(5)
+    #events.log_wf_end(str(workflow_runner.workflow.name), str(job_id))
+    #print(f"Result payload:\t{json.dumps(result_payload)}")
+
     try:
         job = task_queue.enqueue(
             run_workflow_task,
