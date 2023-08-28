@@ -37,7 +37,7 @@ import threading
 
 workcell = None
 kafka_server = None
-wc_state = {"locations": {}, "modules": {}}
+wc_state = {"locations": {}, "modules": {}, "workflows": []}
 
 templates = Jinja2Templates(directory="templates")
 
@@ -49,6 +49,9 @@ def update_state():
     while workcell:
         
         for module in workcell.modules:
+                if not(module.name in wc_state["modules"]):
+                    wc_state["modules"][module.name] = {"state": "UNKNOWN", "queue": []}
+                    
                 if module.interface in INTERFACES:
 
                     try:
@@ -56,7 +59,7 @@ def update_state():
                      state = interface.get_state(module.config)
                    
                      if not(state == ""):
-                         wc_state["modules"][module.name] = state
+                         wc_state["modules"][module.name]["state"] = state
                     except:
                          wc_state["modules"][module.name] = "UNKNOWN"
                 else:
