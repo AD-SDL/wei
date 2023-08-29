@@ -174,21 +174,27 @@ async def submit_job(
             workflow_name=workflow_name,
         
         )
-        for step in workflow_runner.steps:
-            wc_state["modules"]["queue"].append(workflow_runner.run_id)
-        wf_queue.append(workflow_runner)
-        
-
         # Run validation
         workflow_runner.check_flowdef()
         workflow_runner.check_modules()
+        
+        wf_queue.append(workflow_runner)
+        step = workflow_runner.steps[0]
+        wc_state["modules"][step["step_module"]].append(workflow_runner.run_id)
+        if "target" in step["locations"]:
+            wc_state["locations"][step["locations"]["target"]].append(workflow_runner.run_id)
+
+        response_content = {
+            "status": "success",
+            "jobs_ahead": len(wf_queue),
+            "job_id": workflow_runner.run_id}
+        
     except Exception as e:
         response_content = {
             "status": "failed",
             "error": str(e),
-            **base_response_content,
         }
-        return JSONResponse(content=response_content)
+    return JSONResponse(content=response_content)
     # Run workflow
     # exp.events.wei_flow_run()
     #events.log_wf_start(str(workflow_runner.workflow.name), str(job_id))
@@ -629,17 +635,24 @@ def update(location: str):
     return JSONResponse(content={str(location): wc_state["locations"][location] })
 
 @app.post("/wc/locations/{location}/set")
-def update(location: str, run_id: str):
+async def update(location: str, experiment_id: str):
     global wc_state
-    if run_id == "":
-         wc_state["locations"][location] = "Empty"
+    if experiment_id == "":
+         wc_state["locations"][location]["state"] = "Empty"
     else:
-         wc_state["locations"][location] = run_id
+         wc_state["locations"][location]["state"] = experiment_id
 
     
     return JSONResponse(content={"State": wc_state })
 
-
+@app.post("/wc/release")
+async def release(module: str, location: str, run_id: str):
+    global wc_state
+    if wc_state["modules"][module]["queue"][0] == run_id:
+         wc_state["modules"][module]["queue"].pop(0)
+    if wc_state["locations"][location]["queue"][0] == run_id:
+         wc_state["locations"][location]["queue"].pop(0)
+    return JSONResponse(content={"State": wc_state })
 
 if __name__ == "__main__":
     import uvicorn
