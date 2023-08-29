@@ -22,7 +22,8 @@ from rq.registry import FailedJobRegistry, FinishedJobRegistry, StartedJobRegist
 from fastapi.templating import Jinja2Templates
 
 
-from rpl_wei.core.data_classes import Workcell
+from rpl_wei.core.data_classes import Workcell as WorkcellData
+from rpl_wei.core.workcell import Workcell
 from rpl_wei.core.experiment import start_experiment
 from rpl_wei.core.loggers import WEI_Logger
 from rpl_wei.core.interfaces.rest_interface import RestInterface
@@ -43,18 +44,17 @@ kafka_server = None
 wc_state = {"locations": {}, "modules": {}, "workflows": []}
 wf_queue = []
 templates = Jinja2Templates(directory="templates")
-running_wfs = []
+running_wfs = {}
 INTERFACES = {"wei_rest_node": RestInterface,  "wei_ros_node": ROS2Interface("stateNode")}
 print(INTERFACES)
 
 def update_state():
-    global wc_state, workcell
+    global wc_state, workcell, running_wfs, wf_queue
     while workcell:
-        
-        for module in workcell.modules:
+        for module in workcell.workcell.modules:
                 if not(module.name in wc_state["modules"]):
                     wc_state["modules"][module.name] = {"state": "UNKNOWN", "queue": []}
-                    
+                    print("test")
                 if module.interface in INTERFACES:
 
                     try:
@@ -68,11 +68,24 @@ def update_state():
                 else:
                    # print("module interface not found")
                    pass
+        print(wc_state)
+        print(wf_queue)
+        print(running_wfs)
         for wf in wf_queue:
-            if wf.check_step():
-                pc = mpr.Process(wf.run_step())
+            print(wf.steps)
+            if wf.check_step() and not(str(wf.run_id) in running_wfs):
+                step = wf.steps.pop(0)
+                print("a")
+                print(step)
+                pc = mpr.Process(target=wf.run_step, args=(step,))
+                print("b")
                 pc.start()
-
+                print("c")
+                #pc.join()
+                print("d")
+                running_wfs[str(wf.run_id)] = pc
+            if len(wf.steps) == 0  and not(str(wf.run_id) in running_wfs):
+                wf_queue.remove(wf)
         time.sleep(0.3)
 
 @asynccontextmanager
@@ -93,7 +106,8 @@ async def lifespan(app: FastAPI):
         "--kafka-server", type=str, help="Kafka server for logging", default=None
     )
     args = parser.parse_args()
-    workcell = Workcell.from_yaml(args.workcell)
+    with open(args.workcell) as f:
+     workcell = Workcell(yaml.safe_load(f))
     for location in workcell.locations["workcell"]:
             wc_state["locations"][location] = {"state": "Empty", "queue": []}
     thread = threading.Thread(target=update_state)
@@ -115,7 +129,7 @@ st_abs_file_path = os.path.join(script_dir, "static/")
 app.mount("/static", StaticFiles(directory=st_abs_file_path), name="static")
 templates = Jinja2Templates(directory=script_dir+"/templates")
 
-async def submit_job(
+def submit_job(
     experiment_path: str,
     workflow_content_str: str,
     parsed_payload: Dict[str, Any],
@@ -146,8 +160,10 @@ async def submit_job(
        a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
     # manually create job ulid (so we can use it for the loggign inside wei)
+    
     global kafka_server, workcell, wf_queue, wc_state
     try:
+        print("starting")
         job_id = ulid.new().str
         path = Path(experiment_path)
         experiment_id = path.name.split("_id_")[-1]
@@ -165,11 +181,13 @@ async def submit_job(
         #     experiment_path=experiment_path,
         # )
         job_id = ulid.from_str(job_id) if isinstance(job_id, str) else job_id
+        print(workcell)
         workflow_runner = WorkflowRunner(
             yaml.safe_load(workflow_content_str),
+            workcell=workcell,
             payload=parsed_payload,
             experiment_path=experiment_path,
-            run_id=job_id,
+            run_id=job_id,  
             simulate=simulate,
             workflow_name=workflow_name,
         
@@ -180,20 +198,23 @@ async def submit_job(
         
         wf_queue.append(workflow_runner)
         step = workflow_runner.steps[0]
-        wc_state["modules"][step["step_module"]].append(workflow_runner.run_id)
+        wc_state["modules"][step["step_module"].name]["queue"].append(str(workflow_runner.run_id))
+        print(wc_state)
         if "target" in step["locations"]:
-            wc_state["locations"][step["locations"]["target"]].append(workflow_runner.run_id)
-
+            wc_state["locations"][step["locations"]["target"]]["queue"].append(str(workflow_runner.run_id)  )
+        print("asdfsdf")
         response_content = {
             "status": "success",
             "jobs_ahead": len(wf_queue),
-            "job_id": workflow_runner.run_id}
+            "job_id": str(workflow_runner.run_id)}
         
     except Exception as e:
+        print(e)
         response_content = {
             "status": "failed",
             "error": str(e),
         }
+    print("done")
     return JSONResponse(content=response_content)
     # Run workflow
     # exp.events.wei_flow_run()
@@ -488,6 +509,7 @@ async def get_job_status(job_id: str):
      response: Dict
        a dictionary including the status on the queueing, and the result of the job if it's done
     """
+    return JSONResponse(content={"status": "running", "result": "result"})
 
     try:
         job = Job.fetch(job_id, connection=task_queue.connection)
@@ -634,6 +656,26 @@ def update(location: str):
     
     return JSONResponse(content={str(location): wc_state["locations"][location] })
 
+@app.get("/wc/modules/{module}/state")
+def update(module: str):
+    """
+     
+    Describes the state of the workcell locations 
+    Parameters
+    ----------
+    None
+    
+     Returns
+    -------
+     response: Dict
+       the state of the workcell locations, with the id of the run that last filled the location
+     """
+    global wc_state
+    
+
+    
+    return JSONResponse(content={str(module): wc_state["modules"][module] })
+
 @app.post("/wc/locations/{location}/set")
 async def update(location: str, experiment_id: str):
     global wc_state
@@ -646,12 +688,20 @@ async def update(location: str, experiment_id: str):
     return JSONResponse(content={"State": wc_state })
 
 @app.post("/wc/release")
-async def release(module: str, location: str, run_id: str):
-    global wc_state
+async def release(module: str, run_id: str, location: str = "", next_module: str = None, next_location: str = None):
+    global wc_state, running_wfs
+    print(module)
+    print(run_id)
     if wc_state["modules"][module]["queue"][0] == run_id:
          wc_state["modules"][module]["queue"].pop(0)
-    if wc_state["locations"][location]["queue"][0] == run_id:
+    if not(location == "") and wc_state["locations"][location]["queue"][0] == run_id:
          wc_state["locations"][location]["queue"].pop(0)
+    print(running_wfs)
+    running_wfs.pop(run_id)
+    if next_module:
+         wc_state["modules"][next_module]["queue"].append(run_id)
+    if next_location:
+         wc_state["locations"][next_location]["queue"].append(run_id)
     return JSONResponse(content={"State": wc_state })
 
 if __name__ == "__main__":
