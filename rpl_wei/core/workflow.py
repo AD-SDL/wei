@@ -209,7 +209,6 @@ class WorkflowRunner:
         
         
     def run_step(self, step):
-        print(step)
         vals = {"module": step["step_module"].name, "run_id": str(self.run_id) }
         action_response, action_msg, action_log = self.executor.execute_step(**step)
         self.hist[step["step"].name] = {

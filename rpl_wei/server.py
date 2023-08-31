@@ -7,6 +7,7 @@ from typing import Any, Dict  # , List
 import os
 import re
 import yaml
+import redis
 
 import rq
 import requests
@@ -41,52 +42,13 @@ import threading
 
 workcell = None
 kafka_server = None
-wc_state = {"locations": {}, "modules": {}, "workflows": []}
-wf_queue = []
-templates = Jinja2Templates(directory="templates")
-running_wfs = {}
-INTERFACES = {"wei_rest_node": RestInterface,  "wei_ros_node": ROS2Interface("stateNode")}
-print(INTERFACES)
+redis_server = None
+# wc_state = {"locations": {}, "modules": {}, "workflows": []}
+# wf_queue = []
+# templates = Jinja2Templates(directory="templates")
+# running_wfs = {}
+# completed_wfs = {}
 
-def update_state():
-    global wc_state, workcell, running_wfs, wf_queue
-    while workcell:
-        for module in workcell.workcell.modules:
-                if not(module.name in wc_state["modules"]):
-                    wc_state["modules"][module.name] = {"state": "UNKNOWN", "queue": []}
-                    print("test")
-                if module.interface in INTERFACES:
-
-                    try:
-                     interface = INTERFACES[module.interface]
-                     state = interface.get_state(module.config)
-                   
-                     if not(state == ""):
-                         wc_state["modules"][module.name]["state"] = state
-                    except:
-                         wc_state["modules"][module.name] = "UNKNOWN"
-                else:
-                   # print("module interface not found")
-                   pass
-        print(wc_state)
-        print(wf_queue)
-        print(running_wfs)
-        for wf in wf_queue:
-            print(wf.steps)
-            if wf.check_step() and not(str(wf.run_id) in running_wfs):
-                step = wf.steps.pop(0)
-                print("a")
-                print(step)
-                pc = mpr.Process(target=wf.run_step, args=(step,))
-                print("b")
-                pc.start()
-                print("c")
-                #pc.join()
-                print("d")
-                running_wfs[str(wf.run_id)] = pc
-            if len(wf.steps) == 0  and not(str(wf.run_id) in running_wfs):
-                wf_queue.remove(wf)
-        time.sleep(0.3)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -99,19 +61,24 @@ async def lifespan(app: FastAPI):
     Returns
     -------
     None"""
-    global workcell, kafka_server, wc_state
+    global workcell, kafka_server
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
     parser.add_argument(
         "--kafka-server", type=str, help="Kafka server for logging", default=None
     )
+    
+    redis_server = redis.Redis(host='localhost', port=6379, decode_responses=True)
     args = parser.parse_args()
     with open(args.workcell) as f:
-     workcell = Workcell(yaml.safe_load(f))
-    for location in workcell.locations["workcell"]:
-            wc_state["locations"][location] = {"state": "Empty", "queue": []}
-    thread = threading.Thread(target=update_state)
-    thread.start()
+        workcell = Workcell(yaml.safe_load(f))
+    
+    # for module in workcell.locations:
+    #         for location in workcell.locations[module]:
+    #             if not location in wc_state["locations"]:
+    #                 wc_state["locations"][location] = {"state": "Empty", "queue": []}
+    # thread = threading.Thread(target=update_state)
+    # thread.start()
     kafka_server = args.kafka_server
 
     # Yield control to the application
@@ -172,7 +139,7 @@ def submit_job(
             "experiment_path": experiment_path,
         }
 
-        #  events = Events(
+        # events = Events(
         #     "localhost",
         #     "8000",
         #     experiment_name,
@@ -199,10 +166,9 @@ def submit_job(
         wf_queue.append(workflow_runner)
         step = workflow_runner.steps[0]
         wc_state["modules"][step["step_module"].name]["queue"].append(str(workflow_runner.run_id))
-        print(wc_state)
         if "target" in step["locations"]:
-            wc_state["locations"][step["locations"]["target"]]["queue"].append(str(workflow_runner.run_id)  )
-        print("asdfsdf")
+            wc_state["locations"][step["locations"]["target"]]["queue"].append(str(workflow_runner.run_id))
+
         response_content = {
             "status": "success",
             "jobs_ahead": len(wf_queue),
@@ -370,6 +336,7 @@ async def process_job(
     response: Dict
        a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
+    global redis_server
     workflow_path = Path(workflow.filename)
     workflow_name = workflow_path.name.split(".")[0]
 
@@ -378,6 +345,11 @@ async def process_job(
     # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
+    wc_state = json.loads(redis_server.hget("state", "wc_state"))
+    job_id = ulid.new().str
+    wc_state["incoming_workflows"][str(job_id)] = {"workflow_content": workflow_content_str, "parsed_payload": parsed_payload, "experiment_path": str(experiment_path), "name": workflow_name, "simulate": simulate}
+    redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
+    return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
     return submit_job(
         experiment_path,
         workflow_content_str,
@@ -509,6 +481,18 @@ async def get_job_status(job_id: str):
      response: Dict
        a dictionary including the status on the queueing, and the result of the job if it's done
     """
+    global wf_queue, completed_wfs
+    if job_id in running_wfs:
+        return JSONResponse(content={"status": "running", "result": {}})
+    elif job_id in wf_queue:
+        return  JSONResponse(content={"status": "queued", "result": {}})
+    else:
+        wf = completed_wfs[job_id]
+        del completed_wfs[job_id]
+        return  JSONResponse(content={"status": "finished", "result": wf.hist})
+      
+        
+        
     return JSONResponse(content={"status": "running", "result": "result"})
 
     try:
@@ -593,8 +577,9 @@ def show():
        the state of the workcell
     """
      
-    global wc_state
-    return JSONResponse(content={"wc_state": json.dumps(wc_state)}) #templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
+    global redis_server
+    wc_state = json.loads(redis_server.hget("state", "wc_state"))
+    return JSONResponse(content={"wc_state": wc_state}) #templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
 
 
 
@@ -637,7 +622,7 @@ def show_states():
     return JSONResponse(content={"location_states": wc_state["locations"] })
 
 @app.get("/wc/locations/{location}/state")
-def update(location: str):
+def loc(location: str):
     """
      
     Describes the state of the workcell locations 
@@ -657,7 +642,7 @@ def update(location: str):
     return JSONResponse(content={str(location): wc_state["locations"][location] })
 
 @app.get("/wc/modules/{module}/state")
-def update(module: str):
+def mod(module: str):
     """
      
     Describes the state of the workcell locations 

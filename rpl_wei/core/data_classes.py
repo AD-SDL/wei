@@ -171,7 +171,7 @@ class Step(BaseModel):
     """Other steps required to be done before this can start"""
     priority: Optional[int]
     """For scheduling"""
-    id: ulid.ULID = Field(default_factory=ulid.new)
+    id: UUID = Field(default_factory=uuid4)
     """ID of step"""
     comment: Optional[str]
     """Notes about step"""
