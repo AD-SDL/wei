@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
     Returns
     -------
     None"""
-    global workcell, kafka_server
+    global workcell, kafka_server, redis_server
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
     parser.add_argument(
@@ -71,7 +71,7 @@ async def lifespan(app: FastAPI):
     redis_server = redis.Redis(host='localhost', port=6379, decode_responses=True)
     args = parser.parse_args()
     with open(args.workcell) as f:
-        workcell = Workcell(yaml.safe_load(f))
+        workcell = Workcell(workcell_def=yaml.safe_load(f))
     
     # for module in workcell.locations:
     #         for location in workcell.locations[module]:
@@ -481,15 +481,15 @@ async def get_job_status(job_id: str):
      response: Dict
        a dictionary including the status on the queueing, and the result of the job if it's done
     """
-    global wf_queue, completed_wfs
-    if job_id in running_wfs:
+    global redis_server
+    wc_state=json.loads(redis_server.hget("state", "wc_state"))
+    if job_id in wc_state["active_workflows"]:
         return JSONResponse(content={"status": "running", "result": {}})
-    elif job_id in wf_queue:
+    elif job_id in wc_state["queued_workflows"]:
         return  JSONResponse(content={"status": "queued", "result": {}})
-    else:
-        wf = completed_wfs[job_id]
-        del completed_wfs[job_id]
-        return  JSONResponse(content={"status": "finished", "result": wf.hist})
+    elif job_id in wc_state["completed_workflows"]:
+        wf = wc_state["completed_workflows"][job_id]
+        return  JSONResponse(content={"status": "finished", "result": wf["hist"]})
       
         
         

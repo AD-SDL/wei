@@ -12,7 +12,7 @@ class Workcell:
     """A Class to represent a workcell object that contains the different WEI modules"""
 
     def __init__(
-        self, workcell_def: Dict[str, Any], log_level: int = logging.INFO
+        self, workcell: WorkcellData=None, workcell_def: Dict[str, Any]=None, log_level: int = logging.INFO
     ) -> None:
         """Defines a workcell object loaded from a yaml file
 
@@ -25,7 +25,10 @@ class Workcell:
             level for logging
 
         """
-        self.workcell = WorkcellData(**workcell_def)
+        if workcell_def: 
+            self.workcell = WorkcellData(**workcell_def)
+        else: 
+            self.workcell = workcell
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.locations = self.workcell.locations

@@ -59,7 +59,7 @@ class WorkflowRunner:
         self.step_validator = StepValidator()
         path = Path(experiment_path)
         self.experiment_id = path.name.split("_id_")[-1]
-        self.workcell = workcell
+        self.workcell = Workcell(workcell=workcell)
 
         # Setup executor
         self.executor = StepExecutor()
@@ -82,7 +82,7 @@ class WorkflowRunner:
             log_dir=self.log_dir,
             log_level=log_level,
         )
-        self.steps  = self.init_flow(workcell, None, payload=payload, simulate=simulate)
+        self.steps  = self.init_flow(self.workcell, None, payload=payload, simulate=simulate)
         self.hist = {}
 
     def check_modules(self):

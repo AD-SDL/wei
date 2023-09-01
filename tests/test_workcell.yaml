@@ -20,12 +20,32 @@ modules:
       rest_node_address: "http://127.0.0.1:2000"
       rest_node_auth: ""
     workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
- 
+  - name: sciclops
+    model: a4s_sealer
+    interface: wei_rest_node
+    config:
+      rest_node_address: "http://127.0.0.1:2000"
+      rest_node_auth: ""
+    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
+  - name: pf400
+    model: a4s_sealer
+    interface: wei_rest_node
+    config:
+      rest_node_address: "http://127.0.0.1:2000"
+      rest_node_auth: ""
+    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
+  - name: ot2_pcr_alpha
+    model: a4s_sealer
+    interface: wei_rest_node
+    config:
+      rest_node_address: "http://127.0.0.1:2000"
+      rest_node_auth: ""
+    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304]
 locations:
   pf400:
     pf400.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
   workcell:
     pf400.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
-    exchange2: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
-    exchange3: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
+    sciclops.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
+    ot2_pcr_alpha.deck2: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
     exchange4: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
