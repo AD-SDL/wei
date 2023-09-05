@@ -36,7 +36,7 @@ def find_module(workcell, module_name):
 def check_step(exp_id, run_id, step, locations, wc_state):
     if "target" in locations: 
                 location = wc_state["locations"][locations["target"]]
-                if not(wc_state["state"] == "Empty") or not((len(location["queue"]) > 0 and location["queue"][0] == str(run_id))):
+                if not(location["state"] == "Empty") or not((len(location["queue"]) > 0 and location["queue"][0] == str(run_id))):
                         return False
             
     if "source" in locations:          
@@ -64,7 +64,11 @@ if __name__ == "__main__":
     r = redis.Redis(host='localhost', port=6379, decode_responses=True)
     wc_state = {"locations": {}, "modules": {}, "active_workflows": {}, "queued_workflows": {}, "completed_workflows": {}, "incoming_workflows": {}}
     for module in workcell.modules:
-        wc_state["modules"][module.name] = {"type": module.model, "id": str(module.id), "state": "Empty", "queue": []}
+        if module.workcell_coordinates:
+              wc_coords = module.workcell_coordinates
+        else:
+              wc_coords = None
+        wc_state["modules"][module.name] = {"type": module.model, "id": str(module.id), "state": "Empty", "queue": [], "location": wc_coords}
     for module in workcell.locations:
         for location in workcell.locations[module]:
             if not location in wc_state["locations"]:
@@ -73,6 +77,7 @@ if __name__ == "__main__":
 
     while True:
         wc_state = json.loads(r.hget("state", "wc_state"))
+        print(wc_state)
         for module in workcell.modules:
                 #TODO: if not get_state: raise unknown
                 if module.interface in INTERFACES:
