@@ -350,13 +350,6 @@ async def process_job(
     wc_state["incoming_workflows"][str(job_id)] = {"workflow_content": workflow_content_str, "parsed_payload": parsed_payload, "experiment_path": str(experiment_path), "name": workflow_name, "simulate": simulate}
     redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
     return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
-    return submit_job(
-        experiment_path,
-        workflow_content_str,
-        parsed_payload,
-        workflow_name=workflow_name,
-        simulate=simulate,
-    )
 
 
 @app.post("/log/{experiment_id}")

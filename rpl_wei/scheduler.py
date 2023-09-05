@@ -55,29 +55,28 @@ def run_step(exp_path, wf_name,  wf_id, step, locations, module, pipe, executor)
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
-    redis_server = redis.Redis(host='localhost', port=6379, decode_responses=True)
     args = parser.parse_args()
     INTERFACES = {"wei_rest_node": RestInterface}  #"wei_ros_node": ROS2Interface("stateNode")}
     executor = StepExecutor()
     workcell = WorkcellData.from_yaml(args.workcell)
     processes = {}
-    r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    redis_server = redis.Redis(host='localhost', port=6379, decode_responses=True)
     wc_state = {"locations": {}, "modules": {}, "active_workflows": {}, "queued_workflows": {}, "completed_workflows": {}, "incoming_workflows": {}}
     for module in workcell.modules:
-        if module.workcell_coordinates:
-              wc_coords = module.workcell_coordinates
-        else:
-              wc_coords = None
+        # if module.workcell_coordinates:
+        #       wc_coords = module.workcell_coordinates
+        # else:
+        #       wc_coords = None
+        wc_coords=None
         wc_state["modules"][module.name] = {"type": module.model, "id": str(module.id), "state": "Empty", "queue": [], "location": wc_coords}
     for module in workcell.locations:
         for location in workcell.locations[module]:
             if not location in wc_state["locations"]:
                     wc_state["locations"][location] = {"state": "Empty", "queue": []}
-    r.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
+    redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
 
     while True:
-        wc_state = json.loads(r.hget("state", "wc_state"))
-        print(wc_state)
+        wc_state = json.loads(redis_server.hget("state", "wc_state"))
         for module in workcell.modules:
                 #TODO: if not get_state: raise unknown
                 if module.interface in INTERFACES:
@@ -157,7 +156,7 @@ if __name__ == "__main__":
                del wc_state["active_workflows"][wf_id]
                             
                     
-        r.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
+        redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
         time.sleep(0.3)
 
      
