@@ -69,8 +69,9 @@ async def lifespan(app: FastAPI):
         "--kafka-server", type=str, help="Kafka server for logging", default=None
     )
     
-    redis_server = redis.Redis(host=args.redis_host, port=6379, decode_responses=True)
+    
     args = parser.parse_args()
+    redis_server = redis.Redis(host=args.redis_host, port=6379, decode_responses=True)
     with open(args.workcell) as f:
         workcell = Workcell(workcell_def=yaml.safe_load(f))
     
