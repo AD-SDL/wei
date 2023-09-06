@@ -14,6 +14,8 @@ from argparse import ArgumentParser
 import time
 import json
 import multiprocessing as mpr
+
+
 def init_logger(experiment_path, workflow_name, run_id):
         log_dir = (
             Path(experiment_path)
@@ -55,12 +57,13 @@ def run_step(exp_path, wf_name,  wf_id, step, locations, module, pipe, executor)
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
+    parser.add_argument("--redis_host", type=str, help="url (no port) for Redis server", default="localhost")
     args = parser.parse_args()
     INTERFACES = {"wei_rest_node": RestInterface}  #"wei_ros_node": ROS2Interface("stateNode")}
     executor = StepExecutor()
     workcell = WorkcellData.from_yaml(args.workcell)
     processes = {}
-    redis_server = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    redis_server = redis.Redis(host=args.redis_host, port=6379, decode_responses=True)
     wc_state = {"locations": {}, "modules": {}, "active_workflows": {}, "queued_workflows": {}, "completed_workflows": {}, "incoming_workflows": {}}
     for module in workcell.modules:
         # if module.workcell_coordinates:
