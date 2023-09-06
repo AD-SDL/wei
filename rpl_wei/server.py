@@ -482,7 +482,7 @@ async def get_job_status(job_id: str):
         return  JSONResponse(content={"status": "queued", "result": {}})
     elif job_id in wc_state["completed_workflows"]:
         wf = wc_state["completed_workflows"][job_id]
-        return  JSONResponse(content={"status": "finished", "result": wf["hist"]})
+        return  JSONResponse(content={"status": "finished", "result": wf["hist"], "run_dir": wf["hist"]["run_dir"]})
       
         
         
@@ -572,7 +572,7 @@ def show():
      
     global redis_server
     wc_state = json.loads(redis_server.hget("state", "wc_state"))
-    return JSONResponse(content={"wc_state": wc_state}) #templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
+    return JSONResponse(content={"wc_state": json.dumps(wc_state)}) #templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
 
 
 

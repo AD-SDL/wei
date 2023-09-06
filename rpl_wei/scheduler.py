@@ -28,7 +28,7 @@ def init_logger(experiment_path, workflow_name, run_id):
             log_dir=log_dir
             
         )
-        return logger
+        return logger, log_dir
 def find_module(workcell, module_name):
       for module in workcell.modules:
             if module.name == module_name:
@@ -48,9 +48,9 @@ def check_step(exp_id, run_id, step, locations, wc_state):
                         return False
     return True
 def run_step(exp_path, wf_name,  wf_id, step, locations, module, pipe, executor):
-      logger = init_logger(exp_path, wf_name, wf_id)
+      logger, log_dir = init_logger(exp_path, wf_name, wf_id)
       action_response, action_msg, action_log =  executor.execute_step(step, module, logger=logger)
-      pipe.send({"step_response": {"action_response": action_response, "action_message": action_msg, "action_log": action_log}, "step": step, "locations": locations})
+      pipe.send({"step_response": {"action_response": str(action_response), "action_message": action_msg, "action_log": action_log}, "step": step, "locations": locations, "log_dir": log_dir})
       
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -106,7 +106,8 @@ if __name__ == "__main__":
             flowdef=[]
             for step in workflow_runner.steps:
                 flowdef.append({"step": json.loads(step["step"].json()), "locations": step["locations"]})
-            to_queue_wf = {"name": wf_data["name"], "step_index": 0, "flowdef": flowdef, "experiment_path": wf_data["experiment_path"], "hist": {}}
+            exp_id = Path(wf_data["experiment_path"]).name.split("_id_")[-1]
+            to_queue_wf = {"name": wf_data["name"], "step_index": 0, "flowdef": flowdef, "experiment_id": exp_id, "experiment_path": wf_data["experiment_path"], "hist": {}}
             wc_state["queued_workflows"][wf_id] = to_queue_wf
             if "target" in flowdef[0]["locations"]:
                   wc_state["locations"][flowdef[0]["locations"]["target"]]["queue"].append(wf_id)
@@ -143,6 +144,7 @@ if __name__ == "__main__":
                     step_index = wc_state["queued_workflows"][wf_id]["step_index"]
                     if step_index + 1 == len(wc_state["queued_workflows"][wf_id]["flowdef"]):
                             wc_state["completed_workflows"][wf_id] = wc_state["queued_workflows"][wf_id]
+                            wc_state["queued_workflows"][wf_id]["hist"]["run_dir"] = str(response["log_dir"])
                             del wc_state["queued_workflows"][wf_id]
                     else:
                         wc_state["queued_workflows"][wf_id]["step_index"] += 1
