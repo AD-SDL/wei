@@ -50,7 +50,7 @@ def check_step(exp_id, run_id, step, locations, wc_state):
 def run_step(exp_path, wf_name,  wf_id, step, locations, module, pipe, executor):
       logger, log_dir = init_logger(exp_path, wf_name, wf_id)
       action_response, action_msg, action_log =  executor.execute_step(step, module, logger=logger)
-      pipe.send({"step_response": {"action_response": str(action_response), "action_message": action_msg, "action_log": action_log}, "step": step, "locations": locations, "log_dir": log_dir})
+      pipe.send({"step_response": {"action_response": str(action_response), "action_msg": action_msg, "action_log": action_log}, "step": step, "locations": locations, "log_dir": log_dir})
       
 if __name__ == "__main__":
     parser = ArgumentParser()

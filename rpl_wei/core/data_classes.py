@@ -187,9 +187,11 @@ class Step(BaseModel):
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
                 if arg_path.exists():
-                    yaml.safe_load(arg_path.open("r"))
-                    v[key] = yaml.safe_load(arg_path.open("r"))
-
+                    try:
+                        yaml.safe_load(arg_path.open("r"))
+                        v[key] = yaml.safe_load(arg_path.open("r"))
+                    except IsADirectoryError:
+                        pass
             except TypeError:  # Is not a file
                 pass
 

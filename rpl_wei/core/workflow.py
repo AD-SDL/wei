@@ -181,7 +181,6 @@ class WorkflowRunner:
             })
             print(arg_dict)
             steps.append(arg_dict)
-        print("hasdfasjdflk")
         return steps
     def check_step(self):
         if len(self.steps) == 0:
