@@ -8,6 +8,7 @@ from rpl_wei.core.interfaces.rest_interface import RestInterface
 from rpl_wei.core.step_executor import StepExecutor
 from rpl_wei.core.interfaces.ros2_interface import ROS2Interface
 from rpl_wei.core.workflow import WorkflowRunner, WorkflowData
+from rpl_wei.core.events import Events
 import yaml
 from pathlib import Path
 from argparse import ArgumentParser
@@ -58,12 +59,17 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
     parser.add_argument("--redis_host", type=str, help="url (no port) for Redis server", default="localhost")
+    parser.add_argument("--kafka_server", type=str, help="url (no port) for Redis server", default="ec2-54-160-200-147.compute-1.amazonaws.com:9092")
+    parser.add_argument("--server", type=str, help="url (no port) for log server", default="localhost")
     args = parser.parse_args()
+    events = {}
     INTERFACES = {"wei_rest_node": RestInterface}  #"wei_ros_node": ROS2Interface("stateNode")}
     executor = StepExecutor()
     workcell = WorkcellData.from_yaml(args.workcell)
     processes = {}
     redis_server = redis.Redis(host=args.redis_host, port=6379, decode_responses=True)
+    kafka_server=args.kafka_server
+    log_server=args.server
     wc_state = {"locations": {}, "modules": {}, "active_workflows": {}, "queued_workflows": {}, "completed_workflows": {}, "incoming_workflows": {}}
     for module in workcell.modules:
         # if module.workcell_coordinates:
@@ -109,7 +115,14 @@ if __name__ == "__main__":
             flowdef=[]
             for step in workflow_runner.steps:
                 flowdef.append({"step": json.loads(step["step"].json()), "locations": step["locations"]})
-            exp_id = Path(wf_data["experiment_path"]).name.split("_id_")[-1]
+            exp_data = Path(wf_data["experiment_path"]).name.split("_id_")
+            exp_id = exp_data[-1]
+            exp_name = exp_data[0]
+
+            #To ASK RAF: should I specify this some other way?
+            events[wf_id] = Events(log_server, "8000",exp_name, exp_id, kafka_server, wf_data["experiment_path"])
+            events[wf_id].log_wf_start(wf_data["name"], wf_id)
+
             to_queue_wf = {"name": wf_data["name"], "step_index": 0, "flowdef": flowdef, "experiment_id": exp_id, "experiment_path": wf_data["experiment_path"], "hist": {}}
             wc_state["queued_workflows"][wf_id] = to_queue_wf
             if "target" in flowdef[0]["locations"]:
@@ -146,6 +159,8 @@ if __name__ == "__main__":
                     wc_state["queued_workflows"][wf_id]["hist"][step.name] = response["step_response"]
                     step_index = wc_state["queued_workflows"][wf_id]["step_index"]
                     if step_index + 1 == len(wc_state["queued_workflows"][wf_id]["flowdef"]):
+                            events[wf_id].log_wf_end(wc_state["queued_workflows"][wf_id]["name"], wf_id)
+                            del events[wf_id]
                             wc_state["completed_workflows"][wf_id] = wc_state["queued_workflows"][wf_id]
                             wc_state["queued_workflows"][wf_id]["hist"]["run_dir"] = str(response["log_dir"])
                             del wc_state["queued_workflows"][wf_id]
