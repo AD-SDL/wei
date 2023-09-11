@@ -6,10 +6,10 @@ import time
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
-#from a4s_sealer_driver.a4s_sealer_driver import A4S_SEALER_DRIVER  # import sealer driver
+
 
 workcell = None
-global sealer, state
+global state
 serial_port = '/dev/ttyUSB1'
 local_ip = 'parker.alcf.anl.gov'
 local_port = '8000'
@@ -17,7 +17,7 @@ local_port = '8000'
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global sealer, state
+    global state
     """Initial run function for the app, parses the worcell argument
         Parameters
         ----------
@@ -45,26 +45,20 @@ app = FastAPI(lifespan=lifespan, )
 
 @app.get("/state")
 def get_state():
-    global sealer, state
+    global state
     if state != "BUSY":
-        #sealer.get_status()
-        #if sealer.status_msg == 3:
-                    #msg.data = 'State: ERROR'
-                #    state = "ERROR"
 
-        #elif sealer.status_msg == 0:
-         #           state = "IDLE"
         pass
     return JSONResponse(content={"State": state})#sealer.get_status() })
 
 @app.get("/description")
 async def description():
-    global sealer, state
+    global state
     return JSONResponse(content={"State": state })#sealer.get_status() })
 
 @app.get("/resources")
 async def resources():
-    global sealer, state
+    global state
     return JSONResponse(content={"State": state })#sealer.get_status() })
 
 
@@ -74,16 +68,12 @@ def do_action(
     action_vars: str, 
 ):
 
-    global sealer, state
+    global state
     if state == "BUSY":
          return
     state = "BUSY"
-    if action_handle == 'seal' or True:  
-        #self.sealer.set_time(3)
-        #self.sealer.set_temp(175)
+    if action_handle == 'action' or True:  
         try: 
-          
-            #sealer.seal()
             time.sleep(5)  
             response_content = {
                     "action_msg": "StepStatus.Succeeded",

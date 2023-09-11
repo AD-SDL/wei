@@ -72,11 +72,11 @@ if __name__ == "__main__":
     log_server=args.server
     wc_state = {"locations": {}, "modules": {}, "active_workflows": {}, "queued_workflows": {}, "completed_workflows": {}, "incoming_workflows": {}}
     for module in workcell.modules:
-        # if module.workcell_coordinates:
-        #       wc_coords = module.workcell_coordinates
-        # else:
-        #       wc_coords = None
-        wc_coords=None
+        if module.workcell_coordinates:
+              wc_coords = module.workcell_coordinates
+        else:
+              wc_coords = None
+        #wc_coords=None
         wc_state["modules"][module.name] = {"type": module.model, "id": str(module.id), "state": "Empty", "queue": [], "location": wc_coords}
     for module in workcell.locations:
         for location in workcell.locations[module]:

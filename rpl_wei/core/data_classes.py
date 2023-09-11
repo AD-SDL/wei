@@ -110,6 +110,8 @@ class Module(BaseModel):
     """Optional, if the robot supports positions we will use them"""
     tag: Optional[Tag]
     """Vision tag"""
+    workcell_coordinates: Optional[List]
+    """location in workcell"""
     id: UUID = Field(default_factory=uuid4)
     """Robot id"""
 

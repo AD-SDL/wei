@@ -19,28 +19,35 @@ modules:
     config:
       rest_node_address: "http://127.0.0.1:2000"
       rest_node_auth: ""
-    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
+    workcell_coordinates: [0, 0, 0, 0, 0, 0] #[0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
   - name: sciclops
     model: a4s_sealer
     interface: wei_rest_node
     config:
-      rest_node_address: "http://127.0.0.1:2000"
+      rest_node_address: "http://127.0.0.1:2001"
       rest_node_auth: ""
-    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
+    workcell_coordinates: [15, 0, 0, 0, 0, 0] #[0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
   - name: pf400
     model: a4s_sealer
     interface: wei_rest_node
     config:
-      rest_node_address: "http://127.0.0.1:2000"
+      rest_node_address: "http://127.0.0.1:2002"
       rest_node_auth: ""
-    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
+    workcell_coordinates: [7.5, 15, 0, 0, 0, 0] #[0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304] # X, Y, Z, Q0, Q1, Q2, Q3
   - name: ot2_pcr_alpha
     model: a4s_sealer
     interface: wei_rest_node
     config:
-      rest_node_address: "http://127.0.0.1:2000"
+      rest_node_address: "http://127.0.0.1:2003"
       rest_node_auth: ""
-    workcell_coordinates: [0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304]
+    workcell_coordinates: [0, 30, 0, 0, 0, 0] #[0, -0.032184310257434845, 0.8420000076293945, 0.7071067690849304, 0, 0, 0.7071067690849304]
+  - name: ot2_cp_beta
+    model: a4s_sealer
+    interface: wei_rest_node
+    config:
+      rest_node_address: "http://127.0.0.1:2004"
+      rest_node_auth: ""
+    workcell_coordinates: [15, 30, 0, 0, 0, 0] 
 locations:
   pf400:
     pf400.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
