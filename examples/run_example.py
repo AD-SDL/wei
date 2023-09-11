@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from rpl_wei import Experiment
+import time
 
 
 def main():
@@ -20,6 +21,7 @@ def main():
     print(flow_status)
     # This will wait until the flow has run and then print out the final result of the flow
     while flow_status["status"] != "finished":
+        time.sleep(1)
         flow_status = exp.query_job(flow_info["job_id"])
     print(flow_status)
 
