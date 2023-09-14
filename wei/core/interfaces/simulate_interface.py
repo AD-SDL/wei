@@ -3,6 +3,11 @@ from wei.core.data_classes import Step
 from wei.core.interface import Interface
 
 
+class SimulateInterface(Interface):
+    def __init__(self):
+        pass
+
+
 def silent_callback(step: Step, **kwargs):
     """prints a single step from a workflow using no messaging framework
 

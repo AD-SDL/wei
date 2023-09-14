@@ -16,7 +16,6 @@ from wei.core.interfaces.zmq_interface import wei_zmq_callback
 ########################
 #   Executor mapping   #
 ########################
-# wei_exec = ROS2Interface("weiExecNode")
 
 
 class Executor_Map:
