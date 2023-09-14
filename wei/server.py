@@ -234,7 +234,7 @@ async def get_job_status(job_id: str):
 
 
 @app.get("/job/{job_id}/log")
-async def log_return(job_id: str, experiment_path: str):
+async def log_job_return(job_id: str, experiment_path: str):
     """Parameters
     ----------
 
