@@ -127,6 +127,7 @@ class Scheduler:
             "queued_workflows": {},
             "completed_workflows": {},
             "incoming_workflows": {},
+            "failed_workflows": {}
         }
         for module in self.workcell.modules:
             if module.workcell_coordinates:
@@ -172,52 +173,59 @@ class Scheduler:
                     pass
             for wf_id in wc_state["incoming_workflows"]:
                 wf_data = wc_state["incoming_workflows"][wf_id]
-                workflow_runner = WorkflowRunner(
-                    yaml.safe_load(wf_data["workflow_content"]),
-                    workcell=self.workcell,
-                    payload=wf_data["parsed_payload"],
-                    experiment_path=wf_data["experiment_path"],
-                    run_id=wf_id,
-                    simulate=wf_data["simulate"],
-                    workflow_name=wf_data["name"],
-                )
-                flowdef = []
-                for step in workflow_runner.steps:
-                    flowdef.append(
-                        {
-                            "step": json.loads(step["step"].json()),
-                            "locations": step["locations"],
-                        }
+                try:
+                    workflow_runner = WorkflowRunner(
+                        yaml.safe_load(wf_data["workflow_content"]),
+                        workcell=self.workcell,
+                        payload=wf_data["parsed_payload"],
+                        experiment_path=wf_data["experiment_path"],
+                        run_id=wf_id,
+                        simulate=wf_data["simulate"],
+                        workflow_name=wf_data["name"],
                     )
-                exp_data = Path(wf_data["experiment_path"]).name.split("_id_")
-                exp_id = exp_data[-1]
-                exp_name = exp_data[0]
+                
 
-                # To ASK RAF: should I specify this some other way?
-                self.events[wf_id] = Events(
-                    self.log_server,
-                    "8000",
-                    exp_name,
-                    exp_id,
-                    self.kafka_server,
-                    wf_data["experiment_path"],
-                )
-                self.events[wf_id].log_wf_start(wf_data["name"], wf_id)
+                    
+                    flowdef = []
+                        
+                    for step in workflow_runner.steps:
+                        flowdef.append(
+                            {
+                                "step": json.loads(step["step"].json()),
+                                "locations": step["locations"],
+                            }
+                        )
+                    exp_data = Path(wf_data["experiment_path"]).name.split("_id_")
+                    exp_id = exp_data[-1]
+                    exp_name = exp_data[0]
 
-                to_queue_wf = {
-                    "name": wf_data["name"],
-                    "step_index": 0,
-                    "flowdef": flowdef,
-                    "experiment_id": exp_id,
-                    "experiment_path": wf_data["experiment_path"],
-                    "hist": {},
-                }
-                wc_state["queued_workflows"][wf_id] = to_queue_wf
-                if "target" in flowdef[0]["locations"]:
-                    wc_state["locations"][flowdef[0]["locations"]["target"]][
-                        "queue"
-                    ].append(wf_id)
-                wc_state["modules"][flowdef[0]["step"]["module"]]["queue"].append(wf_id)
+                    # To ASK RAF: should I specify this some other way?
+                    self.events[wf_id] = Events(
+                        self.log_server,
+                        "8000",
+                        exp_name,
+                        exp_id,
+                        self.kafka_server,
+                        wf_data["experiment_path"],
+                    )
+                    self.events[wf_id].log_wf_start(wf_data["name"], wf_id)
+
+                    to_queue_wf = {
+                        "name": wf_data["name"],
+                        "step_index": 0,
+                        "flowdef": flowdef,
+                        "experiment_id": exp_id,
+                        "experiment_path": wf_data["experiment_path"],
+                        "hist": {},
+                    }
+                    wc_state["queued_workflows"][wf_id] = to_queue_wf
+                    if "target" in flowdef[0]["locations"]:
+                        wc_state["locations"][flowdef[0]["locations"]["target"]][
+                            "queue"
+                        ].append(wf_id)
+                    wc_state["modules"][flowdef[0]["step"]["module"]]["queue"].append(wf_id)
+                except e:
+                    wc_state["failed_workflows"][wf_id] = {"Error": str(e)}
             for wf_id in wc_state["queued_workflows"]:
                 if wf_id in wc_state["incoming_workflows"]:
                     del wc_state["incoming_workflows"][wf_id]
@@ -295,7 +303,9 @@ class Scheduler:
                     cleanup_wfs.append(wf_id)
             for wf_id in cleanup_wfs:
                 del wc_state["active_workflows"][wf_id]
-
+            for wf_id in wc_state["failed_workflows"]:
+                if wf_id in wc_state["incoming_workflows"]:
+                    del wc_state["incoming_workflows"][wf_id]
             self.redis_server.hset(
                 name="state", mapping={"wc_state": json.dumps(wc_state)}
             )
