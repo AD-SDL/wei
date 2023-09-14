@@ -6,7 +6,7 @@ from wei.core.data_classes import Module, Step, StepStatus
 from wei.core.interfaces.rest_interface import RestInterface
 from wei.core.interfaces.ros2_interface import ROS2Interface, wei_ros2_camera_callback
 from wei.core.interfaces.simulate_interface import silent_callback
-from wei.core.interfaces.tcp_interface import TCPInterface
+from wei.core.interfaces.tcp_interface import TcpInterface
 from wei.core.interfaces.zmq_interface import ZMQInterface
 
 ########################
@@ -20,7 +20,7 @@ class Executor_Map:
     function = {
         "wei_ros_node": ROS2Interface,
         "wei_ros_camera": wei_ros2_camera_callback,
-        "wei_tcp_node": TCPInterface,
+        "wei_tcp_node": TcpInterface,
         "wei_rest_node": RestInterface,
         "wei_zmq_node": ZMQInterface,
         "simulate_callback": silent_callback,
