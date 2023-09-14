@@ -52,15 +52,4 @@ class ZMQInterface(Interface):
         socket.close()
         context.term()
 
-        # TODO: assert all of the above. Deal with edge cases?
-
         return action_response, action_msg, action_log
-
-    def get_about(config):
-        return {}
-
-    def get_state(config):
-        return {}
-
-    def get_resources(config):
-        return {}

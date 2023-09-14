@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
-from wei.core.data_classes import Module, Step
-from wei.core.data_classes import Interface
+from wei.core.data_classes import Interface, Module, Step
+from wei.core.data_classes import 
 
 try:
     import rclpy
@@ -205,9 +205,6 @@ class ROS2Interface(Interface):
             rclpy.spin_once(self.wei_execution_node)
         return action_response, action_msg, action_log
 
-    def get_about(config):
-        pass
-
     def get_state(self, config):
         # wei_execution_node = ROS2Interface.__init_rclpy()
         state = self.wei_execution_node.get_state(config["ros_node_address"])
@@ -215,6 +212,3 @@ class ROS2Interface(Interface):
         print(state)
         # ROS2Interface.__kill_node(wei_execution_node)
         return str(state)
-
-    def get_resources(config):
-        pass

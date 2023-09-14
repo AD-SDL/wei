@@ -1,8 +1,8 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import json
 
-from wei.core.data_classes import Module, Step
-from wei.core.interface import Interface
+from wei.core.data_classes import Interface, Module, Step
+from wei.core.interface import 
 
 
 class TcpInterface(Interface):
@@ -47,6 +47,6 @@ def wei_tcp_callback(step: Step, **kwargs):
     action_response = tcp_response.get("action_response")
     action_msg = tcp_response.get("action_msg")
     action_log = tcp_response.get("action_log")
-    # TODO: assert all of the above. deal with edge cases?
+
     sock.close()
     return action_response, action_msg, action_log

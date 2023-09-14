@@ -1,11 +1,6 @@
 """Handling simulated execution for steps in the RPL-SDL efforts"""
-from wei.core.data_classes import Step
-from wei.core.data_classes import Interface
-
-
-class SimulateInterface(Interface):
-    def __init__(self):
-        pass
+from wei.core.data_classes import Interface, Step
+from wei.core.data_classes import 
 
 
 def silent_callback(step: Step, **kwargs):
@@ -24,3 +19,11 @@ def silent_callback(step: Step, **kwargs):
     """
     print(step)
     return "silent", step.action, ""
+
+
+class SimulateInterface(Interface):
+    def __init__(self):
+        pass
+
+    def send_action():
+        silent_callback()

@@ -149,19 +149,23 @@ class Interface(BaseModel):
 
     def send_action():
         """sends an action"""
-        pass
+        print("Send Action not implemented")
+        return {}
 
     def get_about():
         """gets about information"""
-        pass
+        print("Get About not implemented")
+        return {}
 
     def get_state():
         """gets the robot state"""
-        pass
+        print("Get State not implemented")
+        return {}
 
     def get_resources():
         """gets the robot resources"""
-        pass
+        print("Get Resources not implemented")
+        return {}
 
 
 class Step(BaseModel):
