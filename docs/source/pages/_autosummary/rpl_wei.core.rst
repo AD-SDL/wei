@@ -1,7 +1,7 @@
 rpl\_wei.core
 =============
 
-.. automodule:: rpl_wei.core
+.. automodule:: wei.core
 
    
    
@@ -27,14 +27,14 @@ rpl\_wei.core
    :toctree:
    :recursive:
 
-   rpl_wei.core.data_classes
-   rpl_wei.core.events
-   rpl_wei.core.experiment
-   rpl_wei.core.interface
-   rpl_wei.core.interfaces
-   rpl_wei.core.loggers
-   rpl_wei.core.step_executor
-   rpl_wei.core.validators
-   rpl_wei.core.workcell
-   rpl_wei.core.workflow
+   wei.core.data_classes
+   wei.core.events
+   wei.core.experiment
+   wei.core.interface
+   wei.core.interfaces
+   wei.core.loggers
+   wei.core.step_executor
+   wei.core.validators
+   wei.core.workcell
+   wei.core.workflow
 

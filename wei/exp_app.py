@@ -6,7 +6,7 @@ from typing import Dict, Optional
 import requests
 import ulid
 
-from rpl_wei.core.events import Events
+from wei.core.events import Events
 
 
 class Experiment:

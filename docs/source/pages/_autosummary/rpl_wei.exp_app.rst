@@ -1,7 +1,7 @@
 rpl\_wei.exp\_app
 =================
 
-.. automodule:: rpl_wei.exp_app
+.. automodule:: wei.exp_app
 
    
    

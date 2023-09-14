@@ -4,8 +4,8 @@ from typing import Optional, Union
 
 import ulid
 
-from rpl_wei.core import DATA_DIR
-from rpl_wei.core.events import Events
+from wei.core import DATA_DIR
+from wei.core.events import Events
 
 
 def start_experiment(

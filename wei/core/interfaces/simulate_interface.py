@@ -1,5 +1,5 @@
 """Handling simulated execution for steps in the RPL-SDL efforts"""
-from rpl_wei.core.data_classes import Step
+from wei.core.data_classes import Step
 
 
 def silent_callback(step: Step, **kwargs):

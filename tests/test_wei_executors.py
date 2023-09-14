@@ -6,8 +6,8 @@ from test_base import TestWEI_Base
 
 class TestExecutors(TestWEI_Base):
     def test_validators(self):
-        from rpl_wei.core.step_executor import StepExecutor, StepStatus
-        from rpl_wei.core.workflow import WorkflowRunner
+        from wei.core.step_executor import StepExecutor, StepStatus
+        from wei.core.workflow import WorkflowRunner
 
         workflow_config_path = Path("tests/test_workflow.yaml")
         worfklow_def = yaml.safe_load(workflow_config_path.read_text())

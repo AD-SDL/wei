@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
-from rpl_wei import Experiment
+from wei import Experiment
 import time
 
 

@@ -230,7 +230,7 @@ The experiment library also gives access to Event functions, which help to creat
 
    #!/usr/bin/env python3
    from pathlib import Path
-   from rpl_wei.exp_app import Experiment
+   from wei.exp_app import Experiment
 
    def main():
       #Generates the experiment and assigns it an ID

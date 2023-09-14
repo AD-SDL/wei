@@ -1,18 +1,18 @@
 """The module that initilizes and runs the step by step WEI workflow"""
+import copy
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import copy
 import requests
 import ulid
 from devtools import debug
 
-from rpl_wei.core.data_classes import Workflow as WorkflowData
-from rpl_wei.core.loggers import WEI_Logger
-from rpl_wei.core.step_executor import StepExecutor
-from rpl_wei.core.validators import ModuleValidator, StepValidator
-from rpl_wei.core.workcell import Workcell
+from wei.core.data_classes import Workflow as WorkflowData
+from wei.core.loggers import WEI_Logger
+from wei.core.step_executor import StepExecutor
+from wei.core.validators import ModuleValidator, StepValidator
+from wei.core.workcell import Workcell
 
 
 class WorkflowRunner:
@@ -63,7 +63,7 @@ class WorkflowRunner:
 
         # Setup executor
         self.executor = StepExecutor()
-        
+
         # Setup runner
         if run_id:
             self.run_id = run_id
@@ -82,7 +82,9 @@ class WorkflowRunner:
             log_dir=self.log_dir,
             log_level=log_level,
         )
-        self.steps  = self.init_flow(self.workcell, None, payload=payload, simulate=simulate)
+        self.steps = self.init_flow(
+            self.workcell, None, payload=payload, simulate=simulate
+        )
         self.hist = {}
 
     def check_modules(self):
@@ -141,11 +143,10 @@ class WorkflowRunner:
             ):
                 if step.module in workcell.locations.keys():
                     for key, value in step.args.items():
-
                         # if hasattr(value, "__contains__") and "positions" in value:
                         if value in workcell.locations[step.module].keys():
                             arg_dict["locations"][key] = value
-                            
+
                             step.args[key] = workcell.locations[step.module][value]
 
             # Inject the payload
@@ -171,66 +172,84 @@ class WorkflowRunner:
                     step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
-           
-            arg_dict.update({
-                "step": step,
-                "step_module": step_module,
-                "logger": self.logger,
-                "callbacks": callbacks,
-                "simulate": simulate,
-            })
+
+            arg_dict.update(
+                {
+                    "step": step,
+                    "step_module": step_module,
+                    "logger": self.logger,
+                    "callbacks": callbacks,
+                    "simulate": simulate,
+                }
+            )
             print(arg_dict)
             steps.append(arg_dict)
         return steps
+
     def check_step(self):
         if len(self.steps) == 0:
-             return False
+            return False
         step = self.steps[0]
-        if "target" in step["locations"]: 
-                    url = "http://localhost:8000/wc/locations/" + step["locations"]["target"] + "/state"
-                    state = requests.get(url).json()[step["locations"]["target"]]
-                    
-                    if not(state["state"] == "Empty") or not((len(state["queue"]) > 0 and state["queue"][0] == str(self.run_id))):
-                         return False
-                
-        if "source" in step["locations"]:
-                    url = "http://localhost:8000/wc/locations/" + step["locations"]["source"] + "/state"
-                    state = requests.get(url).json()[step["locations"]["source"]]
+        if "target" in step["locations"]:
+            url = (
+                "http://localhost:8000/wc/locations/"
+                + step["locations"]["target"]
+                + "/state"
+            )
+            state = requests.get(url).json()[step["locations"]["target"]]
 
-                    if not(state["state"] == str(self.experiment_id)):
-                         return False
+            if not (state["state"] == "Empty") or not (
+                (len(state["queue"]) > 0 and state["queue"][0] == str(self.run_id))
+            ):
+                return False
+
+        if "source" in step["locations"]:
+            url = (
+                "http://localhost:8000/wc/locations/"
+                + step["locations"]["source"]
+                + "/state"
+            )
+            state = requests.get(url).json()[step["locations"]["source"]]
+
+            if not (state["state"] == str(self.experiment_id)):
+                return False
         url = "http://localhost:8000/wc/modules/" + step["step_module"].name + "/state"
         state = requests.get(url).json()[step["step_module"].name]
- 
-        if not("BUSY" in state["state"]) and not((len(state["queue"]) > 0 and state["queue"][0] == str(self.run_id))):
-                         return False
+
+        if not ("BUSY" in state["state"]) and not (
+            (len(state["queue"]) > 0 and state["queue"][0] == str(self.run_id))
+        ):
+            return False
         return True
-        
-        
+
     def run_step(self, step):
-        vals = {"module": step["step_module"].name, "run_id": str(self.run_id) }
+        vals = {"module": step["step_module"].name, "run_id": str(self.run_id)}
         action_response, action_msg, action_log = self.executor.execute_step(**step)
         self.hist[step["step"].name] = {
-                "action_response": str(action_response),
-                "action_msg": str(action_msg),
-                "action_log": str(action_log),
-            }
+            "action_response": str(action_response),
+            "action_msg": str(action_msg),
+            "action_log": str(action_log),
+        }
         if "source" in step["locations"]:
-                url = "http://localhost:8000/wc/locations/" + step["locations"]["source"] + "/set"
-                requests.post(url, 
-        params={"experiment_id": ""})
-        if "target" in step["locations"]: 
-                vals["location"] = step["locations"]["target"]
-                url = "http://localhost:8000/wc/locations/" + step["locations"]["target"] + "/set"
-                requests.post(url, 
-        
-        params={"experiment_id": self.experiment_id}
-        )
+            url = (
+                "http://localhost:8000/wc/locations/"
+                + step["locations"]["source"]
+                + "/set"
+            )
+            requests.post(url, params={"experiment_id": ""})
+        if "target" in step["locations"]:
+            vals["location"] = step["locations"]["target"]
+            url = (
+                "http://localhost:8000/wc/locations/"
+                + step["locations"]["target"]
+                + "/set"
+            )
+            requests.post(url, params={"experiment_id": self.experiment_id})
         if len(self.steps) > 0:
-             next_step = self.steps[0]
-             vals["next_module"] = next_step["step_module"].name
-             if "target" in next_step["locations"]:
-                  vals["next_location"] = next_step["locations"]["target"]
+            next_step = self.steps[0]
+            vals["next_module"] = next_step["step_module"].name
+            if "target" in next_step["locations"]:
+                vals["next_location"] = next_step["locations"]["target"]
 
         url = "http://localhost:8000/wc/release"
         state = requests.post(url, params=vals)
@@ -240,8 +259,6 @@ class WorkflowRunner:
             "hist": self.hist,
         }
 
-        
-    
     def run_flow(
         self,
         workcell: Workcell,
@@ -274,7 +291,6 @@ class WorkflowRunner:
         hist = {}
         steps = self.init_flow(workcell, callbacks, payload=payload, simulate=simulate)
         for step in steps:
-            
             action_response, action_msg, action_log = self.executor.execute_step(**step)
             hist[step["step"].name] = {
                 "action_response": str(action_response),
@@ -282,15 +298,19 @@ class WorkflowRunner:
                 "action_log": str(action_log),
             }
             if "source" in step["locations"]:
-                    url = "http://localhost:8000/wc/locations/" + step["locations"]["source"] + "/set"
-                    requests.post(url, 
-            params={"run_id": ""})
-            if "target" in step["locations"]: 
-                    url = "http://localhost:8000/wc/locations/" + step["locations"]["target"] + "/set"
-                    requests.post(url, 
-            
-            params={"run_id": self.run_id}
-        )
+                url = (
+                    "http://localhost:8000/wc/locations/"
+                    + step["locations"]["source"]
+                    + "/set"
+                )
+                requests.post(url, params={"run_id": ""})
+            if "target" in step["locations"]:
+                url = (
+                    "http://localhost:8000/wc/locations/"
+                    + step["locations"]["target"]
+                    + "/set"
+                )
+                requests.post(url, params={"run_id": self.run_id})
         return {
             "run_dir": str(self.log_dir),
             "run_id": str(self.run_id),

@@ -3,12 +3,14 @@ import json
 
 import requests
 
-from rpl_wei.core.data_classes import Module, Step
-from rpl_wei.core.interface import Interface
+from wei.core.data_classes import Module, Step
+from wei.core.interface import Interface
+
 
 class RestInterface(Interface):
-    def  __init__(self):
+    def __init__(self):
         pass
+
     def send_action(step: Step, **kwargs):
         module: Module = kwargs["step_module"]
         base_url = module.config["url"]
@@ -25,26 +27,28 @@ class RestInterface(Interface):
         action_log = rest_response["action_log"]
 
         return action_response, action_msg, action_log
+
     def get_about(config):
         url = config["rest_node_address"]
         rest_response = requests.get(
             url + "/about",
         ).json()
         return rest_response
+
     def get_state(config):
         url = config["rest_node_address"]
         rest_response = requests.get(
             url + "/state",
         ).json()
         return rest_response
-        
+
     def get_resources(config):
         url = config["rest_node_address"]
         rest_response = requests.get(
             url + "/resources",
         ).json()
         return rest_response
-        
+
 
 def wei_rest_callback(step: Step, **kwargs):
     """Executes a single step from a workflow using a REST messaging framework

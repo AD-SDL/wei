@@ -1,7 +1,7 @@
 rpl\_wei.core.validators
 ========================
 
-.. automodule:: rpl_wei.core.validators
+.. automodule:: wei.core.validators
 
    
    

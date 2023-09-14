@@ -3,7 +3,7 @@ import json
 
 import zmq
 
-from rpl_wei.core.data_classes import Module, Step
+from wei.core.data_classes import Module, Step
 
 
 def wei_zmq_callback(step: Step, **kwargs):

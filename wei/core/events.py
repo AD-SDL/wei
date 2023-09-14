@@ -1,8 +1,9 @@
 """Contains the Events class for logging experiment steps"""
-from typing import Optional, Any
+import json
+from typing import Any, Optional
 
 import requests
-import json
+
 # class Event:
 #     pass
 # event = {
@@ -89,7 +90,9 @@ class Events:
 
         return response.json()
 
-    def _log_event(self, event_type, event_name, event_info: Optional[Any] = "", log_dir=""):
+    def _log_event(
+        self, event_type, event_name, event_info: Optional[Any] = "", log_dir=""
+    ):
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -102,19 +105,29 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         url = f"{self.url}/exp/{self.experiment_id}/log"
-        log_value = {"experiment_id": self.experiment_id, "event_type": event_type, "event_name": event_name, "event_info": event_info}
+        log_value = {
+            "experiment_id": self.experiment_id,
+            "event_type": event_type,
+            "event_name": event_name,
+            "event_info": event_info,
+        }
         if log_dir:
             self.experiment_path = log_dir
         response = requests.post(
             url,
-            params={"log_value": str(log_value), "experiment_path": self.experiment_path},
+            params={
+                "log_value": str(log_value),
+                "experiment_path": self.experiment_path,
+            },
         )
 
         try:
-           
             self.kafka_producer.send(
-                "rpl", bytes(json.dumps(log_value), "utf-8"), bytes(self.experiment_id, "utf-8"))
-            
+                "rpl",
+                bytes(json.dumps(log_value), "utf-8"),
+                bytes(self.experiment_id, "utf-8"),
+            )
+
         except Exception:
             print("Kafka Unvavailable")
 
@@ -134,7 +147,7 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
         self.experiment_path = log_dir
-        
+
         return self._log_event("EXPERIMENT", "START")
 
     def end_experiment(self, log_dir: Optional[str] = ""):
@@ -166,7 +179,9 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        return self._log_event("CHECK",  dec_name.capitalize(), {"dec_value": str(dec_value)})
+        return self._log_event(
+            "CHECK", dec_name.capitalize(), {"dec_value": str(dec_value)}
+        )
 
     def log_comment(self, comment: str):
         """logs a comment on the run
@@ -223,7 +238,6 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event("GLOBUS", "GLADIER_RUNFLOW", {"flow_id": flow_id})
 
-
     def log_loop_start(self, loop_name: str):
         """logs the start of a loop during an Experimet
 
@@ -268,10 +282,9 @@ class Events:
            The JSON portion of the response from the server"""
         loop_name = self.loops[-1]
         return self._log_event(
-            "LOOP", "CHECK CONDITION",
-            {"loop_name": loop_name,
-            "condition": condition,
-            "result": str(value)}
+            "LOOP",
+            "CHECK CONDITION",
+            {"loop_name": loop_name, "condition": condition, "result": str(value)},
         )
 
     def log_wf_start(self, wf_name, job_id):
@@ -312,6 +325,5 @@ class Events:
         Any
            The JSON portion of the response from the server"""
         return self._log_event(
-
             "WEI", "WORKFLOW_END", {"wf_name": str(wf_name), "run_id": str(job_id)}
-        )        
+        )

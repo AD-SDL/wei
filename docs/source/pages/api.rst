@@ -7,4 +7,4 @@ WEI API documentation.
     :toctree: _autosummary
     :recursive:
 
-    rpl_wei
+    wei

@@ -1,7 +1,7 @@
 rpl\_wei.core.experiment
 ========================
 
-.. automodule:: rpl_wei.core.experiment
+.. automodule:: wei.core.experiment
 
    
    

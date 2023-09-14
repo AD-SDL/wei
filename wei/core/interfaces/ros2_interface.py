@@ -1,6 +1,7 @@
 """Handling execution for steps in the RPL-SDL efforts"""
-from rpl_wei.core.data_classes import Module, Step
-from rpl_wei.core.interface import Interface
+from wei.core.data_classes import Module, Step
+from wei.core.interface import Interface
+
 try:
     import rclpy
 except ImportError:
@@ -10,7 +11,7 @@ except ImportError:
 try:
     from wei_executor.weiExecutorNode import weiExecNode
 
-except ImportError  as e:
+except ImportError as e:
     print(e)
     wei_execution_node = None
 
@@ -27,7 +28,6 @@ def __init_rclpy():
     global wei_execution_node
 
     if rclpy:  # use_rclpy:
-
         if not rclpy.utilities.ok():
             rclpy.init()
             print("Started RCLPY")
@@ -35,6 +35,7 @@ def __init_rclpy():
         else:
             print("RCLPY OK ")
     return wei_execution_node
+
 
 def __kill_node():
     """stops the execution node
@@ -50,8 +51,8 @@ def __kill_node():
     print("killing node")
     wei_execution_node.destroy_node()
     rclpy.shutdown()
-    
-    
+
+
 def wei_ros2_service_callback(step: Step, **kwargs):
     """Executes a single step from a workflow using a ROS messaging framework
 
@@ -137,23 +138,22 @@ def wei_ros2_camera_callback(step: Step, **kwargs):
         str({"img_path": step.args["save_location"] + "/" + step.args["file_name"]}),
         "action_log",
     )
+
+
 class ROS2Interface(Interface):
     def __init__(self, name) -> None:
-      
-       try:
+        try:
             import rclpy as test
-       except ImportError:
+        except ImportError:
             print("No RCLPY found... Cannot use ROS2")
             test = None
 
-      
-       self.rclpy = test
-       self.wei_execution_node =  self.__init_rclpy(name)
-
+        self.rclpy = test
+        self.wei_execution_node = self.__init_rclpy(name)
 
     def __init_rclpy(self, name):
-        if  self.rclpy :  # use_rclpy:
-            if not  self.rclpy .utilities.ok():
+        if self.rclpy:  # use_rclpy:
+            if not self.rclpy.utilities.ok():
                 self.rclpy.init()
                 print("Started RCLPY")
                 wei_execution_node = weiExecNode(name)
@@ -162,19 +162,18 @@ class ROS2Interface(Interface):
                 wei_execution_node = weiExecNode(name)
         return wei_execution_node
 
-
     def __kill_node(self, wei_execution_node):
-        #print("killing node")
+        # print("killing node")
         self.wei_execution_node.destroy_node()
         self.rclpy.shutdown()
-        
+
     def send_action(self, step: Step, **kwargs):
         module: Module = kwargs["step_module"]
         msg = {
             "node": module.config["ros_node_address"],
             "action_handle": step.action,
             "action_vars": step.args,
-          }
+        }
 
         if kwargs.get("verbose", False):
             print("\n Callback message:")
@@ -183,17 +182,21 @@ class ROS2Interface(Interface):
         action_response = ""
         action_msg = ""
         action_log = ""
-        if self.rclpy :
+        if self.rclpy:
             print("rosstart")
-            print(  self.rclpy.utilities.ok())
-            #$print(rclpy.get_global_executor().add_node(self.wei_execution_node   ))
+            print(self.rclpy.utilities.ok())
+            # $print(rclpy.get_global_executor().add_node(self.wei_execution_node   ))
             print(self.wei_execution_node.context.ok())
             # while self.rclpy.utilities.ok():
             #   self.rclpy.spin_once(self.wei_execution_node, timeout_sec=0.3)
             #   print(  self.rclpy.utilities.ok())
             #   #$print(rclpy.get_global_executor().add_node(self.wei_execution_node   ))
             #   print(self.wei_execution_node.context.ok())
-            action_response, action_msg, action_log = self.wei_execution_node.send_wei_command(
+            (
+                action_response,
+                action_msg,
+                action_log,
+            ) = self.wei_execution_node.send_wei_command(
                 msg["node"], msg["action_handle"], msg["action_vars"]
             )
             print("roseend")
@@ -201,15 +204,17 @@ class ROS2Interface(Interface):
                 print(action_msg)
             rclpy.spin_once(self.wei_execution_node)
         return action_response, action_msg, action_log
+
     def get_about(config):
         pass
 
     def get_state(self, config):
-        #wei_execution_node = ROS2Interface.__init_rclpy()
+        # wei_execution_node = ROS2Interface.__init_rclpy()
         state = self.wei_execution_node.get_state(config["ros_node_address"])
         rclpy.spin_once(self.wei_execution_node)
         print(state)
-        #ROS2Interface.__kill_node(wei_execution_node)
+        # ROS2Interface.__kill_node(wei_execution_node)
         return str(state)
+
     def get_resources(config):
         pass

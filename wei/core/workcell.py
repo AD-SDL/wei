@@ -2,17 +2,20 @@
 import logging
 from typing import Any, Dict, Optional
 
-from rpl_wei.core import DATA_DIR
-from rpl_wei.core.data_classes import Module
-from rpl_wei.core.data_classes import Workcell as WorkcellData
-from rpl_wei.core.loggers import WEI_Logger
+from wei.core import DATA_DIR
+from wei.core.data_classes import Module
+from wei.core.data_classes import Workcell as WorkcellData
+from wei.core.loggers import WEI_Logger
 
 
 class Workcell:
     """A Class to represent a workcell object that contains the different WEI modules"""
 
     def __init__(
-        self, workcell: WorkcellData=None, workcell_def: Dict[str, Any]=None, log_level: int = logging.INFO
+        self,
+        workcell: WorkcellData = None,
+        workcell_def: Dict[str, Any] = None,
+        log_level: int = logging.INFO,
     ) -> None:
         """Defines a workcell object loaded from a yaml file
 
@@ -25,9 +28,9 @@ class Workcell:
             level for logging
 
         """
-        if workcell_def: 
+        if workcell_def:
             self.workcell = WorkcellData(**workcell_def)
-        else: 
+        else:
             self.workcell = workcell
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)

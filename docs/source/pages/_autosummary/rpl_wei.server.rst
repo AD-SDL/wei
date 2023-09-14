@@ -1,7 +1,7 @@
 rpl\_wei.server
 ===============
 
-.. automodule:: rpl_wei.server
+.. automodule:: wei.server
 
    
    

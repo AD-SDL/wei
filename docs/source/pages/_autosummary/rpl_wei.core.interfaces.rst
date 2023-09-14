@@ -1,7 +1,7 @@
 rpl\_wei.core.interfaces
 ========================
 
-.. automodule:: rpl_wei.core.interfaces
+.. automodule:: wei.core.interfaces
 
    
    
@@ -27,9 +27,9 @@ rpl\_wei.core.interfaces
    :toctree:
    :recursive:
 
-   rpl_wei.core.interfaces.rest_interface
-   rpl_wei.core.interfaces.ros2_interface
-   rpl_wei.core.interfaces.simulate_interface
-   rpl_wei.core.interfaces.tcp_interface
-   rpl_wei.core.interfaces.zmq_interface
+   wei.core.interfaces.rest_interface
+   wei.core.interfaces.ros2_interface
+   wei.core.interfaces.simulate_interface
+   wei.core.interfaces.tcp_interface
+   wei.core.interfaces.zmq_interface
 
