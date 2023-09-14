@@ -23,8 +23,8 @@ For more details and specific examples of how to use wei, please see our [docume
 ## Installation
 
 1. Clone the repository into the desired location. This tutorial will assume it is installed in a folder called `~/workspace/wei`
-2. Install [Redis]([200~https://redis.io/docs/getting-started/)
-3. Within `~/workspace/wei` run the following: 
+2. Install [Redis]([200~https://redis.io/docs/getting-started/) and [TMUX](https://github.com/tmux/tmux/wiki/Installing)
+3. Within `~/workspace/wei` run the following:
 
 ```
 pip3 install --upgrade pip setuptools wheel
@@ -42,12 +42,11 @@ pip3 install -e .
 2. From a new terminal run
 
 ```
-cd ~/workspace/wei 
-sudo apt install tmux
+cd ~/workspace/wei
 bash examples/run_wei_server.sh
 ```
 
-This will run a redis server (window 0), a worker that pulls workflows from a redis-based queue (window 1), and a server that takes incoming workflows from the client and puts them onto the redis-based queue (window 2).  
+This will run a redis server (window 0), a worker that pulls workflows from a redis-based queue (window 1), and a server that takes incoming workflows from the client and puts them onto the redis-based queue (window 2).
 
 ## Contributing
 
