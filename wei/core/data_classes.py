@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
 
-import ulid
 import yaml
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, validator
