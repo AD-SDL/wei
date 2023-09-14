@@ -113,7 +113,7 @@ class Scheduler:
         self.kafka_server = ""
         self.log_server = ""
 
-    def run(self, args):
+    def run(self, args):  # noqa
         self.events = {}
         self.executor = StepExecutor()
         self.workcell = WorkcellData.from_yaml(args.workcell)
@@ -138,7 +138,7 @@ class Scheduler:
             }
         for module in self.workcell.locations:
             for location in self.workcell.locations[module]:
-                if not location in wc_state["locations"]:
+                if location not in wc_state["locations"]:
                     wc_state["locations"][location] = {"state": "Empty", "queue": []}
         self.redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
         print("Starting Process")
@@ -158,7 +158,7 @@ class Scheduler:
                             wc_state["modules"][module.name]["state"] = state
                         if first:
                             print("Module Found: " + str(module.name))
-                    except:
+                    except:  # noqa
                         wc_state["modules"][module.name]["state"] = "UNKNOWN"
                         if first:
                             print("Can't Find Module: " + str(module.name))
