@@ -176,43 +176,7 @@ async def process_job(
     return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
 
 
-@app.post("/log/{experiment_id}")
-def return_exp_log(experiment_path: str, log_value: str):
-    """Logs a value to the experiment log fo the given path
-    Parameters
-    ----------
-    experiment_path: str
-       The path to the data of the experiment for the workflow
-    log_value: str
-        the value to write to the experiment log
 
-    Returns
-    -------
-        None
-    """
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.split("_id_")[-1]
-    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
-    logger.info(log_value)
-
-
-@app.get("/log/return")
-async def log_return(experiment_path: str):
-    """Returns a string containing the log files for a given experiment
-    Parameters
-    ----------
-    experiment_path: str
-       The path to the data of the experiment for the workflow
-
-    Returns
-    -------
-    None
-    """
-
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.spit("_")[-1]
-    with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
-        return f.read()
 
 
 @app.post("/experiment")
