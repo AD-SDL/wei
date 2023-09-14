@@ -1,5 +1,4 @@
 """The module that initilizes and runs the step by step WEI workflow"""
-import copy
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -252,7 +251,7 @@ class WorkflowRunner:
                 vals["next_location"] = next_step["locations"]["target"]
 
         url = "http://localhost:8000/wc/release"
-        state = requests.post(url, params=vals)
+        # state = requests.post(url, params=vals)
         return {
             "run_dir": str(self.log_dir),
             "run_id": str(self.run_id),

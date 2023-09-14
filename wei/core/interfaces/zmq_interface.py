@@ -4,6 +4,7 @@ import json
 import zmq
 
 from wei.core.data_classes import Module, Step
+from wei.core.interface import Interface
 
 
 def wei_zmq_callback(step: Step, **kwargs):
