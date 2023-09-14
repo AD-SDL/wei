@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
 
-import ulid
 import yaml
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, validator
@@ -143,10 +142,26 @@ class SimpleModule(BaseModel):
 
 
 class Interface(BaseModel):
-    """standardizes communications with different damons"""
+    """standardizes communications with different daemons"""
 
     name: str
     """"""
+
+    def send_action():
+        """sends an action"""
+        pass
+
+    def get_about():
+        """gets about information"""
+        pass
+
+    def get_state():
+        """gets the robot state"""
+        pass
+
+    def get_resources():
+        """gets the robot resources"""
+        pass
 
 
 class Step(BaseModel):

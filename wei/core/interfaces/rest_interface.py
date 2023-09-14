@@ -4,7 +4,7 @@ import json
 import requests
 
 from wei.core.data_classes import Module, Step
-from wei.core.interface import Interface
+from wei.core.data_classes import Interface
 
 
 class RestInterface(Interface):
