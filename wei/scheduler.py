@@ -69,6 +69,40 @@ def run_step(exp_path, wf_name, wf_id, step, locations, module, pipe, executor):
     )
 
 
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_argument("--workcell", type=Path, help="Path to workcell file")
+    parser.add_argument(
+        "--redis_host",
+        type=str,
+        help="url (no port) for Redis server",
+        default="localhost",
+    )
+    parser.add_argument(
+        "--kafka_server",
+        type=str,
+        help="url (no port) for Redis server",
+        default="ec2-54-160-200-147.compute-1.amazonaws.com:9092",
+    )
+    parser.add_argument(
+        "--server",
+        type=str,
+        help="url (no port) for log server",
+        default="localhost",
+    )
+    return parser.parse_args()
+
+
+minimal_state = {
+    "locations": {},
+    "modules": {},
+    "active_workflows": {},
+    "queued_workflows": {},
+    "completed_workflows": {},
+    "incoming_workflows": {},
+}
+
+
 class Scheduler:
     def __init__(self):
         self.events = {}
@@ -78,39 +112,8 @@ class Scheduler:
         self.redis_server = {}
         self.kafka_server = ""
         self.log_server = ""
-        self.wc_state = {
-            "locations": {},
-            "modules": {},
-            "active_workflows": {},
-            "queued_workflows": {},
-            "completed_workflows": {},
-            "incoming_workflows": {},
-        }
 
-    def parse_args(self):
-        parser = ArgumentParser()
-        parser.add_argument("--workcell", type=Path, help="Path to workcell file")
-        parser.add_argument(
-            "--redis_host",
-            type=str,
-            help="url (no port) for Redis server",
-            default="localhost",
-        )
-        parser.add_argument(
-            "--kafka_server",
-            type=str,
-            help="url (no port) for Redis server",
-            default="ec2-54-160-200-147.compute-1.amazonaws.com:9092",
-        )
-        parser.add_argument(
-            "--server",
-            type=str,
-            help="url (no port) for log server",
-            default="localhost",
-        )
-        return parser.parse_args()
-
-    def run(self, args):
+    def run(self, args):  # noqa
         self.events = {}
         self.executor = StepExecutor()
         self.workcell = WorkcellData.from_yaml(args.workcell)
@@ -120,20 +123,12 @@ class Scheduler:
         )
         self.kafka_server = args.kafka_server
         self.log_server = args.server
-        wc_state = {
-            "locations": {},
-            "modules": {},
-            "active_workflows": {},
-            "queued_workflows": {},
-            "completed_workflows": {},
-            "incoming_workflows": {},
-        }
+        wc_state = minimal_state
         for module in self.workcell.modules:
             if module.workcell_coordinates:
                 wc_coords = module.workcell_coordinates
             else:
                 wc_coords = None
-            # wc_coords=None
             wc_state["modules"][module.name] = {
                 "type": module.model,
                 "id": str(module.id),
@@ -143,7 +138,7 @@ class Scheduler:
             }
         for module in self.workcell.locations:
             for location in self.workcell.locations[module]:
-                if not location in wc_state["locations"]:
+                if location not in wc_state["locations"]:
                     wc_state["locations"][location] = {"state": "Empty", "queue": []}
         self.redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
         print("Starting Process")
@@ -163,7 +158,7 @@ class Scheduler:
                             wc_state["modules"][module.name]["state"] = state
                         if first:
                             print("Module Found: " + str(module.name))
-                    except:
+                    except:  # noqa
                         wc_state["modules"][module.name]["state"] = "UNKNOWN"
                         if first:
                             print("Can't Find Module: " + str(module.name))
@@ -230,7 +225,7 @@ class Scheduler:
                     wf_id in wc_state["active_workflows"]
                 ):
                     send_conn, rec_conn = mpr.Pipe()
-                    module = find_module(workcell, step["module"])
+                    module = find_module(self.workcell, step["module"])
                     step_process = mpr.Process(
                         target=run_step,
                         args=(
@@ -273,7 +268,7 @@ class Scheduler:
                         self.events[wf_id].log_wf_end(
                             wc_state["queued_workflows"][wf_id]["name"], wf_id
                         )
-                        del events[wf_id]
+                        del self.events[wf_id]
                         wc_state["completed_workflows"][wf_id] = wc_state[
                             "queued_workflows"
                         ][wf_id]
@@ -303,6 +298,6 @@ class Scheduler:
 
 
 if __name__ == "__main__":
+    args = parse_args()
     scheduler = Scheduler()
-    args = scheduler.parse_args()
     scheduler.run(args)

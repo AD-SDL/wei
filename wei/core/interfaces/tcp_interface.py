@@ -7,8 +7,8 @@ from wei.core.data_classes import Interface, Module, Step
 class TcpInterface(Interface):
     def __init__(self):
         pass
+
     def send_action(step: Step, **kwargs):
-        
         """Executes a single step from a workflow using a TCP messaging framework
 
         Parameters

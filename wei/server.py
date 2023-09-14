@@ -176,9 +176,6 @@ async def process_job(
     return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
 
 
-
-
-
 @app.post("/experiment")
 def process_exp(experiment_name: str, experiment_id: str):
     """Pulls an experiment and creates the files and logger for it
@@ -237,7 +234,7 @@ async def get_job_status(job_id: str):
 
 
 @app.get("/job/{job_id}/log")
-async def log_return(job_id: str, experiment_path: str):
+async def log_job_return(job_id: str, experiment_path: str):
     """Parameters
     ----------
 
