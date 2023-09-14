@@ -22,8 +22,8 @@ class TestWEI_Locations(TestWEI_Base):
         print(workflow)
         print("testing")
         arg_before_replace = workflow.flowdef[1].args
-        self.assertEqual(arg_before_replace["source"], "sciclops.exchange")
-        self.assertEqual(arg_before_replace["target"], "ot2_pcr_alpha.deck2")
+        self.assertEqual(arg_before_replace["source"], "camera.pos")
+        self.assertEqual(arg_before_replace["target"], "camera.pos")
 
         # Also test the compatibility of the named/actual locations
 
@@ -33,8 +33,9 @@ class TestWEI_Locations(TestWEI_Base):
         arg_after_replace = workflow.flowdef[1].args
         self.assertListEqual(
             arg_after_replace["source"],
-            [222.0, -38.068, 335.876, 325.434, 79.923, 995.062],
+            [0, 0, 0, 0, 0, 0],
         )
         self.assertListEqual(
-            arg_after_replace["target"], [195.99, 60.21, 92.13, 565.41, 82.24, -65.25]
+            arg_after_replace["target"],
+            [0, 0, 0, 0, 0, 0],
         )

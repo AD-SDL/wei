@@ -7,32 +7,25 @@ config:
   globus_search_index: ""
   globus_portal_ep: ""
   globus_group: ""
-  workcell_origin_coordinates: [9.4307, -10.4176, 0, 1, 0, 0, 0]
+  workcell_origin_coordinates: [0, 0, 0, 0, 0, 0]
 
 #List of all components accessible in this workcell
 modules:
   - name: sleep_node
-    model: a4s_sealer
+    model: sleeper_test_node
     interface: wei_rest_node
     config:
-      rest_node_address: "http://127.0.0.1:2000"
+      rest_node_address: "http://localhost:2000"
       rest_node_auth: ""
-    workcell_coordinates: [0, 0, 0, 0, 0, 0] 
+    workcell_coordinates: [0, 0, 0, 0, 0, 0]
   - name: camera_node
-    model: a4s_sealer
+    model: camera_test_node
     interface: wei_rest_node
     config:
-      rest_node_address: "http://127.0.0.1:2001"
+      rest_node_address: "http://localhost:2001"
       rest_node_auth: ""
-    workcell_coordinates: [15, 0, 0, 0, 0, 0] 
-    
+    workcell_coordinates: [15, 0, 0, 0, 0, 0]
+
 locations:
-  pf400:
-    pf400.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
-    sciclops.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
-    ot2_pcr_alpha.deck2: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
   workcell:
-    pf400.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
-    sciclops.exchange: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
-    ot2_pcr_alpha.deck2: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
-    exchange4: [222.0, -38.068, 335.876, 325.434, 79.923, 995.062]
+    camera_node.pos: [0, 0, 0, 0, 0, 0]

@@ -28,7 +28,7 @@ class Test_Workcell_Base(TestWEI_Base):
         worfklow_def = yaml.safe_load(workflow_config_path.read_text())
         runner = WorkflowRunner(worfklow_def, "test_experiment")
 
-        payload = {"thermocyle_time": 10, "thermocyle_temp": 175}
+        payload = {}
 
         run_info = runner.run_flow(workcell, payload=payload)
 
