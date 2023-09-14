@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 from wei.core.data_classes import Module, Step
-from wei.core.interface import Interface
+from wei.core.data_classes import Interface
 
 try:
     import rclpy

@@ -1,6 +1,6 @@
 """Handling simulated execution for steps in the RPL-SDL efforts"""
 from wei.core.data_classes import Step
-from wei.core.interface import Interface
+from wei.core.data_classes import Interface
 
 
 class SimulateInterface(Interface):
