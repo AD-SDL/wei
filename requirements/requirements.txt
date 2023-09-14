@@ -8,5 +8,4 @@ python-multipart==0.0.6
 rq==1.13.0
 requests==2.31.0
 ulid-py==1.1.0
-zmq
-redis
+pyzmq==25.1.1
