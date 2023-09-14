@@ -3,8 +3,7 @@ import json
 
 import requests
 
-from wei.core.data_classes import Module, Step
-from wei.core.data_classes import Interface
+from wei.core.data_classes import Interface, Module, Step
 
 
 class RestInterface(Interface):

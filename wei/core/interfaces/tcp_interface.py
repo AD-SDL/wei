@@ -1,8 +1,8 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import json
 
-from wei.core.data_classes import Module, Step
-from wei.core.interface import Interface
+from wei.core.data_classes import Interface, Module, Step
+from wei.core.interface import 
 
 
 class TcpInterface(Interface):
