@@ -10,9 +10,8 @@ import yaml
 from wei.core.data_classes import Step
 from wei.core.data_classes import Workcell as WorkcellData
 from wei.core.events import Events
-from wei.core.step_executor import Executor_Map
 from wei.core.loggers import WEI_Logger
-from wei.core.step_executor import StepExecutor
+from wei.core.step_executor import Executor_Map, StepExecutor
 from wei.core.workflow import WorkflowRunner
 
 
@@ -69,6 +68,7 @@ def run_step(exp_path, wf_name, wf_id, step, locations, module, pipe, executor):
         }
     )
 
+
 class Scheduler:
     def __init__(self):
         self.events = {}
@@ -86,6 +86,7 @@ class Scheduler:
             "completed_workflows": {},
             "incoming_workflows": {},
         }
+
     def parse_args(self):
         parser = ArgumentParser()
         parser.add_argument("--workcell", type=Path, help="Path to workcell file")
@@ -102,15 +103,21 @@ class Scheduler:
             default="ec2-54-160-200-147.compute-1.amazonaws.com:9092",
         )
         parser.add_argument(
-            "--server", type=str, help="url (no port) for log server", default="localhost"
+            "--server",
+            type=str,
+            help="url (no port) for log server",
+            default="localhost",
         )
         return parser.parse_args()
+
     def run(self, args):
         self.events = {}
         self.executor = StepExecutor()
         self.workcell = WorkcellData.from_yaml(args.workcell)
         self.processes = {}
-        self.redis_server = redis.Redis(host=args.redis_host, port=6379, decode_responses=True)
+        self.redis_server = redis.Redis(
+            host=args.redis_host, port=6379, decode_responses=True
+        )
         self.kafka_server = args.kafka_server
         self.log_server = args.server
         wc_state = {
@@ -146,22 +153,20 @@ class Scheduler:
                 # TODO: if not get_state: raise unknown
                 if module.interface in Executor_Map.function:
                     first = False
-                    if  wc_state["modules"][module.name]["state"] == "INIT":
-                            first = True
+                    if wc_state["modules"][module.name]["state"] == "INIT":
+                        first = True
                     try:
-                    
-                    
                         interface = Executor_Map.function[module.interface]
                         state = interface.get_state(module.config)
 
                         if not (state == ""):
                             wc_state["modules"][module.name]["state"] = state
                         if first:
-                            print("Module Found: "+ str(module.name))
+                            print("Module Found: " + str(module.name))
                     except:
                         wc_state["modules"][module.name]["state"] = "UNKNOWN"
                         if first:
-                            print("Can't Find Module: "+ str(module.name))
+                            print("Can't Find Module: " + str(module.name))
                 else:
                     # print("module interface not found")
                     pass
@@ -225,7 +230,7 @@ class Scheduler:
                     wf_id in wc_state["active_workflows"]
                 ):
                     send_conn, rec_conn = mpr.Pipe()
-                    module = find_module(workcell, step["module"])
+                    module = find_module(self.workcell, step["module"])
                     step_process = mpr.Process(
                         target=run_step,
                         args=(
@@ -252,7 +257,9 @@ class Scheduler:
                         wc_state["locations"][locations["target"]]["state"] = wf[
                             "experiment_id"
                         ]
-                        wc_state["locations"][locations["target"]]["queue"].remove(wf_id)
+                        wc_state["locations"][locations["target"]]["queue"].remove(
+                            wf_id
+                        )
                     if "source" in locations:
                         wc_state["locations"][locations["source"]]["state"] = "Empty"
                     wc_state["modules"][step.module]["queue"].remove(wf_id)
@@ -266,7 +273,7 @@ class Scheduler:
                         self.events[wf_id].log_wf_end(
                             wc_state["queued_workflows"][wf_id]["name"], wf_id
                         )
-                        del events[wf_id]
+                        del self.events[wf_id]
                         wc_state["completed_workflows"][wf_id] = wc_state[
                             "queued_workflows"
                         ][wf_id]
@@ -289,10 +296,12 @@ class Scheduler:
             for wf_id in cleanup_wfs:
                 del wc_state["active_workflows"][wf_id]
 
-            self.redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
+            self.redis_server.hset(
+                name="state", mapping={"wc_state": json.dumps(wc_state)}
+            )
             time.sleep(0.3)
 
-    
+
 if __name__ == "__main__":
     scheduler = Scheduler()
     args = scheduler.parse_args()
