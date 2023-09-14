@@ -2,6 +2,7 @@
 import json
 
 from wei.core.data_classes import Module, Step
+from wei.core.interface import Interface
 
 
 def wei_tcp_callback(step: Step, **kwargs):
