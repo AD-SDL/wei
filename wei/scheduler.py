@@ -10,9 +10,8 @@ import yaml
 from wei.core.data_classes import Step
 from wei.core.data_classes import Workcell as WorkcellData
 from wei.core.events import Events
-from wei.core.step_executor import Executor_Map
 from wei.core.loggers import WEI_Logger
-from wei.core.step_executor import StepExecutor
+from wei.core.step_executor import Executor_Map, StepExecutor
 from wei.core.workflow import WorkflowRunner
 
 
