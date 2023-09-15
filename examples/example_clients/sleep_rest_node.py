@@ -1,17 +1,17 @@
-"""The server that takes incoming WEI flow requests from the experiment application"""
-import json
+"""
+REST-based node that interface with WEI and provides a simple Sleep(t) function
+"""
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 import time
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 
 workcell = None
 global state
-serial_port = "/dev/ttyUSB1"
-local_ip = "parker.alcf.anl.gov"
-local_port = "8000"
+local_ip = "localhost"
+local_port = "2000"
 
 
 @asynccontextmanager
