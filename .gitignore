@@ -279,4 +279,4 @@ $RECYCLE.BIN/
 logs/
 
 # ignore redis dump file
-**/*.rbd
+*.rdb
