@@ -29,7 +29,7 @@ redis_server = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initial run function for the app, parses the worcell argument
+    """Initial run function for the app, parses the workcell argument
         Parameters
         ----------
         app : FastApi

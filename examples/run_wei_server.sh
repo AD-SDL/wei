@@ -8,9 +8,14 @@ tmux new-session -d -s $session
 tmux set -g mouse on
 
 window=0
-tmux new-window -t $session:$window -n 'redis'
+tmux rename-window -t $session:$window 'redis'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
-tmux send-keys -t $session:$window 'envsubst < redis.conf | redis-server -' C-m
+# Start the redis server, or ping if it's already up
+if [ -z "$(lsof -i:6379)" ]; then
+	tmux send-keys -t $session:$window 'envsubst < $folder/../redis.conf | redis-server -' C-m
+else
+	tmux send-keys -t $session:$window 'redis-cli ping' C-m
+fi
 
 window=1
 tmux new-window -t $session:$window -n 'server'

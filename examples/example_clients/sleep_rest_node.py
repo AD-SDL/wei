@@ -1,7 +1,6 @@
 """
-REST-based node that interface with WEI and provides a simple Sleep(t) function
+REST-based node that interfaces with WEI and provides a simple Sleep(t) function
 """
-from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 import time
 from fastapi import FastAPI
@@ -17,7 +16,7 @@ local_port = "2000"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global state
-    """Initial run function for the app, parses the worcell argument
+    """Initial run function for the app, parses the workcell argument
         Parameters
         ----------
         app : FastApi
@@ -27,7 +26,6 @@ async def lifespan(app: FastAPI):
         -------
         None"""
     try:
-        #           sealer = A4S_SEALER_DRIVER(serial_port)
         state = "IDLE"
     except Exception as err:
         print(err)
@@ -50,19 +48,19 @@ def get_state():
     global state
     if state != "BUSY":
         pass
-    return JSONResponse(content={"State": state})  # sealer.get_status() })
+    return JSONResponse(content={"State": state})
 
 
 @app.get("/description")
 async def description():
     global state
-    return JSONResponse(content={"State": state})  # sealer.get_status() })
+    return JSONResponse(content={"State": state})
 
 
 @app.get("/resources")
 async def resources():
     global state
-    return JSONResponse(content={"State": state})  # sealer.get_status() })
+    return JSONResponse(content={"State": state})
 
 
 @app.post("/action")
@@ -72,11 +70,16 @@ def do_action(
 ):
     global state
     if state == "BUSY":
-        return
+        response_content = {
+            "status": "failed",
+            "error": "Node is busy",
+        }
+        return JSONResponse(content=response_content)
     state = "BUSY"
-    if action_handle == "action" or True:
+    if action_handle == "sleep":
         try:
-            time.sleep(5)
+            t = action_vars["t"]
+            time.sleep(t)
             response_content = {
                 "action_msg": "StepStatus.Succeeded",
                 "action_response": "True",
@@ -93,13 +96,20 @@ def do_action(
             print("failure")
             state = "IDLE"
             return JSONResponse(content=response_content)
+    else:
+        response_content = {
+            "status": "failed",
+            "error": "Invalid action_handle",
+        }
+        state = "IDLE"
+        return JSONResponse(content=response_content)
 
 
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "a4s_sealer_REST:app",
+        "sleep_node_REST:app",
         host=local_ip,
         port=local_port,
         reload=True,

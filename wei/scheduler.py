@@ -177,11 +177,9 @@ class Scheduler:
                         simulate=wf_data["simulate"],
                         workflow_name=wf_data["name"],
                     )
-                
 
-                    
                     flowdef = []
-                        
+
                     for step in workflow_runner.steps:
                         flowdef.append(
                             {
@@ -217,8 +215,10 @@ class Scheduler:
                         wc_state["locations"][flowdef[0]["locations"]["target"]][
                             "queue"
                         ].append(wf_id)
-                    wc_state["modules"][flowdef[0]["step"]["module"]]["queue"].append(wf_id)
-                except e:
+                    wc_state["modules"][flowdef[0]["step"]["module"]]["queue"].append(
+                        wf_id
+                    )
+                except Exception as e:
                     wc_state["failed_workflows"][wf_id] = {"Error": str(e)}
             for wf_id in wc_state["queued_workflows"]:
                 if wf_id in wc_state["incoming_workflows"]:

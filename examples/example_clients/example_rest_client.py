@@ -18,7 +18,7 @@ local_port = '8000'
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global state
-    """Initial run function for the app, parses the worcell argument
+    """Initial run function for the app, parses the workcell argument
         Parameters
         ----------
         app : FastApi
@@ -65,22 +65,22 @@ async def resources():
 @app.post("/action")
 def do_action(
     action_handle: str,
-    action_vars: str, 
+    action_vars: str,
 ):
 
     global state
     if state == "BUSY":
          return
     state = "BUSY"
-    if action_handle == 'action' or True:  
-        try: 
-            time.sleep(5)  
+    if action_handle == 'action' or True:
+        try:
+            time.sleep(5)
             response_content = {
                     "action_msg": "StepStatus.Succeeded",
                     "action_response": "True",
                     "action_log": ""
-                    
-                    
+
+
                 }
             state = "IDLE"
             print("success")
@@ -93,7 +93,7 @@ def do_action(
             print("failure")
             state = "IDLE"
             return JSONResponse(content=response_content)
-   
+
 
 if __name__ == "__main__":
     import uvicorn

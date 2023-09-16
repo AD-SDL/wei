@@ -6,7 +6,7 @@ import zmq
 from wei.core.data_classes import Interface, Module, Step
 
 
-class ZMQInterface(Interface):
+class ZmqInterface(Interface):
     def __init__(self):
         pass
 

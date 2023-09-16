@@ -95,6 +95,7 @@ class WorkflowRunner:
         """Checks the actions provided by the workflow"""
         for step in self.workflow.flowdef:
             self.step_validator.check_step(step=step)
+
     def init_flow(
         self,
         workcell: Workcell,
