@@ -7,12 +7,11 @@ from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 
 
-
 workcell = None
 global state
-serial_port = '/dev/ttyUSB1'
-local_ip = 'parker.alcf.anl.gov'
-local_port = '8000'
+serial_port = "/dev/ttyUSB1"
+local_ip = "parker.alcf.anl.gov"
+local_port = "8000"
 
 
 @asynccontextmanager
@@ -28,11 +27,11 @@ async def lifespan(app: FastAPI):
         -------
         None"""
     try:
- #           sealer = A4S_SEALER_DRIVER(serial_port)
-            state = "IDLE"
+        #           sealer = A4S_SEALER_DRIVER(serial_port)
+        state = "IDLE"
     except Exception as err:
-            print(err)
-            state = "ERROR"
+        print(err)
+        state = "ERROR"
 
     # Yield control to the application
     yield
@@ -41,7 +40,10 @@ async def lifespan(app: FastAPI):
     pass
 
 
-app = FastAPI(lifespan=lifespan, )
+app = FastAPI(
+    lifespan=lifespan,
+)
+
 
 @app.get("/state")
 def get_state():
@@ -49,17 +51,19 @@ def get_state():
     if state != "BUSY":
 
         pass
-    return JSONResponse(content={"State": state})#sealer.get_status() })
+    return JSONResponse(content={"State": state})  # sealer.get_status() })
+
 
 @app.get("/description")
 async def description():
     global state
-    return JSONResponse(content={"State": state })#sealer.get_status() })
+    return JSONResponse(content={"State": state})  # sealer.get_status() })
+
 
 @app.get("/resources")
 async def resources():
     global state
-    return JSONResponse(content={"State": state })#sealer.get_status() })
+    return JSONResponse(content={"State": state})  # sealer.get_status() })
 
 
 @app.post("/action")
@@ -70,26 +74,24 @@ def do_action(
 
     global state
     if state == "BUSY":
-         return
+        return
     state = "BUSY"
-    if action_handle == 'action' or True:
+    if action_handle == "action" or True:
         try:
             time.sleep(5)
             response_content = {
-                    "action_msg": "StepStatus.Succeeded",
-                    "action_response": "True",
-                    "action_log": ""
-
-
-                }
+                "action_msg": "StepStatus.Succeeded",
+                "action_response": "True",
+                "action_log": "",
+            }
             state = "IDLE"
             print("success")
             return JSONResponse(content=response_content)
         except Exception as e:
             response_content = {
-            "status": "failed",
-            "error": str(e),
-        }
+                "status": "failed",
+                "error": str(e),
+            }
             print("failure")
             state = "IDLE"
             return JSONResponse(content=response_content)
@@ -97,4 +99,11 @@ def do_action(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("a4s_sealer_REST:app", host=local_ip, port=local_port, reload=True, ws_max_size=100000000000000000000000000000000000000)
+
+    uvicorn.run(
+        "a4s_sealer_REST:app",
+        host=local_ip,
+        port=local_port,
+        reload=True,
+        ws_max_size=100000000000000000000000000000000000000,
+    )

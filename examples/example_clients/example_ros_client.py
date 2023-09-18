@@ -44,14 +44,14 @@ class Example_Client(Node):
 
         action_cb_group = ReentrantCallbackGroup()
         description_cb_group = ReentrantCallbackGroup()
-        state_cb_group = ReentrantCallbackGroup()       
+        state_cb_group = ReentrantCallbackGroup()
         state_refresher_cb_group = ReentrantCallbackGroup()
 
         timer_period = 0.5  # seconds
         state_refresher_timer_period = 0.5 # seconds
-       
+
         self.StateRefresherTimer = self.create_timer(state_refresher_timer_period, callback = self.robot_state_refresher_callback, callback_group = state_refresher_cb_group)
-   
+
         self.statePub = self.create_publisher(String, self.node_name + "/state", 10)       # Publisher for sealer state
         self.stateTimer = self.create_timer(timer_period, self.stateCallback, callback_group=state_cb_group)   # Callback that publishes to sealer state
 
@@ -65,10 +65,7 @@ class Example_Client(Node):
     def robot_state_refresher_callback(self):
         """Get the State from the Robot"""
         sleep(0.1)
-
-        except Exception as err:
-            self.get_logger().error(str(err))
-            self.state = "ERROR"
+        # TODO: Get state from robot
 
     def stateCallback(self):
         """The state of the robot, can be ready, completed, busy, error"""
@@ -110,14 +107,14 @@ class Example_Client(Node):
         -------
         None
         """
-        
+
 
         action_handle = request.action_handle  # Run commands if manager sends corresponding command
         vars = json.loads(request.vars)
         self.get_logger().info(str(vars))
-        
+
         self.action_flag = "BUSY"
-        
+
         if action_handle == 'seal' or True:
             self.get_logger().info('Starting Action: ' + request.action_handle.upper())
             sleep(5)
@@ -126,7 +123,7 @@ class Example_Client(Node):
             return response
 
 
-def main(args=None):  
+def main(args=None):
 
     rclpy.init(args=args)  # initialize Ros2 communication
 

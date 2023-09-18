@@ -54,6 +54,7 @@ class ZmqInterface(Interface):
 
         return action_response, action_msg, action_log
 
+
 def wei_zmq_callback(step: Step, **kwargs):
     """Executes a single step from a workflow using a ZeroMQ messaging framework
 

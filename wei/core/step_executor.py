@@ -4,7 +4,10 @@ from typing import Optional
 
 from wei.core.data_classes import Module, Step, StepStatus
 from wei.core.interfaces.rest_interface import wei_rest_callback
-from wei.core.interfaces.ros2_interface import wei_ros2_camera_callback, wei_ros2_service_callback
+from wei.core.interfaces.ros2_interface import (
+    wei_ros2_camera_callback,
+    wei_ros2_service_callback,
+)
 from wei.core.interfaces.tcp_interface import wei_tcp_callback
 from wei.core.interfaces.zmq_interface import wei_zmq_callback
 from wei.core.interfaces.simulate_interface import silent_callback
@@ -13,6 +16,7 @@ from wei.core.interface import Interface_Map
 ########################
 #   Executor mapping   #
 ########################
+
 
 class Executor_Map:
     """Mapping of YAML names to functions from interfaces"""
@@ -25,6 +29,7 @@ class Executor_Map:
         "wei_zmq_node": wei_zmq_callback,
         "simulate_callback": silent_callback,
     }
+
 
 class StepExecutor:
     """Class to handle executing steps"""
