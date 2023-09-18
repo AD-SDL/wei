@@ -46,7 +46,13 @@ cd ~/workspace/wei
 bash examples/run_wei_server.sh
 ```
 
-This will run a redis server (window 0), a worker that pulls workflows from a redis-based queue (window 1), and a server that takes incoming workflows from the client and puts them onto the redis-based queue (window 2).
+This will run a redis server (window 0), a worker that pulls workflows from a redis-based queue (window 1), and a server that takes incoming workflows from the client and puts them onto the redis-based queue (window 2). It will also run 2 example nodes: a Sleep node and a Camera node.
+
+To test running an experiment, run:
+
+```
+python examples/run_example.py
+```
 
 ## Contributing
 

@@ -29,6 +29,9 @@ tmux send-keys -t $session:$window 'cd ' $folder C-m
 # tmux send-keys -t $session:$window 'source ~/wei_ws/install/setup.bash' C-m
 tmux send-keys -t $session:$window 'python3 -m wei.scheduler --workcell ../tests/test_workcell.yaml' C-m
 
+# Comment the following if you don't need the example nodes
+bash $folder/../examples/run_example_nodes.sh
+
 tmux attach-session -t $session
 
 

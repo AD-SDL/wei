@@ -24,10 +24,10 @@ flowdef:
   #This is a place for additional notes
     comment: Sleep for 5 seconds before we take a picture
 
-  - name: Take Picture
-    module: camera_node
-    action: take_picture
-    args:
-      image_name: "test_snapshot.jpg"
-      source: "camera.pos"
-      target: "camera.pos"
+ - name: Take Picture
+   module: camera_node
+   action: take_picture
+   args:
+     image_name: "test_snapshot.jpg"
+     source: "camera.pos"
+     target: "camera.pos"

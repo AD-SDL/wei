@@ -2,6 +2,7 @@
 REST-based node that interfaces with WEI and provides a simple Sleep(t) function
 """
 from contextlib import asynccontextmanager
+import json
 import time
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -10,7 +11,7 @@ from fastapi.responses import JSONResponse
 workcell = None
 global state
 local_ip = "localhost"
-local_port = "2000"
+local_port = 2000
 
 
 @asynccontextmanager
@@ -71,15 +72,18 @@ def do_action(
     global state
     if state == "BUSY":
         response_content = {
-            "status": "failed",
-            "error": "Node is busy",
+            "action_msg": "StepStatus.Failed",
+            "action_response": "False",
+            "action_log": "Node is busy",
         }
         return JSONResponse(content=response_content)
     state = "BUSY"
     if action_handle == "sleep":
         try:
+            action_vars = json.loads(action_vars)
+            print(type(action_vars))
             t = action_vars["t"]
-            time.sleep(t)
+            time.sleep(int(t))
             response_content = {
                 "action_msg": "StepStatus.Succeeded",
                 "action_response": "True",
@@ -89,17 +93,19 @@ def do_action(
             print("success")
             return JSONResponse(content=response_content)
         except Exception as e:
+            print(e)
             response_content = {
-                "status": "failed",
-                "error": str(e),
+                "action_msg": "StepStatus.Failed",
+                "action_response": "False",
+                "action_log": str(e),
             }
-            print("failure")
             state = "IDLE"
             return JSONResponse(content=response_content)
     else:
         response_content = {
-            "status": "failed",
-            "error": "Invalid action_handle",
+            "action_msg": "StepStatus.Failed",
+            "action_response": "False",
+            "action_log": "Action not supported",
         }
         state = "IDLE"
         return JSONResponse(content=response_content)
@@ -109,7 +115,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "sleep_node_REST:app",
+        "sleep_rest_node:app",
         host=local_ip,
         port=local_port,
         reload=True,

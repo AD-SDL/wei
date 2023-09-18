@@ -23,9 +23,9 @@ class ZmqInterface(Interface):
         action_response: StepStatus
             A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
         action_msg: str
-            the data or informtaion returned from running the step.
+            the data or information returned from running the step.
         action_log: str
-            A record of the exeution of the step
+            A record of the execution of the step
 
         """
         module: Module = kwargs["step_module"]
@@ -53,25 +53,3 @@ class ZmqInterface(Interface):
         context.term()
 
         return action_response, action_msg, action_log
-
-
-def wei_zmq_callback(step: Step, **kwargs):
-    """Executes a single step from a workflow using a ZeroMQ messaging framework
-
-    Parameters
-    ----------
-    step : Step
-        A single step from a workflow definition
-
-    Returns
-    -------
-    action_response: StepStatus
-        A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
-    action_msg: str
-        the data or informtaion returned from running the step.
-    action_log: str
-        A record of the exeution of the step
-
-    """
-    # TODO: build ZMQ callback
-    pass
