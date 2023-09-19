@@ -29,7 +29,7 @@ redis_server = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initial run function for the app, parses the worcell argument
+    """Initial run function for the app, parses the workcell argument
         Parameters
         ----------
         app : FastApi
@@ -229,8 +229,7 @@ async def get_job_status(job_id: str):
                 "run_dir": wf["hist"]["run_dir"],
             }
         )
-    elif job_id in wc_state["failed_workflows"]:
-        return JSONResponse(content={"status": "queued", "result": {}})
+
     return JSONResponse(content={"status": "running", "result": "result"})
 
 

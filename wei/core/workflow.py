@@ -95,6 +95,7 @@ class WorkflowRunner:
         """Checks the actions provided by the workflow"""
         for step in self.workflow.flowdef:
             self.step_validator.check_step(step=step)
+
     def init_flow(
         self,
         workcell: Workcell,
@@ -128,10 +129,6 @@ class WorkflowRunner:
         for step in self.workflow.flowdef:
             arg_dict = {"locations": {}}
             # get module information from workcell file
-            if step.module not in self.workflow.modules:
-                raise ValueError(
-                    f"Module in step module: {step.module}, not in workflow modules list"
-                )
             step_module = workcell.find_step_module(step.module)
             if not step_module:
                 raise ValueError(

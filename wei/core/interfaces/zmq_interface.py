@@ -6,7 +6,7 @@ import zmq
 from wei.core.data_classes import Interface, Module, Step
 
 
-class ZMQInterface(Interface):
+class ZmqInterface(Interface):
     def __init__(self):
         pass
 
@@ -23,9 +23,9 @@ class ZMQInterface(Interface):
         action_response: StepStatus
             A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
         action_msg: str
-            the data or informtaion returned from running the step.
+            the data or information returned from running the step.
         action_log: str
-            A record of the exeution of the step
+            A record of the execution of the step
 
         """
         module: Module = kwargs["step_module"]

@@ -1,27 +1,23 @@
-"""The server that takes incoming WEI flow requests from the experiment application"""
-import json
-from argparse import ArgumentParser
+"""
+REST-based node that interfaces with WEI and provides a USB camera interface
+"""
 from contextlib import asynccontextmanager
-import time
-from fastapi import FastAPI, File, Form, UploadFile
+import cv2
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+import json
 
 
 workcell = None
 global state
-serial_port = "/dev/ttyUSB1"
-local_ip = "parker.alcf.anl.gov"
-local_port = "8000"
-
-
-def parse_args():
-    pass
+local_ip = "localhost"
+local_port = 2001
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global state
-    """Initial run function for the app, parses the worcell argument
+    """Initial run function for the app, parses the workcell argument
         Parameters
         ----------
         app : FastApi
@@ -31,7 +27,6 @@ async def lifespan(app: FastAPI):
         -------
         None"""
     try:
-        #           sealer = A4S_SEALER_DRIVER(serial_port)
         state = "IDLE"
     except Exception as err:
         print(err)
@@ -54,19 +49,19 @@ def get_state():
     global state
     if state != "BUSY":
         pass
-    return JSONResponse(content={"State": state})  # sealer.get_status() })
+    return JSONResponse(content={"State": state})
 
 
 @app.get("/description")
 async def description():
     global state
-    return JSONResponse(content={"State": state})  # sealer.get_status() })
+    return JSONResponse(content={"State": state})
 
 
 @app.get("/resources")
 async def resources():
     global state
-    return JSONResponse(content={"State": state})  # sealer.get_status() })
+    return JSONResponse(content={"State": state})
 
 
 @app.post("/action")
@@ -76,11 +71,21 @@ def do_action(
 ):
     global state
     if state == "BUSY":
-        return
+        response_content = {
+            "action_msg": "StepStatus.Failed",
+            "action_response": "False",
+            "action_log": "Node is busy",
+        }
+        return JSONResponse(content=response_content)
     state = "BUSY"
-    if action_handle == "action" or True:
+    if action_handle == "take_picture":
         try:
-            time.sleep(5)
+            image_name = json.loads(action_vars)["image_name"]
+            camera = cv2.VideoCapture(0)
+            _, frame = camera.read()
+            cv2.imwrite(image_name, frame)
+            camera.release()
+
             response_content = {
                 "action_msg": "StepStatus.Succeeded",
                 "action_response": "True",
@@ -90,20 +95,29 @@ def do_action(
             print("success")
             return JSONResponse(content=response_content)
         except Exception as e:
+            print(e)
             response_content = {
-                "status": "failed",
-                "error": str(e),
+                "action_msg": "StepStatus.Failed",
+                "action_response": "False",
+                "action_log": str(e),
             }
-            print("failure")
             state = "IDLE"
             return JSONResponse(content=response_content)
+    else:
+        response_content = {
+            "action_msg": "StepStatus.Failed",
+            "action_response": "False",
+            "action_log": "Action not supported",
+        }
+        state = "IDLE"
+        return JSONResponse(content=response_content)
 
 
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "a4s_sealer_REST:app",
+        "webcam_rest_node:app",
         host=local_ip,
         port=local_port,
         reload=True,

@@ -70,7 +70,7 @@ class Events:
 
                 self.kafka_producer = KafkaProducer(bootstrap_servers=kafka_server)
             except Exception:
-                print("Kafka Unvavailable")
+                print("Kafka Unavailable")
         self.loops = []
 
     def _return_response(self, response: requests.Response):
@@ -129,7 +129,7 @@ class Events:
             )
 
         except Exception:
-            print("Kafka Unvavailable")
+            print("Kafka Unavailable")
 
         return self._return_response(response)
 

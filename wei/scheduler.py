@@ -10,8 +10,9 @@ import yaml
 from wei.core.data_classes import Step
 from wei.core.data_classes import Workcell as WorkcellData
 from wei.core.events import Events
+from wei.core.interface import Interface_Map
 from wei.core.loggers import WEI_Logger
-from wei.core.step_executor import Executor_Map, StepExecutor
+from wei.core.step_executor import StepExecutor
 from wei.core.workflow import WorkflowRunner
 
 
@@ -100,6 +101,7 @@ minimal_state = {
     "queued_workflows": {},
     "completed_workflows": {},
     "incoming_workflows": {},
+    "failed_workflows": {},
 }
 
 
@@ -146,19 +148,20 @@ class Scheduler:
             wc_state = json.loads(self.redis_server.hget("state", "wc_state"))
             for module in self.workcell.modules:
                 # TODO: if not get_state: raise unknown
-                if module.interface in Executor_Map.function:
+                if module.interface in Interface_Map.function:
                     first = False
                     if wc_state["modules"][module.name]["state"] == "INIT":
                         first = True
                     try:
-                        interface = Executor_Map.function[module.interface]
+                        interface = Interface_Map.function[module.interface]
                         state = interface.get_state(module.config)
 
                         if not (state == ""):
                             wc_state["modules"][module.name]["state"] = state
                         if first:
                             print("Module Found: " + str(module.name))
-                    except:  # noqa
+                    except Exception as e:  # noqa
+                        print(e)
                         wc_state["modules"][module.name]["state"] = "UNKNOWN"
                         if first:
                             print("Can't Find Module: " + str(module.name))
@@ -166,6 +169,7 @@ class Scheduler:
                     # print("module interface not found")
                     pass
             for wf_id in wc_state["incoming_workflows"]:
+                print("Incoming: " + str(wf_id))
                 wf_data = wc_state["incoming_workflows"][wf_id]
                 try:
                     workflow_runner = WorkflowRunner(
@@ -177,11 +181,9 @@ class Scheduler:
                         simulate=wf_data["simulate"],
                         workflow_name=wf_data["name"],
                     )
-                
 
-                    
                     flowdef = []
-                        
+
                     for step in workflow_runner.steps:
                         flowdef.append(
                             {
@@ -217,10 +219,14 @@ class Scheduler:
                         wc_state["locations"][flowdef[0]["locations"]["target"]][
                             "queue"
                         ].append(wf_id)
-                    wc_state["modules"][flowdef[0]["step"]["module"]]["queue"].append(wf_id)
-                except e:
+                    wc_state["modules"][flowdef[0]["step"]["module"]]["queue"].append(
+                        wf_id
+                    )
+                except Exception as e:
+                    print(e)
                     wc_state["failed_workflows"][wf_id] = {"Error": str(e)}
             for wf_id in wc_state["queued_workflows"]:
+                print(wf_id)
                 if wf_id in wc_state["incoming_workflows"]:
                     del wc_state["incoming_workflows"][wf_id]
                 wf = wc_state["queued_workflows"][wf_id]

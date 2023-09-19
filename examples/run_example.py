@@ -13,7 +13,7 @@ def main():
     # This initilizes the connection to the server and the logs for this run of the program.
     exp.register_exp()
     # This runs the simulated_workflow a simulated workflow
-    flow_info = exp.run_job(wf_path.resolve(), simulate=True)
+    flow_info = exp.run_job(wf_path.resolve(), simulate=False)
     print(flow_info)
     # This checks the state of the experiment in the queue
     flow_status = exp.query_job(flow_info["job_id"])
@@ -21,6 +21,7 @@ def main():
     print(flow_status)
     # This will wait until the flow has run and then print out the final result of the flow
     while flow_status["status"] != "finished":
+        print(flow_status)
         time.sleep(1)
         flow_status = exp.query_job(flow_info["job_id"])
     print(flow_status)

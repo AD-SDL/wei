@@ -5,10 +5,6 @@ from typing import Optional
 from wei.core.data_classes import Module, Step, StepStatus
 from wei.core.interface import Interface_Map
 
-########################
-#   Executor mapping   #
-########################
-
 
 class StepExecutor:
     """Class to handle executing steps"""

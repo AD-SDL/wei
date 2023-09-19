@@ -11,8 +11,8 @@ run_mypy = mypy --config-file setup.cfg
 
 .PHONY: format
 format:
-	$(isort)
-	$(black)
+	$(isort .)
+	$(black .)
 
 .PHONY: lint
 lint:
