@@ -15,6 +15,7 @@ class StepExecutor:
         step_module: Module,
         logger: Optional[logging.Logger] = None,
         simulate: bool = False,
+        **kwargs,
     ) -> StepStatus:
         """Executes a single step from a workflow without making any message calls
 
@@ -44,7 +45,7 @@ class StepExecutor:
         if simulate:
             action_response, action_msg, action_log = Interface_Map.function[
                 "simulate_callback"
-            ](step, step_module=step_module)
+            ].send_action(step, step_module=step_module)
         else:
             action_response, action_msg, action_log = Interface_Map.function[
                 step_module.interface

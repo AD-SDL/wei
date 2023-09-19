@@ -49,7 +49,6 @@ app = FastAPI(
 def get_state():
     global state
     if state != "BUSY":
-
         pass
     return JSONResponse(content={"State": state})  # sealer.get_status() })
 
@@ -71,7 +70,6 @@ def do_action(
     action_handle: str,
     action_vars: str,
 ):
-
     global state
     if state == "BUSY":
         return

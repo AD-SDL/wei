@@ -107,7 +107,6 @@ class Example_Client(Node):
         return response
 
     def actionCallback(self, request: str, response: str) -> None:
-
         """The actions the robot can perform, also performs them
 
         Parameters:
@@ -139,7 +138,6 @@ class Example_Client(Node):
 
 
 def main(args=None):
-
     rclpy.init(args=args)  # initialize Ros2 communication
 
     try:
@@ -158,7 +156,5 @@ def main(args=None):
     finally:
         rclpy.shutdown()
 
-
 if __name__ == "__main__":
-
     main()

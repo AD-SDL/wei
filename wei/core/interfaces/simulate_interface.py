@@ -24,5 +24,5 @@ class SimulateInterface(Interface):
     def __init__(self):
         pass
 
-    def send_action():
-        silent_callback()
+    def send_action(step: Step, **kwargs):
+        return silent_callback(step, **kwargs)

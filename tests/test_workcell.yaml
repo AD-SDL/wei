@@ -11,14 +11,14 @@ config:
 
 #List of all components accessible in this workcell
 modules:
-  - name: sleep_node
+  - name: sleeper
     model: sleeper_test_node
     interface: wei_rest_node
     config:
       rest_node_address: "http://localhost:2000"
       rest_node_auth: ""
     workcell_coordinates: [0, 0, 0, 0, 0, 0]
-  - name: camera_node
+  - name: webcam
     model: camera_test_node
     interface: wei_rest_node
     config:
@@ -27,5 +27,5 @@ modules:
     workcell_coordinates: [15, 0, 0, 0, 0, 0]
 
 locations:
-  workcell:
-    camera_node.pos: [0, 0, 0, 0, 0, 0]
+  webcam:
+    webcam.pos: [0, 0, 0, 0, 0, 0]
