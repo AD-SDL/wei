@@ -23,7 +23,7 @@ For more details and specific examples of how to use wei, please see our [docume
 ## Installation
 
 1. Clone the repository into the desired location. This tutorial will assume it is installed in a folder called `~/workspace/wei`
-2. Install [Redis]([200~https://redis.io/docs/getting-started/) and [TMUX](https://github.com/tmux/tmux/wiki/Installing)
+2. Install [Redis](https://redis.io/docs/getting-started/) and [TMUX](https://github.com/tmux/tmux/wiki/Installing)
 3. Within `~/workspace/wei` run the following:
 
 ```
