@@ -11,10 +11,8 @@ window=0
 tmux rename-window -t $session:$window 'redis'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
 # Start the redis server, or ping if it's already up
-if [ -z "$(lsof -i:6379)" ]; then
+if [ "$(redis-cli ping)" != "PONG" ]; then
 	tmux send-keys -t $session:$window 'envsubst < $folder/../redis.conf | redis-server -' C-m
-else
-	tmux send-keys -t $session:$window 'redis-cli ping' C-m
 fi
 
 window=1
@@ -30,7 +28,7 @@ tmux send-keys -t $session:$window 'cd ' $folder C-m
 tmux send-keys -t $session:$window 'python3 -m wei.scheduler --workcell ../tests/test_workcell.yaml' C-m
 
 # Comment the following if you don't need the example nodes
-bash $folder/../examples/run_example_nodes.sh
+bash -c $folder/../examples/run_example_nodes.sh
 
 tmux attach-session -t $session
 
