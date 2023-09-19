@@ -7,7 +7,7 @@ import requests
 import ulid
 from devtools import debug
 
-from wei.core.data_classes import Workflow as WorkflowData
+from wei.core.data_classes import Workflow
 from wei.core.loggers import WEI_Logger
 from wei.core.step_executor import StepExecutor
 from wei.core.validators import ModuleValidator, StepValidator
@@ -19,8 +19,8 @@ class WorkflowRunner:
 
     def __init__(
         self,
-        workflow_def: Dict[str, Any],
-        workcell,
+        workflow_def: [Dict[str, Any], Workflow],
+        workcell: Workcell,
         experiment_path: str,
         payload,
         run_id: Optional[ulid.ULID] = None,
@@ -32,7 +32,7 @@ class WorkflowRunner:
 
         Parameters
         ----------
-        workflow_def : Dict[str, Any]
+        workflow_def : [Dict[str, Any], Workflow]
            The list of workflow steps to complete
 
         experiment_path: str
@@ -51,14 +51,17 @@ class WorkflowRunner:
             Human-created name of the workflow
         """
 
-        self.workflow = WorkflowData(**workflow_def)
+        if type(workflow_def) is dict:
+            self.workflow = Workflow(**workflow_def)
+        elif type(workflow_def) is Workflow:
+            self.workflow = workflow_def
         self.simulate = simulate
         # Setup validators
         self.module_validator = ModuleValidator()
         self.step_validator = StepValidator()
         path = Path(experiment_path)
         self.experiment_id = path.name.split("_id_")[-1]
-        self.workcell = Workcell(workcell=workcell)
+        self.workcell = Workcell(workcell_def=workcell)
 
         # Setup executor
         self.executor = StepExecutor()
@@ -144,7 +147,7 @@ class WorkflowRunner:
                 if step.module in workcell.locations.keys():
                     for key, value in step.args.items():
                         # if hasattr(value, "__contains__") and "positions" in value:
-                        if value in workcell.locations[step.module].keys():
+                        if str(value) in workcell.locations[step.module].keys():
                             arg_dict["locations"][key] = value
 
                             step.args[key] = workcell.locations[step.module][value]

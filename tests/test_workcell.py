@@ -3,6 +3,7 @@ from pathlib import Path
 
 from devtools import debug
 from test_base import TestWEI_Base
+from wei.core.data_classes import WorkcellData
 
 
 class Test_Workcell_Base(TestWEI_Base):
@@ -25,11 +26,19 @@ class Test_Workcell_Base(TestWEI_Base):
         workcell = Workcell(workcell_def)
 
         workflow_config_path = Path("tests/test_workflow.yaml")
-        worfklow_def = yaml.safe_load(workflow_config_path.read_text())
-        runner = WorkflowRunner(worfklow_def, "test_experiment")
+        workflow_def = yaml.safe_load(workflow_config_path.read_text())
+        runner = WorkflowRunner(
+            workflow_def=workflow_def,
+            workcell=WorkcellData.from_yaml("tests/test_workcell.yaml"),
+            payload={},
+            experiment_path="test_experiment",
+            run_id=0,
+            simulate=True,
+            workflow_name="Test Workflow",
+        )
 
         payload = {}
 
-        run_info = runner.run_flow(workcell, payload=payload)
+        run_info = runner.run_flow(workcell, payload=payload, simulate=True)
 
         assert run_info["payload"] == payload

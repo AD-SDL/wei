@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 from wei.core import DATA_DIR
 from wei.core.data_classes import Module
-from wei.core.data_classes import Workcell as WorkcellData
+from wei.core.data_classes import WorkcellData
 from wei.core.loggers import WEI_Logger
 
 
@@ -13,25 +13,25 @@ class Workcell:
 
     def __init__(
         self,
-        workcell: WorkcellData = None,
-        workcell_def: Dict[str, Any] = None,
+        workcell_def: [Dict[str, Any], WorkcellData],
         log_level: int = logging.INFO,
     ) -> None:
         """Defines a workcell object loaded from a yaml file
 
         Parameters
         ----------
-        workcell_def: Dict[str, Any]
+        workcell_def: [Dict[str, Any], WorkcellData]
            data from workcell yaml file
 
         log_level: int
             level for logging
 
         """
-        if workcell_def:
+        if type(workcell_def) is WorkcellData:
+            self.workcell = workcell_def
+        elif type(workcell_def) is dict:
             self.workcell = WorkcellData(**workcell_def)
-        else:
-            self.workcell = workcell
+        print(self.workcell)
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.locations = self.workcell.locations

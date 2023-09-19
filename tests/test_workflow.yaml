@@ -5,15 +5,15 @@ metadata:
   version: 0.2
 
 modules:
-  - name: sleep_node
-  - name: camera_node
+  - name: sleeper
+  - name: webcam
 
 flowdef:
   #This defines a step in the workflow. Each step represents an action on a single module
   #This is a human legible name for the step
   - name: Sleep workcell for t seconds
   #This defines which module the action will run on, in this case, a test node that simply sleeps for t seconds
-    module: sleep_node
+    module: sleeper
   #This tells the module which action in its library to run, in this case grabbing a wellplate from one of the storage tower
     action: sleep
   #These arguments specify the parameters for the action above, in this case, which tower the arm will pull a plate from.
@@ -25,9 +25,9 @@ flowdef:
     comment: Sleep for 5 seconds before we take a picture
 
   - name: Take Picture
-    module: camera_node
+    module: webcam
     action: take_picture
     args:
-      image_name: "test_snapshot.jpg"
-      source: "camera.pos"
-      target: "camera.pos"
+      image_name: test_snapshot.jpg
+      source: webcam.pos
+      target: webcam.pos

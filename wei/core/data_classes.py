@@ -230,7 +230,7 @@ class Metadata(BaseModel):
     """Version of interface used"""
 
 
-class Workcell(BaseModel):
+class WorkcellData(BaseModel):
     """Container for information in a workcell"""
 
     name: str

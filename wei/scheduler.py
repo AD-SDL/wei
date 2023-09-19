@@ -8,7 +8,7 @@ import redis
 import yaml
 
 from wei.core.data_classes import Step
-from wei.core.data_classes import Workcell as WorkcellData
+from wei.core.data_classes import WorkcellData
 from wei.core.events import Events
 from wei.core.interface import Interface_Map
 from wei.core.loggers import WEI_Logger
@@ -173,7 +173,7 @@ class Scheduler:
                 wf_data = wc_state["incoming_workflows"][wf_id]
                 try:
                     workflow_runner = WorkflowRunner(
-                        yaml.safe_load(wf_data["workflow_content"]),
+                        workflow_def=yaml.safe_load(wf_data["workflow_content"]),
                         workcell=self.workcell,
                         payload=wf_data["parsed_payload"],
                         experiment_path=wf_data["experiment_path"],
