@@ -31,7 +31,6 @@ class Workcell:
             self.workcell = workcell_def
         elif type(workcell_def) is dict:
             self.workcell = WorkcellData(**workcell_def)
-        print(self.workcell)
         self.log_dir = DATA_DIR / "workcell"
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.locations = self.workcell.locations

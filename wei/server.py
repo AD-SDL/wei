@@ -154,6 +154,10 @@ async def process_job(
     response: Dict
        a dictionary including the succesfulness of the queueing, the jobs ahead and the id
     """
+    log_dir = Path(experiment_path)
+    experiment_id = log_dir.name.split("_")[-1]
+    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+    logger.info("Received job run request")
     global redis_server
     workflow_path = Path(workflow.filename)
     workflow_name = workflow_path.name.split(".")[0]
@@ -163,16 +167,16 @@ async def process_job(
     # Decode the bytes object to a string
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
-    wc_state = json.loads(redis_server.hget("state", "wc_state"))
     job_id = ulid.new().str
-    wc_state["incoming_workflows"][str(job_id)] = {
+    redis_server.lpush("workflow_queue:incoming", json.dumps({
+        "wf_id": job_id,
         "workflow_content": workflow_content_str,
         "parsed_payload": parsed_payload,
         "experiment_path": str(experiment_path),
         "name": workflow_name,
         "simulate": simulate,
-    }
-    redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
+    }))
+    logger.info("Queued: " + str(job_id))
     return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
 
 

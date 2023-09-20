@@ -100,7 +100,6 @@ minimal_state = {
     "active_workflows": {},
     "queued_workflows": {},
     "completed_workflows": {},
-    "incoming_workflows": {},
     "failed_workflows": {},
 }
 
@@ -143,15 +142,16 @@ class Scheduler:
                 if location not in wc_state["locations"]:
                     wc_state["locations"][location] = {"state": "Empty", "queue": []}
         self.redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
+        self.redis_server.delete("workflow_queue:incoming")
         print("Starting Process")
         while True:
             wc_state = json.loads(self.redis_server.hget("state", "wc_state"))
             for module in self.workcell.modules:
+                first = False
+                if wc_state["modules"][module.name]["state"] == "INIT":
+                    first = True
                 # TODO: if not get_state: raise unknown
                 if module.interface in Interface_Map.function:
-                    first = False
-                    if wc_state["modules"][module.name]["state"] == "INIT":
-                        first = True
                     try:
                         interface = Interface_Map.function[module.interface]
                         state = interface.get_state(module.config)
@@ -161,16 +161,20 @@ class Scheduler:
                         if first:
                             print("Module Found: " + str(module.name))
                     except Exception as e:  # noqa
-                        print(e)
                         wc_state["modules"][module.name]["state"] = "UNKNOWN"
                         if first:
+                            print(e)
                             print("Can't Find Module: " + str(module.name))
                 else:
-                    # print("module interface not found")
+                    if first:
+                        print("No Module Interface for Module", str(module.name))
                     pass
-            for wf_id in wc_state["incoming_workflows"]:
-                print("Incoming: " + str(wf_id))
-                wf_data = wc_state["incoming_workflows"][wf_id]
+            while True:
+                wf_data = self.redis_server.rpop("workflow_queue:incoming")
+                if wf_data is None:
+                    break
+                wf_data = json.loads(wf_data)
+                wf_id = wf_data["wf_id"]
                 try:
                     workflow_runner = WorkflowRunner(
                         workflow_def=yaml.safe_load(wf_data["workflow_content"]),
@@ -226,9 +230,7 @@ class Scheduler:
                     print(e)
                     wc_state["failed_workflows"][wf_id] = {"Error": str(e)}
             for wf_id in wc_state["queued_workflows"]:
-                print(wf_id)
-                if wf_id in wc_state["incoming_workflows"]:
-                    del wc_state["incoming_workflows"][wf_id]
+                print("Queued:", wf_id)
                 wf = wc_state["queued_workflows"][wf_id]
                 step_index = wf["step_index"]
                 step = wf["flowdef"][step_index]["step"]
@@ -257,6 +259,7 @@ class Scheduler:
                     wc_state["active_workflows"][wf_id] = wf
             cleanup_wfs = []
             for wf_id in wc_state["active_workflows"]:
+                print("Active:", wf_id)
                 if self.processes[wf_id]["pipe"].poll():
                     response = self.processes[wf_id]["pipe"].recv()
                     locations = response["locations"]
@@ -288,6 +291,7 @@ class Scheduler:
                         wc_state["queued_workflows"][wf_id]["hist"]["run_dir"] = str(
                             response["log_dir"]
                         )
+                        print("Removing from Queued:", wf_id)
                         del wc_state["queued_workflows"][wf_id]
                     else:
                         wc_state["queued_workflows"][wf_id]["step_index"] += 1
@@ -303,9 +307,6 @@ class Scheduler:
                     cleanup_wfs.append(wf_id)
             for wf_id in cleanup_wfs:
                 del wc_state["active_workflows"][wf_id]
-            for wf_id in wc_state["failed_workflows"]:
-                if wf_id in wc_state["incoming_workflows"]:
-                    del wc_state["incoming_workflows"][wf_id]
             self.redis_server.hset(
                 name="state", mapping={"wc_state": json.dumps(wc_state)}
             )
