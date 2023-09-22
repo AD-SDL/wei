@@ -31,7 +31,7 @@ minimal_state = {
 
 
 def init_logger(
-    experiment_path: Any, workflow_name: Any, run_id: Any
+    experiment_path: Union[str, Path], workflow_name: Any, run_id: Any
 ) -> Tuple[WEI_Logger, Path]:
     """Initialize a logger for a workflow run."""
     log_dir = Path(experiment_path) / "wei_runs" / (workflow_name + "_" + str(run_id))

@@ -12,7 +12,7 @@ def start_experiment(
     experiment_name,
     experiment_id: Optional[Union[ulid.ULID, str]] = None,
     kakfa_server: str = None,
-):
+) -> dict:
     """Create the files for logging and results of the system and log the start of the Experiment
 
 

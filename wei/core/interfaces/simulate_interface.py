@@ -21,8 +21,12 @@ def silent_callback(step: Step, **kwargs):
 
 
 class SimulateInterface(Interface):
+    """A simulated interface for testing WEI workflows"""
+
     def __init__(self):
+        """Initializes the simulated interface"""
         pass
 
     def send_action(step: Step, **kwargs):
+        """Pretends to execute a single step from a workflow, really just prints the step"""
         return silent_callback(step, **kwargs)
