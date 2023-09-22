@@ -1,12 +1,12 @@
 """
 REST-based node that interfaces with WEI and provides a USB camera interface
 """
+import json
 from contextlib import asynccontextmanager
+
 import cv2
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-import json
-
 
 workcell = None
 global state

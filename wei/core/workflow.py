@@ -1,7 +1,7 @@
-"""The module that initilizes and runs the step by step WEI workflow"""
+"""The module that initializes and runs the step by step WEI workflow"""
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 import ulid
@@ -19,7 +19,7 @@ class WorkflowRunner:
 
     def __init__(
         self,
-        workflow_def: [Dict[str, Any], Workflow],
+        workflow_def: Union[Dict[str, Any], Workflow],
         workcell: Workcell,
         experiment_path: str,
         payload,

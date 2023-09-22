@@ -2,16 +2,15 @@
 """Sealer Node"""
 
 
-import rclpy  # import Rospy
-from rclpy.node import Node  # import Rospy Node
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup
-from rclpy.executors import MultiThreadedExecutor, SingleThreadedExecutor
-from std_msgs.msg import String
-
-from wei_services.srv import WeiActions, WeiDescription
-
-from time import sleep
 import json
+from time import sleep
+
+import rclpy  # import Rospy
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node  # import Rospy Node
+from std_msgs.msg import String
+from wei_services.srv import WeiActions, WeiDescription
 
 
 class Example_Client(Node):
@@ -83,8 +82,9 @@ class Example_Client(Node):
 
     def stateCallback(self):
         """The state of the robot, can be ready, completed, busy, error"""
-        msg = String()
         self.state = "IDLE"
+        msg = String(self.state)
+        self.statePub.publish(msg)
 
     def descriptionCallback(self, request, response):
         """The descriptionCallback function is a service that can be called to showcase the available actions a robot
@@ -155,6 +155,7 @@ def main(args=None):
             example_client.destroy_node()
     finally:
         rclpy.shutdown()
+
 
 if __name__ == "__main__":
     main()

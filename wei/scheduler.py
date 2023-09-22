@@ -1,22 +1,39 @@
+"""
+Scheduler Class and associated helpers and data
+"""
+
 import json
 import multiprocessing as mpr
 import time
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
+from multiprocessing.connection import Connection
 from pathlib import Path
+from typing import Any, Tuple, Union
 
 import redis
 import yaml
 
-from wei.core.data_classes import Step
-from wei.core.data_classes import WorkcellData
+from wei.core.data_classes import Module, Step, WorkcellData
 from wei.core.events import Events
 from wei.core.interface import Interface_Map
 from wei.core.loggers import WEI_Logger
 from wei.core.step_executor import StepExecutor
 from wei.core.workflow import WorkflowRunner
 
+minimal_state = {
+    "locations": {},
+    "modules": {},
+    "active_workflows": {},
+    "queued_workflows": {},
+    "completed_workflows": {},
+    "failed_workflows": {},
+}
 
-def init_logger(experiment_path, workflow_name, run_id):
+
+def init_logger(
+    experiment_path: Any, workflow_name: Any, run_id: Any
+) -> Tuple[WEI_Logger, Path]:
+    """Initialize a logger for a workflow run."""
     log_dir = Path(experiment_path) / "wei_runs" / (workflow_name + "_" + str(run_id))
     result_dir = log_dir / "results"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -25,13 +42,16 @@ def init_logger(experiment_path, workflow_name, run_id):
     return logger, log_dir
 
 
-def find_module(workcell, module_name):
+def find_module(workcell: WorkcellData, module_name: str) -> Module:
+    """Find a module in a workcell by name."""
     for module in workcell.modules:
         if module.name == module_name:
             return module
+    raise Exception("Module not found: " + module_name)
 
 
-def check_step(exp_id, run_id, step, locations, wc_state):
+def check_step(exp_id, run_id, step: dict, locations: dict, wc_state: dict) -> bool:
+    """Check if a step is valid."""
     if "target" in locations:
         location = wc_state["locations"][locations["target"]]
         if not (location["state"] == "Empty") or not (
@@ -51,7 +71,17 @@ def check_step(exp_id, run_id, step, locations, wc_state):
     return True
 
 
-def run_step(exp_path, wf_name, wf_id, step, locations, module, pipe, executor):
+def run_step(
+    exp_path: Union[str, Path],
+    wf_name: Any,
+    wf_id: Any,
+    step: Step,
+    locations: dict,
+    module: Module,
+    pipe: Connection,
+    executor: StepExecutor,
+) -> None:
+    """Runs a single Step from a given workflow on a specified Module."""
     logger, log_dir = init_logger(exp_path, wf_name, wf_id)
     action_response, action_msg, action_log = executor.execute_step(
         step, module, logger=logger
@@ -70,7 +100,8 @@ def run_step(exp_path, wf_name, wf_id, step, locations, module, pipe, executor):
     )
 
 
-def parse_args():
+def parse_args() -> Namespace:
+    """Parse command line arguments."""
     parser = ArgumentParser()
     parser.add_argument("--workcell", type=Path, help="Path to workcell file")
     parser.add_argument(
@@ -94,18 +125,14 @@ def parse_args():
     return parser.parse_args()
 
 
-minimal_state = {
-    "locations": {},
-    "modules": {},
-    "active_workflows": {},
-    "queued_workflows": {},
-    "completed_workflows": {},
-    "failed_workflows": {},
-}
-
-
 class Scheduler:
+    """
+    Handles scheduling workflows and executing steps on the workcell.
+    Pops incoming workflows off a redis-based queue (a LIST) and executes them.
+    """
+
     def __init__(self):
+        """Initialize the scheduler."""
         self.events = {}
         self.executor = StepExecutor()
         self.workcell = {}
@@ -114,7 +141,8 @@ class Scheduler:
         self.kafka_server = ""
         self.log_server = ""
 
-    def run(self, args):  # noqa
+    def run(self, args: Namespace):  # noqa
+        """Run the scheduler, popping incoming workflows queued by the server and executing them."""
         self.events = {}
         self.executor = StepExecutor()
         self.workcell = WorkcellData.from_yaml(args.workcell)
@@ -199,7 +227,7 @@ class Scheduler:
                     exp_id = exp_data[-1]
                     exp_name = exp_data[0]
 
-                    # To ASK RAF: should I specify this some other way?
+                    # TODO ASK RAF: should this be specified some other way?
                     self.events[wf_id] = Events(
                         self.log_server,
                         "8000",

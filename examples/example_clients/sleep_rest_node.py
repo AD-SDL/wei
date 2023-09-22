@@ -1,12 +1,12 @@
 """
 REST-based node that interfaces with WEI and provides a simple Sleep(t) function
 """
-from contextlib import asynccontextmanager
 import json
 import time
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-
 
 workcell = None
 global state

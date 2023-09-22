@@ -1,4 +1,5 @@
 import yaml
+
 from test_base import TestWEI_Base
 from wei.core.data_classes import WorkcellData
 

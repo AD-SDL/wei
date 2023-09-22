@@ -168,14 +168,19 @@ async def process_job(
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
     job_id = ulid.new().str
-    redis_server.lpush("workflow_queue:incoming", json.dumps({
-        "wf_id": job_id,
-        "workflow_content": workflow_content_str,
-        "parsed_payload": parsed_payload,
-        "experiment_path": str(experiment_path),
-        "name": workflow_name,
-        "simulate": simulate,
-    }))
+    redis_server.lpush(
+        "workflow_queue:incoming",
+        json.dumps(
+            {
+                "wf_id": job_id,
+                "workflow_content": workflow_content_str,
+                "parsed_payload": parsed_payload,
+                "experiment_path": str(experiment_path),
+                "name": workflow_name,
+                "simulate": simulate,
+            }
+        ),
+    )
     logger.info("Queued: " + str(job_id))
     return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
 
