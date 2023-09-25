@@ -7,7 +7,10 @@ from wei.core.data_classes import Interface, Module, Step
 
 
 class ZmqInterface(Interface):
+    """Basic Interface for interacting with WEI modules using ZMQ"""
+
     def __init__(self):
+        """Initializes the ZMQ interface"""
         pass
 
     def send_action(step: Step, **kwargs):

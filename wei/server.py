@@ -18,7 +18,6 @@ from wei.core.workcell import Workcell
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
-# TODO consider sub-applications for different parts of the server (e.g. /job, /queue, /data, etc.)
 # TODO make the workcell live in the DATA_DIR and be coupled to the server
 #      This might entail making a rq object of the wei object and making that available to the workers
 
@@ -70,7 +69,7 @@ app = FastAPI(
 )
 
 
-def start_exp(experiment_id: str, experiment_name: str):
+def start_exp(experiment_id: str, experiment_name: str) -> JSONResponse:
     """Pulls an experiment and creates the files and logger for it
 
     Parameters
@@ -93,15 +92,6 @@ def start_exp(experiment_id: str, experiment_name: str):
     }
     try:
         exp_data = start_experiment(experiment_name, experiment_id, kafka_server)
-        # jobs_ahead = len(task_queue.jobs)
-        # response_content = {
-        #     "status": "success",
-        #     "exp_id": experiment_id,
-        #     "experiment_path"
-        #     "jobs_ahead": jobs_ahead,
-        #     "job_id": job.get_id(),
-        #     **base_response_content,
-        # }
         return JSONResponse(content=exp_data)
 
     except Exception as e:
@@ -114,8 +104,8 @@ def start_exp(experiment_id: str, experiment_name: str):
 
 
 @app.post("/exp/{experiment_id}/log")
-def log_experiment(experiment_path: str, log_value: str):
-    """Placeholder"""
+def log_experiment(experiment_path: str, log_value: str) -> None:
+    """Logs a value to the log file for a given experiment"""
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.split("_id_")[-1]
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
@@ -123,7 +113,8 @@ def log_experiment(experiment_path: str, log_value: str):
 
 
 @app.get("/exp/{experiment_id}/log")
-async def log_return(experiment_path: str):
+async def log_return(experiment_path: str) -> str:
+    """Returns the log for a given experiment"""
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.split("_")[-1]
     with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
@@ -136,7 +127,7 @@ async def process_job(
     payload: UploadFile = File(...),
     experiment_path: str = "",
     simulate: bool = False,
-):
+) -> JSONResponse:
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
     Parameters
     ----------
@@ -152,7 +143,7 @@ async def process_job(
     Returns
     -------
     response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+       a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
     log_dir = Path(experiment_path)
     experiment_id = log_dir.name.split("_")[-1]
@@ -168,20 +159,25 @@ async def process_job(
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
     job_id = ulid.new().str
-    redis_server.lpush("workflow_queue:incoming", json.dumps({
-        "wf_id": job_id,
-        "workflow_content": workflow_content_str,
-        "parsed_payload": parsed_payload,
-        "experiment_path": str(experiment_path),
-        "name": workflow_name,
-        "simulate": simulate,
-    }))
+    redis_server.lpush(
+        "workflow_queue:incoming",
+        json.dumps(
+            {
+                "wf_id": job_id,
+                "workflow_content": workflow_content_str,
+                "parsed_payload": parsed_payload,
+                "experiment_path": str(experiment_path),
+                "name": workflow_name,
+                "simulate": simulate,
+            }
+        ),
+    )
     logger.info("Queued: " + str(job_id))
     return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
 
 
 @app.post("/experiment")
-def process_exp(experiment_name: str, experiment_id: str):
+def process_exp(experiment_name: str, experiment_id: str) -> dict:
     """Pulls an experiment and creates the files and logger for it
 
     Parameters
@@ -189,11 +185,11 @@ def process_exp(experiment_name: str, experiment_id: str):
     experiment_name: str
         The human created name of the experiment
     experiment_id : str
-       The programatically generated id of the experiment for the workflow
+       The programmatically generated id of the experiment for the workflow
     Returns
     -------
      response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+       a dictionary including the successfulness of the queueing, the jobs ahead and the id
 
     """
 
@@ -204,13 +200,13 @@ def process_exp(experiment_name: str, experiment_id: str):
 
 
 @app.get("/job/{job_id}/state")
-async def get_job_status(job_id: str):
+async def get_job_status(job_id: str) -> JSONResponse:
     """Pulls the status of a job on the queue
 
     Parameters
     ----------
     job_id : str
-       The programatically generated id of the experiment for the workflow
+       The programmatically generated id of the experiment for the workflow
 
 
     Returns
@@ -238,7 +234,7 @@ async def get_job_status(job_id: str):
 
 
 @app.get("/job/{job_id}/log")
-async def log_job_return(job_id: str, experiment_path: str):
+async def log_job_return(job_id: str, experiment_path: str) -> str:
     """Parameters
     ----------
 
@@ -261,7 +257,7 @@ async def log_job_return(job_id: str, experiment_path: str):
 
 
 @app.get("/wc/state", response_class=HTMLResponse)
-def show():
+def show() -> JSONResponse:
     """
 
      Describes the state of the whole workcell including locations and daemon states
@@ -284,7 +280,7 @@ def show():
 
 
 @app.get("/wc/locations/all_states")
-def show_states():
+def show_states() -> JSONResponse:
     """
 
      Describes the state of the workcell locations
@@ -305,7 +301,7 @@ def show_states():
 
 
 @app.get("/wc/locations/{location}/state")
-def loc(location: str):
+def loc(location: str) -> JSONResponse:
     """
 
     Describes the state of the workcell locations
@@ -324,27 +320,27 @@ def loc(location: str):
     return JSONResponse(content={str(location): wc_state["locations"][location]})
 
 
-@app.get("/wc/modules/{module}/state")
-def mod(module: str):
+@app.get("/wc/modules/{module_name}/state")
+def mod(module_name: str) -> JSONResponse:
     """
-
-    Describes the state of the workcell locations
+    Gets the state of a given module
     Parameters
     ----------
-    None
+    module_name: the name of the module to get the state of
 
      Returns
     -------
      response: Dict
-       the state of the workcell locations, with the id of the run that last filled the location
+       the state of the requested module
     """
     global redis_server
     wc_state = json.loads(redis_server.hget("state", "wc_state"))
-    return JSONResponse(content={str(module): wc_state["modules"][module]})
+    return JSONResponse(content={str(module_name): wc_state["modules"][module_name]})
 
 
 @app.post("/wc/locations/{location}/set")
-async def update(location: str, experiment_id: str):
+async def update(location: str, experiment_id: str) -> JSONResponse:
+    """Manually update the state of a location in the workcell."""
     global redis_server
     wc_state = json.loads(redis_server.hget("state", "wc_state"))
 

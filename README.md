@@ -38,7 +38,7 @@ pip3 install -e .
 
 ### Starting the server
 
-1. Update the `folder` variable in `examples/run_wei_server.sh` to point to your WEI install
+1. Update the `folder` variable in `examples/run_wei_server_with_examples.sh` to point to your WEI install
 2. From a new terminal run
 
 ```

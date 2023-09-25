@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-from pathlib import Path
-from wei import Experiment
 import time
+from pathlib import Path
+
+from wei import Experiment
 
 
 def main():

@@ -1,14 +1,18 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import json
+from typing import Tuple
 
 from wei.core.data_classes import Interface, Module, Step
 
 
 class TcpInterface(Interface):
-    def __init__(self):
+    """Basic Interface for interacting with WEI modules using TCP"""
+
+    def __init__(self) -> None:
+        """Initializes the TCP interface"""
         pass
 
-    def send_action(step: Step, **kwargs):
+    def send_action(step: Step, **kwargs) -> Tuple[str, str, str]:
         """Executes a single step from a workflow using a TCP messaging framework
 
         Parameters
@@ -18,12 +22,12 @@ class TcpInterface(Interface):
 
         Returns
         -------
-        action_response: StepStatus
+        action_response: str
             A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
         action_msg: str
-            the data or informtaion returned from running the step.
+            the data or information returned from running the step.
         action_log: str
-            A record of the exeution of the step
+            A record of the execution of the step
 
         """
         import socket

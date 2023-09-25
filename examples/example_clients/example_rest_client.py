@@ -1,11 +1,9 @@
 """The server that takes incoming WEI flow requests from the experiment application"""
-import json
-from argparse import ArgumentParser
-from contextlib import asynccontextmanager
 import time
-from fastapi import FastAPI, File, Form, UploadFile
-from fastapi.responses import JSONResponse
+from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 workcell = None
 global state

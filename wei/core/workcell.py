@@ -3,8 +3,7 @@ import logging
 from typing import Any, Dict, Optional
 
 from wei.core import DATA_DIR
-from wei.core.data_classes import Module
-from wei.core.data_classes import WorkcellData
+from wei.core.data_classes import Module, WorkcellData
 from wei.core.loggers import WEI_Logger
 
 
