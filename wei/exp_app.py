@@ -6,7 +6,7 @@ from typing import Dict, Optional
 import requests
 import ulid
 
-from rpl_wei.core.events import Events
+from wei.core.events import Events
 
 
 class Experiment:
@@ -92,7 +92,7 @@ class Experiment:
            The JSON portion of the response from the server, including the ID of the job as job_id
         """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
-        url = f"{self.url}/job"
+        url = f"{self.url}/job/run"
         payload_path = Path("~/.wei/temp/payload.txt")
         with open(payload_path.expanduser(), "w") as f2:
             payload = json.dump(payload, f2)
@@ -112,6 +112,8 @@ class Experiment:
                     "payload": (str("payload_file.txt"), f2, "text"),
                 },
             )
+
+        print(response.json())
 
         return self._return_response(response)
 
@@ -133,7 +135,6 @@ class Experiment:
             params={
                 "experiment_id": self.experiment_id,
                 "experiment_name": self.experiment_name,
-                "kafka_server": self.kafka_server,
             },
         )
         self.experiment_path = response.json()["exp_dir"]
@@ -155,12 +156,12 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server"""
 
-        url = f"{self.url}/job/{job_id}"
+        url = f"{self.url}/job/{job_id}/state"
         response = requests.get(url)
 
         return self._return_response(response)
 
-    def get_log(self):
+    def get_job_log(self):
         """Returns the log for this experiment as a string
 
         Parameters

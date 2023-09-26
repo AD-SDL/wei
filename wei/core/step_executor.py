@@ -1,33 +1,9 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import logging
-from typing import Callable, List, Optional
+from typing import Optional
 
-from rpl_wei.core.data_classes import Module, Step, StepStatus
-from rpl_wei.core.interfaces.rest_interface import wei_rest_callback
-from rpl_wei.core.interfaces.ros2_interface import (
-    wei_ros2_camera_callback,
-    wei_ros2_service_callback,
-)
-from rpl_wei.core.interfaces.simulate_interface import silent_callback
-from rpl_wei.core.interfaces.tcp_interface import wei_tcp_callback
-from rpl_wei.core.interfaces.zmq_interface import wei_zmq_callback
-
-########################
-#   Executor mapping   #
-########################
-
-
-class Executor_Map:
-    """Mapping of YAML names to functions from interfaces"""
-
-    function = {
-        "wei_ros_node": wei_ros2_service_callback,
-        "wei_ros_camera": wei_ros2_camera_callback,
-        "wei_tcp_node": wei_tcp_callback,
-        "wei_rest_node": wei_rest_callback,
-        "wei_zmq_node": wei_zmq_callback,
-        "simulate_callback": silent_callback,
-    }
+from wei.core.data_classes import Module, Step, StepStatus
+from wei.core.interface import Interface_Map
 
 
 class StepExecutor:
@@ -37,9 +13,9 @@ class StepExecutor:
         self,
         step: Step,
         step_module: Module,
-        callbacks: Optional[List[Callable]] = None,
         logger: Optional[logging.Logger] = None,
         simulate: bool = False,
+        **kwargs,
     ) -> StepStatus:
         """Executes a single step from a workflow without making any message calls
 
@@ -59,7 +35,7 @@ class StepExecutor:
 
         """
         assert (
-            step_module.interface in Executor_Map.function
+            step_module.interface in Interface_Map.function
         ), f"Executor not found for {step_module.interface}"
 
         logger.info(f"Started running step with name: {step.name}")
@@ -67,13 +43,13 @@ class StepExecutor:
 
         # map the correct executor function to the step_module
         if simulate:
-            action_response, action_msg, action_log = Executor_Map.function[
+            action_response, action_msg, action_log = Interface_Map.function[
                 "simulate_callback"
-            ](step, step_module=step_module)
+            ].send_action(step, step_module=step_module)
         else:
-            action_response, action_msg, action_log = Executor_Map.function[
+            action_response, action_msg, action_log = Interface_Map.function[
                 step_module.interface
-            ](step, step_module=step_module)
+            ].send_action(step, step_module=step_module)
 
         logger.info(f"Finished running step with name: {step.name}")
 

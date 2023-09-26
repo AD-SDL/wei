@@ -1,7 +1,7 @@
 rpl\_wei.core.workflow
 ======================
 
-.. automodule:: rpl_wei.core.workflow
+.. automodule:: wei.core.workflow
 
    
    

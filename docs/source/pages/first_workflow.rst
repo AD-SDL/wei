@@ -4,12 +4,12 @@ Quickstart Guide
 Setting Up
 ----------
 
-#. To install the system and run the server, please follow the instructions `here <https://github.com/AD-SDL/rpl_wei#development-install>`_. 
+#. To install the system and run the server, please follow the instructions `here <https://github.com/AD-SDL/wei#development-install>`_. 
 
 Creating a Workflow
 -------------------
 
-Once you have the server up and running, it is time to define a Workflow! Workflows in ``rpl_wei`` are defined in YAML files. The structure of a workflow YAML file is as follows:
+Once you have the server up and running, it is time to define a Workflow! Workflows in ``wei`` are defined in YAML files. The structure of a workflow YAML file is as follows:
 
 - ``metadata``: Information about the workflow such as its name, author, version, and general info.
 - ``workcell``: The path to the workcell configuration file (another YAML file).
@@ -86,15 +86,15 @@ Here's a sample workflow YAML file:
 Running a Workflow
 ------------------
 
-To execute a workflow, you need to use the ``Experiment`` class from ``rpl_wei`` and provide the path to your 
-workflow file. This script is defined in rpl_wei/examples/run_example.py, and runs the workflow above while simulating communication with the real robots. 
+To execute a workflow, you need to use the ``Experiment`` class from ``wei`` and provide the path to your 
+workflow file. This script is defined in wei/examples/run_example.py, and runs the workflow above while simulating communication with the real robots. 
 
 .. code-block:: python
 
   #!/usr/bin/env python3
 
   from pathlib import Path
-  from rpl_wei import Experiment
+  from wei import Experiment
 
   def main():
       #The path to the Workflow definition yaml file
@@ -124,7 +124,7 @@ workflow file. This script is defined in rpl_wei/examples/run_example.py, and ru
 Workcell Configuration
 ----------------------
 
-The workcell file in ``rpl_wei`` describes the robotic system in the real world. It is referenced in the workflow file and provides configuration details about each module involved in a workflow. 
+The workcell file in ``wei`` describes the robotic system in the real world. It is referenced in the workflow file and provides configuration details about each module involved in a workflow. 
 
 The workcell file is organized into two main sections: 
 
@@ -180,10 +180,10 @@ Here's a sample excerpt from a workcell configuration file:
        config:
          ros_node: "/std_ns/pf400_camera_right"
 
-For more details on how to define a module and its positions, refer to the detailed ``rpl_wei`` documentation.
+For more details on how to define a module and its positions, refer to the detailed ``wei`` documentation.
 
 
 Next Steps
 ----------
 
-Congratulations, you've taken your first steps with ``rpl_wei``! More information to come soon!
+Congratulations, you've taken your first steps with ``wei``! More information to come soon!

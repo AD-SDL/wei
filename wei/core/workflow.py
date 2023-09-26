@@ -1,25 +1,28 @@
-"""The module that initilizes and runs the step by step WEI workflow"""
+"""The module that initializes and runs the step by step WEI workflow"""
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
+import requests
 import ulid
 from devtools import debug
 
-from rpl_wei.core.data_classes import Workflow as WorkflowData
-from rpl_wei.core.loggers import WEI_Logger
-from rpl_wei.core.step_executor import StepExecutor
-from rpl_wei.core.validators import ModuleValidator, StepValidator
-from rpl_wei.core.workcell import Workcell
+from wei.core.data_classes import Workflow
+from wei.core.loggers import WEI_Logger
+from wei.core.step_executor import StepExecutor
+from wei.core.validators import ModuleValidator, StepValidator
+from wei.core.workcell import Workcell
 
 
 class WorkflowRunner:
-    """Initilizes and runs the step by step WEI workflow"""
+    """Initializes and runs the step by step WEI workflow"""
 
     def __init__(
         self,
-        workflow_def: Dict[str, Any],
+        workflow_def: Union[Dict[str, Any], Workflow],
+        workcell: Workcell,
         experiment_path: str,
+        payload,
         run_id: Optional[ulid.ULID] = None,
         log_level: int = logging.INFO,
         simulate: bool = False,
@@ -29,7 +32,7 @@ class WorkflowRunner:
 
         Parameters
         ----------
-        workflow_def : Dict[str, Any]
+        workflow_def : [Dict[str, Any], Workflow]
            The list of workflow steps to complete
 
         experiment_path: str
@@ -48,11 +51,17 @@ class WorkflowRunner:
             Human-created name of the workflow
         """
 
-        self.workflow = WorkflowData(**workflow_def)
+        if type(workflow_def) is dict:
+            self.workflow = Workflow(**workflow_def)
+        elif type(workflow_def) is Workflow:
+            self.workflow = workflow_def
         self.simulate = simulate
         # Setup validators
         self.module_validator = ModuleValidator()
         self.step_validator = StepValidator()
+        path = Path(experiment_path)
+        self.experiment_id = path.name.split("_id_")[-1]
+        self.workcell = Workcell(workcell_def=workcell)
 
         # Setup executor
         self.executor = StepExecutor()
@@ -75,6 +84,10 @@ class WorkflowRunner:
             log_dir=self.log_dir,
             log_level=log_level,
         )
+        self.steps = self.init_flow(
+            self.workcell, None, payload=payload, simulate=simulate
+        )
+        self.hist = {}
 
     def check_modules(self):
         """Checks the modules required by the workflow"""
@@ -115,7 +128,9 @@ class WorkflowRunner:
 
         # Start executing the steps
         steps = []
+
         for step in self.workflow.flowdef:
+            arg_dict = {"locations": {}}
             # get module information from workcell file
             step_module = workcell.find_step_module(step.module)
             if not step_module:
@@ -132,7 +147,9 @@ class WorkflowRunner:
                 if step.module in workcell.locations.keys():
                     for key, value in step.args.items():
                         # if hasattr(value, "__contains__") and "positions" in value:
-                        if value in workcell.locations[step.module].keys():
+                        if str(value) in workcell.locations[step.module].keys():
+                            arg_dict["locations"][key] = value
+
                             step.args[key] = workcell.locations[step.module][value]
 
             # Inject the payload
@@ -158,13 +175,17 @@ class WorkflowRunner:
                     step.args[step_arg_key] = str(self.result_dir)
 
             # execute the step
-            arg_dict = {
-                "step": step,
-                "step_module": step_module,
-                "logger": self.logger,
-                "callbacks": callbacks,
-                "simulate": simulate,
-            }
+
+            arg_dict.update(
+                {
+                    "step": step,
+                    "step_module": step_module,
+                    "logger": self.logger,
+                    "callbacks": callbacks,
+                    "simulate": simulate,
+                }
+            )
+            print(arg_dict)
             steps.append(arg_dict)
         return steps
 
@@ -206,6 +227,20 @@ class WorkflowRunner:
                 "action_msg": str(action_msg),
                 "action_log": str(action_log),
             }
+            if "source" in step["locations"]:
+                url = (
+                    "http://localhost:8000/wc/locations/"
+                    + step["locations"]["source"]
+                    + "/set"
+                )
+                requests.post(url, params={"run_id": ""})
+            if "target" in step["locations"]:
+                url = (
+                    "http://localhost:8000/wc/locations/"
+                    + step["locations"]["target"]
+                    + "/set"
+                )
+                requests.post(url, params={"run_id": self.run_id})
         return {
             "run_dir": str(self.log_dir),
             "run_id": str(self.run_id),

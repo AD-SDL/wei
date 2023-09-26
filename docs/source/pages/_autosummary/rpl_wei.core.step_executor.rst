@@ -1,7 +1,7 @@
 rpl\_wei.core.step\_executor
 ============================
 
-.. automodule:: rpl_wei.core.step_executor
+.. automodule:: wei.core.step_executor
 
    
    

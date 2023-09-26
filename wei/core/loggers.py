@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from rpl_wei.core.data_classes import PathLike
+from wei.core.data_classes import PathLike
 
 
 class WEI_Logger:
@@ -30,7 +30,7 @@ class WEI_Logger:
         logger: Logger
              The logging object with the appropriate handlers
         """
-        
+
         if log_file is None:
             log_file = Path().resolve() / f"{logger_name}.log"
 
@@ -82,6 +82,7 @@ class WEI_Logger:
             while not (logger.handlers == []):
                 for handler in logger.handlers:
                     logger.removeHandler(handler)
+
             log_file = log_dir / f"{log_name}.log"
             log_file.parent.mkdir(parents=True, exist_ok=True)
             formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")

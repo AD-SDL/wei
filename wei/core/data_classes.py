@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from uuid import UUID, uuid4
 
-import ulid
 import yaml
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, validator
@@ -110,6 +109,8 @@ class Module(BaseModel):
     """Optional, if the robot supports positions we will use them"""
     tag: Optional[Tag]
     """Vision tag"""
+    workcell_coordinates: Optional[List]
+    """location in workcell"""
     id: UUID = Field(default_factory=uuid4)
     """Robot id"""
 
@@ -141,10 +142,30 @@ class SimpleModule(BaseModel):
 
 
 class Interface(BaseModel):
-    """standardizes communications with different damons"""
+    """standardizes communications with different daemons"""
 
     name: str
     """"""
+
+    def send_action():
+        """sends an action"""
+        print("Send Action not implemented")
+        return {}
+
+    def get_about():
+        """gets about information"""
+        print("Get About not implemented")
+        return {}
+
+    def get_state():
+        """gets the robot state"""
+        print("Get State not implemented")
+        return {}
+
+    def get_resources():
+        """gets the robot resources"""
+        print("Get Resources not implemented")
+        return {}
 
 
 class Step(BaseModel):
@@ -171,7 +192,7 @@ class Step(BaseModel):
     """Other steps required to be done before this can start"""
     priority: Optional[int]
     """For scheduling"""
-    id: ulid.ULID = Field(default_factory=ulid.new)
+    id: UUID = Field(default_factory=uuid4)
     """ID of step"""
     comment: Optional[str]
     """Notes about step"""
@@ -187,9 +208,11 @@ class Step(BaseModel):
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
                 if arg_path.exists():
-                    yaml.safe_load(arg_path.open("r"))
-                    v[key] = yaml.safe_load(arg_path.open("r"))
-
+                    try:
+                        yaml.safe_load(arg_path.open("r"))
+                        v[key] = yaml.safe_load(arg_path.open("r"))
+                    except IsADirectoryError:
+                        pass
             except TypeError:  # Is not a file
                 pass
 
@@ -207,7 +230,7 @@ class Metadata(BaseModel):
     """Version of interface used"""
 
 
-class Workcell(BaseModel):
+class WorkcellData(BaseModel):
     """Container for information in a workcell"""
 
     name: str

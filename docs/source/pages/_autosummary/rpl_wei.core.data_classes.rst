@@ -1,7 +1,7 @@
 rpl\_wei.core.data\_classes
 ===========================
 
-.. automodule:: rpl_wei.core.data_classes
+.. automodule:: wei.core.data_classes
 
    
    

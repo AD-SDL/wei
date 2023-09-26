@@ -1,7 +1,7 @@
 rpl\_wei.core.events
 ====================
 
-.. automodule:: rpl_wei.core.events
+.. automodule:: wei.core.events
 
    
    

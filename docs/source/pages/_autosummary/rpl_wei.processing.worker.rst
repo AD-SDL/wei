@@ -1,7 +1,7 @@
 rpl\_wei.processing.worker
 ==========================
 
-.. automodule:: rpl_wei.processing.worker
+.. automodule:: wei.processing.worker
 
    
    

@@ -1,7 +1,7 @@
 rpl\_wei.core.loggers
 =====================
 
-.. automodule:: rpl_wei.core.loggers
+.. automodule:: wei.core.loggers
 
    
    

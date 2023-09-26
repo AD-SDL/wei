@@ -1,7 +1,7 @@
 rpl\_wei.core.interfaces.ros2\_interface
 ========================================
 
-.. automodule:: rpl_wei.core.interfaces.ros2_interface
+.. automodule:: wei.core.interfaces.ros2_interface
 
    
    

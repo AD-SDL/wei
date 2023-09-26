@@ -1,7 +1,7 @@
 rpl\_wei.core.interfaces.zmq\_interface
 =======================================
 
-.. automodule:: rpl_wei.core.interfaces.zmq_interface
+.. automodule:: wei.core.interfaces.zmq_interface
 
    
    

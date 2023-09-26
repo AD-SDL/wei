@@ -1,7 +1,7 @@
 rpl\_wei.core.interface
 =======================
 
-.. automodule:: rpl_wei.core.interface
+.. automodule:: wei.core.interface
 
    
    
