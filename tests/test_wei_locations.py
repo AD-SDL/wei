@@ -1,6 +1,6 @@
 import yaml
-
 from test_base import TestWEI_Base
+
 from wei.core.data_classes import WorkcellData
 
 
@@ -8,8 +8,8 @@ class TestWEI_Locations(TestWEI_Base):
     def test_workflow_replace_locations(self):
         from pathlib import Path
 
-        from wei.core.workflow import WorkflowRunner
         from wei.core.workcell import Workcell
+        from wei.core.workflow import WorkflowRunner
 
         workcell_config_path = Path("tests/test_workcell.yaml")
         workcell_def = yaml.safe_load(workcell_config_path.read_text())

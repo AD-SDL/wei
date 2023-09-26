@@ -10,7 +10,6 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, Tuple, Union
 
-import redis
 import yaml
 
 from wei.core.data_classes import Module, Step, WorkcellData
@@ -19,15 +18,7 @@ from wei.core.interface import Interface_Map
 from wei.core.loggers import WEI_Logger
 from wei.core.step_executor import StepExecutor
 from wei.core.workflow import WorkflowRunner
-
-minimal_state = {
-    "locations": {},
-    "modules": {},
-    "active_workflows": {},
-    "queued_workflows": {},
-    "completed_workflows": {},
-    "failed_workflows": {},
-}
+from wei.state_manager import StateManager
 
 
 def init_logger(
@@ -50,20 +41,22 @@ def find_module(workcell: WorkcellData, module_name: str) -> Module:
     raise Exception("Module not found: " + module_name)
 
 
-def check_step(exp_id, run_id, step: dict, locations: dict, wc_state: dict) -> bool:
+def check_step(
+    exp_id, run_id, step: dict, locations: dict, state: StateManager
+) -> bool:
     """Check if a step is valid."""
     if "target" in locations:
-        location = wc_state["locations"][locations["target"]]
+        location = state.locations[locations["target"]]
         if not (location["state"] == "Empty") or not (
             (len(location["queue"]) > 0 and location["queue"][0] == str(run_id))
         ):
             return False
 
     if "source" in locations:
-        location = wc_state["locations"][locations["source"]]
+        location = state.locations[locations["source"]]
         if not (location["state"] == str(exp_id)):
             return False
-    module_data = wc_state["modules"][step["module"]]
+    module_data = state.modules[step["module"]]
     if not ("BUSY" in module_data["state"]) and not (
         (len(module_data["queue"]) > 0 and module_data["queue"][0] == str(run_id))
     ):
@@ -122,6 +115,18 @@ def parse_args() -> Namespace:
         help="url (no port) for log server",
         default="localhost",
     )
+    parser.add_argument(
+        "--reset_locations",
+        type=bool,
+        help="Reset locations on startup",
+        default=False,
+    )
+    parser.add_argument(
+        "--update_interval",
+        type=float,
+        help="Time between state updates",
+        default=1.0,
+    )
     return parser.parse_args()
 
 
@@ -137,7 +142,7 @@ class Scheduler:
         self.executor = StepExecutor()
         self.workcell = {}
         self.processes = {}
-        self.redis_server = {}
+        self.state = None
         self.kafka_server = ""
         self.log_server = ""
 
@@ -147,198 +152,228 @@ class Scheduler:
         self.executor = StepExecutor()
         self.workcell = WorkcellData.from_yaml(args.workcell)
         self.processes = {}
-        self.redis_server = redis.Redis(
-            host=args.redis_host, port=6379, decode_responses=True
+        self.state = StateManager(
+            workcell_name=self.workcell.name,
+            redis_host=args.redis_host,
+            redis_port=6379,
         )
         self.kafka_server = args.kafka_server
         self.log_server = args.server
-        wc_state = minimal_state
-        for module in self.workcell.modules:
-            if module.workcell_coordinates:
-                wc_coords = module.workcell_coordinates
-            else:
-                wc_coords = None
-            wc_state["modules"][module.name] = {
-                "type": module.model,
-                "id": str(module.id),
-                "state": "INIT",
-                "queue": [],
-                "location": wc_coords,
-            }
-        for module in self.workcell.locations:
-            for location in self.workcell.locations[module]:
-                if location not in wc_state["locations"]:
-                    wc_state["locations"][location] = {"state": "Empty", "queue": []}
-        self.redis_server.hset(name="state", mapping={"wc_state": json.dumps(wc_state)})
-        self.redis_server.delete("workflow_queue:incoming")
+        self.state.clear_state(reset_locations=args.reset_locations)
+        with self.state.state_lock():
+            for module in self.workcell.modules:
+                if module.workcell_coordinates:
+                    wc_coords = module.workcell_coordinates
+                else:
+                    wc_coords = None
+                self.state.modules[module.name] = {
+                    "type": module.model,
+                    "id": str(module.id),
+                    "state": "INIT",
+                    "queue": [],
+                    "location": wc_coords,
+                }
+            for module_name in self.workcell.locations:
+                for location in self.workcell.locations[module_name]:
+                    if location not in self.state.locations:
+                        self.state.locations[location] = {
+                            "state": "Empty",
+                            "queue": [],
+                        }
         print("Starting Process")
         while True:
-            wc_state = json.loads(self.redis_server.hget("state", "wc_state"))
-            for module in self.workcell.modules:
-                first = False
-                if wc_state["modules"][module.name]["state"] == "INIT":
-                    first = True
-                # TODO: if not get_state: raise unknown
-                if module.interface in Interface_Map.function:
-                    try:
-                        interface = Interface_Map.function[module.interface]
-                        state = interface.get_state(module.config)
-
-                        if not (state == ""):
-                            wc_state["modules"][module.name]["state"] = state
-                        if first:
-                            print("Module Found: " + str(module.name))
-                    except Exception as e:  # noqa
-                        wc_state["modules"][module.name]["state"] = "UNKNOWN"
-                        if first:
-                            print(e)
-                            print("Can't Find Module: " + str(module.name))
-                else:
-                    if first:
-                        print("No Module Interface for Module", str(module.name))
-                    pass
-            while True:
-                wf_data = self.redis_server.rpop("workflow_queue:incoming")
-                if wf_data is None:
-                    break
-                wf_data = json.loads(wf_data)
-                wf_id = wf_data["wf_id"]
-                try:
-                    workflow_runner = WorkflowRunner(
-                        workflow_def=yaml.safe_load(wf_data["workflow_content"]),
-                        workcell=self.workcell,
-                        payload=wf_data["parsed_payload"],
-                        experiment_path=wf_data["experiment_path"],
-                        run_id=wf_id,
-                        simulate=wf_data["simulate"],
-                        workflow_name=wf_data["name"],
+            with self.state.state_lock():  # * Lock the state for the duration of the update loop
+                for module in self.workcell.modules:
+                    self.state.update_module(
+                        module.name, self.update_module_state, module
                     )
-
-                    flowdef = []
-
-                    for step in workflow_runner.steps:
-                        flowdef.append(
-                            {
-                                "step": json.loads(step["step"].json()),
-                                "locations": step["locations"],
-                            }
-                        )
-                    exp_data = Path(wf_data["experiment_path"]).name.split("_id_")
-                    exp_id = exp_data[-1]
-                    exp_name = exp_data[0]
-
-                    # TODO ASK RAF: should this be specified some other way?
-                    self.events[wf_id] = Events(
-                        self.log_server,
-                        "8000",
-                        exp_name,
-                        exp_id,
-                        self.kafka_server,
-                        wf_data["experiment_path"],
-                    )
-                    self.events[wf_id].log_wf_start(wf_data["name"], wf_id)
-
-                    to_queue_wf = {
+                # * Work through all incoming workflows, converting them into properly formatted
+                # * workflows and adding them to the state
+                while True:
+                    if self.state.incoming_workflows.empty():
+                        break
+                    wf_data = self.state.incoming_workflows.get()
+                    wf_id = wf_data["wf_id"]
+                    wf = {
                         "name": wf_data["name"],
                         "step_index": 0,
-                        "flowdef": flowdef,
-                        "experiment_id": exp_id,
                         "experiment_path": wf_data["experiment_path"],
                         "hist": {},
+                        "status": "queued",
+                        "result": {},
                     }
-                    wc_state["queued_workflows"][wf_id] = to_queue_wf
-                    if "target" in flowdef[0]["locations"]:
-                        wc_state["locations"][flowdef[0]["locations"]["target"]][
-                            "queue"
-                        ].append(wf_id)
-                    wc_state["modules"][flowdef[0]["step"]["module"]]["queue"].append(
-                        wf_id
+                    try:
+                        workflow_runner = WorkflowRunner(
+                            workflow_def=yaml.safe_load(wf_data["workflow_content"]),
+                            workcell=self.workcell,
+                            payload=wf_data["parsed_payload"],
+                            experiment_path=wf_data["experiment_path"],
+                            run_id=wf_id,
+                            simulate=wf_data["simulate"],
+                            workflow_name=wf_data["name"],
+                        )
+
+                        flowdef = []
+
+                        for step in workflow_runner.steps:
+                            flowdef.append(
+                                {
+                                    "step": json.loads(step["step"].json()),
+                                    "locations": step["locations"],
+                                }
+                            )
+                        wf["flowdef"] = flowdef
+                        exp_data = Path(wf_data["experiment_path"]).name.split("_id_")
+                        exp_id = exp_data[-1]
+                        wf["experiment_id"] = exp_id
+                        exp_name = exp_data[0]
+
+                        # TODO ASK RAF: should this be specified some other way?
+                        self.events[wf_id] = Events(
+                            self.log_server,
+                            "8000",
+                            exp_name,
+                            exp_id,
+                            self.kafka_server,
+                            wf_data["experiment_path"],
+                        )
+                        self.events[wf_id].log_wf_start(wf_data["name"], wf_id)
+
+                        self.state.workflows[wf_id] = wf
+                        self.update_source_and_target(wf, wf_id)
+                    except Exception as e:  # noqa
+                        print(e)
+                        wf["status"] = {"Error": str(e)}
+                        self.state.workflows[wf_id] = wf
+                # * Update all queued workflows
+                for wf_id in self.state.workflows.keys():
+                    self.state.update_workflow(
+                        wf_id, self.update_queued_workflow, wf_id
                     )
-                except Exception as e:
+            time.sleep(args.update_interval)
+
+    def update_module_state(self, module: dict, workcell_module: Module) -> dict:
+        """Initialize a module."""
+        module_name = workcell_module.name
+        if workcell_module.interface in Interface_Map.function:
+            try:
+                interface = Interface_Map.function[workcell_module.interface]
+                state = interface.get_state(workcell_module.config)
+
+                if not (state == ""):
+                    if module["state"] == "INIT":
+                        print("Module Found: " + str(module_name))
+                    module["state"] = state
+                    self.state.modules[module_name] = module
+                else:
+                    module["state"] = "UNKNOWN"
+            except Exception as e:  # noqa
+                if module["state"] == "INIT":
                     print(e)
-                    wc_state["failed_workflows"][wf_id] = {"Error": str(e)}
-            for wf_id in wc_state["queued_workflows"]:
-                print("Queued:", wf_id)
-                wf = wc_state["queued_workflows"][wf_id]
-                step_index = wf["step_index"]
-                step = wf["flowdef"][step_index]["step"]
-                locations = wf["flowdef"][step_index]["locations"]
-                exp_id = Path(wf["experiment_path"]).name.split("_id_")[-1]
-                if check_step(exp_id, wf_id, step, locations, wc_state) and not (
-                    wf_id in wc_state["active_workflows"]
-                ):
-                    send_conn, rec_conn = mpr.Pipe()
-                    module = find_module(self.workcell, step["module"])
-                    step_process = mpr.Process(
-                        target=run_step,
-                        args=(
-                            wf["experiment_path"],
-                            wf["name"],
-                            wf_id,
-                            Step(**step),
-                            locations,
-                            module,
-                            send_conn,
-                            self.executor,
-                        ),
-                    )
-                    step_process.start()
-                    self.processes[wf_id] = {"process": step_process, "pipe": rec_conn}
-                    wc_state["active_workflows"][wf_id] = wf
-            cleanup_wfs = []
-            for wf_id in wc_state["active_workflows"]:
-                print("Active:", wf_id)
-                if self.processes[wf_id]["pipe"].poll():
-                    response = self.processes[wf_id]["pipe"].recv()
-                    locations = response["locations"]
-                    step = response["step"]
-                    if "target" in locations:
-                        wc_state["locations"][locations["target"]]["state"] = wf[
-                            "experiment_id"
-                        ]
-                        wc_state["locations"][locations["target"]]["queue"].remove(
-                            wf_id
-                        )
-                    if "source" in locations:
-                        wc_state["locations"][locations["source"]]["state"] = "Empty"
-                    wc_state["modules"][step.module]["queue"].remove(wf_id)
-                    wc_state["queued_workflows"][wf_id]["hist"][step.name] = response[
-                        "step_response"
+                    print("Can't Find Module: " + str(module_name))
+                self.state.modules[module_name] = module
+        else:
+            if self.state.modules[module_name]["state"] == "INIT":
+                print("No Module Interface for Module", str(module_name))
+            pass
+        return module
+
+    def update_queued_workflow(self, wf: dict, wf_id: str) -> None:
+        """
+        Updates state based on the given workflow and prior state.
+        """
+        if wf["status"] == "queued":
+            step_index = wf["step_index"]
+            step = wf["flowdef"][step_index]["step"]
+            locations = wf["flowdef"][step_index]["locations"]
+            exp_id = Path(wf["experiment_path"]).name.split("_id_")[-1]
+            if check_step(exp_id, wf_id, step, locations, self.state):
+                send_conn, rec_conn = mpr.Pipe()
+                module = find_module(self.workcell, step["module"])
+                step_process = mpr.Process(
+                    target=run_step,
+                    args=(
+                        wf["experiment_path"],
+                        wf["name"],
+                        wf_id,
+                        Step(**step),
+                        locations,
+                        module,
+                        send_conn,
+                        self.executor,
+                    ),
+                )
+                step_process.start()
+                self.processes[wf_id] = {
+                    "process": step_process,
+                    "pipe": rec_conn,
+                }
+                wf["status"] = "running"
+            return wf
+        if wf["status"] == "running":
+            if self.processes[wf_id]["pipe"].poll():
+                response = self.processes[wf_id]["pipe"].recv()
+                locations = response["locations"]
+                step = response["step"]
+                if "target" in locations:
+                    self.state.locations[locations["target"]]["state"] = wf[
+                        "experiment_id"
                     ]
-                    step_index = wc_state["queued_workflows"][wf_id]["step_index"]
-                    if step_index + 1 == len(
-                        wc_state["queued_workflows"][wf_id]["flowdef"]
-                    ):
-                        self.events[wf_id].log_wf_end(
-                            wc_state["queued_workflows"][wf_id]["name"], wf_id
-                        )
-                        del self.events[wf_id]
-                        wc_state["completed_workflows"][wf_id] = wc_state[
-                            "queued_workflows"
-                        ][wf_id]
-                        wc_state["queued_workflows"][wf_id]["hist"]["run_dir"] = str(
-                            response["log_dir"]
-                        )
-                        print("Removing from Queued:", wf_id)
-                        del wc_state["queued_workflows"][wf_id]
-                    else:
-                        wc_state["queued_workflows"][wf_id]["step_index"] += 1
-                        step_index = wc_state["queued_workflows"][wf_id]["step_index"]
-                        flowdef = wc_state["queued_workflows"][wf_id]["flowdef"]
-                        if "target" in flowdef[step_index]["locations"]:
-                            wc_state["locations"][
-                                flowdef[step_index]["locations"]["target"]
-                            ]["queue"].append(wf_id)
-                        wc_state["modules"][flowdef[step_index]["step"]["module"]][
-                            "queue"
-                        ].append(wf_id)
-                    cleanup_wfs.append(wf_id)
-            for wf_id in cleanup_wfs:
-                del wc_state["active_workflows"][wf_id]
-            self.redis_server.hset(
-                name="state", mapping={"wc_state": json.dumps(wc_state)}
+                    self.state.locations[locations["target"]]["queue"].remove(wf_id)
+                if "source" in locations:
+                    self.state.locations[locations["source"]]["state"] = "Empty"
+                self.state.modules[step.module]["queue"].remove(wf_id)
+                wf["hist"][step.name] = response["step_response"]
+                step_index = wf["step_index"]
+                if step_index + 1 == len(wf["flowdef"]):
+                    self.events[wf_id].log_wf_end(wf["name"], wf_id)
+                    del self.events[wf_id]
+                    wf["status"] = "completed"
+                    wf["hist"]["run_dir"] = str(response["log_dir"])
+                else:
+                    wf["step_index"] += 1
+                    self.update_source_and_target(wf, wf_id)
+        return wf
+
+    def update_source_and_target(self, wf, wf_id: str) -> None:
+        """Update the source and target location and module of a workflow."""
+        step_index = wf["step_index"]
+        flowdef = wf["flowdef"]
+
+        # Define some helper functions to update the "queue" properties of modules and locations
+        def remove_element_from_queue(object, element):
+            try:
+                object["queue"].remove(element)
+            except ValueError:
+                pass
+            return object
+
+        def append_element_to_queue(object, element):
+            object["queue"].append(element)
+            return object
+
+        if "source" in flowdef[step_index]["locations"]:
+            self.state.update_location(
+                flowdef[step_index]["locations"]["source"],
+                remove_element_from_queue,
+                wf_id,
             )
-            time.sleep(0.3)
+        if "target" in flowdef[step_index]["locations"]:
+            self.state.update_location(
+                flowdef[step_index]["locations"]["target"],
+                append_element_to_queue,
+                wf_id,
+            )
+
+        if step_index > 0:
+            self.state.update_module(
+                flowdef[step_index - 1]["step"]["module"],
+                remove_element_from_queue,
+                wf_id,
+            )
+        self.state.update_module(
+            flowdef[step_index]["step"]["module"], append_element_to_queue, wf_id
+        )
 
 
 if __name__ == "__main__":

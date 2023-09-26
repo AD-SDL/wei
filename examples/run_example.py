@@ -14,7 +14,7 @@ def main():
     # This initilizes the connection to the server and the logs for this run of the program.
     exp.register_exp()
     # This runs the simulated_workflow a simulated workflow
-    flow_info = exp.run_job(wf_path.resolve(), simulate=False)
+    flow_info = exp.run_job(wf_path.resolve(), simulate=True)
     print(flow_info)
     # This checks the state of the experiment in the queue
     flow_status = exp.query_job(flow_info["job_id"])

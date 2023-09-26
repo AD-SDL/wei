@@ -11,3 +11,4 @@ ulid-py==1.1.0
 pyzmq==25.1.1
 numpy==1.21.6
 opencv-python-headless==4.8.0.76
+pottery==3.0.0
