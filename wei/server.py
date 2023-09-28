@@ -11,6 +11,7 @@ import yaml
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from wei.core.data_classes import ExperimentStatus, WorkflowStatus
 from wei.core.experiment import start_experiment
 from wei.core.loggers import WEI_Logger
 from wei.core.workcell import Workcell
@@ -91,6 +92,7 @@ def start_exp(experiment_id: str, experiment_name: str) -> JSONResponse:
     base_response_content = {
         "experiment_id": experiment_id,
         "experiment_name": experiment_name,
+        "status": ExperimentStatus.CREATED,
     }
     try:
         exp_data = start_experiment(experiment_name, experiment_id, kafka_server)
@@ -98,7 +100,7 @@ def start_exp(experiment_id: str, experiment_name: str) -> JSONResponse:
 
     except Exception as e:
         response_content = {
-            "status": "failed",
+            "status": ExperimentStatus.FAILED,
             "error": str(e),
             **base_response_content,
         }
@@ -172,7 +174,7 @@ async def process_job(
         }
     )
     logger.info("Queued: " + str(job_id))
-    return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
+    return JSONResponse(content={"status": WorkflowStatus.QUEUED, "job_id": job_id})
 
 
 @app.post("/experiment")
@@ -223,7 +225,7 @@ async def get_job_status(job_id: str) -> JSONResponse:
             }
         )
     except KeyError:
-        return JSONResponse(content={"status": "not found"})
+        return JSONResponse(content={"status": WorkflowStatus.UNKNOWN})
 
 
 @app.get("/job/{job_id}/log")
@@ -390,7 +392,10 @@ async def clear_workflows() -> JSONResponse:
     global state_manager
     with state_manager.state_lock():
         for wf_id, workflow in state_manager.workflows:
-            if workflow["status"] == "completed" or workflow["status"] == "failed":
+            if (
+                workflow["status"] == WorkflowStatus.COMPLETED
+                or workflow["status"] == WorkflowStatus.FAILED
+            ):
                 del state_manager.workflows[wf_id]
         return JSONResponse(
             content={"Workflows": str(state_manager.workflows.to_dict())}

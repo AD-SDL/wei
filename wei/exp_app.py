@@ -113,7 +113,7 @@ class Experiment:
                 },
             )
 
-        print(response.json())
+        # print(response.json())
 
         return self._return_response(response)
 

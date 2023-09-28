@@ -243,6 +243,16 @@ class WorkcellData(BaseModel):
     """Locations used by the workcell"""
 
 
+class WorkflowStatus(str, Enum):
+    """Status for a workflow"""
+
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    UNKNOWN = "unknown"
+
+
 class Workflow(BaseModel):
     """Grand container that pulls all info of a workflow together"""
 
@@ -256,9 +266,13 @@ class Workflow(BaseModel):
     """Information about the flow"""
     payload: Optional[Dict]
     """input information for a given workflow run"""
+    status: Optional[WorkflowStatus]
+    """current status of the workflow"""
+    result: Optional[Dict]
+    """result from the Workflow"""
 
 
-class StepStatus(Enum):
+class StepStatus(str, Enum):
     """Status for a step of a workflow"""
 
     IDLE = "idle"
@@ -267,10 +281,17 @@ class StepStatus(Enum):
     FAILED = "failed"
 
 
-class NodeStatus(Enum):
+class NodeStatus(str, Enum):
     """Status for the state of a Node"""
 
     IDLE = "idle"
     BUSY = "busy"
     ERROR = "error"
     UNKNOWN = "unknown"
+
+
+class ExperimentStatus(str, Enum):
+    """Status for an experiment"""
+
+    FAILED = "failed"
+    CREATED = "created"

@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 from wei import Experiment
+from wei.core.data_classes import WorkflowStatus
 
 
 def main():
@@ -21,7 +22,7 @@ def main():
     # This will print out the queued job
     print(flow_status)
     # This will wait until the flow has run and then print out the final result of the flow
-    while flow_status["status"] != "finished":
+    while flow_status["status"] != WorkflowStatus.COMPLETED:
         print(flow_status)
         time.sleep(1)
         flow_status = exp.query_job(flow_info["job_id"])

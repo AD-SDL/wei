@@ -4,7 +4,7 @@ Quickstart Guide
 Setting Up
 ----------
 
-#. To install the system and run the server, please follow the instructions `here <https://github.com/AD-SDL/wei#development-install>`_. 
+#. To install the system and run the server, please follow the instructions `here <https://github.com/AD-SDL/wei#development-install>`_.
 
 Creating a Workflow
 -------------------
@@ -44,14 +44,14 @@ Here's a sample workflow YAML file:
       module: sciclops
     #This tells the module which action in its library to run, in this case grabbing a wellplate from one of the storage tower
       command: get_plate
-    #These arguments specify the parameters for the action above, in this case, which tower the arm will pull a plate from. 
+    #These arguments specify the parameters for the action above, in this case, which tower the arm will pull a plate from.
       args:
         loc: "tower1"
     #This represents checks that will take place before the system runs, in this case, there are none specified
       checks: null
     #This is a place for additional notes
       comment: Stage pcr plates
-    
+
     - name: PF400 Moves plate from Sciclops to OT2
       module: pf400
       command: transfer
@@ -70,7 +70,7 @@ Here's a sample workflow YAML file:
         config_path: tests/test_ot2_protocol.yaml
       checks: RESOURCE_CHECK
       comment: Run a protocol on the OT2
-  
+
     - name: Move the plate from OT2 to Sciclops
       module: pf400
       command: transfer
@@ -86,8 +86,8 @@ Here's a sample workflow YAML file:
 Running a Workflow
 ------------------
 
-To execute a workflow, you need to use the ``Experiment`` class from ``wei`` and provide the path to your 
-workflow file. This script is defined in wei/examples/run_example.py, and runs the workflow above while simulating communication with the real robots. 
+To execute a workflow, you need to use the ``Experiment`` class from ``wei`` and provide the path to your
+workflow file. This script is defined in wei/examples/run_example.py, and runs the workflow above while simulating communication with the real robots.
 
 .. code-block:: python
 
@@ -95,13 +95,14 @@ workflow file. This script is defined in wei/examples/run_example.py, and runs t
 
   from pathlib import Path
   from wei import Experiment
+  from wei.core.data_classes import WorkflowStatus
 
   def main():
       #The path to the Workflow definition yaml file
       wf_path = Path('../tests/test_workflow.yaml')
       #This defines the Experiment object that will communicate with the server for workflows
       exp = Experiment('127.0.0.1', '8000', 'Example Program')
-      #This initilizes the connection to the server and the logs for this run of the program. 
+      #This initilizes the connection to the server and the logs for this run of the program.
       exp.register_exp()
       #This runs the simulated_workflow a simulated workflow
       flow_info = exp.run_job(wf_path.resolve(), simulate=True)
@@ -111,24 +112,24 @@ workflow file. This script is defined in wei/examples/run_example.py, and runs t
       #This will print out the queued job
       print(flow_status)
       #This will wait until the flow has run and then print out the final result of the flow
-      while flow_status["status"] != "finished":
+      while flow_status["status"] != WorkflowStatus.COMPLETED:
       flow_status = exp.query_job(flow_info['job_id'])
       print(flow_status)
 
   if __name__ == "__main__":
       main()
 
-  
+
 
 
 Workcell Configuration
 ----------------------
 
-The workcell file in ``wei`` describes the robotic system in the real world. It is referenced in the workflow file and provides configuration details about each module involved in a workflow. 
+The workcell file in ``wei`` describes the robotic system in the real world. It is referenced in the workflow file and provides configuration details about each module involved in a workflow.
 
-The workcell file is organized into two main sections: 
+The workcell file is organized into two main sections:
 
-1. ``config``: Contains configuration settings for the workcell. 
+1. ``config``: Contains configuration settings for the workcell.
 2. ``modules``: Describes the list of modules available in the workcell, including their names, types, configurations, and positions.
 
 Workcell Configuration (`config`)

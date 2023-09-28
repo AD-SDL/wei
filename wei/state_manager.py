@@ -22,19 +22,21 @@ class StateManager:
         Initialize a StateManager for a given workcell.
         """
         self.workcell_name = workcell_name
-        self.prefix = f"wei:{workcell_name}"
-        self.redis_server = redis.Redis(
+        self._prefix = f"wei:{workcell_name}"
+        self._redis_server = redis.Redis(
             host=redis_host, port=redis_port, decode_responses=True
         )
         self.locations = RedisDict(
-            key=f"{self.prefix}:locations", redis=self.redis_server
+            key=f"{self._prefix}:locations", redis=self._redis_server
         )
-        self.modules = RedisDict(key=f"{self.prefix}:modules", redis=self.redis_server)
+        self.modules = RedisDict(
+            key=f"{self._prefix}:modules", redis=self._redis_server
+        )
         self.workflows = RedisDict(
-            key=f"{self.prefix}:workflows", redis=self.redis_server
+            key=f"{self._prefix}:workflows", redis=self._redis_server
         )
         self.incoming_workflows = RedisSimpleQueue(
-            key=f"{self.prefix}:incoming_workflows", redis=self.redis_server
+            key=f"{self._prefix}:incoming_workflows", redis=self._redis_server
         )
 
     def get_state(self) -> dict:
@@ -53,7 +55,7 @@ class StateManager:
         Gets a lock on the state. This should be called before any state updates are made,
         or where we don't want the state to be changing underneath us (i.e., in the scheduler).
         """
-        return Redlock(key=f"{self.prefix}:state", masters={self.redis_server})
+        return Redlock(key=f"{self._prefix}:state", masters={self._redis_server})
 
     def is_state_locked(self) -> bool:
         """
@@ -65,10 +67,10 @@ class StateManager:
         """
         Clears the state of the workcell, optionally leaving the locations state intact.
         """
-        self.modules.clear()
+        self.modules.update({})
         if reset_locations:
-            self.locations.clear()
-        self.workflows.clear()
+            self.locations.update({})
+        self.workflows.update({})
         self.incoming_workflows.clear()
 
     def update_workflow(self, wf_id: str, func: Callable, *args) -> None:

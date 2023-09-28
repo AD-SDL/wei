@@ -12,7 +12,7 @@ from typing import Any, Tuple, Union
 
 import yaml
 
-from wei.core.data_classes import Module, Step, WorkcellData
+from wei.core.data_classes import Module, Step, WorkcellData, WorkflowStatus
 from wei.core.events import Events
 from wei.core.interface import Interface_Map
 from wei.core.loggers import WEI_Logger
@@ -91,6 +91,7 @@ def run_step(
             "log_dir": log_dir,
         }
     )
+    time.sleep(1)
 
 
 def parse_args() -> Namespace:
@@ -119,7 +120,7 @@ def parse_args() -> Namespace:
         "--reset_locations",
         type=bool,
         help="Reset locations on startup",
-        default=False,
+        default=True,
     )
     parser.add_argument(
         "--update_interval",
@@ -199,7 +200,7 @@ class Scheduler:
                         "step_index": 0,
                         "experiment_path": wf_data["experiment_path"],
                         "hist": {},
-                        "status": "queued",
+                        "status": WorkflowStatus.QUEUED,
                         "result": {},
                     }
                     try:
@@ -243,7 +244,7 @@ class Scheduler:
                         self.update_source_and_target(wf, wf_id)
                     except Exception as e:  # noqa
                         print(e)
-                        wf["status"] = {"Error": str(e)}
+                        wf["status"] = WorkflowStatus.FAILED
                         self.state.workflows[wf_id] = wf
                 # * Update all queued workflows
                 for wf_id in self.state.workflows.keys():
@@ -282,7 +283,7 @@ class Scheduler:
         """
         Updates state based on the given workflow and prior state.
         """
-        if wf["status"] == "queued":
+        if wf["status"] == WorkflowStatus.QUEUED:
             step_index = wf["step_index"]
             step = wf["flowdef"][step_index]["step"]
             locations = wf["flowdef"][step_index]["locations"]
@@ -308,9 +309,9 @@ class Scheduler:
                     "process": step_process,
                     "pipe": rec_conn,
                 }
-                wf["status"] = "running"
+                wf["status"] = WorkflowStatus.RUNNING
             return wf
-        if wf["status"] == "running":
+        if wf["status"] == WorkflowStatus.RUNNING:
             if self.processes[wf_id]["pipe"].poll():
                 response = self.processes[wf_id]["pipe"].recv()
                 locations = response["locations"]
@@ -328,9 +329,10 @@ class Scheduler:
                 if step_index + 1 == len(wf["flowdef"]):
                     self.events[wf_id].log_wf_end(wf["name"], wf_id)
                     del self.events[wf_id]
-                    wf["status"] = "completed"
+                    wf["status"] = WorkflowStatus.COMPLETED
                     wf["hist"]["run_dir"] = str(response["log_dir"])
                 else:
+                    wf["status"] = WorkflowStatus.QUEUED
                     wf["step_index"] += 1
                     self.update_source_and_target(wf, wf_id)
         return wf
