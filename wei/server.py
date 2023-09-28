@@ -6,15 +6,16 @@ from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import redis
 import ulid
 import yaml
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from wei.core.data_classes import ExperimentStatus, WorkflowStatus
 from wei.core.experiment import start_experiment
 from wei.core.loggers import WEI_Logger
 from wei.core.workcell import Workcell
+from wei.state_manager import StateManager
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
 # TODO logging for server and workcell
@@ -23,7 +24,7 @@ from wei.core.workcell import Workcell
 
 workcell = None
 kafka_server = None
-redis_server = None
+state_manager = None
 
 
 @asynccontextmanager
@@ -37,7 +38,7 @@ async def lifespan(app: FastAPI):
         Returns
         -------
         None"""
-    global workcell, kafka_server, redis_server
+    global workcell, kafka_server, state_manager
     parser = ArgumentParser()
     parser.add_argument(
         "--redis_host",
@@ -51,9 +52,11 @@ async def lifespan(app: FastAPI):
     )
 
     args = parser.parse_args()
-    redis_server = redis.Redis(host=args.redis_host, port=6379, decode_responses=True)
     with open(args.workcell) as f:
         workcell = Workcell(workcell_def=yaml.safe_load(f))
+    state_manager = StateManager(
+        workcell.workcell.name, redis_host=args.redis_host, redis_port=6379
+    )
 
     kafka_server = args.kafka_server
 
@@ -75,7 +78,7 @@ def start_exp(experiment_id: str, experiment_name: str) -> JSONResponse:
     Parameters
     ----------
     experiment_id : str
-       The programatically generated id of the experiment for the workflow
+       The programmatically generated id of the experiment for the workflow
 
     experiment_name: str
         The human created name of the experiment
@@ -83,12 +86,13 @@ def start_exp(experiment_id: str, experiment_name: str) -> JSONResponse:
     Returns
     -------
      response: Dict
-       a dictionary including the succesfulness of the queueing, the jobs ahead and the id
+       a dictionary including the successfulness of the queueing, the jobs ahead and the id
     """
     global kafka_server
     base_response_content = {
         "experiment_id": experiment_id,
         "experiment_name": experiment_name,
+        "status": ExperimentStatus.CREATED,
     }
     try:
         exp_data = start_experiment(experiment_name, experiment_id, kafka_server)
@@ -96,7 +100,7 @@ def start_exp(experiment_id: str, experiment_name: str) -> JSONResponse:
 
     except Exception as e:
         response_content = {
-            "status": "failed",
+            "status": ExperimentStatus.FAILED,
             "error": str(e),
             **base_response_content,
         }
@@ -149,7 +153,7 @@ async def process_job(
     experiment_id = log_dir.name.split("_")[-1]
     logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
     logger.info("Received job run request")
-    global redis_server
+    global state_manager
     workflow_path = Path(workflow.filename)
     workflow_name = workflow_path.name.split(".")[0]
 
@@ -159,21 +163,18 @@ async def process_job(
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
     job_id = ulid.new().str
-    redis_server.lpush(
-        "workflow_queue:incoming",
-        json.dumps(
-            {
-                "wf_id": job_id,
-                "workflow_content": workflow_content_str,
-                "parsed_payload": parsed_payload,
-                "experiment_path": str(experiment_path),
-                "name": workflow_name,
-                "simulate": simulate,
-            }
-        ),
+    state_manager.incoming_workflows.put(
+        {
+            "wf_id": job_id,
+            "workflow_content": workflow_content_str,
+            "parsed_payload": parsed_payload,
+            "experiment_path": str(experiment_path),
+            "name": workflow_name,
+            "simulate": simulate,
+        }
     )
     logger.info("Queued: " + str(job_id))
-    return JSONResponse(content={"status": "SUCCESS", "job_id": job_id})
+    return JSONResponse(content={"status": WorkflowStatus.QUEUED, "job_id": job_id})
 
 
 @app.post("/experiment")
@@ -214,23 +215,17 @@ async def get_job_status(job_id: str) -> JSONResponse:
      response: Dict
        a dictionary including the status on the queueing, and the result of the job if it's done
     """
-    global redis_server
-    wc_state = json.loads(redis_server.hget("state", "wc_state"))
-    if job_id in wc_state["active_workflows"]:
-        return JSONResponse(content={"status": "running", "result": {}})
-    elif job_id in wc_state["queued_workflows"]:
-        return JSONResponse(content={"status": "queued", "result": {}})
-    elif job_id in wc_state["completed_workflows"]:
-        wf = wc_state["completed_workflows"][job_id]
+    global state_manager
+    try:
+        workflow = state_manager.workflows[job_id]
         return JSONResponse(
             content={
-                "status": "finished",
-                "result": wf["hist"],
-                "run_dir": wf["hist"]["run_dir"],
+                "status": workflow["status"],
+                "result": workflow["result"],
             }
         )
-
-    return JSONResponse(content={"status": "running", "result": "result"})
+    except KeyError:
+        return JSONResponse(content={"status": WorkflowStatus.UNKNOWN})
 
 
 @app.get("/job/{job_id}/log")
@@ -243,7 +238,7 @@ async def log_job_return(job_id: str, experiment_path: str) -> str:
         The queue job id for the job being logged
 
     experiment_path : str
-       The path to the data forthe experiment for the workflow
+       The path to the data for the experiment for the workflow
 
     Returns
     -------
@@ -260,7 +255,7 @@ async def log_job_return(job_id: str, experiment_path: str) -> str:
 def show() -> JSONResponse:
     """
 
-     Describes the state of the whole workcell including locations and daemon states
+    Describes the state of the whole workcell including locations and daemon states
 
     Parameters
     ----------
@@ -271,9 +266,9 @@ def show() -> JSONResponse:
      response: Dict
        the state of the workcell
     """
+    global state_manager
 
-    global redis_server
-    wc_state = json.loads(redis_server.hget("state", "wc_state"))
+    wc_state = json.loads(state_manager.get_state())
     return JSONResponse(
         content={"wc_state": json.dumps(wc_state)}
     )  # templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
@@ -283,7 +278,8 @@ def show() -> JSONResponse:
 def show_states() -> JSONResponse:
     """
 
-     Describes the state of the workcell locations
+    Describes the state of the workcell locations
+
     Parameters
     ----------
     None
@@ -294,10 +290,11 @@ def show_states() -> JSONResponse:
        the state of the workcell locations, with the id of the run that last filled the location
     """
 
-    global redis_server
-    wc_state = json.loads(redis_server.hget("state", "wc_state"))
+    global state_manager
 
-    return JSONResponse(content={"location_states": wc_state["locations"]})
+    return JSONResponse(
+        content={"location_states": str(state_manager.locations.to_dict())}
+    )
 
 
 @app.get("/wc/locations/{location}/state")
@@ -314,10 +311,14 @@ def loc(location: str) -> JSONResponse:
      response: Dict
        the state of the workcell locations, with the id of the run that last filled the location
     """
-    global redis_server
-    wc_state = json.loads(redis_server.hget("state", "wc_state"))
+    global state_manager
 
-    return JSONResponse(content={str(location): wc_state["locations"][location]})
+    try:
+        return JSONResponse(
+            content={str(location): str(state_manager.locations[location])}
+        )
+    except KeyError:
+        return HTTPException(status_code=404, detail="Location not found")
 
 
 @app.get("/wc/modules/{module_name}/state")
@@ -333,23 +334,72 @@ def mod(module_name: str) -> JSONResponse:
      response: Dict
        the state of the requested module
     """
-    global redis_server
-    wc_state = json.loads(redis_server.hget("state", "wc_state"))
-    return JSONResponse(content={str(module_name): wc_state["modules"][module_name]})
+    global state_manager
+
+    try:
+        return JSONResponse(
+            content={str(module_name): str(state_manager.modules[module_name])}
+        )
+    except KeyError:
+        return HTTPException(status_code=404, detail="Module not found")
 
 
-@app.post("/wc/locations/{location}/set")
-async def update(location: str, experiment_id: str) -> JSONResponse:
-    """Manually update the state of a location in the workcell."""
-    global redis_server
-    wc_state = json.loads(redis_server.hget("state", "wc_state"))
+@app.post("/wc/locations/{location_name}/set")
+async def update(location_name: str, experiment_id: str) -> JSONResponse:
+    """
+    Manually update the state of a location in the workcell.
+    Parameters
+    ----------
+    location: the name of the location to update
+    experiment_id: the id of the experiment that is in the location
 
-    if experiment_id == "":
-        wc_state["locations"][location]["state"] = "Empty"
-    else:
-        wc_state["locations"][location]["state"] = experiment_id
-    redis_server.hset("state", "wc_state", json.dumps(wc_state))
-    return JSONResponse(content={"State": wc_state})
+    Returns
+    -------
+        response: Dict
+         the state of the workcell locations, with the id of the run that last filled the location
+    """
+    global state_manager
+
+    def update_location_state(location: dict, value: str) -> dict:
+        location["state"] = "Empty"
+        return location
+
+    with state_manager.state_lock():
+        if experiment_id == "":
+            state_manager.update_location(location_name, update_location_state, "Empty")
+        else:
+            state_manager.update_location(
+                location_name, update_location_state, experiment_id
+            )
+        return JSONResponse(
+            content={"Locations": str(state_manager.locations.to_dict())}
+        )
+
+
+@app.delete("/wc/workflows/clear")
+async def clear_workflows() -> JSONResponse:
+    """
+    Clears the completed and failed workflows from the workcell
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+        response: Dict
+         the state of the workflows
+    """
+    global state_manager
+    with state_manager.state_lock():
+        for wf_id, workflow in state_manager.workflows:
+            if (
+                workflow["status"] == WorkflowStatus.COMPLETED
+                or workflow["status"] == WorkflowStatus.FAILED
+            ):
+                del state_manager.workflows[wf_id]
+        return JSONResponse(
+            content={"Workflows": str(state_manager.workflows.to_dict())}
+        )
 
 
 if __name__ == "__main__":

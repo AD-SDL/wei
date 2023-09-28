@@ -29,5 +29,4 @@ flowdef:
     action: take_picture
     args:
       image_name: test_snapshot.jpg
-      source: webcam.pos
       target: webcam.pos

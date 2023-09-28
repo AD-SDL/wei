@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+from wei.core.data_classes import WorkflowStatus
+
 workcell = None
 global state
 serial_port = "/dev/ttyUSB1"
@@ -85,7 +87,7 @@ def do_action(
             return JSONResponse(content=response_content)
         except Exception as e:
             response_content = {
-                "status": "failed",
+                "status": WorkflowStatus.FAILED,
                 "error": str(e),
             }
             print("failure")

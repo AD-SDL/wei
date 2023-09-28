@@ -2,9 +2,8 @@
 
 import json
 
-import redis
-
 import matplotlib.pyplot as plt
+import redis
 from matplotlib.patches import Rectangle
 
 r = redis.Redis(host="localhost", port=6379, decode_responses=True)
