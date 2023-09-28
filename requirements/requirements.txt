@@ -13,3 +13,4 @@ numpy==1.22.0
 opencv-python-headless==4.8.0.76
 #pottery==3.0.0
 pottery @ git+https://github.com/luckierdodge/pottery@master
+typing_extensions==4.8.0
