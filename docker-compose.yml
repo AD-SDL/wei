@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8000:8000
-    command: python -m wei.server --workcell /app/tests/test_workcell.yaml
+    command: python -m wei.server --workcell /app/tests/test_workcell.yaml --redis_host wei_redis
     depends_on:
       - wei_redis
   wei_scheduler:
@@ -48,3 +48,11 @@ services:
     ports:
       - 2001:2001
     command: python /app/examples/example_clients/webcam_rest_node.py
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    container_name: jupyter
+    ports:
+      - 8888:8888
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: "wei"
