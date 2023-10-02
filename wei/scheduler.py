@@ -326,6 +326,8 @@ class Scheduler:
                 self.state.modules[step.module]["queue"].remove(wf_id)
                 wf["hist"][step.name] = response["step_response"]
                 step_index = wf["step_index"]
+                self.processes[wf_id]["process"].close()
+                del self.processes[wf_id]
                 if step_index + 1 == len(wf["flowdef"]):
                     self.events[wf_id].log_wf_end(wf["name"], wf_id)
                     del self.events[wf_id]
