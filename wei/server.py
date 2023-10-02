@@ -222,7 +222,9 @@ async def get_job_status(job_id: str) -> JSONResponse:
             content={
                 "status": workflow["status"],
                 "result": workflow["result"],
-            }
+                "hist": workflow["hist"],
+ 
+                }
         )
     except KeyError:
         return JSONResponse(content={"status": WorkflowStatus.UNKNOWN})
