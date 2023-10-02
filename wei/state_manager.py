@@ -67,10 +67,10 @@ class StateManager:
         """
         Clears the state of the workcell, optionally leaving the locations state intact.
         """
-        self.modules.update({})
+        self.modules.clear()
         if reset_locations:
-            self.locations.update({})
-        self.workflows.update({})
+            self.locations.clear()
+        self.workflows.clear()
         self.incoming_workflows.clear()
 
     def update_workflow(self, wf_id: str, func: Callable, *args) -> None:

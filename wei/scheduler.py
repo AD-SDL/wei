@@ -161,6 +161,7 @@ class Scheduler:
         self.kafka_server = args.kafka_server
         self.log_server = args.server
         self.state.clear_state(reset_locations=args.reset_locations)
+        print(self.state.workflows)
         with self.state.state_lock():
             for module in self.workcell.modules:
                 if module.workcell_coordinates:
@@ -183,6 +184,7 @@ class Scheduler:
                         }
         print("Starting Process")
         while True:
+            
             with self.state.state_lock():  # * Lock the state for the duration of the update loop
                 for module in self.workcell.modules:
                     self.state.update_module(
@@ -248,6 +250,7 @@ class Scheduler:
                         self.state.workflows[wf_id] = wf
                 # * Update all queued workflows
                 for wf_id in self.state.workflows.keys():
+                   
                     self.state.update_workflow(
                         wf_id, self.update_queued_workflow, wf_id
                     )
@@ -312,8 +315,9 @@ class Scheduler:
                 wf["status"] = WorkflowStatus.RUNNING
             return wf
         if wf["status"] == WorkflowStatus.RUNNING:
-            if self.processes[wf_id]["pipe"].poll():
+            if wf_id in self.processes and self.processes[wf_id]["pipe"].poll():
                 response = self.processes[wf_id]["pipe"].recv()
+                print(response)
                 locations = response["locations"]
                 step = response["step"]
                 if "target" in locations:
@@ -326,7 +330,12 @@ class Scheduler:
                 self.state.modules[step.module]["queue"].remove(wf_id)
                 wf["hist"][step.name] = response["step_response"]
                 step_index = wf["step_index"]
+                print("done")
+                self.processes[wf_id]["process"].terminate()
+                print("terminate")
+                print(self.processes[wf_id]["process"])
                 self.processes[wf_id]["process"].close()
+                print("close")
                 del self.processes[wf_id]
                 if step_index + 1 == len(wf["flowdef"]):
                     self.events[wf_id].log_wf_end(wf["name"], wf_id)
