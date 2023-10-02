@@ -246,6 +246,7 @@ class WorkcellData(BaseModel):
 class WorkflowStatus(str, Enum):
     """Status for a workflow"""
 
+    NEW = "new"
     QUEUED = "queued"
     RUNNING = "running"
     COMPLETED = "completed"

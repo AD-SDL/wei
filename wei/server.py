@@ -12,9 +12,11 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from wei.core.data_classes import ExperimentStatus, WorkflowStatus
+from wei.core.events import Events
 from wei.core.experiment import start_experiment
 from wei.core.loggers import WEI_Logger
 from wei.core.workcell import Workcell
+from wei.core.workflow import WorkflowRunner
 from wei.state_manager import StateManager
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
@@ -163,18 +165,61 @@ async def process_job(
     workflow_content_str = workflow_content.decode("utf-8")
     parsed_payload = json.loads(payload)
     job_id = ulid.new().str
-    state_manager.incoming_workflows.put(
-        {
-            "wf_id": job_id,
-            "workflow_content": workflow_content_str,
-            "parsed_payload": parsed_payload,
-            "experiment_path": str(experiment_path),
+    try:
+        wf = {
             "name": workflow_name,
-            "simulate": simulate,
+            "step_index": 0,
+            "experiment_path": str(experiment_path),
+            "hist": {},
+            "status": WorkflowStatus.QUEUED,
+            "result": {},
+        }
+        workflow_runner = WorkflowRunner(
+            workflow_def=yaml.safe_load(workflow_content_str),
+            workcell=self.workcell,  # TODO
+            payload=parsed_payload,
+            experiment_path=str(experiment_path),
+            run_id=job_id,
+            simulate=simulate,
+            workflow_name=workflow_name,
+        )
+
+        flowdef = []
+
+        for step in workflow_runner.steps:
+            flowdef.append(
+                {
+                    "step": json.loads(step["step"].json()),
+                    "locations": step["locations"],
+                }
+            )
+        wf["flowdef"] = flowdef
+
+        # self.events[wf_id] = Events(
+        #     self.log_server,
+        #     "8000",
+        #     exp_name,
+        #     exp_id,
+        #     self.kafka_server,
+        #     wf_data["experiment_path"],
+        # )
+        # self.events[wf_id].log_wf_start(wf_data["name"], wf_id)
+        # self.update_source_and_target(wf, wf_id)
+
+        state_manager.workflows[job_id] = wf
+    except Exception as e:  # noqa
+        print(e)
+        wf["status"] = WorkflowStatus.FAILED
+        state_manager.workflows[job_id] = wf
+    return JSONResponse(
+        content={
+            "status": wf["status"],
+            "job_id": job_id,
+            "run_dir": str(log_dir),
+            "payload": parsed_payload,
+            "hist": wf["hist"],
         }
     )
-    logger.info("Queued: " + str(job_id))
-    return JSONResponse(content={"status": WorkflowStatus.QUEUED, "job_id": job_id})
 
 
 @app.post("/experiment")

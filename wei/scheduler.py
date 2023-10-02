@@ -184,68 +184,6 @@ class Scheduler:
         print("Starting Process")
         while True:
             with self.state.state_lock():  # * Lock the state for the duration of the update loop
-                for module in self.workcell.modules:
-                    self.state.update_module(
-                        module.name, self.update_module_state, module
-                    )
-                # * Work through all incoming workflows, converting them into properly formatted
-                # * workflows and adding them to the state
-                while True:
-                    if self.state.incoming_workflows.empty():
-                        break
-                    wf_data = self.state.incoming_workflows.get()
-                    wf_id = wf_data["wf_id"]
-                    wf = {
-                        "name": wf_data["name"],
-                        "step_index": 0,
-                        "experiment_path": wf_data["experiment_path"],
-                        "hist": {},
-                        "status": WorkflowStatus.QUEUED,
-                        "result": {},
-                    }
-                    try:
-                        workflow_runner = WorkflowRunner(
-                            workflow_def=yaml.safe_load(wf_data["workflow_content"]),
-                            workcell=self.workcell,
-                            payload=wf_data["parsed_payload"],
-                            experiment_path=wf_data["experiment_path"],
-                            run_id=wf_id,
-                            simulate=wf_data["simulate"],
-                            workflow_name=wf_data["name"],
-                        )
-
-                        flowdef = []
-
-                        for step in workflow_runner.steps:
-                            flowdef.append(
-                                {
-                                    "step": json.loads(step["step"].json()),
-                                    "locations": step["locations"],
-                                }
-                            )
-                        wf["flowdef"] = flowdef
-                        exp_data = Path(wf_data["experiment_path"]).name.split("_id_")
-                        exp_id = exp_data[-1]
-                        wf["experiment_id"] = exp_id
-                        exp_name = exp_data[0]
-
-                        # TODO ASK RAF: should this be specified some other way?
-                        self.events[wf_id] = Events(
-                            self.log_server,
-                            "8000",
-                            exp_name,
-                            exp_id,
-                            self.kafka_server,
-                            wf_data["experiment_path"],
-                        )
-                        self.events[wf_id].log_wf_start(wf_data["name"], wf_id)
-
-                        self.state.workflows[wf_id] = wf
-                        self.update_source_and_target(wf, wf_id)
-                    except Exception as e:  # noqa
-                        print(e)
-                        wf["status"] = WorkflowStatus.FAILED
-                        self.state.workflows[wf_id] = wf
                 # * Update all queued workflows
                 for wf_id in self.state.workflows.keys():
                     self.state.update_workflow(
@@ -283,7 +221,23 @@ class Scheduler:
         """
         Updates state based on the given workflow and prior state.
         """
-        if wf["status"] == WorkflowStatus.QUEUED:
+        if wf["status"] == WorkflowStatus.NEW:
+            exp_data = Path(wf["experiment_path"]).name.split("_id_")
+            exp_id = exp_data[-1]
+            wf["experiment_id"] = exp_id
+            exp_name = exp_data[0]
+            self.events[wf_id] = Events(
+                self.log_server,
+                "8000",
+                exp_name,
+                exp_id,
+                self.kafka_server,
+                wf["experiment_path"],
+            )
+            self.events[wf_id].log_wf_start(wf["name"], wf_id)
+            self.update_source_and_target(wf, wf_id)
+            wf["status"] == WorkflowStatus.QUEUED
+        elif wf["status"] == WorkflowStatus.QUEUED:
             step_index = wf["step_index"]
             step = wf["flowdef"][step_index]["step"]
             locations = wf["flowdef"][step_index]["locations"]
@@ -311,7 +265,7 @@ class Scheduler:
                 }
                 wf["status"] = WorkflowStatus.RUNNING
             return wf
-        if wf["status"] == WorkflowStatus.RUNNING:
+        elif wf["status"] == WorkflowStatus.RUNNING:
             if self.processes[wf_id]["pipe"].poll():
                 response = self.processes[wf_id]["pipe"].recv()
                 locations = response["locations"]

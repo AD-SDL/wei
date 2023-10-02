@@ -6,7 +6,7 @@ StateManager for WEI
 from typing import Callable
 
 import redis
-from pottery import RedisDict, RedisSimpleQueue, Redlock
+from pottery import RedisDict, Redlock
 
 
 class StateManager:
@@ -35,9 +35,6 @@ class StateManager:
         self.workflows = RedisDict(
             key=f"{self._prefix}:workflows", redis=self._redis_server
         )
-        self.incoming_workflows = RedisSimpleQueue(
-            key=f"{self._prefix}:incoming_workflows", redis=self._redis_server
-        )
 
     def get_state(self) -> dict:
         """
@@ -47,7 +44,6 @@ class StateManager:
             "locations": self.locations.to_dict(),
             "modules": self.modules.to_dict(),
             "workflows": self.workflows.to_dict(),
-            "incoming_workflows": self.incoming_workflows.__repr__(),
         }
 
     def state_lock(self) -> Redlock:
@@ -67,11 +63,10 @@ class StateManager:
         """
         Clears the state of the workcell, optionally leaving the locations state intact.
         """
-        self.modules.update({})
+        self.modules.clear()
         if reset_locations:
-            self.locations.update({})
-        self.workflows.update({})
-        self.incoming_workflows.clear()
+            self.locations.clear()
+        self.workflows.clear()
 
     def update_workflow(self, wf_id: str, func: Callable, *args) -> None:
         """
