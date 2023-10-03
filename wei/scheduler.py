@@ -2,7 +2,6 @@
 Scheduler Class and associated helpers and data
 """
 
-import json
 import multiprocessing as mpr
 import time
 from argparse import ArgumentParser, Namespace
@@ -10,14 +9,11 @@ from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, Tuple, Union
 
-import yaml
-
 from wei.core.data_classes import Module, Step, WorkcellData, WorkflowStatus
 from wei.core.events import Events
 from wei.core.interface import Interface_Map
 from wei.core.loggers import WEI_Logger
 from wei.core.step_executor import StepExecutor
-from wei.core.workflow import WorkflowRunner
 from wei.state_manager import StateManager
 
 
@@ -91,7 +87,6 @@ def run_step(
             "log_dir": log_dir,
         }
     )
-    time.sleep(1)
 
 
 def parse_args() -> Namespace:
@@ -141,7 +136,7 @@ class Scheduler:
         """Initialize the scheduler."""
         self.events = {}
         self.executor = StepExecutor()
-        self.workcell = {}
+        # self.workcell = {}
         self.processes = {}
         self.state = None
         self.kafka_server = ""
@@ -151,17 +146,18 @@ class Scheduler:
         """Run the scheduler, popping incoming workflows queued by the server and executing them."""
         self.events = {}
         self.executor = StepExecutor()
-        self.workcell = WorkcellData.from_yaml(args.workcell)
         self.processes = {}
         self.state = StateManager(
-            workcell_name=self.workcell.name,
+            workcell_name=self.state.workcell["name"],
             redis_host=args.redis_host,
             redis_port=6379,
         )
+        self.state.clear_state(reset_locations=args.reset_locations)
         self.kafka_server = args.kafka_server
         self.log_server = args.server
-        self.state.clear_state(reset_locations=args.reset_locations)
         with self.state.state_lock():
+            self.workcell = WorkcellData.from_yaml(args.workcell)
+            self.state.set_workcell(self.workcell)
             for module in self.workcell.modules:
                 if module.workcell_coordinates:
                     wc_coords = module.workcell_coordinates
@@ -184,6 +180,7 @@ class Scheduler:
         print("Starting Process")
         while True:
             with self.state.state_lock():  # * Lock the state for the duration of the update loop
+                self.workcell = self.state.get_workcell()
                 # * Update all queued workflows
                 for wf_id in self.state.workflows.keys():
                     self.state.update_workflow(

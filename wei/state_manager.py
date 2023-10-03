@@ -8,6 +8,8 @@ from typing import Callable
 import redis
 from pottery import RedisDict, Redlock
 
+from wei.core.data_classes import WorkcellData
+
 
 class StateManager:
     """
@@ -35,6 +37,27 @@ class StateManager:
         self.workflows = RedisDict(
             key=f"{self._prefix}:workflows", redis=self._redis_server
         )
+        self._workcell = RedisDict(
+            key=f"{self._prefix}:workcell", redis=self._redis_server
+        )
+
+    def get_workcell(self) -> WorkcellData:
+        """
+        Returns the current workcell as a WorkcellData object
+        """
+        return WorkcellData(**self._workcell.to_dict())
+
+    def set_workcell(self, workcell: WorkcellData) -> None:
+        """
+        Sets the active workcell
+        """
+        self._workcell.update(workcell.dict())
+
+    def clear_workcell(self) -> None:
+        """
+        Empty the workcell definition
+        """
+        self._workcell.clear()
 
     def get_state(self) -> dict:
         """
@@ -67,6 +90,7 @@ class StateManager:
         if reset_locations:
             self.locations.clear()
         self.workflows.clear()
+        self._workcell.clear()
 
     def update_workflow(self, wf_id: str, func: Callable, *args) -> None:
         """

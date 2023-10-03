@@ -12,7 +12,6 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from wei.core.data_classes import ExperimentStatus, WorkflowStatus
-from wei.core.events import Events
 from wei.core.experiment import start_experiment
 from wei.core.loggers import WEI_Logger
 from wei.core.workcell import Workcell
@@ -151,37 +150,48 @@ async def process_job(
     response: Dict
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.split("_")[-1]
-    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
-    logger.info("Received job run request")
-    global state_manager
-    workflow_path = Path(workflow.filename)
-    workflow_name = workflow_path.name.split(".")[0]
-
-    workflow_content = await workflow.read()
-    payload = await payload.read()
-    # Decode the bytes object to a string
-    workflow_content_str = workflow_content.decode("utf-8")
-    parsed_payload = json.loads(payload)
-    job_id = ulid.new().str
     try:
         wf = {
-            "name": workflow_name,
+            "name": "",
+            "label": "",
+            "run_id": "",
             "step_index": 0,
             "experiment_path": str(experiment_path),
             "hist": {},
-            "status": WorkflowStatus.QUEUED,
+            "status": WorkflowStatus.NEW,
             "result": {},
+            "run_dir": "",
+            "flowdef": [],
+            "payload": "",
+        }
+        wf["run_id"] = ulid.new().str
+        log_dir = Path(experiment_path)
+        wf["run_dir"] = str(Path(log_dir, "runs", f"{wf['name']}_{wf['run_id']}"))
+        experiment_id = log_dir.name.split("_")[-1]
+        logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+        logger.info("Received job run request")
+        global state_manager
+        workflow_path = Path(workflow.filename)
+        wf["name"] = workflow_path.name.split(".")[0]
+        wf["label"] = wf["name"] # TODO: Implement labels
+
+        workflow_content = await workflow.read()
+        payload = await payload.read()
+        # Decode the bytes object to a string
+        workflow_content_str = workflow_content.decode("utf-8")
+        wf["payload"] = json.loads(payload)
+        wf = {
+            "step_index": 0,
+            "experiment_path": str(experiment_path),
         }
         workflow_runner = WorkflowRunner(
             workflow_def=yaml.safe_load(workflow_content_str),
-            workcell=self.workcell,  # TODO
-            payload=parsed_payload,
+            workcell=state_manager.get_workcell(),
+            payload=wf["payload"],
             experiment_path=str(experiment_path),
-            run_id=job_id,
+            run_id=wf["run_id"],
             simulate=simulate,
-            workflow_name=workflow_name,
+            workflow_name=wf["name"],
         )
 
         flowdef = []
@@ -194,31 +204,14 @@ async def process_job(
                 }
             )
         wf["flowdef"] = flowdef
-
-        # self.events[wf_id] = Events(
-        #     self.log_server,
-        #     "8000",
-        #     exp_name,
-        #     exp_id,
-        #     self.kafka_server,
-        #     wf_data["experiment_path"],
-        # )
-        # self.events[wf_id].log_wf_start(wf_data["name"], wf_id)
-        # self.update_source_and_target(wf, wf_id)
-
-        state_manager.workflows[job_id] = wf
+        state_manager.workflows[wf["run_id"]] = wf
     except Exception as e:  # noqa
         print(e)
         wf["status"] = WorkflowStatus.FAILED
-        state_manager.workflows[job_id] = wf
+        wf["hist"]["validation"] = f"Error: {e}"
+        state_manager.workflows[wf["run_id"]] = wf
     return JSONResponse(
-        content={
-            "status": wf["status"],
-            "job_id": job_id,
-            "run_dir": str(log_dir),
-            "payload": parsed_payload,
-            "hist": wf["hist"],
-        }
+        content=wf
     )
 
 
