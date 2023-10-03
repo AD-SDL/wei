@@ -3,6 +3,7 @@ StateManager for WEI
 """
 
 
+import json
 from typing import Callable
 
 import redis
@@ -23,7 +24,6 @@ class StateManager:
         """
         Initialize a StateManager for a given workcell.
         """
-        self.workcell_name = workcell_name
         self._prefix = f"wei:{workcell_name}"
         self._redis_server = redis.Redis(
             host=redis_host, port=redis_port, decode_responses=True
@@ -51,7 +51,11 @@ class StateManager:
         """
         Sets the active workcell
         """
-        self._workcell.update(workcell.dict())
+        # print(workcell.dict())
+        # for key, value in workcell:
+        #     self._workcell[key] = value
+        # print(workcell.dict())
+        self._workcell.update(json.loads(workcell.json()))
 
     def clear_workcell(self) -> None:
         """

@@ -149,8 +149,9 @@ class Scheduler:
         self.events = {}
         self.executor = StepExecutor()
         self.processes = {}
+        self.workcell = WorkcellData.from_yaml(args.workcell)
         self.state = StateManager(
-            workcell_name=self.state.workcell["name"],
+            workcell_name=self.workcell.name,
             redis_host=args.redis_host,
             redis_port=6379,
         )
@@ -160,7 +161,6 @@ class Scheduler:
         self.state.clear_state(reset_locations=args.reset_locations)
         print(self.state.locations)
         with self.state.state_lock():
-            self.workcell = WorkcellData.from_yaml(args.workcell)
             self.state.set_workcell(self.workcell)
             for module in self.workcell.modules:
                 if module.workcell_coordinates:
@@ -239,7 +239,8 @@ class Scheduler:
             )
             self.events[wf_id].log_wf_start(wf["name"], wf_id)
             self.update_source_and_target(wf, wf_id)
-            wf["status"] == WorkflowStatus.QUEUED
+            wf["status"] = WorkflowStatus.QUEUED
+            print(wf)
         elif wf["status"] == WorkflowStatus.QUEUED:
             step_index = wf["step_index"]
             step = wf["flowdef"][step_index]["step"]
