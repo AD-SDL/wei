@@ -82,7 +82,7 @@ class StateManager:
         """
         return bool(self.state_lock().locked())
 
-    def clear_state(self, reset_locations=False) -> None:
+    def clear_state(self, reset_locations=True) -> None:
         """
         Clears the state of the workcell, optionally leaving the locations state intact.
         """

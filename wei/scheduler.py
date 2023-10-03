@@ -41,8 +41,10 @@ def check_step(
     exp_id, run_id, step: dict, locations: dict, state: StateManager
 ) -> bool:
     """Check if a step is valid."""
+    print(locations)
     if "target" in locations:
         location = state.locations[locations["target"]]
+        print(location)
         if not (location["state"] == "Empty") or not (
             (len(location["queue"]) > 0 and location["queue"][0] == str(run_id))
         ):
@@ -155,6 +157,8 @@ class Scheduler:
         self.state.clear_state(reset_locations=args.reset_locations)
         self.kafka_server = args.kafka_server
         self.log_server = args.server
+        self.state.clear_state(reset_locations=args.reset_locations)
+        print(self.state.locations)
         with self.state.state_lock():
             self.workcell = WorkcellData.from_yaml(args.workcell)
             self.state.set_workcell(self.workcell)
@@ -179,10 +183,12 @@ class Scheduler:
                         }
         print("Starting Process")
         while True:
+            
             with self.state.state_lock():  # * Lock the state for the duration of the update loop
                 self.workcell = self.state.get_workcell()
                 # * Update all queued workflows
                 for wf_id in self.state.workflows.keys():
+                   
                     self.state.update_workflow(
                         wf_id, self.update_queued_workflow, wf_id
                     )
@@ -239,6 +245,7 @@ class Scheduler:
             step = wf["flowdef"][step_index]["step"]
             locations = wf["flowdef"][step_index]["locations"]
             exp_id = Path(wf["experiment_path"]).name.split("_id_")[-1]
+            print("here")
             if check_step(exp_id, wf_id, step, locations, self.state):
                 send_conn, rec_conn = mpr.Pipe()
                 module = find_module(self.workcell, step["module"])
@@ -263,8 +270,9 @@ class Scheduler:
                 wf["status"] = WorkflowStatus.RUNNING
             return wf
         elif wf["status"] == WorkflowStatus.RUNNING:
-            if self.processes[wf_id]["pipe"].poll():
+            if wf_id in self.processes and self.processes[wf_id]["pipe"].poll():
                 response = self.processes[wf_id]["pipe"].recv()
+                print(response)
                 locations = response["locations"]
                 step = response["step"]
                 if "target" in locations:
@@ -277,10 +285,22 @@ class Scheduler:
                 self.state.modules[step.module]["queue"].remove(wf_id)
                 wf["hist"][step.name] = response["step_response"]
                 step_index = wf["step_index"]
+                print("done")
+                self.processes[wf_id]["process"].terminate()
+                print("terminate")
+                print(self.processes[wf_id]["process"])
+                while self.processes[wf_id]["process"].is_alive():
+                     print(self.processes[wf_id]["process"])
+                    
+                self.processes[wf_id]["process"].close()
+                print("close")
+                del self.processes[wf_id]
                 if step_index + 1 == len(wf["flowdef"]):
                     self.events[wf_id].log_wf_end(wf["name"], wf_id)
                     del self.events[wf_id]
                     wf["status"] = WorkflowStatus.COMPLETED
+                    wf["step_index"] += 1
+                    self.update_source_and_target(wf, wf_id)
                     wf["hist"]["run_dir"] = str(response["log_dir"])
                 else:
                     wf["status"] = WorkflowStatus.QUEUED
@@ -304,19 +324,22 @@ class Scheduler:
         def append_element_to_queue(object, element):
             object["queue"].append(element)
             return object
-
-        if "source" in flowdef[step_index]["locations"]:
-            self.state.update_location(
-                flowdef[step_index]["locations"]["source"],
-                remove_element_from_queue,
-                wf_id,
+        
+        def update_location_state(object, element):
+            object["state"] = element
+            return object
+        
+        if step_index  < len(wf["flowdef"]):
+            if "target" in flowdef[step_index]["locations"]:
+                    self.state.update_location(
+                    flowdef[step_index]["locations"]["target"],
+                    append_element_to_queue,
+                    wf_id,
+                )
+            self.state.update_module(
+                flowdef[step_index]["step"]["module"], append_element_to_queue, wf_id
             )
-        if "target" in flowdef[step_index]["locations"]:
-            self.state.update_location(
-                flowdef[step_index]["locations"]["target"],
-                append_element_to_queue,
-                wf_id,
-            )
+         
 
         if step_index > 0:
             self.state.update_module(
@@ -324,9 +347,24 @@ class Scheduler:
                 remove_element_from_queue,
                 wf_id,
             )
-        self.state.update_module(
-            flowdef[step_index]["step"]["module"], append_element_to_queue, wf_id
-        )
+            if "source" in flowdef[step_index-1]["locations"]:
+                self.state.update_location(
+                flowdef[step_index-1]["locations"]["source"],
+                update_location_state,
+                "Empty",
+                )
+            if "target" in flowdef[step_index-1]["locations"]: 
+                self.state.update_location(
+                flowdef[step_index-1]["locations"]["target"],
+                update_location_state,
+                wf["experiment_id"]
+                )
+                self.state.update_location(
+                    flowdef[step_index-1]["locations"]["target"],
+                    remove_element_from_queue,
+                    wf_id,
+                )
+       
 
 
 if __name__ == "__main__":
