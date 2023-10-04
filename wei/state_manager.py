@@ -3,10 +3,13 @@ StateManager for WEI
 """
 
 
+import json
 from typing import Callable
 
 import redis
-from pottery import RedisDict, RedisSimpleQueue, Redlock
+from pottery import RedisDict, Redlock
+
+from wei.core.data_classes import WorkcellData
 
 
 class StateManager:
@@ -21,7 +24,6 @@ class StateManager:
         """
         Initialize a StateManager for a given workcell.
         """
-        self.workcell_name = workcell_name
         self._prefix = f"wei:{workcell_name}"
         self._redis_server = redis.Redis(
             host=redis_host, port=redis_port, decode_responses=True
@@ -35,9 +37,27 @@ class StateManager:
         self.workflows = RedisDict(
             key=f"{self._prefix}:workflows", redis=self._redis_server
         )
-        self.incoming_workflows = RedisSimpleQueue(
-            key=f"{self._prefix}:incoming_workflows", redis=self._redis_server
+        self._workcell = RedisDict(
+            key=f"{self._prefix}:workcell", redis=self._redis_server
         )
+
+    def get_workcell(self) -> WorkcellData:
+        """
+        Returns the current workcell as a WorkcellData object
+        """
+        return WorkcellData(**self._workcell.to_dict())
+
+    def set_workcell(self, workcell: WorkcellData) -> None:
+        """
+        Sets the active workcell
+        """
+        self._workcell.update(json.loads(workcell.json()))
+
+    def clear_workcell(self) -> None:
+        """
+        Empty the workcell definition
+        """
+        self._workcell.clear()
 
     def get_state(self) -> dict:
         """
@@ -47,7 +67,6 @@ class StateManager:
             "locations": self.locations.to_dict(),
             "modules": self.modules.to_dict(),
             "workflows": self.workflows.to_dict(),
-            "incoming_workflows": self.incoming_workflows.__repr__(),
         }
 
     def state_lock(self) -> Redlock:
@@ -63,15 +82,15 @@ class StateManager:
         """
         return bool(self.state_lock().locked())
 
-    def clear_state(self, reset_locations=False) -> None:
+    def clear_state(self, reset_locations=True) -> None:
         """
         Clears the state of the workcell, optionally leaving the locations state intact.
         """
-        self.modules.update({})
+        self.modules.clear()
         if reset_locations:
-            self.locations.update({})
-        self.workflows.update({})
-        self.incoming_workflows.clear()
+            self.locations.clear()
+        self.workflows.clear()
+        self._workcell.clear()
 
     def update_workflow(self, wf_id: str, func: Callable, *args) -> None:
         """

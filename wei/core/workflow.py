@@ -20,7 +20,7 @@ class WorkflowRunner:
     def __init__(
         self,
         workflow_def: Union[Dict[str, Any], Workflow],
-        workcell: Workcell,
+        workcell: Union[Dict[str, Any], Workcell],
         experiment_path: str,
         payload,
         run_id: Optional[ulid.ULID] = None,
