@@ -41,10 +41,8 @@ def check_step(
     exp_id, run_id, step: dict, locations: dict, state: StateManager
 ) -> bool:
     """Check if a step is valid."""
-    print(locations)
     if "target" in locations:
         location = state.locations[locations["target"]]
-        print(location)
         if not (location["state"] == "Empty") or not (
             (len(location["queue"]) > 0 and location["queue"][0] == str(run_id))
         ):
@@ -138,7 +136,6 @@ class Scheduler:
         """Initialize the scheduler."""
         self.events = {}
         self.executor = StepExecutor()
-        # self.workcell = {}
         self.processes = {}
         self.state = None
         self.kafka_server = ""
@@ -244,7 +241,6 @@ class Scheduler:
             step = wf["flowdef"][step_index]["step"]
             locations = wf["flowdef"][step_index]["locations"]
             exp_id = Path(wf["experiment_path"]).name.split("_id_")[-1]
-            print("here")
             if check_step(exp_id, wf_id, step, locations, self.state):
                 send_conn, rec_conn = mpr.Pipe()
                 module = find_module(self.workcell, step["module"])
@@ -284,15 +280,9 @@ class Scheduler:
                 self.state.modules[step.module]["queue"].remove(wf_id)
                 wf["hist"][step.name] = response["step_response"]
                 step_index = wf["step_index"]
-                print("done")
                 self.processes[wf_id]["process"].terminate()
-                print("terminate")
-                print(self.processes[wf_id]["process"])
-                while self.processes[wf_id]["process"].is_alive():
-                    print(self.processes[wf_id]["process"])
 
                 self.processes[wf_id]["process"].close()
-                print("close")
                 del self.processes[wf_id]
                 if step_index + 1 == len(wf["flowdef"]):
                     self.events[wf_id].log_wf_end(wf["name"], wf_id)

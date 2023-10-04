@@ -180,10 +180,6 @@ async def process_job(
         # Decode the bytes object to a string
         workflow_content_str = workflow_content.decode("utf-8")
         wf["payload"] = json.loads(payload)
-        # wf = {
-        #     "step_index": 0,
-        #     "experiment_path": str(experiment_path),
-        # }
         workflow_runner = WorkflowRunner(
             workflow_def=yaml.safe_load(workflow_content_str),
             workcell=state_manager.get_workcell(),
