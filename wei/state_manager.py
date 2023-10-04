@@ -51,10 +51,6 @@ class StateManager:
         """
         Sets the active workcell
         """
-        # print(workcell.dict())
-        # for key, value in workcell:
-        #     self._workcell[key] = value
-        # print(workcell.dict())
         self._workcell.update(json.loads(workcell.json()))
 
     def clear_workcell(self) -> None:

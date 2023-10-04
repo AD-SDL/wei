@@ -173,7 +173,7 @@ async def process_job(
         global state_manager
         workflow_path = Path(workflow.filename)
         wf["name"] = workflow_path.name.split(".")[0]
-        wf["label"] = wf["name"] # TODO: Implement labels
+        wf["label"] = wf["name"]  # TODO: Implement labels
 
         workflow_content = await workflow.read()
         payload = await payload.read()
@@ -261,8 +261,7 @@ async def get_job_status(job_id: str) -> JSONResponse:
                 "status": workflow["status"],
                 "result": workflow["result"],
                 "hist": workflow["hist"],
- 
-                }
+            }
         )
     except KeyError:
         return JSONResponse(content={"status": WorkflowStatus.UNKNOWN})
