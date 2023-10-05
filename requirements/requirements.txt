@@ -13,5 +13,4 @@ opencv-python-headless==4.8.0.76
 redis==4.2.2
 
 pottery==3.0.0
-#pottery @ git+https://github.com/luckierdodge/pottery@master
 

@@ -15,6 +15,7 @@ from wei.core.data_classes import ExperimentStatus, WorkflowStatus
 from wei.core.experiment import start_experiment
 from wei.core.loggers import WEI_Logger
 from wei.core.workcell import Workcell
+from wei.core.workflow import WorkflowRunner
 from wei.state_manager import StateManager
 
 # TODO: db backup of tasks and results (can be a proper db or just a file)
@@ -149,32 +150,65 @@ async def process_job(
     response: Dict
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.split("_")[-1]
-    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
-    logger.info("Received job run request")
-    global state_manager
-    workflow_path = Path(workflow.filename)
-    workflow_name = workflow_path.name.split(".")[0]
-
-    workflow_content = await workflow.read()
-    payload = await payload.read()
-    # Decode the bytes object to a string
-    workflow_content_str = workflow_content.decode("utf-8")
-    parsed_payload = json.loads(payload)
-    job_id = ulid.new().str
-    state_manager.incoming_workflows.put(
-        {
-            "wf_id": job_id,
-            "workflow_content": workflow_content_str,
-            "parsed_payload": parsed_payload,
+    try:
+        wf = {
+            "name": "",
+            "label": "",
+            "run_id": "",
+            "step_index": 0,
             "experiment_path": str(experiment_path),
-            "name": workflow_name,
-            "simulate": simulate,
+            "hist": {},
+            "status": WorkflowStatus.NEW,
+            "result": {},
+            "run_dir": "",
+            "flowdef": [],
+            "payload": "",
         }
+        wf["run_id"] = ulid.new().str
+        log_dir = Path(experiment_path)
+        wf["run_dir"] = str(Path(log_dir, "runs", f"{wf['name']}_{wf['run_id']}"))
+        experiment_id = log_dir.name.split("_")[-1]
+        logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+        logger.info("Received job run request")
+        global state_manager
+        workflow_path = Path(workflow.filename)
+        wf["name"] = workflow_path.name.split(".")[0]
+        wf["label"] = wf["name"]  # TODO: Implement labels
+
+        workflow_content = await workflow.read()
+        payload = await payload.read()
+        # Decode the bytes object to a string
+        workflow_content_str = workflow_content.decode("utf-8")
+        wf["payload"] = json.loads(payload)
+        workflow_runner = WorkflowRunner(
+            workflow_def=yaml.safe_load(workflow_content_str),
+            workcell=state_manager.get_workcell(),
+            payload=wf["payload"],
+            experiment_path=str(experiment_path),
+            run_id=wf["run_id"],
+            simulate=simulate,
+            workflow_name=wf["name"],
+        )
+
+        flowdef = []
+
+        for step in workflow_runner.steps:
+            flowdef.append(
+                {
+                    "step": json.loads(step["step"].json()),
+                    "locations": step["locations"],
+                }
+            )
+        wf["flowdef"] = flowdef
+        state_manager.workflows[wf["run_id"]] = wf
+    except Exception as e:  # noqa
+        print(e)
+        wf["status"] = WorkflowStatus.FAILED
+        wf["hist"]["validation"] = f"Error: {e}"
+        state_manager.workflows[wf["run_id"]] = wf
+    return JSONResponse(
+        content={"wf": wf, "run_id": wf["run_id"], "status": str(wf["status"])}
     )
-    logger.info("Queued: " + str(job_id))
-    return JSONResponse(content={"status": WorkflowStatus.QUEUED, "job_id": job_id})
 
 
 @app.post("/experiment")
@@ -222,6 +256,7 @@ async def get_job_status(job_id: str) -> JSONResponse:
             content={
                 "status": workflow["status"],
                 "result": workflow["result"],
+                "hist": workflow["hist"],
             }
         )
     except KeyError:
