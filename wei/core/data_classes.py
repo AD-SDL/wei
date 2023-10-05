@@ -113,6 +113,7 @@ class Module(BaseModel):
     """location in workcell"""
     id: UUID = Field(default_factory=uuid4)
     """Robot id"""
+    active: Optional[bool] = True
 
     # TODO: Think about new validators based on backend types, e.g rosnodes, docker containers
     @validator("config")
