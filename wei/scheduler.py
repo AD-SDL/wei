@@ -160,6 +160,8 @@ class Scheduler:
         with self.state.state_lock():
             self.state.set_workcell(self.workcell)
             for module in self.workcell.modules:
+                if not module.active:
+                    continue
                 if module.workcell_coordinates:
                     wc_coords = module.workcell_coordinates
                 else:
