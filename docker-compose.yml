@@ -5,10 +5,10 @@ services:
     container_name: wei_server
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./docker/Dockerfile-wei
     ports:
       - 8000:8000
-    command: python -m wei.server --workcell /app/tests/test_workcell.yaml --redis_host wei_redis
+    command: python -m wei.server --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis
     depends_on:
       - wei_redis
   wei_scheduler:
@@ -16,8 +16,8 @@ services:
     container_name: wei_scheduler
     build:
       context: .
-      dockerfile: Dockerfile
-    command: python -m wei.scheduler --workcell /app/tests/test_workcell.yaml --redis_host wei_redis
+      dockerfile: ./docker/Dockerfile-wei
+    command: python -m wei.scheduler --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
       - sleeper_node
@@ -35,8 +35,8 @@ services:
     container_name: sleeper_node
     build:
       context: .
-      dockerfile: Dockerfile
-    command: python /app/examples/example_clients/sleep_rest_node.py
+      dockerfile: ./docker/Dockerfile-wei
+    command: python /wei/examples/example_clients/sleep_rest_node.py
     ports:
       - 2000:2000
   webcam_node:
@@ -44,15 +44,28 @@ services:
     container_name: webcam_node
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ./docker/Dockerfile-wei
     ports:
       - 2001:2001
-    command: python /app/examples/example_clients/webcam_rest_node.py
-  jupyter:
-    image: jupyter/datascience-notebook:latest
-    container_name: jupyter
+    command: python /wei/examples/example_clients/webcam_rest_node.py
+  wei_jupyter:
+    image: wei_jupyter
+    container_name: wei_jupyter
+    user: root
+    working_dir: "/home/rpl"
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-jupyter
     ports:
       - 8888:8888
+    volumes:
+      - ./examples:/home/rpl/examples
     environment:
       JUPYTER_ENABLE_LAB: "yes"
       JUPYTER_TOKEN: "wei"
+      NB_USER: "rpl"
+      CHOWN_HOME: "yes"
+      NB_UID: "${UID}"
+      NB_GID: "${GID}"
+
+

@@ -18,7 +18,7 @@ def main():
     flow_info = exp.run_job(wf_path.resolve(), simulate=True)
     print(flow_info)
     # This checks the state of the experiment in the queue
-    flow_status = exp.query_job(flow_info["job_id"])
+    flow_status = exp.query_job(flow_info["run_id"])
     # This will print out the queued job
     print(flow_status)
     # This will wait until the flow has run and then print out the final result of the flow

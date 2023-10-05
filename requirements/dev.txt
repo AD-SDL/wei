@@ -1,5 +1,6 @@
 # As well as these dev tools:
 mypy==0.910 # workaround https://github.com/samuelcolvin/pydantic/issues/3562
+build==1.0.3
 black[jupyter]
 flake8
 pytest
@@ -9,10 +10,10 @@ pydocstyle
 
 # mypy type stubs:
 types-PyYAML
-types-aiofiles 
-types-orjson 
-types-python-dateutil 
-types-redis 
-types-requests 
+types-aiofiles
+types-orjson
+types-python-dateutil
+types-redis
+types-requests
 types-ujson
 types-jwt

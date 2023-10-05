@@ -442,6 +442,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "wei.server:app",
+        host="0.0.0.0",
         reload=False,
         ws_max_size=10000000000000000000000000000000000000000000000000000000000000000000000000,
     )
