@@ -52,20 +52,22 @@ services:
     image: wei_jupyter
     container_name: wei_jupyter
     user: root
-    working_dir: "/home/rpl"
+    working_dir: "/home/${USER}"
     build:
       context: .
       dockerfile: ./docker/Dockerfile-jupyter
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        USER: ${USER}
     ports:
       - 8888:8888
     volumes:
-      - ./examples:/home/rpl/examples
+      - ./examples:/home/${USER}/examples
     environment:
       JUPYTER_ENABLE_LAB: "yes"
       JUPYTER_TOKEN: "wei"
-      NB_USER: "rpl"
+      NB_USER: "${USER}"
       CHOWN_HOME: "yes"
       NB_UID: "${UID}"
       NB_GID: "${GID}"
-
-

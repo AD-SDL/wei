@@ -1,9 +1,13 @@
 FROM jupyter/datascience-notebook:latest
 # USER root
 ARG USER=joyvan
+ARG UID=1000
+ARG GID=1000
 USER root
 
 RUN mkdir -p /home/${USER}/wei
+RUN mkdir -p /home/${USER}/.wei/temp
+RUN chown -R ${UID}:${GID} /home/${USER}/.wei
 
 # Copy wei files
 COPY requirements /home/${USER}/wei/requirements
