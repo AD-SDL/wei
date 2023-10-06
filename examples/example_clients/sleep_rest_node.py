@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 workcell = None
 global state
-local_ip = "localhost"
+host = "0.0.0.0" # Allows all connections from local network
 local_port = 2000
 
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "sleep_rest_node:app",
-        host=local_ip,
+        host=host,
         port=local_port,
         reload=True,
         ws_max_size=100000000000000000000000000000000000000,

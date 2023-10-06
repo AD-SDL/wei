@@ -1,0 +1,73 @@
+version: "3.0"
+services:
+  wei_server:
+    image: wei
+    container_name: wei_server
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-wei
+    ports:
+      - 8000:8000
+    command: python -m wei.server --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis
+    depends_on:
+      - wei_redis
+  wei_scheduler:
+    image: wei
+    container_name: wei_scheduler
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-wei
+    command: python -m wei.scheduler --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis --server wei_server
+    depends_on:
+      - wei_redis
+      - sleeper_node
+      - webcam_node
+  wei_redis:
+    image: redis
+    container_name: wei_redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ~/.wei/redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+  sleeper_node:
+    image: wei
+    container_name: sleeper_node
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-wei
+    command: python /wei/examples/example_clients/sleep_rest_node.py
+    ports:
+      - 2000:2000
+  webcam_node:
+    image: wei
+    container_name: webcam_node
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-wei
+    ports:
+      - 2001:2001
+    command: python /wei/examples/example_clients/webcam_rest_node.py
+  wei_jupyter:
+    image: wei_jupyter
+    container_name: wei_jupyter
+    user: root
+    working_dir: "/home/${USER}"
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile-jupyter
+      args:
+        UID: ${UID}
+        GID: ${GID}
+        USER: ${USER}
+    ports:
+      - 8888:8888
+    volumes:
+      - ./examples:/home/${USER}/examples
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: "wei"
+      NB_USER: "${USER}"
+      CHOWN_HOME: "yes"
+      NB_UID: "${UID}"
+      NB_GID: "${GID}"

@@ -1,0 +1,26 @@
+FROM jupyter/datascience-notebook:latest
+# USER root
+ARG USER=joyvan
+ARG UID=1000
+ARG GID=1000
+USER root
+
+RUN mkdir -p /home/${USER}/wei
+RUN mkdir -p /home/${USER}/.wei/temp
+RUN chown -R ${UID}:${GID} /home/${USER}/.wei
+
+# Copy wei files
+COPY requirements /home/${USER}/wei/requirements
+COPY wei /home/${USER}/wei/wei
+COPY tests /home/${USER}/wei/tests
+COPY setup.cfg /home/${USER}/wei/setup.cfg
+COPY setup.py /home/${USER}/wei/setup.py
+
+
+# Install dependencies
+RUN python -m pip install --upgrade pip
+RUN pip install -r /home/${USER}/wei/requirements/requirements.txt
+RUN pip install -r /home/${USER}/wei/requirements/dev.txt
+
+# Install wei
+RUN pip install -e /home/${USER}/wei
