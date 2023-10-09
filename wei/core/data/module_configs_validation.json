@@ -14,8 +14,7 @@
         "zmq_node_port"
     ],
     "wei_rest_node": [
-        "rest_node_address",
-        "rest_node_auth"
+        "rest_node_address"
     ],
     "simulate_callback": []
 }
