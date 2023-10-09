@@ -115,7 +115,6 @@ class Module(BaseModel):
     """Robot id"""
     active: Optional[bool] = True
 
-    # TODO: Think about new validators based on backend types, e.g rosnodes, docker containers
     @validator("config")
     def validate_config(cls, v, values, **kwargs):
         """Validate the config field of the workcell config with special rules for each type of robot"""
@@ -148,22 +147,29 @@ class Interface(BaseModel):
     name: str
     """"""
 
-    def send_action():
+    def send_action(self, action):
         """sends an action"""
+        print(action)
         print("Send Action not implemented")
         return {}
 
-    def get_about():
+    def get_about(
+        self,
+    ):
         """gets about information"""
         print("Get About not implemented")
         return {}
 
-    def get_state():
+    def get_state(
+        self,
+    ):
         """gets the robot state"""
         print("Get State not implemented")
         return {}
 
-    def get_resources():
+    def get_resources(
+        self,
+    ):
         """gets the robot resources"""
         print("Get Resources not implemented")
         return {}
