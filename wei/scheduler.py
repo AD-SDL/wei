@@ -268,7 +268,14 @@ class Scheduler:
             return wf
         elif wf["status"] == WorkflowStatus.RUNNING:
             if wf_id in self.processes and self.processes[wf_id]["pipe"].poll():
-                response = self.processes[wf_id]["pipe"].recv()
+                try:
+                    response = self.processes[wf_id]["pipe"].recv()
+                except Exception as e:
+                    # TODO: better error handling
+                    print(f"Error: {str(e)}")
+                    wf["status"] = WorkflowStatus.FAILED
+                    wf["hist"][step.name] = str(e)
+                    return wf
                 print(response)
                 locations = response["locations"]
                 step = response["step"]
