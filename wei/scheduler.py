@@ -279,18 +279,9 @@ class Scheduler:
                 print(response)
                 locations = response["locations"]
                 step = response["step"]
-                if "target" in locations:
-                    self.state.locations[locations["target"]]["state"] = wf[
-                        "experiment_id"
-                    ]
-                    self.state.locations[locations["target"]]["queue"].remove(wf_id)
-                if "source" in locations:
-                    self.state.locations[locations["source"]]["state"] = "Empty"
-                self.state.modules[step.module]["queue"].remove(wf_id)
                 wf["hist"][step.name] = response["step_response"]
                 step_index = wf["step_index"]
                 self.processes[wf_id]["process"].terminate()
-
                 self.processes[wf_id]["process"].close()
                 del self.processes[wf_id]
                 if step_index + 1 == len(wf["flowdef"]):
@@ -351,11 +342,12 @@ class Scheduler:
                     "Empty",
                 )
             if "target" in flowdef[step_index - 1]["locations"]:
-                self.state.update_location(
-                    flowdef[step_index - 1]["locations"]["target"],
-                    update_location_state,
-                    wf["experiment_id"],
-                )
+                if  not("trash" in flowdef[step_index - 1]["locations"]["target"]):
+                    self.state.update_location(
+                        flowdef[step_index - 1]["locations"]["target"],
+                        update_location_state,
+                        wf["experiment_id"],
+                    )
                 self.state.update_location(
                     flowdef[step_index - 1]["locations"]["target"],
                     remove_element_from_queue,
