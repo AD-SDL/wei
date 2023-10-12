@@ -193,7 +193,8 @@ class Experiment:
 
         response: Dict
            The JSON portion of the response from the server with the experiment log"""
-        url = f"{self.url}/run/return"
+        
+        url = f"{self.url}/run/" + run_id + "/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
         return self._return_response(response)
