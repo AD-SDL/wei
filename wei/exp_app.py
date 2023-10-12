@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 from typing import Dict, Optional
-
+import time
 import requests
 import ulid
 
@@ -67,11 +67,12 @@ class Experiment:
 
         return response.json()
 
-    def run_job(
+    def start_run(
         self,
         workflow_file: Path,
         payload: Optional[Dict] = None,
         simulate: Optional[bool] = False,
+        blocking: Optional[bool] = False
     ):
         """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
@@ -92,7 +93,7 @@ class Experiment:
            The JSON portion of the response from the server, including the ID of the job as job_id
         """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
-        url = f"{self.url}/job/run"
+        url = f"{self.url}/run/start"
         payload_path = Path("~/.wei/temp/payload.txt")
         with open(payload_path.expanduser(), "w") as f2:
             payload = json.dump(payload, f2)
@@ -112,10 +113,27 @@ class Experiment:
                     "payload": (str("payload_file.txt"), f2, "text"),
                 },
             )
-
         print(response.json())
+        if blocking: 
+            job_status = self.query_job(response["run_id"])
+            print(job_status)
+            while job_status["status"] != "completed" and job_status["status"] != "failure":
+                job_status = self.query_job(response["run_id"])
+                print(job_status)
+                time.sleep(3)
 
         return self._return_response(response)
+    def await_runs(self, run_list):
+        results = {}
+        while(len(results.keys()) < len(run_list)):
+            for id in run_list:
+                if not(id in results):
+                    run_status = self.query_job(id)
+                    if run_status["status"] == "completed"  or run_status["status"] == "failure":
+                        results[id] = self._return_response(run_status)
+        return results
+
+
 
     def register_exp(self):
         """Initializes an Experiment, and creates its log files
