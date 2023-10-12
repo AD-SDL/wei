@@ -1,4 +1,4 @@
-﻿rpl\_wei
+rpl\_wei
 ========
 
 .. automodule:: wei
