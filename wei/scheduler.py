@@ -42,17 +42,17 @@ def check_step(
 ) -> bool:
     """Check if a step is valid."""
     if "target" in locations:
-        location = state.locations[locations["target"]]
+        location = state._locations[locations["target"]]
         if not (location["state"] == "Empty") or not (
             (len(location["queue"]) > 0 and location["queue"][0] == str(run_id))
         ):
             return False
 
     if "source" in locations:
-        location = state.locations[locations["source"]]
+        location = state._locations[locations["source"]]
         if not (location["state"] == str(exp_id)):
             return False
-    module_data = state.modules[step["module"]]
+    module_data = state._modules[step["module"]]
     if not ("BUSY" in module_data["state"]) and not (
         (len(module_data["queue"]) > 0 and module_data["queue"][0] == str(run_id))
     ):
@@ -63,7 +63,7 @@ def check_step(
 def run_step(
     exp_path: Union[str, Path],
     wf_name: Any,
-    wf_id: Any,
+    run_id: Any,
     step: Step,
     locations: dict,
     module: Module,
@@ -71,7 +71,7 @@ def run_step(
     executor: StepExecutor,
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
-    logger, log_dir = init_logger(exp_path, wf_name, wf_id)
+    logger, log_dir = init_logger(exp_path, wf_name, run_id)
     action_response, action_msg, action_log = executor.execute_step(
         step, module, logger=logger
     )
@@ -156,7 +156,7 @@ class Scheduler:
         self.kafka_server = args.kafka_server
         self.log_server = args.server
         self.state.clear_state(reset_locations=args.reset_locations)
-        print(self.state.locations)
+        print(self.state._locations)
         with self.state.state_lock():
             self.state.set_workcell(self.workcell)
             for module in self.workcell.modules:
@@ -166,7 +166,7 @@ class Scheduler:
                     wc_coords = module.workcell_coordinates
                 else:
                     wc_coords = None
-                self.state.modules[module.name] = {
+                self.state._modules[module.name] = {
                     "type": module.model,
                     "id": str(module.id),
                     "state": "INIT",
@@ -175,8 +175,8 @@ class Scheduler:
                 }
             for module_name in self.workcell.locations:
                 for location in self.workcell.locations[module_name]:
-                    if location not in self.state.locations:
-                        self.state.locations[location] = {
+                    if location not in self.state._locations:
+                        self.state._locations[location] = {
                             "state": "Empty",
                             "queue": [],
                         }
@@ -185,9 +185,9 @@ class Scheduler:
             with self.state.state_lock():  # * Lock the state for the duration of the update loop
                 self.workcell = self.state.get_workcell()
                 # * Update all queued workflows
-                for wf_id in self.state.workflows.keys():
-                    self.state.update_workflow(
-                        wf_id, self.update_queued_workflow, wf_id
+                for run_id in self.state._workflow_runs.keys():
+                    self.state.update_workflow_run(
+                        run_id, self.update_queued_workflow, run_id
                     )
             time.sleep(args.update_interval)
 
@@ -203,21 +203,21 @@ class Scheduler:
                     if module["state"] == "INIT":
                         print("Module Found: " + str(module_name))
                     module["state"] = state
-                    self.state.modules[module_name] = module
+                    self.state._modules[module_name] = module
                 else:
                     module["state"] = "UNKNOWN"
             except Exception as e:  # noqa
                 if module["state"] == "INIT":
                     print(e)
                     print("Can't Find Module: " + str(module_name))
-                self.state.modules[module_name] = module
+                self.state._modules[module_name] = module
         else:
-            if self.state.modules[module_name]["state"] == "INIT":
+            if self.state._modules[module_name]["state"] == "INIT":
                 print("No Module Interface for Module", str(module_name))
             pass
         return module
 
-    def update_queued_workflow(self, wf: dict, wf_id: str) -> None:
+    def update_queued_workflow(self, wf: dict, run_id: str) -> None:
         """
         Updates state based on the given workflow and prior state.
         """
@@ -226,7 +226,7 @@ class Scheduler:
             exp_id = exp_data[-1]
             wf["experiment_id"] = exp_id
             exp_name = exp_data[0]
-            self.events[wf_id] = Events(
+            self.events[run_id] = Events(
                 self.log_server,
                 "8000",
                 exp_name,
@@ -234,8 +234,8 @@ class Scheduler:
                 self.kafka_server,
                 wf["experiment_path"],
             )
-            self.events[wf_id].log_wf_start(wf["name"], wf_id)
-            self.update_source_and_target(wf, wf_id)
+            self.events[run_id].log_wf_start(wf["name"], run_id)
+            self.update_source_and_target(wf, run_id)
             wf["status"] = WorkflowStatus.QUEUED
             print(wf)
         elif wf["status"] == WorkflowStatus.QUEUED:
@@ -243,7 +243,7 @@ class Scheduler:
             step = wf["flowdef"][step_index]["step"]
             locations = wf["flowdef"][step_index]["locations"]
             exp_id = Path(wf["experiment_path"]).name.split("_id_")[-1]
-            if check_step(exp_id, wf_id, step, locations, self.state):
+            if check_step(exp_id, run_id, step, locations, self.state):
                 send_conn, rec_conn = mpr.Pipe()
                 module = find_module(self.workcell, step["module"])
                 step_process = mpr.Process(
@@ -251,7 +251,7 @@ class Scheduler:
                     args=(
                         wf["experiment_path"],
                         wf["name"],
-                        wf_id,
+                        run_id,
                         Step(**step),
                         locations,
                         module,
@@ -260,16 +260,16 @@ class Scheduler:
                     ),
                 )
                 step_process.start()
-                self.processes[wf_id] = {
+                self.processes[run_id] = {
                     "process": step_process,
                     "pipe": rec_conn,
                 }
                 wf["status"] = WorkflowStatus.RUNNING
             return wf
         elif wf["status"] == WorkflowStatus.RUNNING:
-            if wf_id in self.processes and self.processes[wf_id]["pipe"].poll():
+            if run_id in self.processes and self.processes[run_id]["pipe"].poll():
                 try:
-                    response = self.processes[wf_id]["pipe"].recv()
+                    response = self.processes[run_id]["pipe"].recv()
                 except Exception as e:
                     # TODO: better error handling
                     print(f"Error: {str(e)}")
@@ -281,23 +281,23 @@ class Scheduler:
                 step = response["step"]
                 wf["hist"][step.name] = response["step_response"]
                 step_index = wf["step_index"]
-                self.processes[wf_id]["process"].terminate()
-                self.processes[wf_id]["process"].close()
-                del self.processes[wf_id]
+                self.processes[run_id]["process"].terminate()
+                self.processes[run_id]["process"].close()
+                del self.processes[run_id]
                 if step_index + 1 == len(wf["flowdef"]):
-                    self.events[wf_id].log_wf_end(wf["name"], wf_id)
-                    del self.events[wf_id]
+                    self.events[run_id].log_wf_end(wf["name"], run_id)
+                    del self.events[run_id]
                     wf["status"] = WorkflowStatus.COMPLETED
                     wf["step_index"] += 1
-                    self.update_source_and_target(wf, wf_id)
+                    self.update_source_and_target(wf, run_id)
                     wf["hist"]["run_dir"] = str(response["log_dir"])
                 else:
                     wf["status"] = WorkflowStatus.QUEUED
                     wf["step_index"] += 1
-                    self.update_source_and_target(wf, wf_id)
+                    self.update_source_and_target(wf, run_id)
         return wf
 
-    def update_source_and_target(self, wf, wf_id: str) -> None:
+    def update_source_and_target(self, wf, run_id: str) -> None:
         """Update the source and target location and module of a workflow."""
         step_index = wf["step_index"]
         flowdef = wf["flowdef"]
@@ -323,17 +323,17 @@ class Scheduler:
                 self.state.update_location(
                     flowdef[step_index]["locations"]["target"],
                     append_element_to_queue,
-                    wf_id,
+                    run_id,
                 )
             self.state.update_module(
-                flowdef[step_index]["step"]["module"], append_element_to_queue, wf_id
+                flowdef[step_index]["step"]["module"], append_element_to_queue, run_id
             )
 
         if step_index > 0:
             self.state.update_module(
                 flowdef[step_index - 1]["step"]["module"],
                 remove_element_from_queue,
-                wf_id,
+                run_id,
             )
             if "source" in flowdef[step_index - 1]["locations"]:
                 self.state.update_location(
@@ -351,7 +351,7 @@ class Scheduler:
                 self.state.update_location(
                     flowdef[step_index - 1]["locations"]["target"],
                     remove_element_from_queue,
-                    wf_id,
+                    run_id,
                 )
 
 

@@ -91,10 +91,10 @@ class Module(BaseModel):
     """Container for a module found in a workcell file (more info than in a workflow file)"""
 
     # Hidden
-    config_validation: Optional[Path] = Field(
-        Path(__file__).parent.resolve() / "data/module_configs_validation.json",
-        hidden=True,
-    )
+    @property
+    def config_validation(self) -> Path:
+        """Path to the config validation file"""
+        return Path(__file__).parent.resolve() / "data/module_configs_validation.json"
 
     # Public
     name: str
@@ -246,12 +246,11 @@ class WorkcellData(BaseModel):
     """Globus search index, needed for publishing"""
     modules: List[Module]
     """The modules available to a workcell"""
-    locations: Optional[Dict[str, Any]]
+    locations: Optional[Locations]
     """Locations used by the workcell"""
 
-
 class WorkflowStatus(str, Enum):
-    """Status for a workflow"""
+    """Status for a workflow run"""
 
     NEW = "new"
     QUEUED = "queued"
@@ -274,9 +273,13 @@ class Workflow(BaseModel):
     """Information about the flow"""
     payload: Optional[Dict]
     """input information for a given workflow run"""
-    status: Optional[WorkflowStatus]
+
+class WorkflowRun(Workflow):
+    run_id: UUID = Field(default_factory=uuid4)
+    """ID of the workflow run"""
+    status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
-    result: Optional[Dict]
+    result: Dict = Field(default={})
     """result from the Workflow"""
 
 
@@ -289,8 +292,8 @@ class StepStatus(str, Enum):
     FAILED = "failed"
 
 
-class NodeStatus(str, Enum):
-    """Status for the state of a Node"""
+class ModuleStatus(str, Enum):
+    """Status for the state of a Module"""
 
     IDLE = "idle"
     BUSY = "busy"

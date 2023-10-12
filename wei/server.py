@@ -200,12 +200,12 @@ async def process_job(
                 }
             )
         wf["flowdef"] = flowdef
-        state_manager.workflows[wf["run_id"]] = wf
+        state_manager._workflow_runs[wf["run_id"]] = wf
     except Exception as e:  # noqa
         print(e)
         wf["status"] = WorkflowStatus.FAILED
         wf["hist"]["validation"] = f"Error: {e}"
-        state_manager.workflows[wf["run_id"]] = wf
+        state_manager._workflow_runs[wf["run_id"]] = wf
     return JSONResponse(
         content={"wf": wf, "run_id": wf["run_id"], "status": str(wf["status"])}
     )
@@ -251,7 +251,7 @@ async def get_job_status(job_id: str) -> JSONResponse:
     """
     global state_manager
     try:
-        workflow = state_manager.workflows[job_id]
+        workflow = state_manager._workflow_runs[job_id]
         return JSONResponse(
             content={
                 "status": workflow["status"],
@@ -328,7 +328,7 @@ def show_states() -> JSONResponse:
     global state_manager
 
     return JSONResponse(
-        content={"location_states": str(state_manager.locations.to_dict())}
+        content={"location_states": str(state_manager._locations.to_dict())}
     )
 
 
@@ -350,7 +350,7 @@ def loc(location: str) -> JSONResponse:
 
     try:
         return JSONResponse(
-            content={str(location): str(state_manager.locations[location])}
+            content={str(location): str(state_manager._locations[location])}
         )
     except KeyError:
         return HTTPException(status_code=404, detail="Location not found")
@@ -373,7 +373,7 @@ def mod(module_name: str) -> JSONResponse:
 
     try:
         return JSONResponse(
-            content={str(module_name): str(state_manager.modules[module_name])}
+            content={str(module_name): str(state_manager._modules[module_name])}
         )
     except KeyError:
         return HTTPException(status_code=404, detail="Module not found")
@@ -407,7 +407,7 @@ async def update(location_name: str, experiment_id: str) -> JSONResponse:
                 location_name, update_location_state, experiment_id
             )
         return JSONResponse(
-            content={"Locations": str(state_manager.locations.to_dict())}
+            content={"Locations": str(state_manager._locations.to_dict())}
         )
 
 
@@ -426,14 +426,14 @@ async def clear_workflows() -> JSONResponse:
     """
     global state_manager
     with state_manager.state_lock():
-        for wf_id, workflow in state_manager.workflows:
+        for run_id, workflow in state_manager._workflow_runs:
             if (
                 workflow["status"] == WorkflowStatus.COMPLETED
                 or workflow["status"] == WorkflowStatus.FAILED
             ):
-                del state_manager.workflows[wf_id]
+                del state_manager._workflow_runs[run_id]
         return JSONResponse(
-            content={"Workflows": str(state_manager.workflows.to_dict())}
+            content={"Workflows": str(state_manager._workflow_runs.to_dict())}
         )
 
 
