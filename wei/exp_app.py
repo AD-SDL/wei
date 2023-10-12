@@ -115,20 +115,21 @@ class Experiment:
             )
         print(response.json())
         if blocking: 
-            job_status = self.query_job(response["run_id"])
+            job_status = self.query_run(response["run_id"])
             print(job_status)
             while job_status["status"] != "completed" and job_status["status"] != "failure":
-                job_status = self.query_job(response["run_id"])
+                job_status = self.query_run(response["run_id"])
                 print(job_status)
                 time.sleep(3)
 
         return self._return_response(response)
+    
     def await_runs(self, run_list):
         results = {}
         while(len(results.keys()) < len(run_list)):
             for id in run_list:
                 if not(id in results):
-                    run_status = self.query_job(id)
+                    run_status = self.query_run(id)
                     if run_status["status"] == "completed"  or run_status["status"] == "failure":
                         results[id] = self._return_response(run_status)
         return results
@@ -159,7 +160,7 @@ class Experiment:
         self.events.experiment_path = self.experiment_path
         return self._return_response(response)
 
-    def query_job(self, job_id: str):
+    def query_run(self, run_id: str):
         """Checks on a workflow run using the id given
 
         Parameters
@@ -174,12 +175,12 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server"""
 
-        url = f"{self.url}/job/{job_id}/state"
+        url = f"{self.url}/run/{run_id}/state"
         response = requests.get(url)
 
         return self._return_response(response)
 
-    def get_job_log(self):
+    def get_run_log(self, run_id: str):
         """Returns the log for this experiment as a string
 
         Parameters
@@ -192,7 +193,7 @@ class Experiment:
 
         response: Dict
            The JSON portion of the response from the server with the experiment log"""
-        url = f"{self.url}/log/return"
+        url = f"{self.url}/run/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
         return self._return_response(response)

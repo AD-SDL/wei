@@ -126,8 +126,8 @@ async def log_return(experiment_path: str) -> str:
         return f.read()
 
 
-@app.post("/job/run")
-async def process_job(
+@app.post("/run/start")
+async def start_run(
     workflow: UploadFile = File(...),
     payload: UploadFile = File(...),
     experiment_path: str = "",
@@ -234,8 +234,8 @@ def process_exp(experiment_name: str, experiment_id: str) -> dict:
     return start_experiment(experiment_name, experiment_id, kafka_server)
 
 
-@app.get("/job/{job_id}/state")
-async def get_job_status(job_id: str) -> JSONResponse:
+@app.get("/run/{run_id}/state")
+async def get_run_status(run_id: str) -> JSONResponse:
     """Pulls the status of a job on the queue
 
     Parameters
@@ -251,7 +251,7 @@ async def get_job_status(job_id: str) -> JSONResponse:
     """
     global state_manager
     try:
-        workflow = state_manager.workflows[job_id]
+        workflow = state_manager.workflows[run_id]
         return JSONResponse(
             content={
                 "status": workflow["status"],
@@ -263,8 +263,8 @@ async def get_job_status(job_id: str) -> JSONResponse:
         return JSONResponse(content={"status": WorkflowStatus.UNKNOWN})
 
 
-@app.get("/job/{job_id}/log")
-async def log_job_return(job_id: str, experiment_path: str) -> str:
+@app.get("/run/{run_id}/log")
+async def log_run_return(run_id: str, experiment_path: str) -> str:
     """Parameters
     ----------
 
@@ -281,7 +281,7 @@ async def log_job_return(job_id: str, experiment_path: str) -> str:
        a string with the log data for the run requested"""
     log_dir = Path(experiment_path)
     for file in os.listdir(log_dir / "wei_runs"):
-        if re.match(".*" + job_id, file):
+        if re.match(".*" + run_id, file):
             with open(log_dir / "wei_runs" / file / "runLogger.log") as f:
                 return f.read()
 
