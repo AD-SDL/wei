@@ -72,7 +72,7 @@ class Experiment:
         workflow_file: Path,
         payload: Optional[Dict] = None,
         simulate: Optional[bool] = False,
-        blocking: Optional[bool] = False
+        blocking: Optional[bool] = True
     ):
         """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
@@ -114,16 +114,22 @@ class Experiment:
                 },
             )
         print(response.json())
+        print("here")
+        response = self._return_response(response)
         if blocking: 
+            
+            print(response)
+            print("asdfasdf")
             job_status = self.query_run(response["run_id"])
             print(job_status)
             while job_status["status"] != "completed" and job_status["status"] != "failure":
                 job_status = self.query_run(response["run_id"])
                 print(job_status)
                 time.sleep(3)
-
-        return self._return_response(response)
-    
+            return job_status
+        return response
+        
+       
     def await_runs(self, run_list):
         results = {}
         while(len(results.keys()) < len(run_list)):
