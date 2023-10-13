@@ -15,14 +15,14 @@ modules:
     model: sleeper_test_node
     interface: wei_rest_node
     config:
-      rest_node_address: "http://sleeper_node:2000"
+      rest_node_address: "http://0.0.0.0:2000"
       rest_node_auth: ""
     workcell_coordinates: [0, 0, 0, 0, 0, 0]
   - name: webcam
     model: camera_test_node
     interface: wei_rest_node
     config:
-      rest_node_address: "http://webcam_node:2001"
+      rest_node_address: "http://172.31.64.1:2001"
       rest_node_auth: ""
     workcell_coordinates: [15, 0, 0, 0, 0, 0]
 

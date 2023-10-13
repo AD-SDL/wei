@@ -41,6 +41,7 @@ def check_step(
     exp_id, run_id, step: dict, locations: dict, state: StateManager
 ) -> bool:
     """Check if a step is valid."""
+    print(step)
     if "target" in locations:
         location = state.locations[locations["target"]]
         if not (location["state"] == "Empty") or not (
@@ -189,6 +190,8 @@ class Scheduler:
                     self.state.update_workflow(
                         wf_id, self.update_queued_workflow, wf_id
                     )
+                
+
             time.sleep(args.update_interval)
 
     def update_module_state(self, module: dict, workcell_module: Module) -> dict:
@@ -270,16 +273,18 @@ class Scheduler:
             if wf_id in self.processes and self.processes[wf_id]["pipe"].poll():
                 try:
                     response = self.processes[wf_id]["pipe"].recv()
+                   
                 except Exception as e:
                     # TODO: better error handling
                     print(f"Error: {str(e)}")
                     wf["status"] = WorkflowStatus.FAILED
                     wf["hist"][step.name] = str(e)
                     return wf
-                print(response)
+              
                 locations = response["locations"]
                 step = response["step"]
                 wf["hist"][step.name] = response["step_response"]
+                
                 step_index = wf["step_index"]
                 self.processes[wf_id]["process"].terminate()
                 self.processes[wf_id]["process"].close()
