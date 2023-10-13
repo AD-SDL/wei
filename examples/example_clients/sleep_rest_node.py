@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 workcell = None
 global state
-host = "0.0.0.0" # Allows all connections from local network
+host = "0.0.0.0"  # Allows all connections from local network
 local_port = 2000
 
 

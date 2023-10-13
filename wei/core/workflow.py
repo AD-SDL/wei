@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import requests
-import ulid
 from devtools import debug
 
 from wei.core.data_classes import Workflow
@@ -23,7 +22,7 @@ class WorkflowRunner:
         workcell: Union[Dict[str, Any], Workcell],
         experiment_path: str,
         payload,
-        run_id: Optional[ulid.ULID] = None,
+        run_id: Optional[str] = None,
         log_level: int = logging.INFO,
         simulate: bool = False,
         workflow_name: str = "",

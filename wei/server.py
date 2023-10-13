@@ -6,12 +6,11 @@ from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-import ulid
 import yaml
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from wei.core.data_classes import ExperimentStatus, WorkflowStatus
+from wei.core.data_classes import ExperimentStatus, WorkflowRun, WorkflowStatus
 from wei.core.experiment import start_experiment
 from wei.core.loggers import WEI_Logger
 from wei.core.workcell import Workcell
@@ -151,43 +150,33 @@ async def process_job(
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
     try:
-        wf = {
-            "name": "",
-            "label": "",
-            "run_id": "",
-            "step_index": 0,
-            "experiment_path": str(experiment_path),
-            "hist": {},
-            "status": WorkflowStatus.NEW,
-            "result": {},
-            "run_dir": "",
-            "flowdef": [],
-            "payload": "",
-        }
-        wf["run_id"] = ulid.new().str
         log_dir = Path(experiment_path)
-        wf["run_dir"] = str(Path(log_dir, "runs", f"{wf['name']}_{wf['run_id']}"))
+        wf = WorkflowRun(
+            name=Path(workflow.filename).name.split(".")[0],
+            modules=[],
+            flowdef=[],
+            experiment_path=str(log_dir),
+        )
+        wf.label = wf.name
+        wf.run_dir = str(Path(log_dir, "runs", f"{wf.name}_{wf.run_id}"))
         experiment_id = log_dir.name.split("_")[-1]
         logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
         logger.info("Received job run request")
         global state_manager
-        workflow_path = Path(workflow.filename)
-        wf["name"] = workflow_path.name.split(".")[0]
-        wf["label"] = wf["name"]  # TODO: Implement labels
 
         workflow_content = await workflow.read()
         payload = await payload.read()
         # Decode the bytes object to a string
         workflow_content_str = workflow_content.decode("utf-8")
-        wf["payload"] = json.loads(payload)
+        wf.payload = json.loads(payload)
         workflow_runner = WorkflowRunner(
             workflow_def=yaml.safe_load(workflow_content_str),
             workcell=state_manager.get_workcell(),
-            payload=wf["payload"],
+            payload=wf.payload,
             experiment_path=str(experiment_path),
-            run_id=wf["run_id"],
+            run_id=wf.run_id,
             simulate=simulate,
-            workflow_name=wf["name"],
+            workflow_name=wf.name,
         )
 
         flowdef = []
@@ -199,15 +188,19 @@ async def process_job(
                     "locations": step["locations"],
                 }
             )
-        wf["flowdef"] = flowdef
-        state_manager._workflow_runs[wf["run_id"]] = wf
+        wf.flowdef = flowdef
+        state_manager.set_workflow_run(wf.run_id, wf)
     except Exception as e:  # noqa
         print(e)
-        wf["status"] = WorkflowStatus.FAILED
-        wf["hist"]["validation"] = f"Error: {e}"
-        state_manager._workflow_runs[wf["run_id"]] = wf
+        wf.status = WorkflowStatus.FAILED
+        wf.hist["validation"] = f"Error: {e}"
+        state_manager.set_workflow_run(wf.run_id, wf)
     return JSONResponse(
-        content={"wf": wf, "run_id": wf["run_id"], "status": str(wf["status"])}
+        content={
+            "wf": wf.model_dump(mode="json"),
+            "run_id": wf.run_id,
+            "status": str(wf.status),
+        }
     )
 
 
@@ -229,7 +222,7 @@ def process_exp(experiment_name: str, experiment_id: str) -> dict:
     """
 
     # Decode the bytes object to a string
-    # Generate ULID for the experiment, really this should be done by the client (Experiment class)
+    # Generate UUID for the experiment, really this should be done by the client (Experiment class)
     global kafka_server
     return start_experiment(experiment_name, experiment_id, kafka_server)
 
@@ -251,14 +244,8 @@ async def get_job_status(job_id: str) -> JSONResponse:
     """
     global state_manager
     try:
-        workflow = state_manager._workflow_runs[job_id]
-        return JSONResponse(
-            content={
-                "status": workflow["status"],
-                "result": workflow["result"],
-                "hist": workflow["hist"],
-            }
-        )
+        workflow = state_manager.get_workflow_run(job_id)
+        return JSONResponse(content=workflow.model_dump(mode="json"))
     except KeyError:
         return JSONResponse(content={"status": WorkflowStatus.UNKNOWN})
 
@@ -373,7 +360,11 @@ def mod(module_name: str) -> JSONResponse:
 
     try:
         return JSONResponse(
-            content={str(module_name): str(state_manager._modules[module_name])}
+            content={
+                str(module_name): state_manager.get_module(module_name).model_dump(
+                    mode="json"
+                )
+            }
         )
     except KeyError:
         return HTTPException(status_code=404, detail="Module not found")
@@ -426,14 +417,14 @@ async def clear_workflows() -> JSONResponse:
     """
     global state_manager
     with state_manager.state_lock():
-        for run_id, workflow in state_manager._workflow_runs:
+        for workflow in state_manager.get_all_workflow_runs():
             if (
-                workflow["status"] == WorkflowStatus.COMPLETED
-                or workflow["status"] == WorkflowStatus.FAILED
+                workflow.status == WorkflowStatus.COMPLETED
+                or workflow.status == WorkflowStatus.FAILED
             ):
-                del state_manager._workflow_runs[run_id]
+                state_manager.delete_workflow_run(workflow.run_id)
         return JSONResponse(
-            content={"Workflows": str(state_manager._workflow_runs.to_dict())}
+            content={"Workflows": str(state_manager.get_all_workflow_runs())}
         )
 
 

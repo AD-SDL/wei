@@ -20,8 +20,6 @@ services:
     command: python -m wei.scheduler --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
-      - sleeper_node
-      - webcam_node
   wei_redis:
     image: redis
     container_name: wei_redis
