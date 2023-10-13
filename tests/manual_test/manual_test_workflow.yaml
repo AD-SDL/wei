@@ -1,0 +1,57 @@
+name: Manual - Test - Workflow
+metadata:
+  author: Tobias Ginsburg, Kyle Hippe, Ryan D. Lewis
+  info: Example workflow for WEI
+  version: 0.2
+
+modules:
+  - name: transfer
+  - name: synthesis
+  - name: measure
+
+flowdef:
+  #This defines a step in the workflow. Each step represents an action on a single module
+  #This is a human legible name for the step
+  - name: Transfer get plate
+  #This defines which module the action will run on, in this case, a test node that simply sleeps for t seconds
+    module: transfer
+  #This tells the module which action in its library to run, in this case grabbing a wellplate from one of the storage tower
+    action: transfer
+  #These arguments specify the parameters for the action above, in this case, which tower the arm will pull a plate from.
+    args:
+      t: "2"
+      target: "synthesis.pos"
+  #This represents checks that will take place before the system runs, in this case, there are none specified
+    checks: null
+  #This is a place for additional notes
+    comment: put a plate in first position
+
+  - name: synthesize
+    module: synthesis
+    action: run
+    args:
+      t: "2"
+
+  - name: Transfer synth 2 measure
+    module: transfer
+    action: run
+    args:
+      source: synthesis.pos
+      target: measure.pos
+      t: "2"
+
+  - name: measure
+    module: measure
+    action: run
+    args:
+      t: "2"
+
+  - name: Transfer measure 2 trash
+    module: transfer
+    action: run
+    args:
+      source: measure.pos
+      target: wc.trash
+      t: "2"
+  
+
