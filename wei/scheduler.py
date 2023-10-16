@@ -94,6 +94,7 @@ def run_step(
             "log_dir": log_dir,
         }
     )
+    print("Finished step")
 
 
 def parse_args() -> Namespace:
@@ -174,8 +175,6 @@ class Scheduler:
                 for location, coordinates in self.workcell.locations[
                     module_name
                 ].items():
-                    print(location)
-                    print(coordinates)
                     self.state.set_location(
                         location,
                         Location(
@@ -197,7 +196,6 @@ class Scheduler:
                         )
                 # * Update all queued workflows
                 for run_id, wf in self.state.get_all_workflow_runs().items():
-                    self.update_queued_workflow(wf, run_id)
                     self.state.update_workflow_run(
                         run_id, self.update_queued_workflow, run_id
                     )
@@ -249,7 +247,7 @@ class Scheduler:
             self.events[run_id].log_wf_start(wf.name, run_id)
             self.update_source_and_target(wf, run_id)
             wf.status = WorkflowStatus.QUEUED
-            print(wf)
+            print(f"Processed new workflow: {wf.name} with run_id: {run_id}")
         elif wf.status == WorkflowStatus.QUEUED:
             step_index = wf.step_index
             step = wf.flowdef[step_index]["step"]
@@ -277,9 +275,10 @@ class Scheduler:
                     "pipe": rec_conn,
                 }
                 wf.status = WorkflowStatus.RUNNING
-            return wf
+                print(f"Starting workflow: {wf.name} with run_id: {run_id}")
         elif wf.status == WorkflowStatus.RUNNING:
             if run_id in self.processes and self.processes[run_id]["pipe"].poll():
+                print(f"Checking response from {wf.name} with run_id: {run_id}")
                 try:
                     response = self.processes[run_id]["pipe"].recv()
                 except Exception as e:
@@ -288,6 +287,7 @@ class Scheduler:
                     wf.status = WorkflowStatus.FAILED
                     wf.hist[step.name] = str(e)
                     return wf
+                print(f"Finished workflow: {wf.name} with run_id: {run_id}")
                 print(response)
                 locations = response["locations"]
                 step = response["step"]

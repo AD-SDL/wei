@@ -189,12 +189,14 @@ async def process_job(
                 }
             )
         wf.flowdef = flowdef
-        state_manager.set_workflow_run(wf.run_id, wf)
+        with state_manager.state_lock():
+            state_manager.set_workflow_run(wf.run_id, wf)
     except Exception as e:  # noqa
         print(e)
         wf.status = WorkflowStatus.FAILED
         wf.hist["validation"] = f"Error: {e}"
-        state_manager.set_workflow_run(wf.run_id, wf)
+        with state_manager.state_lock():
+            state_manager.set_workflow_run(wf.run_id, wf)
     return JSONResponse(
         content={
             "wf": wf.model_dump(mode="json"),
@@ -244,7 +246,8 @@ async def get_job_status(job_id: str) -> JSONResponse:
     """
     global state_manager
     try:
-        workflow = state_manager.get_workflow_run(job_id)
+        with state_manager.state_lock():
+            workflow = state_manager.get_workflow_run(job_id)
         return JSONResponse(content=workflow.model_dump(mode="json"))
     except KeyError:
         return JSONResponse(content={"status": WorkflowStatus.UNKNOWN})
@@ -290,7 +293,8 @@ def show() -> JSONResponse:
     """
     global state_manager
 
-    wc_state = json.loads(state_manager.get_state())
+    with state_manager.state_lock():
+        wc_state = json.loads(state_manager.get_state())
     return JSONResponse(
         content={"wc_state": json.dumps(wc_state)}
     )  # templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
@@ -314,9 +318,15 @@ def show_states() -> JSONResponse:
 
     global state_manager
 
-    return JSONResponse(
-        content={"location_states": str(state_manager._locations.to_dict())}
-    )
+    with state_manager.state_lock():
+        return JSONResponse(
+            content={
+                "location_states": {
+                    location_name: location.model_dump(mode="json")
+                    for location_name, location in state_manager.get_all_locations().items()
+                }
+            }
+        )
 
 
 @app.get("/wc/locations/{location}/state")
@@ -336,9 +346,14 @@ def loc(location: str) -> JSONResponse:
     global state_manager
 
     try:
-        return JSONResponse(
-            content={str(location): str(state_manager._locations[location])}
-        )
+        with state_manager.state_lock():
+            return JSONResponse(
+                content={
+                    str(location): str(
+                        state_manager.get_location(location).model_dump(mode="json")
+                    )
+                }
+            )
     except KeyError:
         return HTTPException(status_code=404, detail="Location not found")
 
@@ -359,13 +374,14 @@ def mod(module_name: str) -> JSONResponse:
     global state_manager
 
     try:
-        return JSONResponse(
-            content={
-                str(module_name): state_manager.get_module(module_name).model_dump(
-                    mode="json"
-                )
-            }
-        )
+        with state_manager.state_lock():
+            return JSONResponse(
+                content={
+                    str(module_name): state_manager.get_module(module_name).model_dump(
+                        mode="json"
+                    )
+                }
+            )
     except KeyError:
         return HTTPException(status_code=404, detail="Module not found")
 
@@ -398,7 +414,12 @@ async def update(location_name: str, experiment_id: str) -> JSONResponse:
                 location_name, update_location_state, experiment_id
             )
         return JSONResponse(
-            content={"Locations": str(state_manager._locations.to_dict())}
+            content={
+                "Locations": {
+                    location_name: location.model_dump(mode="json")
+                    for location_name, location in state_manager.get_all_locations().items()
+                }
+            }
         )
 
 

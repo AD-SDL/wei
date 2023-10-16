@@ -8,6 +8,8 @@ services:
       dockerfile: ./docker/Dockerfile-wei
     ports:
       - 8000:8000
+    volumes:
+      - ./wei:/wei/wei
     command: python -m wei.server --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis
     depends_on:
       - wei_redis
@@ -17,6 +19,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile-wei
+    volumes:
+      - ./wei:/wei/wei
     command: python -m wei.scheduler --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
@@ -34,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile-wei
+    volumes:
+      - ./wei:/wei/wei
     command: python /wei/examples/example_clients/sleep_rest_node.py
     ports:
       - 2000:2000
@@ -43,6 +49,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile-wei
+    volumes:
+      - ./wei:/wei/wei
     ports:
       - 2001:2001
     command: python /wei/examples/example_clients/webcam_rest_node.py
@@ -62,6 +70,7 @@ services:
       - 8888:8888
     volumes:
       - ./examples:/home/${USER}/examples
+      - ./wei:/home/${USER}/wei/wei
     environment:
       JUPYTER_ENABLE_LAB: "yes"
       JUPYTER_TOKEN: "wei"

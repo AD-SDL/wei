@@ -9,7 +9,6 @@ from typing import Callable, Dict, Union
 import redis
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
-
 from wei.core.data_classes import Location, Module, WorkcellData, Workflow, WorkflowRun
 
 

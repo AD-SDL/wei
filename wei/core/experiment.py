@@ -1,6 +1,6 @@
 """Code for managing the Experiment logs on the server side"""
 
-from typing import Optional, Union
+from typing import Optional
 
 from wei.core import DATA_DIR
 from wei.core.events import Events
