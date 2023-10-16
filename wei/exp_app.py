@@ -117,15 +117,12 @@ class Experiment:
         print("here")
         response = self._return_response(response)
         if blocking: 
-            
-            print(response)
-            print("asdfasdf")
             job_status = self.query_run(response["run_id"])
             print(job_status)
             while job_status["status"] != "completed" and job_status["status"] != "failure":
                 job_status = self.query_run(response["run_id"])
                 print(job_status)
-                time.sleep(3)
+                time.sleep(1)
             return job_status
         return response
         
