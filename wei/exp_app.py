@@ -1,5 +1,6 @@
 """Contains the Experiment class that manages WEI flows and helpes annotate the experiment run"""
 import json
+import time
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -67,11 +68,12 @@ class Experiment:
 
         return response.json()
 
-    def run_job(
+    def start_run(
         self,
         workflow_file: Path,
         payload: Optional[Dict] = None,
         simulate: Optional[bool] = False,
+        blocking: Optional[bool] = True,
     ):
         """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
@@ -92,7 +94,7 @@ class Experiment:
            The JSON portion of the response from the server, including the ID of the job as job_id
         """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
-        url = f"{self.url}/job/run"
+        url = f"{self.url}/run/start"
         payload_path = Path("~/.wei/temp/payload.txt")
         with open(payload_path.expanduser(), "w") as f2:
             payload = json.dump(payload, f2)
@@ -112,8 +114,38 @@ class Experiment:
                     "payload": (str("payload_file.txt"), f2, "text"),
                 },
             )
+        print(response.json())
+        print("here")
+        response = self._return_response(response)
+        if blocking:
+            job_status = self.query_run(response["run_id"])
+            print(job_status)
+            while (
+                job_status["status"] != "completed"
+                and job_status["status"] != "failure"
+            ):
+                job_status = self.query_run(response["run_id"])
+                print(job_status)
+                time.sleep(1)
+            return job_status
+        return response
 
-        return self._return_response(response)
+    def await_runs(self, run_list):
+        """
+        Waits for all provided runs to complete, then returns results
+        """
+        results = {}
+        while len(results.keys()) < len(run_list):
+            for id in run_list:
+                if not (id in results):
+                    run_status = self.query_run(id)
+                    if (
+                        run_status["status"] == "completed"
+                        or run_status["status"] == "failure"
+                    ):
+                        results[id] = self._return_response(run_status)
+            time.sleep(1)
+        return results
 
     def register_exp(self):
         """Initializes an Experiment, and creates its log files
@@ -139,7 +171,7 @@ class Experiment:
         self.events.experiment_path = self.experiment_path
         return self._return_response(response)
 
-    def query_job(self, job_id: str):
+    def query_run(self, run_id: str):
         """Checks on a workflow run using the id given
 
         Parameters
@@ -154,12 +186,12 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server"""
 
-        url = f"{self.url}/job/{job_id}/state"
+        url = f"{self.url}/run/{run_id}/state"
         response = requests.get(url)
 
         return self._return_response(response)
 
-    def get_job_log(self):
+    def get_run_log(self, run_id: str):
         """Returns the log for this experiment as a string
 
         Parameters
@@ -172,7 +204,8 @@ class Experiment:
 
         response: Dict
            The JSON portion of the response from the server with the experiment log"""
-        url = f"{self.url}/log/return"
+
+        url = f"{self.url}/run/" + run_id + "/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
         return self._return_response(response)

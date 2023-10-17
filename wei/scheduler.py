@@ -48,6 +48,7 @@ def check_step(
     exp_id, run_id, step: dict, locations: dict, state: StateManager
 ) -> bool:
     """Check if a step is valid."""
+    print(step)
     if "target" in locations:
         location = state.get_location(locations["target"])
         if not (location.state == "Empty") or not (
@@ -94,7 +95,6 @@ def run_step(
             "log_dir": log_dir,
         }
     )
-    print("Finished step")
 
 
 def parse_args() -> Namespace:
@@ -199,6 +199,13 @@ class Scheduler:
                     self.state.update_workflow_run(
                         run_id, self.update_queued_workflow, run_id
                     )
+            cleanup_ids = []
+            for run_id, process in self.processes.items():
+                if not process["process"].is_alive():
+                    process["process"].close()
+                    cleanup_ids.append(run_id)
+            for run_id in cleanup_ids:
+                del self.processes[run_id]
             time.sleep(args.update_interval)
 
     def update_module_state(self, module: Module) -> Module:
@@ -294,8 +301,6 @@ class Scheduler:
                 wf.hist[step.name] = response["step_response"]
                 step_index = wf.step_index
                 self.processes[run_id]["process"].terminate()
-                self.processes[run_id]["process"].close()
-                del self.processes[run_id]
                 if step_index + 1 == len(wf.flowdef):
                     self.events[run_id].log_wf_end(wf.name, run_id)
                     del self.events[run_id]
