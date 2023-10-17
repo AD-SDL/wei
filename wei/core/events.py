@@ -4,6 +4,7 @@ from typing import Any, Optional
 import os
 from diaspora_logger import DiasporaLogger
 import requests
+from pathlib import Path
 
 # class Event:
 #     pass
@@ -65,9 +66,10 @@ class Events:
         self.experiment_path = experiment_path
         self.url = f"http://{self.server_addr}:{self.server_port}"
        
-
        #switch to auth file at some point
-        refresh_token = os.getenv('DIASPORA_REFRESH')
+        with open(Path("/home/rpl/kafka.txt").resolve(), 'r') as f:
+          refresh_token = f.read()
+        print(refresh_token)
         if not refresh_token:
             raise ValueError("Environment variable DIASPORA_REFRESH not set")
 
@@ -75,7 +77,7 @@ class Events:
             bootstrap_servers=["52.200.217.146:9093", "54.210.46.108:9094"],
             refresh_token=refresh_token,
         )
-        print(kafka_logger)
+        
         self.topic = "rpl_test"
         self.kafka_producer = kafka_logger
         
@@ -130,12 +132,15 @@ class Events:
         )
 
         try:
-            self.kafka_producer.send(
-            self.topic,
-            log_value,
-            )
+            
+            #self.kafka_producer.send(
+            #self.topic,
+            #log_value,
+            #)
+            pass
 
-        except Exception:
+        except Exception as e:
+            print(str(e))
             print("Kafka Unavailable")
 
         return self._return_response(response)

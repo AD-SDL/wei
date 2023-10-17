@@ -287,6 +287,8 @@ class Scheduler:
                 
                 step_index = wf["step_index"]
                 self.processes[wf_id]["process"].terminate()
+                while self.processes[wf_id]["process"].is_alive():
+                    pass
                 self.processes[wf_id]["process"].close()
                 del self.processes[wf_id]
                 if step_index + 1 == len(wf["flowdef"]):
