@@ -1,8 +1,13 @@
 """Contains the Events class for logging experiment steps"""
-import json
+
+# import time
+
+# from pathlib import Path
 from typing import Any, Optional
 
 import requests
+
+# from diaspora_logger import DiasporaLogger
 
 # class Event:
 #     pass
@@ -63,14 +68,22 @@ class Events:
         self.experiment_name = experiment_name
         self.experiment_path = experiment_path
         self.url = f"http://{self.server_addr}:{self.server_port}"
-        self.kafka_producer = None
-        if kafka_server:
-            try:
-                from kafka import KafkaProducer
 
-                self.kafka_producer = KafkaProducer(bootstrap_servers=kafka_server)
-            except Exception:
-                print("Kafka Unavailable")
+        # switch to auth file at some point
+        # with open(Path("/home/rpl/kafka.txt").resolve(), "r") as f:
+        #     refresh_token = f.read()
+        # print(refresh_token)
+        # if not refresh_token:
+        #     raise ValueError("Environment variable DIASPORA_REFRESH not set")
+
+        # kafka_logger = DiasporaLogger(
+        #     bootstrap_servers=["52.200.217.146:9093", "54.210.46.108:9094"],
+        #     refresh_token=refresh_token,
+        # )
+
+        self.topic = "rpl_test"
+        self.kafka_producer = None  # kafka_logger
+
         self.loops = []
 
     def _return_response(self, response: requests.Response):
@@ -120,15 +133,15 @@ class Events:
                 "experiment_path": self.experiment_path,
             },
         )
-
         try:
-            self.kafka_producer.send(
-                "rpl",
-                bytes(json.dumps(log_value), "utf-8"),
-                bytes(self.experiment_id, "utf-8"),
-            )
+            # self.kafka_producer.send(
+            # self.topic,
+            # log_value,
+            # )
+            pass
 
-        except Exception:
+        except Exception as e:
+            print(str(e))
             print("Kafka Unavailable")
 
         return self._return_response(response)

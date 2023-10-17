@@ -1,4 +1,4 @@
-name: RPL_Modular_workcell
+name: manual_test_workcell
 
 #Info about data processing and location of the workcell
 config:
@@ -11,21 +11,30 @@ config:
 
 #List of all components accessible in this workcell
 modules:
-  - name: sleeper
+  - name: synthesis
     model: sleeper_test_node
     interface: wei_rest_node
     config:
       rest_node_address: "http://0.0.0.0:2000"
       rest_node_auth: ""
     workcell_coordinates: [0, 0, 0, 0, 0, 0]
-  - name: webcam
-    model: camera_test_node
+  - name: transfer
+    model: sleeper_test_node
     interface: wei_rest_node
     config:
       rest_node_address: "http://0.0.0.0:2001"
       rest_node_auth: ""
     workcell_coordinates: [15, 0, 0, 0, 0, 0]
+  - name: measure
+    model: sleeper_test_node
+    interface: wei_rest_node
+    config:
+      rest_node_address: "http://0.0.0.0:2002"
+      rest_node_auth: ""
+    workcell_coordinates: [15, 0, 0, 0, 0, 0]
 
 locations:
-  webcam:
-    webcam.pos: [0, 0, 0, 0, 0, 0]
+  transfer:
+    synthesis.pos: [0, 0, 0, 0, 0, 0]
+    measure.pos: [0, 0, 0, 0, 0, 0]
+    wc.trash: [0, 0, 0, 0, 0, 0]

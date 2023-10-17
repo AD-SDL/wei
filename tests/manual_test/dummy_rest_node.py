@@ -3,6 +3,7 @@ REST-based node that interfaces with WEI and provides a simple Sleep(t) function
 """
 import json
 import time
+from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -78,7 +79,7 @@ def do_action(
         }
         return JSONResponse(content=response_content)
     state = "BUSY"
-    if action_handle == "sleep":
+    if action_handle:
         try:
             action_vars = json.loads(action_vars)
             print(type(action_vars))
@@ -114,10 +115,13 @@ def do_action(
 if __name__ == "__main__":
     import uvicorn
 
+    parser = ArgumentParser()
+    parser.add_argument("--port", type=int, help="Port for the Node")
+    args = parser.parse_args()
     uvicorn.run(
-        "sleep_rest_node:app",
+        "dummy_rest_node:app",
         host=host,
-        port=local_port,
+        port=args.port,
         reload=True,
         ws_max_size=100000000000000000000000000000000000000,
     )

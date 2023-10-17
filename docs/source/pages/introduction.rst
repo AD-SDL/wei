@@ -3,14 +3,14 @@ Introduction to WEI
 ===================
 
 WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular environment in which a variety of hardware and software components implement common interfaces.
-This tool leverages ROS (`Robot Operating System <https://www.ros.org>`_) for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a 
-function-as-a-service platform, for distributed computation. It is particularly geared towards managing 
+This tool leverages ROS (`Robot Operating System <https://www.ros.org>`_) for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a
+function-as-a-service platform, for distributed computation. It is particularly geared towards managing
 complex workflows in scientific research and laboratory environments.
 
-WEI allows you to define **workflows** in YAML format. Each workflow comprises a sequence of actions 
-(commands), each performed by a specific module. A **module** represents an individual hardware or 
-software component in the workcell. This modular approach provides the flexibility to design and 
-implement diverse workflows across a variety of domains. 
+WEI allows you to define **workflows** in YAML format. Each workflow comprises a sequence of actions
+(commands), each performed by a specific module. A **module** represents an individual hardware or
+software component in the workcell. This modular approach provides the flexibility to design and
+implement diverse workflows across a variety of domains.
 
 
 Overview and Terminology
@@ -18,7 +18,7 @@ Overview and Terminology
 
 We define conventional hardware and software configurations for robotic equipment and control software in order to simplify the assembly, modification, and scaling of experimental systems. The following figure shows our hardware conventions:
 
-* A **cart** is a cart with zero or more modules 
+* A **cart** is a cart with zero or more modules
 * A **module** is a hardware component with a name, type, position, etc. (e.g., Pealer, Sealer, OT2 liquid handling robot, plate handler, plate mover, camera)
 * A **workcell**, as shown in the photo on the left of the image below, is formed from multiple (eight in the photo) carts, each typically holding one or more modules (a total of 12 in the example, as described below).
 * Multiple workcells and other components can be linked via mobile robots
@@ -33,7 +33,7 @@ The software associated with a workflow is then defined by three types of files:
 * A **workflow definition**, in YAML, define a set of **actions** to be executed, in order, on one or more of the modules in the workcell
 * A **protocol definition**, in YAML, defines a set of steps to be performed, in order, on a specified OpenTrons OT2
 
-The figure illustrates the three components for a simple "Color Picker" application that we use to illustrate the use of the technology. 
+The figure illustrates the three components for a simple "Color Picker" application that we use to illustrate the use of the technology.
 
 .. image:: ../assets/ColorPicker.jpg
 
@@ -53,15 +53,15 @@ The **config** section defines various infrastructure services that may be used 
   globus_group: "dda56f31-53d1-11ed-bd8b-0db7472df7d6"        # UUID for the group that shares permissions to all UUID's above
 
 
-The **modules** section lists the *modules* that are included in the workcell. In the example just listed, there are 12 in total: 
+The **modules** section lists the *modules* that are included in the workcell. In the example just listed, there are 12 in total:
 
-* a `pf400 sample handler <https://preciseautomation.com/SampleHandler.html>`_ (**pf400**) and two associated cameras, **pf400_camera_right** and **pf400_camera_left**; 
+* a `pf400 sample handler <https://preciseautomation.com/SampleHandler.html>`_ (**pf400**) and two associated cameras, **pf400_camera_right** and **pf400_camera_left**;
 * a `SciClops plate handler <https://hudsonrobotics.com/microplate-handling-2/platecrane-sciclops-3/>`_ (**sciclops**)
 * a `A4S <https://www.azenta.com/products/automated-roll-heat-sealer-formerly-a4s>`_ (**sealer**) and a `Brooks XPeel <https://www.azenta.com/products/automated-plate-seal-remover-formerly-xpeel>`_ (**peeler**), with an associated camera, **sp_module_camera**
 * three `OpenTrons OT2 <https://opentrons.com/products/robots/ot-2/>`_ liquid handlers, **ot2_pcr_alpha**, **ot2_pcr_beta**, and **ot2_cp_gamma**;
 * a `Biometra thermal cycler <https://www.analytik-jena.com/products/life-science/pcr-qpcr-thermal-cycler/thermal-cycler-pcr/biometra-trio-series/>`_ (**biometra**)
 * another camera module, **camera_module**
-           
+
 For example, this module specification included in `pcr_workcell.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/pcr_workcell.yaml>`_ described the Sealer module:
 
 .. code-block:: yaml
@@ -150,11 +150,11 @@ It comprises four steps:
 * Take a picture of the plate
 
 > While a workflow and a protocol both specify a sequence of actions to be performed, they are quite different in role and syntax. A **workflow** uses a hardware-independent notation to specify actions to perform on one or more modules (e.g., action A1 on module M1, action A2 on module M2); a **protocol** uses a hardware-specific notation to specify steps to be performed on a single module (e.g., OT2). Why *workflow* and *protocol*? Perhaps because this technology was developed by a partnership of computer scientists ("module", "workflow") and biologists ("protocol")
- 
+
 Protocol definition
 -------------------
 
-A protocol file gives the device-specific instructions to be executed on a specific piece of hardware to implement an intended action. For example, `ot2_pcr_config.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/protocol_files/ot2_pcr_config.yaml>`_ gives instructions for an OpenTrons OT2. A protocol file specifies a list of **equipment** within the hardware component; a sequence of **commands** to be executed on the equipment; and some describptive **metadata**. For example, the following shows the contents of `combined_protocol.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/color_picker/protocol_files/combined_protocol.yaml>`_, which comprise the equipment section, three commands, and the metadata section. 
+A protocol file gives the device-specific instructions to be executed on a specific piece of hardware to implement an intended action. For example, `ot2_pcr_config.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/protocol_files/ot2_pcr_config.yaml>`_ gives instructions for an OpenTrons OT2. A protocol file specifies a list of **equipment** within the hardware component; a sequence of **commands** to be executed on the equipment; and some describptive **metadata**. For example, the following shows the contents of `combined_protocol.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/color_picker/protocol_files/combined_protocol.yaml>`_, which comprise the equipment section, three commands, and the metadata section.
 
 Strings of the form *payload.VARIABLE* (e.g., `payload.destination_wells`) refer to arguments passed to the protocol.
 
@@ -162,10 +162,10 @@ The "location" argument here is OT2-specific: it indicates one of 11 plate locat
 
 .. image:: ../assets/DeckMapEmpty.jpg
     :width: 200px
-    
-An "alias" argument defines a string that can be used to refer to a position later in the specifrication: e.g., the fourth line in the YAML below specifies that location "7" can be referred to as "source". 
 
-The wells within a plate are referred to via their column and row, e.g., A1. 
+An "alias" argument defines a string that can be used to refer to a position later in the specifrication: e.g., the fourth line in the YAML below specifies that location "7" can be referred to as "source".
+
+The wells within a plate are referred to via their column and row, e.g., A1.
 
 The following specification describes an OT2 with the following components:
 * In location 7: A 6-well rack of 50 ml tubes. (These are used to contain the different colors that are to be mixed, in wells A1, A2, and A3.
@@ -183,7 +183,7 @@ The following specification describes an OT2 with the following components:
         location: "9"
 
     commands:
-    - name: Mix Color 1                       # Transfer fluid: A1 -> specified locations 
+    - name: Mix Color 1                       # Transfer fluid: A1 -> specified locations
         source: source:A1
         destination: payload.destination_wells  # Destination wells for transfers (argument)
         volume: payload.red_volumes             # Volumes to be transferred  (argument)
@@ -197,8 +197,8 @@ The following specification describes an OT2 with the following components:
         volume: payload.green_volumes
         dispense_clearance: 2
         aspirate_clearance: 1
-        drop_tip: False    
-    
+        drop_tip: False
+
     - name: Mix color 3
         source: source:A3
         destination: payload.destination_wells
@@ -218,13 +218,13 @@ The following specification describes an OT2 with the following components:
 Experiment Application
 ----------------------
 
-A Python program defines the process required to run an experiment. E.g., see `color_picker_application.py <https://github.com/AD-SDL/rpl_workcell/blob/dev_tobias/color_picker/color_picker_application.py>`_ for a color picker program, which calls three workflows: 
+A Python program defines the process required to run an experiment. E.g., see `color_picker_application.py <https://github.com/AD-SDL/rpl_workcell/blob/dev_tobias/color_picker/color_picker_application.py>`_ for a color picker program, which calls three workflows:
 
 * First, if needed, `cp_wf_newplate.yaml`
 * Then, the workflow given above, `cp_wf_mixcolor.yaml`
 * Finally, as needed, `cp_wf_trashplate.yaml`
 
-The experiment library also gives access to Event functions, which help to create a log of all functions and workflows run during the experiment. The code below shows a simplified version of the color picker, with experiment event annottations, and then the log produced. 
+The experiment library also gives access to Event functions, which help to create a log of all functions and workflows run during the experiment. The code below shows a simplified version of the color picker, with experiment event annottations, and then the log produced.
 
 .. code-block:: python
 
@@ -252,18 +252,18 @@ The experiment library also gives access to Event functions, which help to creat
             test = exp.run_job(Path('new_plate.yaml'),
             payload=payload)
             new_plate=False
-        #Log and note the solver run    
+        #Log and note the solver run
         exp.events.log_local_compute("solver.run_iteration")
         solver.run_iteration()
         #Run the WEI Workflow to mix the colors
         test = exp.run_job(Path('mix_colors.yaml'),
         payload=payload)
-        #Log and note pulling the colors in  
+        #Log and note pulling the colors in
         exp.events.log_local_compute("get_colors_from_file")
         get_colors_from_file(test.result_file)
         #Publish the Color Picker data to a remote portal
         publish_iter(test)
-        
+
         num_exps += pop_size
         #Mark the end of a loop iteration while checking the loop condition
         exp.events.loop_check("Sufficient Wells In Well Plate", num_exps + pop_size <= exp_budget)

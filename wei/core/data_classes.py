@@ -3,9 +3,9 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
-from uuid import UUID, uuid4
+from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar, Union
 
+import ulid
 import yaml
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, validator
@@ -16,44 +16,17 @@ PathLike = Union[str, Path]
 
 
 class BaseModel(_BaseModel):
-    """Allows any sub-class to inherit methods allowing for programatic description of protocols
+    """Allows any sub-class to inherit methods allowing for programmatic description of protocols
     Can load a yaml into a class and write a class into a yaml file.
     """
 
-    def dict(self, **kwargs):
-        """Return the dictionary without the hidden fields
+    class Config:
+        """Config for the BaseModel"""
 
-        Returns
-        -------
-        dict
-            Dict representation of the object
-        """
-        hidden_fields = set(
-            attribute_name
-            for attribute_name, model_field in self.__fields__.items()
-            if model_field.field_info.extra.get("hidden") is True
-        )
-        kwargs.setdefault("exclude", hidden_fields)
-        return super().dict(**kwargs)
-
-    def json(self, **kwargs) -> str:
-        """Returns the json representation of the object without the hidden fields
-
-        Returns
-        -------
-        str
-            returns the JSON string of the object
-        """
-        hidden_fields = set(
-            attribute_name
-            for attribute_name, model_field in self.__fields__.items()
-            if model_field.field_info.extra.get("hidden") is True
-        )
-        kwargs.setdefault("exclude", hidden_fields)
-        return super().json(**kwargs)
+        use_enum_values = True  # Needed to serialize/deserialize enums
 
     def write_yaml(self, cfg_path: PathLike) -> None:
-        """Allows programatic creation of ot2util objects and saving them into yaml.
+        """Allows programmatic creation of ot2util objects and saving them into yaml.
         Parameters
         ----------
         cfg_path : PathLike
@@ -87,38 +60,59 @@ class Tag(BaseModel):
     """Id of the tag """
 
 
+class ModuleStatus(str, Enum):
+    """Status for the state of a Module"""
+
+    INIT = "INIT"
+    IDLE = "IDLE"
+    BUSY = "BUSY"
+    ERROR = "ERROR"
+    UNKNOWN = "UNKNOWN"
+
+
 class Module(BaseModel):
     """Container for a module found in a workcell file (more info than in a workflow file)"""
 
     # Hidden
-    config_validation: Optional[Path] = Field(
-        Path(__file__).parent.resolve() / "data/module_configs_validation.json",
-        hidden=True,
+    config_validation: ClassVar[Path] = (
+        Path(__file__).parent.resolve() / "data/module_configs_validation.json"
     )
 
     # Public
     name: str
     """name of the module, should be opentrons api compatible"""
-    model: Optional[str]
+    model: Optional[str] = None
     """type of the robot (e.g OT2, pf400, etc.) """
     interface: str
     """Type of client (e.g ros_wei_client)"""
     config: Dict
     """the necessary configuration for the robot, arbitrary dict"""
-    positions: Optional[dict]
+    positions: Optional[dict] = {}
     """Optional, if the robot supports positions we will use them"""
-    tag: Optional[Tag]
+    tag: Optional[Tag] = None
     """Vision tag"""
-    workcell_coordinates: Optional[List]
+    workcell_coordinates: Optional[List] = []
     """location in workcell"""
-    id: UUID = Field(default_factory=uuid4)
-    """Robot id"""
     active: Optional[bool] = True
+    """Whether or not the robot is active"""
+
+    # Runtime values
+    id: str = Field(default=ulid.new().str)
+    """Robot id"""
+    state: Optional[ModuleStatus] = Field(default=ModuleStatus.INIT)
+    """Current state of the module"""
+    queue: Optional[List[str]] = []
+    """Queue of workflows to be run at this location"""
+
+    @property
+    def location(self):
+        """Alias for workcell_coordinates"""
+        return self.workcell_coordinates
 
     @validator("config")
     def validate_config(cls, v, values, **kwargs):
         """Validate the config field of the workcell config with special rules for each type of robot"""
-        config_validation = json.load(values["config_validation"].open())
+        config_validation = json.load(cls.config_validation.open())
         interface_type = values.get("interface", "").lower()
 
         if interface_type.lower() not in config_validation:
@@ -189,19 +183,19 @@ class Step(BaseModel):
     """Module used in the step"""
     action: str
     """The command type to get executed by the robot"""
-    args: Optional[Dict]
+    args: Optional[Dict] = {}
     """Arguments for instruction"""
-    checks: Optional[str]
+    checks: Optional[str] = None
     """For future use"""
-    requirements: Optional[Dict]
+    requirements: Optional[Dict] = {}
     """Equipment/resources needed in module"""
-    dependencies: Optional[Union[str, UUID]]
+    dependencies: List[str] = []
     """Other steps required to be done before this can start"""
-    priority: Optional[int]
+    priority: Optional[int] = None
     """For scheduling"""
-    id: UUID = Field(default_factory=uuid4)
+    id: str = Field(default=ulid.new().str)
     """ID of step"""
-    comment: Optional[str]
+    comment: Optional[str] = None
     """Notes about step"""
 
     # Assumes any path given to args is a yaml file
@@ -229,9 +223,9 @@ class Step(BaseModel):
 class Metadata(BaseModel):
     """Metadata container"""
 
-    author: Optional[str]
+    author: Optional[str] = None
     """Who authored this workflow"""
-    info: Optional[str]
+    info: Optional[str] = None
     """Long description"""
     version: float = 0.1
     """Version of interface used"""
@@ -242,16 +236,16 @@ class WorkcellData(BaseModel):
 
     name: str
     """Name of the workflow"""
-    config: Optional[Dict[str, Any]]
+    config: Optional[Dict[str, Any]] = {}
     """Globus search index, needed for publishing"""
     modules: List[Module]
     """The modules available to a workcell"""
-    locations: Optional[Dict[str, Any]]
+    locations: Optional[Dict[str, Any]] = {}
     """Locations used by the workcell"""
 
 
 class WorkflowStatus(str, Enum):
-    """Status for a workflow"""
+    """Status for a workflow run"""
 
     NEW = "new"
     QUEUED = "queued"
@@ -268,16 +262,35 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     modules: List[SimpleModule]
     """List of modules needed for the workflow"""
-    flowdef: List[Step]
+    flowdef: List[Union[Step, Dict]]
     """Steps of the flow"""
-    metadata: Metadata
+    metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
-    payload: Optional[Dict]
+    payload: Optional[Dict] = {}
     """input information for a given workflow run"""
-    status: Optional[WorkflowStatus]
+
+
+class WorkflowRun(Workflow):
+    """Container for a workflow run"""
+
+    label: Optional[str] = None
+    """Label for the workflow run"""
+    run_id: str = Field(default=ulid.new().str)
+    """ID of the workflow run"""
+    status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
-    result: Optional[Dict]
+    result: Dict = Field(default={})
     """result from the Workflow"""
+    hist: Dict = Field(default={})
+    """history of the workflow"""
+    experiment_id: Optional[str] = None
+    """ID of the experiment this workflow is a part of"""
+    experiment_path: Optional[PathLike] = None
+    """Path to the experiment this workflow is a part of"""
+    step_index: int = 0
+    """Index of the current step"""
+    run_dir: Optional[PathLike] = None
+    """Path to the run directory"""
 
 
 class StepStatus(str, Enum):
@@ -289,17 +302,21 @@ class StepStatus(str, Enum):
     FAILED = "failed"
 
 
-class NodeStatus(str, Enum):
-    """Status for the state of a Node"""
-
-    IDLE = "idle"
-    BUSY = "busy"
-    ERROR = "error"
-    UNKNOWN = "unknown"
-
-
 class ExperimentStatus(str, Enum):
     """Status for an experiment"""
 
     FAILED = "failed"
     CREATED = "created"
+
+
+class Location(BaseModel):
+    """Container for a location"""
+
+    name: str
+    """Name of the location"""
+    workcell_coordinates: Any
+    """Coordinates of the location"""
+    state: Optional[str] = "Empty"
+    """State of the location"""
+    queue: Optional[List[str]] = []
+    """Queue of workflows to be run at this location"""
