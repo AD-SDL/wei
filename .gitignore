@@ -280,3 +280,7 @@ logs/
 
 # ignore redis dump file
 *.rdb
+
+# Image Artifacts
+**/*.jpg
+
