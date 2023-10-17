@@ -9,10 +9,10 @@ from wei.core.data_classes import WorkflowStatus
 
 def main():
     # The path to the Workflow definition yaml file
-    wf_path = Path("../tests/test_workflow.yaml")
+    wf_path = Path("./example_workflow.yaml")
     # This defines the Experiment object that will communicate with the server for workflows
     exp = Experiment("127.0.0.1", "8000", "Example Program")
-    # This initilizes the connection to the server and the logs for this run of the program.
+    # This initializes the connection to the server and the logs for this run of the program.
     exp.register_exp()
     # This runs the simulated_workflow a simulated workflow
     flow_info = exp.run_job(wf_path.resolve(), simulate=True)

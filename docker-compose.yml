@@ -10,18 +10,15 @@ services:
       - 8000:8000
     volumes:
       - ./wei:/wei/wei
-    command: python -m wei.server --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis
+    command: python -m wei.server --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis
     depends_on:
       - wei_redis
   wei_scheduler:
     image: wei
     container_name: wei_scheduler
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile-wei
     volumes:
       - ./wei:/wei/wei
-    command: python -m wei.scheduler --workcell /wei/tests/test_workcell.yaml --redis_host wei_redis --server wei_server
+    command: python -m wei.scheduler --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
   wei_redis:
@@ -35,9 +32,6 @@ services:
   sleeper_node:
     image: wei
     container_name: sleeper_node
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile-wei
     volumes:
       - ./wei:/wei/wei
     command: python /wei/examples/example_clients/sleep_rest_node.py
@@ -46,11 +40,10 @@ services:
   webcam_node:
     image: wei
     container_name: webcam_node
-    build:
-      context: .
-      dockerfile: ./docker/Dockerfile-wei
+    privileged: true
     volumes:
       - ./wei:/wei/wei
+      - /dev/video0:/dev/video0
     ports:
       - 2001:2001
     command: python /wei/examples/example_clients/webcam_rest_node.py

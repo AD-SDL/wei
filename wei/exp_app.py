@@ -113,8 +113,6 @@ class Experiment:
                 },
             )
 
-        print(response.json())
-
         return self._return_response(response)
 
     def register_exp(self):
