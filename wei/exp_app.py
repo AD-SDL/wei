@@ -1,4 +1,4 @@
-"""Contains the Experiment class that manages WEI flows and helpes annotate the experiment run"""
+"""Contains the Experiment class that manages WEI flows and helps annotate the experiment run"""
 import json
 import time
 from pathlib import Path
@@ -35,7 +35,7 @@ class Experiment:
             Human chosen name for experiment
 
         experiment_id: Optional[str]
-            Programatially generated experiment id, can be reused if needed
+            Programmatically generated experiment id, can be reused if needed
 
         kafka_server: Optional[str]
             Url of kafka server for logging
@@ -94,7 +94,7 @@ class Experiment:
            The JSON portion of the response from the server, including the ID of the job as job_id
         """
         assert workflow_file.exists(), f"{workflow_file} does not exist"
-        url = f"{self.url}/run/start"
+        url = f"{self.url}/runs/start"
         payload_path = Path("~/.wei/temp/payload.txt")
         with open(payload_path.expanduser(), "w") as f2:
             payload = json.dump(payload, f2)
@@ -114,8 +114,7 @@ class Experiment:
                     "payload": (str("payload_file.txt"), f2, "text"),
                 },
             )
-        print(response.json())
-        print("here")
+        print(json.dumps(response.json(), indent=2))
         response = self._return_response(response)
         if blocking:
             job_status = self.query_run(response["run_id"])
@@ -125,7 +124,7 @@ class Experiment:
                 and job_status["status"] != "failure"
             ):
                 job_status = self.query_run(response["run_id"])
-                print(job_status)
+                print(f"Status: {job_status['status']}")
                 time.sleep(1)
             return job_status
         return response
@@ -159,7 +158,7 @@ class Experiment:
 
         response: Dict
            The JSON portion of the response from the server"""
-        url = f"{self.url}/experiment"
+        url = f"{self.url}/experiments/"
         response = requests.post(
             url,
             params={
@@ -186,7 +185,7 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server"""
 
-        url = f"{self.url}/run/{run_id}/state"
+        url = f"{self.url}/runs/{run_id}/state"
         response = requests.get(url)
 
         return self._return_response(response)
@@ -205,7 +204,7 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server with the experiment log"""
 
-        url = f"{self.url}/run/" + run_id + "/return"
+        url = f"{self.url}/runs/" + run_id + "/return"
         response = requests.get(url, params={"experiment_path": self.experiment_path})
 
         return self._return_response(response)
