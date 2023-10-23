@@ -41,7 +41,13 @@ class RestInterface(Interface):
             url,
             headers=headers,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
-        ).json()
+        )
+        if "action_response" in rest_response.headers:
+            with open(rest_response.headers["action_msg", 'wb']) as f:
+                f.write(rest_response.content)
+            rest_response = rest_response.headers
+        else:
+            rest_response = rest_response.json()
         action_response = rest_response["action_response"]
         action_msg = rest_response["action_msg"]
         action_log = rest_response["action_log"]
