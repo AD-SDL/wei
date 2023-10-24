@@ -128,7 +128,12 @@ class WorkflowRunner:
 
         # Start executing the steps
         steps = []
-
+        for module in self.workflow.modules:
+            if not(workcell.find_step_module(module.name)):
+              
+                raise ValueError(
+                    f"Module {module} not in Workcell {self.workflow.modules}"
+                )
         for step in self.workflow.flowdef:
             arg_dict = {"locations": {}}
             # get module information from workcell file
@@ -137,7 +142,14 @@ class WorkflowRunner:
                 raise ValueError(
                     f"No module found for step module: {step.module}, in step: {step}"
                 )
-
+            valid = False
+            for module in self.workflow.modules:
+                if step.module == module.name:
+                    valid = True 
+            if not(valid):
+                raise ValueError(
+                    f"Module {step.module} not in flow modules"
+                )
             # replace position names with actual positions
             if (
                 isinstance(step.args, dict)

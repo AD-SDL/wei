@@ -142,7 +142,7 @@ class Experiment:
                         run_status["status"] == "completed"
                         or run_status["status"] == "failure"
                     ):
-                        results[id] = self._return_response(run_status)
+                        results[id] = run_status
             time.sleep(1)
         return results
 
