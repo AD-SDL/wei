@@ -27,5 +27,5 @@ modules:
     workcell_coordinates: [15, 0, 0, 0, 0, 0]
 
 locations:
-  webcam:
-    webcam.pos: [0, 0, 0, 0, 0, 0]
+  - name: "webcam.pos"
+    coordinates: {"workcell": [0, 0, 0, 0, 0, 0]}

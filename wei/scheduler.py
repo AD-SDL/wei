@@ -51,14 +51,14 @@ def check_step(
     print(step)
     if "target" in locations:
         location = state.get_location(locations["target"])
-        if not (location.state == "Empty") or not (
-            (len(location.queue) > 0 and location.queue[0] == str(run_id))
-        ):
+        if not (location.labware_id == "Empty") or not (
+            location.run_id == str(run_id))
+        :
             return False
 
     if "source" in locations:
         location = state.get_location(locations["source"])
-        if not (location.state == str(exp_id)):
+        if not (location.labware_id == str(exp_id)):
             return False
     module_data = state.get_module(step["module"])
     if not ("BUSY" in module_data.state) and not (
@@ -171,17 +171,13 @@ class Scheduler:
                     continue
                 module.state = ModuleStatus.INIT
                 self.state.set_module(module.name, module)
-            for module_name in self.workcell.locations:
-                for location, coordinates in self.workcell.locations[
-                    module_name
-                ].items():
+            for location in self.workcell.locations:
                     self.state.set_location(
-                        location,
+                        location.name,
                         Location(
-                            name=location,
-                            workcell_coordinates=coordinates,
-                            state="Empty",
-                            queue=[],
+                            name=location.name,
+                            coordinates=location.coordinates,
+                            
                         ),
                     )
         print("Starting Process")

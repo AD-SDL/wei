@@ -101,7 +101,7 @@ class Module(BaseModel):
     """Robot id"""
     state: Optional[ModuleStatus] = Field(default=ModuleStatus.INIT)
     """Current state of the module"""
-    queue: Optional[List[str]] = []
+    run_id: Field(default=ModuleStatus.INIT)
     """Queue of workflows to be run at this location"""
 
     @property
@@ -230,6 +230,17 @@ class Metadata(BaseModel):
     version: float = 0.1
     """Version of interface used"""
 
+class Location(BaseModel):
+    """Container for a location"""
+
+    name: str
+    """Name of the location"""
+    coordinates: Dict[str, Any]
+    """Coordinates of the location"""
+    run_id: str = Field(default="")
+    """The run that has priority on this location"""
+    labware_id: str = Field(default="Empty")
+    """The experiment_id of the labware currently in this location"""
 
 class WorkcellData(BaseModel):
     """Container for information in a workcell"""
@@ -240,9 +251,9 @@ class WorkcellData(BaseModel):
     """Globus search index, needed for publishing"""
     modules: List[Module]
     """The modules available to a workcell"""
-    locations: Optional[Dict[str, Any]] = {}
+    locations: Optional[List[Location]] = {}
     """Locations used by the workcell"""
-
+ 
 
 class WorkflowStatus(str, Enum):
     """Status for a workflow run"""
@@ -309,14 +320,3 @@ class ExperimentStatus(str, Enum):
     CREATED = "created"
 
 
-class Location(BaseModel):
-    """Container for a location"""
-
-    name: str
-    """Name of the location"""
-    workcell_coordinates: Any
-    """Coordinates of the location"""
-    state: Optional[str] = "Empty"
-    """State of the location"""
-    queue: Optional[List[str]] = []
-    """Queue of workflows to be run at this location"""

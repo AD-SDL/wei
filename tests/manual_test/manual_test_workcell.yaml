@@ -33,8 +33,11 @@ modules:
       rest_node_auth: ""
     workcell_coordinates: [15, 0, 0, 0, 0, 0]
 
+
 locations:
-  transfer:
-    synthesis.pos: [0, 0, 0, 0, 0, 0]
-    measure.pos: [0, 0, 0, 0, 0, 0]
-    wc.trash: [0, 0, 0, 0, 0, 0]
+  - name: "synthesis.pos"
+    coordinates: {"workcell":[0, 0, 0, 0, 0, 0], "transfer": [0, 0, 0, 0, 0, 0]}
+  - name: "measure.pos"
+    coordinates: {"workcell":[0, 0, 0, 0, 0, 0], "transfer": [0, 0, 0, 0, 0, 0]}
+  - name: "wc.trash"
+    coordinates: {"workcell":[0, 0, 0, 0, 0, 0], "transfer": [0, 0, 0, 0, 0, 0]}
