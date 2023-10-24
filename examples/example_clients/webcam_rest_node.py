@@ -6,11 +6,11 @@ from contextlib import asynccontextmanager
 
 import cv2
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 
 workcell = None
 global state
-host = "0.0.0.0"  # Allows all connections from local network
+host = "172.26.192.1"  # Allows all connections from local network
 local_port = 2001
 
 
@@ -87,13 +87,15 @@ def do_action(
             camera.release()
 
             response_content = {
-                "action_msg": "StepStatus.Succeeded",
-                "action_response": "True",
+                "action_response": "StepStatus.Succeeded",
+                "action_msg": "webcam_image.jpg",
                 "action_log": "",
             }
             state = "IDLE"
             print("success")
-            return JSONResponse(content=response_content)
+            response = FileResponse(image_name, headers = response_content)
+          
+            return response
         except Exception as e:
             print(e)
             response_content = {

@@ -22,7 +22,7 @@ modules:
     model: camera_test_node
     interface: wei_rest_node
     config:
-      rest_node_address: "http://127.0.0.1:2001"
+      rest_node_address: "http://172.26.192.1:2001"
       rest_node_auth: ""
     workcell_coordinates: [15, 0, 0, 0, 0, 0]
 
