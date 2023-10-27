@@ -44,27 +44,49 @@ def find_module(workcell: WorkcellData, module_name: str) -> Module:
     raise Exception("Module not found: " + module_name)
 
 
-def check_step(
+def check_step(self, 
     exp_id, run_id, step: dict, locations: dict, state: StateManager
 ) -> bool:
     """Check if a step is valid."""
-    print(step)
-    if "target" in locations:
-        location = state.get_location(locations["target"])
-        if not (location.labware_id == "Empty") or not (
-            location.run_id == str(run_id))
-        :
-            return False
+    def add_run_id(object, run_id):
+            try:
+                if object.run_id == "":
+                    object.run_id = run_id
+            except ValueError:
+                pass
+            return object
 
+    def clear_run_id(object):
+            object.run_id = ""
+            return object
+    
+    location_clear = True
+    if "target" in locations:
+        location = self.state.get_location(locations["target"])
+        if not (location.labware_id == "Empty") or not (
+            location.run_id == ""):
+            location_clear =  False
     if "source" in locations:
-        location = state.get_location(locations["source"])
+        location = self.state.get_location(locations["source"])
         if not (location.labware_id == str(exp_id)):
-            return False
-    module_data = state.get_module(step["module"])
+            location_clear = False
+    module_data = self.state.get_module(step["module"])
     if not ("BUSY" in module_data.state) and not (
-        (len(module_data.queue) > 0 and module_data.queue[0] == str(run_id))
+         module_data.run_id == ""
     ):
         return False
+    if location_clear: 
+        self.state.update_module(
+            module_data,
+            add_run_id,
+            run_id
+        )
+        if "target" in locations:
+            self.state.update_location(
+            location["target"],
+            add_run_id,
+            run_id
+        )
     return True
 
 
@@ -316,56 +338,27 @@ class Scheduler:
         flowdef = wf.flowdef
 
         # Define some helper functions to update the "queue" properties of modules and locations
-        def remove_element_from_queue(object, element):
-            try:
-                object.queue.remove(element)
-            except ValueError:
-                pass
+       
+
+        def update_location_labware(object, element):
+            object.labware_id = element
             return object
 
-        def append_element_to_queue(object, element):
-            object.queue.append(element)
-            return object
-
-        def update_location_state(object, element):
-            object.state = element
-            return object
-
-        if step_index < len(wf.flowdef):
-            if "target" in flowdef[step_index]["locations"]:
-                self.state.update_location(
-                    flowdef[step_index]["locations"]["target"],
-                    append_element_to_queue,
-                    run_id,
-                )
-            self.state.update_module(
-                flowdef[step_index]["step"]["module"], append_element_to_queue, run_id
-            )
-
-        if step_index > 0:
-            self.state.update_module(
-                flowdef[step_index - 1]["step"]["module"],
-                remove_element_from_queue,
-                run_id,
-            )
+            
             if "source" in flowdef[step_index - 1]["locations"]:
                 self.state.update_location(
                     flowdef[step_index - 1]["locations"]["source"],
-                    update_location_state,
+                    update_location_labware,
                     "Empty",
                 )
             if "target" in flowdef[step_index - 1]["locations"]:
                 if not ("trash" in flowdef[step_index - 1]["locations"]["target"]):
                     self.state.update_location(
                         flowdef[step_index - 1]["locations"]["target"],
-                        update_location_state,
+                        update_location_labware,
                         wf.experiment_id,
                     )
-                self.state.update_location(
-                    flowdef[step_index - 1]["locations"]["target"],
-                    remove_element_from_queue,
-                    run_id,
-                )
+               
 
 
 if __name__ == "__main__":

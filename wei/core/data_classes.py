@@ -101,8 +101,8 @@ class Module(BaseModel):
     """Robot id"""
     state: Optional[ModuleStatus] = Field(default=ModuleStatus.INIT)
     """Current state of the module"""
-    run_id: Field(default=ModuleStatus.INIT)
-    """Queue of workflows to be run at this location"""
+    run_id: str = Field(default="")
+    """ workflowsto be run on this module"""
 
     @property
     def location(self):

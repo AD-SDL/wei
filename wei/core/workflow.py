@@ -144,8 +144,8 @@ class WorkflowRunner:
                 and len(step.args) > 0
                 and workcell.locations
             ):
-                if step.module in workcell.locations.keys():
-                    for key, value in step.args.items():
+               
+                for key, value in step.args.items():
                         # if hasattr(value, "__contains__") and "positions" in value:
                         if str(value) in workcell.locations[step.module].keys():
                             arg_dict["locations"][key] = value
