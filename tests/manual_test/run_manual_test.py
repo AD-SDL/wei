@@ -14,7 +14,7 @@ def main():
     exp.register_exp()
     # This runs the simulated_workflow a simulated workflow
     flow_info_1 = exp.start_run(wf_path.resolve(), simulate=False, blocking=False)
-    #flow_info_2 = exp.start_run(wf_path.resolve(), simulate=False, blocking=False)
+    # flow_info_2 = exp.start_run(wf_path.resolve(), simulate=False, blocking=False)
     # This checks the state of the flows in the queue
     flows = exp.await_runs([flow_info_1["run_id"]])
     # This will print out the queued job

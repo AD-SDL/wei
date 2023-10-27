@@ -172,18 +172,23 @@ class Scheduler:
                 module.state = ModuleStatus.INIT
                 self.state.set_module(module.name, module)
             for module_name in self.workcell.locations:
-                for location, coordinates in self.workcell.locations[
+                for location_name, coordinates in self.workcell.locations[
                     module_name
                 ].items():
-                    self.state.set_location(
-                        location,
-                        Location(
-                            name=location,
-                            workcell_coordinates=coordinates,
-                            state="Empty",
-                            queue=[],
-                        ),
-                    )
+                    try:
+                        location = self.state.get_location(location_name)
+                        location.coordinates[module_name] = coordinates
+                        self.state.set_location(location_name, location)
+                    except KeyError:
+                        self.state.set_location(
+                            location_name,
+                            Location(
+                                name=location_name,
+                                coordinates={module_name: coordinates},
+                                state="Empty",
+                                queue=[],
+                            ),
+                        )
         print("Starting Process")
         while True:
             with self.state.state_lock():  # * Lock the state for the duration of the update loop

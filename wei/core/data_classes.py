@@ -314,7 +314,7 @@ class Location(BaseModel):
 
     name: str
     """Name of the location"""
-    workcell_coordinates: Any
+    coordinates: Dict[str, Any]
     """Coordinates of the location"""
     state: Optional[str] = "Empty"
     """State of the location"""
