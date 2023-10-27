@@ -105,7 +105,7 @@ class WorkflowRunner:
         callbacks: Optional[List[Any]] = None,
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """Pulls the workcell and builds a list of dictionary steps to be executed
 
         Parameters

@@ -1,5 +1,6 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
 import json
+from pathlib import Path
 from typing import Tuple
 
 import requests
@@ -43,9 +44,18 @@ class RestInterface(Interface):
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
         )
         if "action_response" in rest_response.headers:
-            with open(rest_response.headers["action_msg"], 'wb') as f:
+            if "exp_path" in kwargs.keys():
+                path = Path(
+                    kwargs["exp_path"] / "results" / step.id
+                    + "_"
+                    + rest_response.headers["action_msg"]
+                )
+            else:
+                path = Path(step.id + rest_response.headers["action_msg"])
+            with open(str(path), "wb") as f:
                 f.write(rest_response.content)
             rest_response = rest_response.headers
+            rest_response["action_msg"] = str(path.name)
         else:
             rest_response = rest_response.json()
         print(rest_response)

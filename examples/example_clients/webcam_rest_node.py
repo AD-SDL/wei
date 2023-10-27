@@ -2,22 +2,22 @@
 REST-based node that interfaces with WEI and provides a USB camera interface
 """
 import json
+from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 
 import cv2
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
-workcell = None
+from wei.core.data_classes import ModuleStatus, StepStatus
+
 global state
-host = "172.26.192.1"  # Allows all connections from local network
-local_port = 2001
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global state
-    """Initial run function for the app, parses the workcell argument
+    """Initial run function for the app, initializes state
         Parameters
         ----------
         app : FastApi
@@ -27,10 +27,10 @@ async def lifespan(app: FastAPI):
         -------
         None"""
     try:
-        state = "IDLE"
+        state = ModuleStatus.BUSY
     except Exception as err:
         print(err)
-        state = "ERROR"
+        state = ModuleStatus.ERROR
 
     # Yield control to the application
     yield
@@ -47,12 +47,10 @@ app = FastAPI(
 @app.get("/state")
 def get_state():
     global state
-    if state != "BUSY":
-        pass
     return JSONResponse(content={"State": state})
 
 
-@app.get("/description")
+@app.get("/about")
 async def description():
     global state
     return JSONResponse(content={"State": state})
@@ -70,14 +68,15 @@ def do_action(
     action_vars: str,
 ):
     global state
-    if state == "BUSY":
-        response_content = {
-            "action_msg": "StepStatus.Failed",
-            "action_response": "False",
-            "action_log": "Node is busy",
-        }
-        return JSONResponse(content=response_content)
-    state = "BUSY"
+    if state == ModuleStatus.BUSY:
+        return JSONResponse(
+            content={
+                "action_response": StepStatus.FAILED,
+                "action_msg": "",
+                "action_log": "Module is busy",
+            }
+        )
+    state = ModuleStatus.BUSY
     if action_handle == "take_picture":
         try:
             image_name = json.loads(action_vars)["image_name"]
@@ -86,42 +85,45 @@ def do_action(
             cv2.imwrite(image_name, frame)
             camera.release()
 
-            response_content = {
-                "action_response": "StepStatus.Succeeded",
-                "action_msg": "webcam_image.jpg",
-                "action_log": "",
-            }
-            state = "IDLE"
+            state = ModuleStatus.IDLE
             print("success")
-            response = FileResponse(image_name, headers = response_content)
-          
-            return response
+            return FileResponse(
+                path=image_name,
+                headers={
+                    "action_response": StepStatus.SUCCEEDED,
+                    "action_msg": f"{image_name}.jpg",
+                    "action_log": "",
+                },
+            )
         except Exception as e:
             print(e)
-            response_content = {
-                "action_msg": "StepStatus.Failed",
-                "action_response": "False",
-                "action_log": str(e),
-            }
-            state = "IDLE"
-            return JSONResponse(content=response_content)
+            state = ModuleStatus.IDLE
+            return JSONResponse(
+                content={
+                    "action_response": StepStatus.FAILED,
+                    "action_msg": "",
+                    "action_log": str(e),
+                }
+            )
     else:
-        response_content = {
-            "action_msg": "StepStatus.Failed",
-            "action_response": "False",
-            "action_log": "Action not supported",
-        }
-        state = "IDLE"
-        return JSONResponse(content=response_content)
+        state = ModuleStatus.IDLE
+        return JSONResponse(
+            content={
+                "action_response": StepStatus.FAILED,
+                "action_msg": "",
+                "action_log": "Action not supported",
+            }
+        )
 
 
 if __name__ == "__main__":
     import uvicorn
 
+    parser = ArgumentParser()
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host IP")
+    parser.add_argument("--port", type=str, default="2001", help="Port to serve on")
+    args = parser.parse_args()
+
     uvicorn.run(
-        "webcam_rest_node:app",
-        host=host,
-        port=local_port,
-        reload=True,
-        ws_max_size=100000000000000000000000000000000000000,
+        "webcam_rest_node:app", host=args.host, port=int(args.port), reload=True
     )

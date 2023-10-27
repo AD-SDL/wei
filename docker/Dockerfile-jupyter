@@ -1,4 +1,4 @@
-FROM jupyter/datascience-notebook:latest
+FROM jupyter/minimal-notebook:python-3.11
 # USER root
 ARG USER=joyvan
 ARG UID=1000
@@ -18,9 +18,10 @@ COPY setup.py /home/${USER}/wei/setup.py
 
 
 # Install dependencies
-RUN python -m pip install --upgrade pip
-RUN pip install -r /home/${USER}/wei/requirements/requirements.txt
-RUN pip install -r /home/${USER}/wei/requirements/dev.txt
+RUN python -m pip install --upgrade pip wheel setuptools && \
+    pip install --no-cache-dir -r /home/${USER}/wei/requirements/requirements.txt && \
+    pip install --no-cache-dir -r /home/${USER}/wei/requirements/dev.txt && \
+    pip install --no-cache-dir -r /home/${USER}/wei/requirements/examples.txt
 
 # Install wei
 RUN pip install -e /home/${USER}/wei

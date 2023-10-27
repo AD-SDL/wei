@@ -302,6 +302,20 @@ class StepStatus(str, Enum):
     FAILED = "failed"
 
 
+class StepResponse(BaseModel):
+    """
+    Standard Response returned by module interfaces
+    in response to action requests
+    """
+
+    action_response: StepStatus = StepStatus.SUCCEEDED
+    """Whether the action succeeded, failed, is running, or is idle"""
+    action_msg: str = ""
+    """Any result from the action. If the result is a file, this should be the file name"""
+    action_log: str = ""
+    """Error or log messages resulting from the action"""
+
+
 class ExperimentStatus(str, Enum):
     """Status for an experiment"""
 
