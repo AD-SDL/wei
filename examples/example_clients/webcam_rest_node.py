@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
         -------
         None"""
     try:
-        state = ModuleStatus.BUSY
+        state = ModuleStatus.IDLE
     except Exception as err:
         print(err)
         state = ModuleStatus.ERROR
@@ -91,7 +91,7 @@ def do_action(
                 path=image_name,
                 headers={
                     "action_response": StepStatus.SUCCEEDED,
-                    "action_msg": f"{image_name}.jpg",
+                    "action_msg": f"{image_name}",
                     "action_log": "",
                 },
             )
