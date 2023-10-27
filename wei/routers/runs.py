@@ -43,53 +43,53 @@ async def start_run(
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
     state_manager = request.app.state_manager
-    # try:
-    log_dir = Path(experiment_path)
-    wf = WorkflowRun(
-        name=Path(workflow.filename).name.split(".")[0],
-        modules=[],
-        flowdef=[],
-        experiment_path=str(log_dir),
-    )
-    wf.label = wf.name
-    wf.run_dir = str(Path(log_dir, "runs", f"{wf.name}_{wf.run_id}"))
-    experiment_id = log_dir.name.split("_")[-1]
-    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
-    logger.info("Received job run request")
-
-    workflow_content = await workflow.read()
-    payload = await payload.read()
-    # Decode the bytes object to a string
-    workflow_content_str = workflow_content.decode("utf-8")
-    wf.payload = json.loads(payload)
-    workflow_runner = WorkflowRunner(
-        workflow_def=yaml.safe_load(workflow_content_str),
-        workcell=state_manager.get_workcell(),
-        payload=wf.payload,
-        experiment_path=str(experiment_path),
-        run_id=wf.run_id,
-        simulate=simulate,
-        workflow_name=wf.name,
-    )
-
-    flowdef = []
-
-    for step in workflow_runner.steps:
-        flowdef.append(
-            {
-                "step": json.loads(step["step"].json()),
-                "locations": step["locations"],
-            }
+    try:
+        log_dir = Path(experiment_path)
+        wf = WorkflowRun(
+            name=Path(workflow.filename).name.split(".")[0],
+            modules=[],
+            flowdef=[],
+            experiment_path=str(log_dir),
         )
-    wf.flowdef = flowdef
-    with state_manager.state_lock():
-        state_manager.set_workflow_run(wf.run_id, wf)
-    # except Exception as e:  # noqa
-    #     print(e)
-    #     wf.status = WorkflowStatus.FAILED
-    #     wf.hist["validation"] = f"Error: {e}"
-    #     with state_manager.state_lock():
-    #         state_manager.set_workflow_run(wf.run_id, wf)
+        wf.label = wf.name
+        wf.run_dir = str(Path(log_dir, "runs", f"{wf.name}_{wf.run_id}"))
+        experiment_id = log_dir.name.split("_")[-1]
+        logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+        logger.info("Received job run request")
+
+        workflow_content = await workflow.read()
+        payload = await payload.read()
+        # Decode the bytes object to a string
+        workflow_content_str = workflow_content.decode("utf-8")
+        wf.payload = json.loads(payload)
+        workflow_runner = WorkflowRunner(
+            workflow_def=yaml.safe_load(workflow_content_str),
+            workcell=state_manager.get_workcell(),
+            payload=wf.payload,
+            experiment_path=str(experiment_path),
+            run_id=wf.run_id,
+            simulate=simulate,
+            workflow_name=wf.name,
+        )
+
+        flowdef = []
+
+        for step in workflow_runner.steps:
+            flowdef.append(
+                {
+                    "step": json.loads(step["step"].json()),
+                    "locations": step["locations"],
+                }
+            )
+        wf.flowdef = flowdef
+        with state_manager.state_lock():
+            state_manager.set_workflow_run(wf.run_id, wf)
+    except Exception as e:  # noqa
+        print(e)
+        wf.status = WorkflowStatus.FAILED
+        wf.hist["validation"] = f"Error: {e}"
+        with state_manager.state_lock():
+            state_manager.set_workflow_run(wf.run_id, wf)
     return JSONResponse(
         content={
             "wf": wf.model_dump(mode="json"),
