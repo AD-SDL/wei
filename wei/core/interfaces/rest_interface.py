@@ -46,9 +46,9 @@ class RestInterface(Interface):
         if "action_response" in rest_response.headers:
             if "exp_path" in kwargs.keys():
                 path = Path(
-                    kwargs["exp_path"] , "results" , step.id
-                    + "_"
-                    + rest_response.headers["action_msg"]
+                    kwargs["exp_path"],
+                    "results",
+                    step.id + "_" + rest_response.headers["action_msg"],
                 )
             else:
                 path = Path(step.id + rest_response.headers["action_msg"])

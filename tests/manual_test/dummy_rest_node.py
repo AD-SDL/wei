@@ -53,8 +53,8 @@ def get_state():
     return JSONResponse(content={"State": state})
 
 
-@app.get("/description")
-async def description():
+@app.get("/about")
+async def about():
     global state
     return JSONResponse(content={"State": state})
 

@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.data_classes import ModuleStatus, StepStatus
+from wei.core.data_classes import ModuleStatus, StepResponse, StepStatus
 
 global state, module_resources
 
@@ -51,7 +51,7 @@ def get_state():
 
 
 @app.get("/about")
-async def description():
+async def about():
     """Returns a description of the actions and resources the module supports"""
     global state
     return JSONResponse(content={"About": ""})
@@ -68,15 +68,13 @@ async def resources():
 def do_action(
     action_handle: str,  # The action to be performed
     action_vars: str,  # Any arguments necessary to run that action
-):
+) -> StepResponse:
     global state
     if state == ModuleStatus.BUSY:
-        return JSONResponse(
-            content={
-                "action_response": StepStatus.FAILED,
-                "action_msg": "",
-                "action_log": "Module is busy",
-            }
+        return StepResponse(
+            action_response=StepStatus.FAILED,
+            action_msg="",
+            action_log="Module is busy",
         )
     state = ModuleStatus.BUSY
 
@@ -88,43 +86,38 @@ def do_action(
             result = "any result you want to return"
 
             state = ModuleStatus.IDLE
-            return JSONResponse(
-                content={
-                    "action_response": StepStatus.SUCCEEDED,
-                    "action_msg": result,
-                    "action_log": "",
-                }
+            return StepResponse(
+                action_response=StepStatus.SUCCEEDED,
+                action_msg=result,
+                action_log="",
             )
         elif action_handle == "do_action_return_file":
             state = ModuleStatus.IDLE
             # Use the FileResponse class to return files
+            file_name = json.loads(action_vars)["file_name"]
             return FileResponse(
-                path=json.loads(action_vars)["file_name"],
+                path=file_name,
                 content={
                     "action_response": StepStatus.SUCCEEDED,
-                    "action_msg": json.loads(action_vars)["file_name"],
+                    "action_msg": file_name,
                     "action_log": "",
                 },
             )
         else:
             # Handle Unsupported actions
             state = ModuleStatus.IDLE
-            return JSONResponse(
-                content={
-                    "action_response": StepStatus.FAILED,
-                    "action_msg": "",
-                    "action_log": "Unsupported action",
-                }
+            return StepResponse(
+                action_response=StepStatus.FAILED,
+                action_msg="",
+                action_log="Unsupported action",
             )
     except Exception as e:
         print(str(e))
         state = ModuleStatus.IDLE
-        return JSONResponse(
-            content={
-                "action_response": StepStatus.FAILED,
-                "action_msg": "",
-                "action_log": str(e),
-            }
+        return StepResponse(
+            action_response=StepStatus.FAILED,
+            action_msg="",
+            action_log=str(e),
         )
 
 

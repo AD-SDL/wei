@@ -9,7 +9,7 @@ import cv2
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.data_classes import ModuleStatus, StepStatus
+from wei.core.data_classes import ModuleStatus, StepResponse, StepStatus
 
 global state
 
@@ -51,7 +51,7 @@ def get_state():
 
 
 @app.get("/about")
-async def description():
+async def about():
     global state
     return JSONResponse(content={"State": state})
 
@@ -66,19 +66,17 @@ async def resources():
 def do_action(
     action_handle: str,
     action_vars: str,
-):
+) -> StepResponse:
     global state
     if state == ModuleStatus.BUSY:
-        return JSONResponse(
-            content={
-                "action_response": StepStatus.FAILED,
-                "action_msg": "",
-                "action_log": "Module is busy",
-            }
+        return StepResponse(
+            action_response=StepStatus.FAILED,
+            action_msg="",
+            action_log="Module is busy",
         )
     state = ModuleStatus.BUSY
-    if action_handle == "take_picture":
-        try:
+    try:
+        if action_handle == "take_picture":
             image_name = json.loads(action_vars)["image_name"]
             camera = cv2.VideoCapture(0)
             _, frame = camera.read()
@@ -95,24 +93,20 @@ def do_action(
                     "action_log": "",
                 },
             )
-        except Exception as e:
-            print(e)
+        else:
             state = ModuleStatus.IDLE
-            return JSONResponse(
-                content={
-                    "action_response": StepStatus.FAILED,
-                    "action_msg": "",
-                    "action_log": str(e),
-                }
+            return StepResponse(
+                action_response=StepStatus.FAILED,
+                action_msg="",
+                action_log="Unsupported action",
             )
-    else:
+    except Exception as e:
+        print(e)
         state = ModuleStatus.IDLE
-        return JSONResponse(
-            content={
-                "action_response": StepStatus.FAILED,
-                "action_msg": "",
-                "action_log": "Action not supported",
-            }
+        return StepResponse(
+            action_response=StepStatus.FAILED,
+            action_msg="",
+            action_log=str(e),
         )
 
 
