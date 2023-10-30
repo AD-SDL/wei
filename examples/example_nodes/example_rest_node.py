@@ -131,7 +131,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     uvicorn.run(
-        "example_rest_client:app",
+        "example_rest_node:app",
         host=args.host,
         port=int(args.port),
         reload=True,
