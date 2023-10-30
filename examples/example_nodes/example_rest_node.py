@@ -4,9 +4,14 @@ from argparse import ArgumentParser
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import ModuleStatus, StepResponse, StepStatus
+from wei.core.data_classes import (
+    ModuleStatus,
+    StepFileResponse,
+    StepResponse,
+    StepStatus,
+)
 
 global state, module_resources
 
@@ -95,13 +100,10 @@ def do_action(
             state = ModuleStatus.IDLE
             # Use the FileResponse class to return files
             file_name = json.loads(action_vars)["file_name"]
-            return FileResponse(
-                path=file_name,
-                headers=StepResponse(
-                    action_response=StepStatus.SUCCEEDED,
-                    action_msg=file_name,
-                    action_log="",
-                ).model_dump(mode="json"),
+            return StepFileResponse(
+                action_response=StepStatus.SUCCEEDED,
+                path=file_name,  # The path to the file to be returned
+                action_log="",
             )
         else:
             # Handle Unsupported actions

@@ -5,7 +5,7 @@ from typing import Tuple
 
 import requests
 
-from wei.core.data_classes import Interface, Module, Step
+from wei.core.data_classes import Interface, Module, Step, StepResponse
 
 
 class RestInterface(Interface):
@@ -43,25 +43,25 @@ class RestInterface(Interface):
             headers=headers,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
         )
-        if "action_response" in rest_response.headers:
+        if "X-WEI-action_response" in rest_response.headers:
+            response = StepResponse.from_headers(rest_response.headers)
             if "exp_path" in kwargs.keys():
                 path = Path(
                     kwargs["exp_path"],
                     "results",
-                    step.id + "_" + rest_response.headers["action_msg"],
+                    step.id + "_" + response.action_msg,
                 )
             else:
-                path = Path(step.id + rest_response.headers["action_msg"])
+                path = Path(step.id + response.action_msg)
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
-            rest_response = rest_response.headers
-            rest_response["action_msg"] = str(path.name)
+            response.action_msg = str(path)
         else:
-            rest_response = rest_response.json()
-        print(rest_response)
-        action_response = rest_response["action_response"]
-        action_msg = rest_response["action_msg"]
-        action_log = rest_response["action_log"]
+            response = StepResponse.model_validate(rest_response.json())
+        print(response)
+        action_response = response.action_response
+        action_msg = response.action_msg
+        action_log = response.action_log
 
         return action_response, action_msg, action_log
 

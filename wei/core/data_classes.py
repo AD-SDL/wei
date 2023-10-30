@@ -7,6 +7,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar, Union
 
 import ulid
 import yaml
+from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, validator
 
@@ -314,6 +315,45 @@ class StepResponse(BaseModel):
     """Any result from the action. If the result is a file, this should be the file name"""
     action_log: str = ""
     """Error or log messages resulting from the action"""
+
+    def to_headers(self) -> Dict[str, str]:
+        """Converts the response to a dictionary of headers"""
+        return {
+            "X-WEI-action-response": str(self.action_response),
+            "X-WEI-action-msg": self.action_msg,
+            "X-WEI-action-log": self.action_log,
+        }
+
+    @classmethod
+    def from_headers(cls, response: FileResponse):
+        """Creates a StepResponse from the headers of a file response"""
+        return cls(
+            action_response=StepStatus(response.headers["X-WEI-action-response"]),
+            action_msg=response.headers["X-WEI-action-msg"],
+            action_log=response.headers["X-WEI-action-log"],
+        )
+
+
+class StepFileResponse(FileResponse):
+    """
+    Convenience wrapper for FastAPI's FileResponse class
+    If not using FastAPI, return a response with
+        - The file object as the response content
+        - The StepResponse parameters as custom headers, prefixed with "wei_"
+    """
+
+    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
+        """
+        Returns a FileResponse with the given path as the response content
+        """
+        return super().__init__(
+            path=path,
+            headers=StepResponse(
+                action_response=action_response,
+                action_msg=str(path),
+                action_log=action_log,
+            ).to_headers(),
+        )
 
 
 class ExperimentStatus(str, Enum):

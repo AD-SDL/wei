@@ -7,9 +7,14 @@ from contextlib import asynccontextmanager
 
 import cv2
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import ModuleStatus, StepResponse, StepStatus
+from wei.core.data_classes import (
+    ModuleStatus,
+    StepFileResponse,
+    StepResponse,
+    StepStatus,
+)
 
 global state
 
@@ -85,13 +90,10 @@ def do_action(
 
             state = ModuleStatus.IDLE
             print("success")
-            return FileResponse(
+            return StepFileResponse(
+                action_response=StepStatus.SUCCEEDED,
                 path=image_name,
-                headers=StepResponse(
-                    action_response=StepStatus.SUCCEEDED,
-                    action_msg=image_name,
-                    action_log="",
-                ).model_dump(mode="json"),
+                action_log="",
             )
         else:
             state = ModuleStatus.IDLE
