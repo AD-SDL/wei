@@ -1,5 +1,5 @@
 # As well as these dev tools:
-mypy==0.910 # workaround https://github.com/samuelcolvin/pydantic/issues/3562
+mypy
 build==1.0.3
 black[jupyter]
 flake8

@@ -13,7 +13,7 @@ black:
 	black --target-version py37 $(package_name) $(extra_folders)
 
 isort:
-	isort -rc --atomic $(package_name) $(extra_folders)
+	isort --atomic $(package_name) $(extra_folders)
 
 format: isort black 
 

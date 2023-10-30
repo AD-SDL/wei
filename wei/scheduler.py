@@ -81,7 +81,7 @@ def run_step(
     """Runs a single Step from a given workflow on a specified Module."""
     logger, log_dir = init_logger(exp_path, wf_name, run_id)
     action_response, action_msg, action_log = executor.execute_step(
-        step, module, logger=logger
+        step, module, logger=logger, exp_path=exp_path
     )
     pipe.send(
         {
