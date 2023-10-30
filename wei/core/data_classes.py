@@ -339,7 +339,7 @@ class StepFileResponse(FileResponse):
     Convenience wrapper for FastAPI's FileResponse class
     If not using FastAPI, return a response with
         - The file object as the response content
-        - The StepResponse parameters as custom headers, prefixed with "wei_"
+        - The StepResponse parameters as custom headers, prefixed with "X-WEI-"
     """
 
     def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
