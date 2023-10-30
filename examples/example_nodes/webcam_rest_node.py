@@ -87,11 +87,11 @@ def do_action(
             print("success")
             return FileResponse(
                 path=image_name,
-                headers={
-                    "action_response": StepStatus.SUCCEEDED,
-                    "action_msg": f"{image_name}",
-                    "action_log": "",
-                },
+                headers=StepResponse(
+                    action_response=StepStatus.SUCCEEDED,
+                    action_msg=image_name,
+                    action_log="",
+                ).model_dump(mode="json"),
             )
         else:
             state = ModuleStatus.IDLE

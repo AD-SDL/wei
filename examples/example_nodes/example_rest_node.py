@@ -97,11 +97,11 @@ def do_action(
             file_name = json.loads(action_vars)["file_name"]
             return FileResponse(
                 path=file_name,
-                content={
-                    "action_response": StepStatus.SUCCEEDED,
-                    "action_msg": file_name,
-                    "action_log": "",
-                },
+                headers=StepResponse(
+                    action_response=StepStatus.SUCCEEDED,
+                    action_msg=file_name,
+                    action_log="",
+                ).model_dump(mode="json"),
             )
         else:
             # Handle Unsupported actions
