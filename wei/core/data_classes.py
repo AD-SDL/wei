@@ -188,6 +188,8 @@ class Step(BaseModel):
     """Arguments for instruction"""
     checks: Optional[str] = None
     """For future use"""
+    locations: Optional[Dict] = {}
+    """locations referenced in the step"""
     requirements: Optional[Dict] = {}
     """Equipment/resources needed in module"""
     dependencies: List[str] = []
@@ -264,12 +266,10 @@ class Workflow(BaseModel):
     modules: List[SimpleModule]
     """List of modules needed for the workflow"""
     flowdef: List[Union[Step, Dict]]
-    """Steps of the flow"""
+    """User Submitted Steps of the flow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
-    payload: Optional[Dict] = {}
-    """input information for a given workflow run"""
-
+    
 
 class WorkflowRun(Workflow):
     """Container for a workflow run"""
@@ -278,8 +278,12 @@ class WorkflowRun(Workflow):
     """Label for the workflow run"""
     run_id: str = Field(default=ulid.new().str)
     """ID of the workflow run"""
+    payload: Optional[Dict] = {}
+    """input information for a given workflow run"""
     status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
+    steps: List[Union[Step, Dict]]
+    """WEI Processed Steps of the flow"""
     result: Dict = Field(default={})
     """result from the Workflow"""
     hist: Dict = Field(default={})
