@@ -10,7 +10,7 @@ import yaml
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import Workflow, WorkflowRun, WorkflowStatus 
+from wei.core.data_classes import Workflow, WorkflowRun, WorkflowStatus
 from wei.core.loggers import WEI_Logger
 from wei.core.workflow import create_run
 
@@ -50,8 +50,8 @@ async def start_run(
         payload = await payload.read()
         payload = json.loads(payload)
         log_dir = Path(experiment_path)
-        #wf.label = wf.name
-        #wf.run_dir = str(Path(log_dir, "runs", f"{wf.name}_{wf.run_id}"))
+        # wf.label = wf.name
+        # wf.run_dir = str(Path(log_dir, "runs", f"{wf.name}_{wf.run_id}"))
         experiment_id = log_dir.name.split("_")[-1]
         logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
         logger.info("Received job run request")
@@ -67,16 +67,6 @@ async def start_run(
         #     workflow_name=wf.name,
         # )
 
-        # flowdef = []
-
-        # for step in workflow_runner.steps:
-        #     flowdef.append(
-        #         {
-        #             "step": json.loads(step["step"].json()),
-        #             "locations": step["locations"],
-        #         }
-        #     )
-        # wf.flowdef = flowdef
         with state_manager.state_lock():
             state_manager.set_workflow_run(wf_run.run_id, wf_run)
         return JSONResponse(
@@ -94,9 +84,8 @@ async def start_run(
                 "wf": wf.model_dump(mode="json"),
                 "error": f"Error: {e}",
                 "status": str(WorkflowStatus.FAILED),
-            }
+            },
         )
-    
 
 
 @router.get("/{run_id}/state")

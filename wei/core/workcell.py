@@ -6,6 +6,7 @@ from wei.core import DATA_DIR
 from wei.core.data_classes import Module, WorkcellData
 from wei.core.loggers import WEI_Logger
 
+
 def find_step_module(workcell: WorkcellData, step_module: str) -> Optional[Module]:
     """finds the full module information based on just it's name
 

@@ -40,6 +40,6 @@ class Test_Workcell_Base(TestWEI_Base):
 
         payload = {}
 
-        #run_info = runner.run_flow(workcell, payload=payload, simulate=True)
-        #TODO: Fix all testing to use run_step
+        # run_info = runner.run_flow(workcell, payload=payload, simulate=True)
+        # TODO: Fix all testing to use run_step
         assert payload == payload

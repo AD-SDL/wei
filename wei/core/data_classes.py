@@ -9,7 +9,7 @@ import ulid
 import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, validator
+from pydantic import Field, computed_field, validator
 
 _T = TypeVar("_T")
 
@@ -133,7 +133,7 @@ class SimpleModule(BaseModel):
     """Simple module for use in the workflow file (does not need as much info)"""
 
     name: str
-    """Name, should correspond with a module rosnode"""
+    """Name, should correspond with a module ros node"""
 
 
 class Interface(BaseModel):
@@ -269,7 +269,7 @@ class Workflow(BaseModel):
     """User Submitted Steps of the flow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
-    
+
 
 class WorkflowRun(Workflow):
     """Container for a workflow run"""
@@ -294,8 +294,20 @@ class WorkflowRun(Workflow):
     """Path to the experiment this workflow is a part of"""
     step_index: int = 0
     """Index of the current step"""
-    run_dir: Optional[PathLike] = None
-    """Path to the run directory"""
+    simulate: bool = False
+    """Whether or not this workflow is being simulated"""
+
+    @computed_field
+    @property
+    def run_dir(self) -> PathLike:
+        """Path to the run directory"""
+        return Path(self.experiment_path, "runs", f"{self.name}_{self.run_id}")
+
+    @computed_field
+    @property
+    def result_dir(self) -> PathLike:
+        """Path to the result directory"""
+        return Path(self.run_dir, "results")
 
 
 class StepStatus(str, Enum):
