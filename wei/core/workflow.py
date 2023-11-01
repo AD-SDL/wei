@@ -26,29 +26,28 @@ def workflow_logger(workflow_run: WorkflowRun):
     return (
         WEI_Logger.get_logger(
             f"{workflow_run.run_id}_run_log",
-            log_dir=workflow_run.run_dir,
-            log_level=workflow_run.log_level,
-        ),
+            log_dir=workflow_run.run_dir
+        )
     )
 
 
 def check_step(
-    exp_id, run_id, step: dict, locations: dict, state: StateManager
+    exp_id, run_id, step: dict, state: StateManager
 ) -> bool:
     """Check if a step is valid."""
     print(step)
-    if "target" in locations:
-        location = state.get_location(locations["target"])
+    if "target" in step.locations:
+        location = state.get_location(step.locations["target"])
         if not (location.state == "Empty") or not (
             (len(location.queue) > 0 and location.queue[0] == str(run_id))
         ):
             return False
 
-    if "source" in locations:
-        location = state.get_location(locations["source"])
+    if "source" in step.locations:
+        location = state.get_location(step.locations["source"])
         if not (location.state == str(exp_id)):
             return False
-    module_data = state.get_module(step["module"])
+    module_data = state.get_module(step.module)
     if not ("BUSY" in module_data.state) and not (
         (len(module_data.queue) > 0 and module_data.queue[0] == str(run_id))
     ):
@@ -113,22 +112,26 @@ def create_run(
     steps: WorkflowRun
         a completely initialized workflow run
     """
-
+    print(workcell)
     path = Path(experiment_path)
     experiment_id = path.name.split("_id_")[-1]
 
     # Start executing the steps
     steps = []
     for module in workflow.modules:
+        
         if not (find_step_module(workcell, module.name)):
             raise ValueError(f"Module {module} not in Workcell {workflow.modules}")
+   
+    kwargs =  workflow.model_dump()
+    kwargs.update({"label": workflow.name,
+        "payload": payload,
+        "experiment_id": experiment_id,
+        "experiment_path": str(experiment_path),
+        "simulate": simulate})
+ 
     wf_run = WorkflowRun(
-        label=workflow.name,
-        payload=payload,
-        experiment_id=experiment_id,
-        experiment_path=experiment_path,
-        simulate=simulate,
-        **workflow.model_dump(),
+        **kwargs
     )
     wf_run.run_dir.mkdir(parents=True, exist_ok=True)
     wf_run.result_dir.mkdir(parents=True, exist_ok=True)

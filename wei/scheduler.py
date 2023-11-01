@@ -189,11 +189,11 @@ class Scheduler:
             print(f"Processed new workflow: {wf.name} with run_id: {run_id}")
         elif wf.status == WorkflowStatus.QUEUED:
             step_index = wf.step_index
-            step = wf.steps[step_index]["step"]
+            step = wf.steps[step_index]
             exp_id = Path(wf.experiment_path).name.split("_id_")[-1]
-            if check_step(exp_id, run_id, step, locations, self.state):
+            if check_step(exp_id, run_id, step, self.state):
                 send_conn, rec_conn = mpr.Pipe()
-                module = find_step_module(self.workcell, step["module"])
+                module = find_step_module(self.workcell, step.module)
                 step_process = mpr.Process(
                     target=run_step,
                     args=(
@@ -263,37 +263,37 @@ class Scheduler:
             return object
 
         if step_index < len(wf.steps):
-            if "target" in steps[step_index]["locations"]:
+            if "target" in steps[step_index].locations:
                 self.state.update_location(
-                    steps[step_index]["locations"]["target"],
+                    steps[step_index].locations["target"],
                     append_element_to_queue,
                     run_id,
                 )
             self.state.update_module(
-                steps[step_index]["step"]["module"], append_element_to_queue, run_id
+                steps[step_index].module, append_element_to_queue, run_id
             )
 
         if step_index > 0:
             self.state.update_module(
-                steps[step_index - 1]["step"]["module"],
+                steps[step_index - 1].module,
                 remove_element_from_queue,
                 run_id,
             )
-            if "source" in steps[step_index - 1]["locations"]:
+            if "source" in steps[step_index - 1].locations:
                 self.state.update_location(
-                    steps[step_index - 1]["locations"]["source"],
+                    steps[step_index - 1].locations["source"],
                     update_location_state,
                     "Empty",
                 )
-            if "target" in steps[step_index - 1]["locations"]:
-                if not ("trash" in steps[step_index - 1]["locations"]["target"]):
+            if "target" in steps[step_index - 1].locations:
+                if not ("trash" in steps[step_index - 1].locations["target"]):
                     self.state.update_location(
-                        steps[step_index - 1]["locations"]["target"],
+                        steps[step_index - 1].locations["target"],
                         update_location_state,
                         wf.experiment_id,
                     )
                 self.state.update_location(
-                    steps[step_index - 1]["locations"]["target"],
+                    steps[step_index - 1].locations["target"],
                     remove_element_from_queue,
                     run_id,
                 )

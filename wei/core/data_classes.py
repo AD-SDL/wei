@@ -9,7 +9,7 @@ import ulid
 import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, computed_field, validator
+from pydantic import Field, computed_field, validator, field_serializer
 
 _T = TypeVar("_T")
 
@@ -282,7 +282,7 @@ class WorkflowRun(Workflow):
     """input information for a given workflow run"""
     status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
-    steps: List[Union[Step, Dict]]
+    steps: Optional[List[Union[Step, Dict]]] = []
     """WEI Processed Steps of the flow"""
     result: Dict = Field(default={})
     """result from the Workflow"""
@@ -308,6 +308,14 @@ class WorkflowRun(Workflow):
     def result_dir(self) -> PathLike:
         """Path to the result directory"""
         return Path(self.run_dir, "results")
+    
+    @field_serializer('run_dir')
+    def serialize_run_dir(self, run_dir):
+        return str(run_dir)
+    
+    @field_serializer('result_dir')
+    def serialize_dt(self, result_dir):
+        return str(result_dir)
 
 
 class StepStatus(str, Enum):

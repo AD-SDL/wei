@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 from fastapi import FastAPI
 
-from wei.core.workcell import Workcell
+from wei.core.data_classes import WorkcellData
 from wei.routers import experiments, locations, modules, runs, workcells
 from wei.state_manager import StateManager
 
@@ -36,9 +36,9 @@ async def lifespan(app: FastAPI):
 
     args = parser.parse_args()
     with open(args.workcell) as f:
-        workcell = Workcell(workcell_def=yaml.safe_load(f))
+        workcell = WorkcellData.from_yaml(args.workcell)
     state_manager = StateManager(
-        workcell.workcell.name, redis_host=args.redis_host, redis_port=6379
+        workcell.name, redis_host=args.redis_host, redis_port=6379
     )
 
     kafka_server = args.kafka_server

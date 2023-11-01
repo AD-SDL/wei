@@ -46,7 +46,7 @@ async def start_run(
     try:
         workflow_content = await workflow.read()
         workflow_content_str = workflow_content.decode("utf-8")
-        wf = Workflow.from_yaml(workflow_content_str)
+        wf = Workflow(**yaml.safe_load(workflow_content_str))
         payload = await payload.read()
         payload = json.loads(payload)
         log_dir = Path(experiment_path)
@@ -56,7 +56,8 @@ async def start_run(
         logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
         logger.info("Received job run request")
         workcell = state_manager.get_workcell()
-        wf_run = create_run(wf, payload, workcell)
+     
+        wf_run = create_run(wf, workcell, payload, experiment_path)
         # workflow_runner = WorkflowRunner(
         #     workflow_def=yaml.safe_load(workflow_content_str),
         #     workcell=state_manager.get_workcell(),
@@ -73,7 +74,7 @@ async def start_run(
             content={
                 "wf": wf_run.model_dump(mode="json"),
                 "run_id": wf_run.run_id,
-                "status": str(wf.status),
+                "status": str(wf_run.status),
             }
         )
     except Exception as e:  # noqa

@@ -98,13 +98,13 @@ class StateManager:
         self._workcell.clear()
 
     # Workflow Methods
-    def get_workflow_run(self, run_id: Union[str, str]) -> Workflow:
+    def get_workflow_run(self, run_id: Union[str, str]) -> WorkflowRun:
         """
         Returns a workflow by ID
         """
         return WorkflowRun.model_validate(self._workflow_runs[str(run_id)])
 
-    def get_all_workflow_runs(self) -> Dict[Union[str, str], Workflow]:
+    def get_all_workflow_runs(self) -> Dict[Union[str, str], WorkflowRun]:
         """
         Returns all workflows
         """
