@@ -6,10 +6,10 @@ from wei.core import DATA_DIR
 from wei.core.events import Events
 
 
-def start_experiment(
+def create_experiment(
     experiment_name,
     experiment_id: Optional[str] = None,
-    kakfa_server: str = None,
+    kafka_server: str = None,
 ) -> dict:
     """Create the files for logging and results of the system and log the start of the Experiment
 
@@ -31,10 +31,10 @@ def start_experiment(
         "8000",
         experiment_name,
         experiment_id,
-        kafka_server=kakfa_server,
+        kafka_server=kafka_server,
     )
     log_dir = DATA_DIR / (str(experiment_name) + "_id_" + experiment_id)
-    runs_dir = log_dir / "wei_runs"
+    runs_dir = log_dir / "runs"
     result_dir = log_dir / "results"
     log_dir.mkdir(parents=True, exist_ok=True)
     result_dir.mkdir(parents=True, exist_ok=True)

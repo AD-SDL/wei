@@ -9,18 +9,6 @@ import requests
 
 # from diaspora_logger import DiasporaLogger
 
-# class Event:
-#     pass
-# event = {
-#     "experiment_name":"",
-#     "experiment_id":"",
-#     "name": "NAME",
-#   "action":{
-#    "type":"globus-compute",
-#   "action_id":"action_id"
-#   }
-# }
-
 # def log_event_local():
 #     return str(event.name, event)
 

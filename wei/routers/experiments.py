@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Request
 
-from wei.core.experiment import start_experiment
+from wei.core.experiment import create_experiment
 from wei.core.loggers import WEI_Logger
 
 router = APIRouter()
@@ -48,4 +48,4 @@ def process_exp(experiment_name: str, experiment_id: str, request: Request) -> d
 
     # Decode the bytes object to a string
     # Generate UUID for the experiment, really this should be done by the client (Experiment class)
-    return start_experiment(experiment_name, experiment_id, request.app.kafka_server)
+    return create_experiment(experiment_name, experiment_id, request.app.kafka_server)

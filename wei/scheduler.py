@@ -35,6 +35,12 @@ def parse_args() -> Namespace:
         default="localhost",
     )
     parser.add_argument(
+        "--redis_port",
+        type=str,
+        help="port for Redis server",
+        default=6379,
+    )
+    parser.add_argument(
         "--kafka_server",
         type=str,
         help="url (no port) for Redis server",
@@ -85,9 +91,8 @@ class Scheduler:
         self.state = StateManager(
             workcell_name=self.workcell.name,
             redis_host=args.redis_host,
-            redis_port=6379,
+            redis_port=args.redis_port,
         )
-        self.state.clear_state(reset_locations=args.reset_locations)
         self.kafka_server = args.kafka_server
         self.log_server = args.server
         self.state.clear_state(reset_locations=args.reset_locations)
