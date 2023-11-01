@@ -73,8 +73,9 @@ def do_action(
     global state
     if state == "BUSY":
         response_content = {
-            "action_msg": "StepStatus.Failed",
-            "action_response": "False",
+            
+            "action_response": "failed",
+            "action_msg": "True",
             "action_log": "Node is busy",
         }
         return JSONResponse(content=response_content)
@@ -86,9 +87,9 @@ def do_action(
             t = action_vars["t"]
             time.sleep(int(t))
             response_content = {
-                "action_msg": "StepStatus.Succeeded",
-                "action_response": "True",
-                "action_log": "",
+                "action_response": "succeeded",
+                "action_msg": "True",
+                "action_log": ""
             }
             state = "IDLE"
             print("success")
@@ -96,9 +97,10 @@ def do_action(
         except Exception as e:
             print(e)
             response_content = {
-                "action_msg": "StepStatus.Failed",
-                "action_response": "False",
-                "action_log": str(e),
+                "action_response": "succeeded",
+                "action_msg": "False",
+                "action_response": "failed",
+                "action_log": str(e)
             }
             state = "IDLE"
             return JSONResponse(content=response_content)
