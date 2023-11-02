@@ -7,8 +7,6 @@ from typing import Any, Optional
 
 import requests
 
-from wei.core.experiment import log_experiment_event
-
 # from diaspora_logger import DiasporaLogger
 
 # def log_event_local():
@@ -110,6 +108,8 @@ class Events:
         }
 
         if self.wei_internal:
+            from wei.core.experiment import log_experiment_event
+
             log_experiment_event(self.experiment_id, str(log_value))
         else:
             response = requests.post(

@@ -4,7 +4,7 @@ import fnmatch
 import os
 from typing import Optional
 
-from wei.core.config import Config
+from wei.config import Config
 from wei.core.data_classes import Experiment
 from wei.core.events import Events
 from wei.core.loggers import WEI_Logger

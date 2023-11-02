@@ -7,7 +7,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Optional
 
-from wei.core.data_classes import WorkcellData
+# from wei.core.data_classes import WorkcellData
 from wei.core.state_manager import StateManager
 
 # import os
@@ -19,7 +19,7 @@ class Config:
     Allows for shared configuration across the application
     """
 
-    workcell = None
+    workcell_file = None
     redis_host = None
     redis_server = None
     kafka_server = None
@@ -37,7 +37,7 @@ class Config:
     def load_engine_config(self, args: Namespace):
         # load_dotenv()
         # WORKCELL_FILE = os.environ.get("WORKCELL_FILE", None)
-        self.workcell = WorkcellData.from_yaml(args.workcell)
+        self.workcell_file = args.workcell
         self.redis_host = args.redis_host
         self.redis_port = args.redis_port
         self.update_interval = args.update_interval
@@ -54,7 +54,7 @@ class Config:
 
     @staticmethod
     def load_server_config(self, args: Namespace):
-        self.workcell = WorkcellData.from_yaml(args.workcell)
+        self.workcell_file = args.workcell
         self.server_host = args.server
         self.server_port = args.port
         self.redis_host = args.redis_host

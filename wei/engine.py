@@ -4,7 +4,8 @@ Engine Class and associated helpers and data
 
 import time
 
-from wei.core.config import Config, parse_args
+from wei.config import Config, parse_args
+from wei.core.data_classes import WorkcellData
 from wei.core.location import initialize_workcell_locations
 from wei.core.module import initialize_workcell_modules, update_active_modules
 from wei.core.scheduler import Scheduler
@@ -25,7 +26,7 @@ class Engine:
             state_manager=self.state_manager,
         )
         with self.state_manager.state_lock():
-            self.state_manager.set_workcell(Config.workcell)
+            self.state_manager.set_workcell(WorkcellData.from_yaml(Config.workcell))
             initialize_workcell_modules()
             initialize_workcell_locations()
 

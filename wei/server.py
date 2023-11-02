@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from wei.core.config import Config, parse_args
+from wei.config import Config, parse_args
 from wei.routers import experiments, locations, modules, runs, workcells
 
 

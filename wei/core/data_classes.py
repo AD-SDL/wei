@@ -11,9 +11,6 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, computed_field, field_serializer, validator
 
-from wei.core.config import Config
-from wei.core.experiment import get_experiment_name
-from wei.core.interface import InterfaceMap
 
 _T = TypeVar("_T")
 
@@ -117,6 +114,7 @@ class Module(BaseModel):
     @validator("config")
     def validate_config(cls, v, values, **kwargs):
         """Validate the config field of the workcell config with special rules for each type of robot"""
+        from wei.core.interface import InterfaceMap
         interface_type = values.get("interface", "").lower()
 
         if interface_type.lower() not in InterfaceMap.interfaces:
@@ -248,6 +246,8 @@ class WorkcellData(BaseModel):
 
 
 class Experiment(BaseModel):
+    from wei.core.experiment import Config, get_experiment_name
+
     experiment_id: str = Field(default=ulid.new().str)
     """ID of the experiment"""
     experiment_name: Optional[str] = get_experiment_name(experiment_id)
@@ -255,7 +255,7 @@ class Experiment(BaseModel):
     experiment_dir: Optional[PathLike] = (
         Config.data_directory
         / "experiment"
-        / (str(get_experiment_name(experiment_id)) + "_id_" + experiment_id)
+        / (str(experiment_name) + "_id_" + experiment_id)
     )
     """Path to the experiment's log directory"""
     run_dir: Optional[PathLike] = experiment_dir / "runs"

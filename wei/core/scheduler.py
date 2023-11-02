@@ -2,7 +2,7 @@
 
 import multiprocessing as mpr
 
-from wei.core.config import Config
+from wei.config import Config
 from wei.core.data_classes import Experiment, WorkflowRun, WorkflowStatus
 from wei.core.events import Events
 from wei.core.location import update_source_and_target

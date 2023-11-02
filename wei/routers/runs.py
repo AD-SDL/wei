@@ -7,7 +7,7 @@ import yaml
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 
-from wei.core.config import Config
+from wei.config import Config
 from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.loggers import WEI_Logger
 from wei.core.workflow import create_run

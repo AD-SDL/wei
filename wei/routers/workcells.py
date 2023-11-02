@@ -6,7 +6,7 @@ import json
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from wei.core.config import Config
+from wei.config import Config
 from wei.core.data_classes import WorkflowStatus
 
 router = APIRouter()

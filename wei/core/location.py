@@ -1,6 +1,6 @@
 """Provides methods and classes to work with locations"""
 
-from wei.core.config import Config
+from wei.config import Config
 from wei.core.data_classes import Location, WorkflowRun
 
 state_manager = Config.state_manager

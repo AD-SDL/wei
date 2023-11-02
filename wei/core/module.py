@@ -1,7 +1,7 @@
 """Provides methods and classes to work with modules"""
 
 
-from wei.core.config import Config
+from wei.config import Config
 from wei.core.data_classes import Module, ModuleStatus, WorkcellData, Workflow
 from wei.core.interface import InterfaceMap
 from wei.core.workcell import find_step_module

@@ -2,7 +2,7 @@
 from multiprocessing.connection import Connection
 from typing import Any, Dict, Optional
 
-from wei.core.config import Config
+from wei.config import Config
 from wei.core.data_classes import (
     Experiment,
     Module,

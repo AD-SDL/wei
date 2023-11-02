@@ -4,7 +4,7 @@ Router for the "locations" endpoints
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from wei.core.config import Config
+from wei.config import Config
 
 router = APIRouter()
 
