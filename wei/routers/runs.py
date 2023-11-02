@@ -10,16 +10,18 @@ import yaml
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import JSONResponse
 
+from wei.core.config import Config
 from wei.core.data_classes import Workflow, WorkflowRun, WorkflowStatus
 from wei.core.loggers import WEI_Logger
 from wei.core.workflow import create_run
 
 router = APIRouter()
 
+state_manager = Config.state_manager
+
 
 @router.post("/start")
 async def start_run(
-    request: Request,
     workflow: UploadFile = File(...),
     payload: UploadFile = File(...),
     experiment_path: str = "",
@@ -42,7 +44,6 @@ async def start_run(
     response: Dict
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    state_manager = request.app.state_manager
     try:
         workflow_content = await workflow.read()
         workflow_content_str = workflow_content.decode("utf-8")
@@ -50,23 +51,12 @@ async def start_run(
         payload = await payload.read()
         payload = json.loads(payload)
         log_dir = Path(experiment_path)
-        # wf.label = wf.name
-        # wf.run_dir = str(Path(log_dir, "runs", f"{wf.name}_{wf.run_id}"))
         experiment_id = log_dir.name.split("_")[-1]
         logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
         logger.info("Received job run request")
         workcell = state_manager.get_workcell()
-     
+
         wf_run = create_run(wf, workcell, payload, experiment_path)
-        # workflow_runner = WorkflowRunner(
-        #     workflow_def=yaml.safe_load(workflow_content_str),
-        #     workcell=state_manager.get_workcell(),
-        #     payload=wf.payload,
-        #     experiment_path=str(experiment_path),
-        #     run_id=wf.run_id,
-        #     simulate=simulate,
-        #     workflow_name=wf.name,
-        # )
 
         with state_manager.state_lock():
             state_manager.set_workflow_run(wf_run.run_id, wf_run)
@@ -90,7 +80,9 @@ async def start_run(
 
 
 @router.get("/{run_id}/state")
-def get_run_status(run_id: str, request: Request) -> JSONResponse:
+def get_run_status(
+    run_id: str,
+) -> JSONResponse:
     """Pulls the status of a job on the queue
 
     Parameters
@@ -104,7 +96,6 @@ def get_run_status(run_id: str, request: Request) -> JSONResponse:
      response: Dict
        a dictionary including the status on the queueing, and the result of the job if it's done
     """
-    state_manager = request.app.state_manager
     try:
         with state_manager.state_lock():
             workflow = state_manager.get_workflow_run(run_id)

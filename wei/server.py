@@ -6,9 +6,10 @@ from pathlib import Path
 import yaml
 from fastapi import FastAPI
 
+from wei.core.config import Config, parse_args
 from wei.core.data_classes import WorkcellData
+from wei.core.state_manager import StateManager
 from wei.routers import experiments, locations, modules, runs, workcells
-from wei.state_manager import StateManager
 
 
 @asynccontextmanager
@@ -22,30 +23,6 @@ async def lifespan(app: FastAPI):
         Returns
         -------
         None"""
-    parser = ArgumentParser()
-    parser.add_argument(
-        "--redis_host",
-        type=str,
-        help="url (no port) for Redis server",
-        default="localhost",
-    )
-    parser.add_argument("--workcell", type=Path, help="Path to workcell file")
-    parser.add_argument(
-        "--kafka-server", type=str, help="Kafka server for logging", default=None
-    )
-
-    args = parser.parse_args()
-    with open(args.workcell) as f:
-        workcell = WorkcellData.from_yaml(args.workcell)
-    state_manager = StateManager(
-        workcell.name, redis_host=args.redis_host, redis_port=6379
-    )
-
-    kafka_server = args.kafka_server
-
-    app.kafka_server = kafka_server
-    app.state_manager = state_manager
-    app.workcell = workcell
 
     app.include_router(runs.router, prefix="/runs")
     app.include_router(experiments.router, prefix="/experiments")
@@ -70,8 +47,12 @@ app = FastAPI(
 if __name__ == "__main__":
     import uvicorn
 
+    args = parse_args()
+    Config.load_server_config(args)
+
     uvicorn.run(
         "wei.server:app",
-        host="0.0.0.0",
+        host=Config.server_host,
+        port=Config.server_port,
         reload=False,
     )

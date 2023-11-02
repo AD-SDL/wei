@@ -9,7 +9,9 @@ import ulid
 import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, computed_field, validator, field_serializer
+from pydantic import Field, computed_field, field_serializer, validator
+
+from wei.core.interface import InterfaceMap
 
 _T = TypeVar("_T")
 
@@ -113,20 +115,16 @@ class Module(BaseModel):
     @validator("config")
     def validate_config(cls, v, values, **kwargs):
         """Validate the config field of the workcell config with special rules for each type of robot"""
-        config_validation = json.load(cls.config_validation.open())
         interface_type = values.get("interface", "").lower()
 
-        if interface_type.lower() not in config_validation:
+        if interface_type.lower() not in InterfaceMap.interfaces:
             raise ValueError(
-                f"Module type {interface_type} not in configuration validators"
+                f"Interface '{interface_type}' for module {values.get('name')} is invalid"
             )
 
-        req_fields = config_validation[interface_type]
-        for field in req_fields:
-            if field not in v:
-                raise ValueError(f"Required field `{field}` not in values")
-
-        return v
+        return InterfaceMap.interfaces[interface_type].config_validator(
+            values.get("config", {})
+        )
 
 
 class SimpleModule(BaseModel):
@@ -265,7 +263,7 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     modules: List[SimpleModule]
     """List of modules needed for the workflow"""
-    flowdef: List[Union[Step, Dict]]
+    flowdef: List[Step]
     """User Submitted Steps of the flow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
@@ -282,7 +280,7 @@ class WorkflowRun(Workflow):
     """input information for a given workflow run"""
     status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
-    steps: Optional[List[Union[Step, Dict]]] = []
+    steps: Optional[Step] = []
     """WEI Processed Steps of the flow"""
     result: Dict = Field(default={})
     """result from the Workflow"""
@@ -308,12 +306,12 @@ class WorkflowRun(Workflow):
     def result_dir(self) -> PathLike:
         """Path to the result directory"""
         return Path(self.run_dir, "results")
-    
-    @field_serializer('run_dir')
+
+    @field_serializer("run_dir")
     def serialize_run_dir(self, run_dir):
         return str(run_dir)
-    
-    @field_serializer('result_dir')
+
+    @field_serializer("result_dir")
     def serialize_dt(self, result_dir):
         return str(result_dir)
 

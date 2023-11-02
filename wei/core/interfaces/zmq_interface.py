@@ -13,6 +13,24 @@ class ZmqInterface(Interface):
         """Initializes the ZMQ interface"""
         pass
 
+    def config_validator(self, config: dict) -> bool:
+        """Validates the configuration for the interface
+
+        Parameters
+        ----------
+        config : dict
+            The configuration for the module
+
+        Returns
+        -------
+        bool
+            Whether the configuration is valid or not
+        """
+        for key in ["zmq_node_address", "zmq_node_port"]:
+            if key not in config:
+                return False
+        return True
+
     def send_action(step: Step, **kwargs):
         """Executes a single step from a workflow using a ZMQ messaging framework with the ZMQ library
 

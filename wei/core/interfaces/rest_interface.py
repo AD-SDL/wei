@@ -15,6 +15,24 @@ class RestInterface(Interface):
         """Initializes the REST interface"""
         pass
 
+    def config_validator(self, config: dict) -> bool:
+        """Validates the configuration for the interface
+
+        Parameters
+        ----------
+        config : dict
+            The configuration for the module
+
+        Returns
+        -------
+        bool
+            Whether the configuration is valid or not
+        """
+        for key in ["rest_node_address"]:
+            if key not in config:
+                return False
+        return True
+
     def send_action(step: Step, **kwargs) -> Tuple[str, str, str]:
         """Executes a single step from a workflow using a TCP messaging framework
 
@@ -45,9 +63,9 @@ class RestInterface(Interface):
         )
         if "X-WEI-action_response" in rest_response.headers:
             response = StepResponse.from_headers(rest_response.headers)
-            if "exp_path" in kwargs.keys():
+            if "experiment_path" in kwargs.keys():
                 path = Path(
-                    kwargs["exp_path"],
+                    kwargs["experiment_path"],
                     "results",
                     step.id + "_" + response.action_msg,
                 )

@@ -4,11 +4,17 @@ Router for the modules endpoints
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from wei.core.config import Config
+
 router = APIRouter()
+
+state_manager = Config.state_manager
 
 
 @router.get("/{module_name}/state")
-def mod(module_name: str, request: Request) -> JSONResponse:
+def mod(
+    module_name: str,
+) -> JSONResponse:
     """
     Gets the state of a given module
     Parameters
@@ -20,8 +26,6 @@ def mod(module_name: str, request: Request) -> JSONResponse:
      response: Dict
        the state of the requested module
     """
-    state_manager = request.app.state_manager
-
     try:
         with state_manager.state_lock():
             return JSONResponse(

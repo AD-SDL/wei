@@ -21,11 +21,11 @@ tmux send-keys -t $session:$window 'cd ' $folder C-m
 tmux send-keys -t $session:$window 'python3 -m wei.server --workcell ./example_workcell.yaml' C-m
 
 window=2
-tmux new-window -t $session:$window -n 'scheduler'
+tmux new-window -t $session:$window -n 'engine'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
 # Uncomment the following for ROS support
 # tmux send-keys -t $session:$window 'source ~/wei_ws/install/setup.bash' C-m
-tmux send-keys -t $session:$window 'python3 -m wei.scheduler --workcell ./example_workcell.yaml' C-m
+tmux send-keys -t $session:$window 'python3 -m wei.engine --workcell ./example_workcell.yaml' C-m
 
 tmux attach-session -t $session
 

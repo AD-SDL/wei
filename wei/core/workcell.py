@@ -24,4 +24,4 @@ def find_step_module(workcell: WorkcellData, step_module: str) -> Optional[Modul
         if module_name == step_module:
             return module
 
-    return None
+    raise ValueError(f"Module {module} not in Workcell {workcell.name}")

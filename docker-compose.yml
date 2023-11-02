@@ -13,12 +13,12 @@ services:
     command: python -m wei.server --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis
     depends_on:
       - wei_redis
-  wei_scheduler:
+  engine:
     image: wei
-    container_name: wei_scheduler
+    container_name: engine
     volumes:
       - ./wei:/wei/wei
-    command: python -m wei.scheduler --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis --server wei_server
+    command: python -m wei.engine --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
   wei_redis:

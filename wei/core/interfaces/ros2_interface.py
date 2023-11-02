@@ -165,6 +165,24 @@ class ROS2Interface(Interface):
                 wei_execution_node = weiExecNode(name)
         return wei_execution_node
 
+    def config_validator(self, config: dict) -> bool:
+        """Validates the configuration for the interface
+
+        Parameters
+        ----------
+        config : dict
+            The configuration for the module
+
+        Returns
+        -------
+        bool
+            Whether the configuration is valid or not
+        """
+        for key in ["ros_node_address"]:
+            if key not in config:
+                return False
+        return True
+
     def __kill_node(self, wei_execution_node):
         # print("killing node")
         self.wei_execution_node.destroy_node()

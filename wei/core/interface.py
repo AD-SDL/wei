@@ -7,10 +7,10 @@ from wei.core.interfaces.tcp_interface import TcpInterface
 from wei.core.interfaces.zmq_interface import ZmqInterface
 
 
-class Interface_Map:
+class InterfaceMap:
     """Mapping of YAML names to functions from interfaces"""
 
-    function = {
+    interfaces = {
         "wei_ros_node": ROS2Interface,
         "wei_tcp_node": TcpInterface,
         "wei_rest_node": RestInterface,

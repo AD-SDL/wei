@@ -46,7 +46,7 @@ class StateManager:
     def state_lock(self) -> Redlock:
         """
         Gets a lock on the state. This should be called before any state updates are made,
-        or where we don't want the state to be changing underneath us (i.e., in the scheduler).
+        or where we don't want the state to be changing underneath us (i.e., in the engine).
         """
         return Redlock(key=f"{self._prefix}:state", masters={self._redis_server})
 

@@ -6,13 +6,16 @@ import json
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from wei.core.config import Config
 from wei.core.data_classes import WorkflowStatus
 
 router = APIRouter()
 
+state_manager = Config.state_manager
+
 
 @router.get("/state", response_class=HTMLResponse)
-def show(request: Request) -> JSONResponse:
+def show() -> JSONResponse:
     """
 
     Describes the state of the whole workcell including locations and daemon states
@@ -26,8 +29,6 @@ def show(request: Request) -> JSONResponse:
      response: Dict
        the state of the workcell
     """
-    state_manager = request.app.state_manager
-
     with state_manager.state_lock():
         wc_state = json.loads(state_manager.get_state())
     return JSONResponse(
@@ -36,7 +37,7 @@ def show(request: Request) -> JSONResponse:
 
 
 @router.delete("/clear_runs")
-async def clear_runs(request: Request) -> JSONResponse:
+async def clear_runs() -> JSONResponse:
     """
     Clears the completed and failed workflows from the workcell
     Parameters
@@ -48,7 +49,6 @@ async def clear_runs(request: Request) -> JSONResponse:
         response: Dict
          the state of the workflows
     """
-    state_manager = request.app.state_manager
     with state_manager.state_lock():
         for workflow in state_manager.get_all_workflow_runs():
             if (

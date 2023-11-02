@@ -27,6 +27,10 @@ class SimulateInterface(Interface):
         """Initializes the simulated interface"""
         pass
 
+    def config_validator(self, config: dict) -> bool:
+        """Validates the configuration for the interface"""
+        return True
+
     def send_action(step: Step, **kwargs):
         """Pretends to execute a single step from a workflow, really just prints the step"""
         return silent_callback(step, **kwargs)

@@ -8,46 +8,45 @@ import requests
 import ulid
 from devtools import debug
 
+from wei.core.config import Config
 from wei.core.data_classes import (
     Module,
     PathLike,
     Step,
+    StepStatus,
     WorkcellData,
     Workflow,
     WorkflowRun,
 )
+from wei.core.interface import InterfaceMap
 from wei.core.loggers import WEI_Logger
-from wei.core.step_executor import StepExecutor
+from wei.core.modules import validate_module_names
+from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
-from wei.state_manager import StateManager
+
+state_manager = Config.state_manager
 
 
 def workflow_logger(workflow_run: WorkflowRun):
-    return (
-        WEI_Logger.get_logger(
-            f"{workflow_run.run_id}_run_log",
-            log_dir=workflow_run.run_dir
-        )
+    return WEI_Logger.get_logger(
+        f"{workflow_run.run_id}_run_log", log_dir=workflow_run.run_dir
     )
 
 
-def check_step(
-    exp_id, run_id, step: dict, state: StateManager
-) -> bool:
+def check_step(exp_id, run_id, step: dict) -> bool:
     """Check if a step is valid."""
-    print(step)
     if "target" in step.locations:
-        location = state.get_location(step.locations["target"])
+        location = state_manager.get_location(step.locations["target"])
         if not (location.state == "Empty") or not (
             (len(location.queue) > 0 and location.queue[0] == str(run_id))
         ):
             return False
 
     if "source" in step.locations:
-        location = state.get_location(step.locations["source"])
+        location = state_manager.get_location(step.locations["source"])
         if not (location.state == str(exp_id)):
             return False
-    module_data = state.get_module(step.module)
+    module_data = state_manager.get_module(step.module)
     if not ("BUSY" in module_data.state) and not (
         (len(module_data.queue) > 0 and module_data.queue[0] == str(run_id))
     ):
@@ -59,14 +58,29 @@ def run_step(
     wf_run: WorkflowRun,
     module: Module,
     pipe: Connection,
-    executor: StepExecutor,
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
     logger = workflow_logger(wf_run)  # TODO
     step: Step = wf_run.steps[wf_run.step_index]
-    action_response, action_msg, action_log = executor.execute_step(
-        step, module, logger=logger, exp_path=wf_run.experiment_path
-    )
+
+    logger.info(f"Started running step with name: {step.name}")
+    logger.debug(step)
+
+    interface = "simulate_callback" if wf_run.simulate else module.interface
+
+    try:
+        action_response, action_msg, action_log = InterfaceMap.interfaces[
+            interface
+        ].send_action(step, step_module=module, experiment_path=wf_run.experiment_path)
+    except Exception as e:
+        logger.info(f"Exception occurred while running step with name: {step.name}")
+        logger.debug(str(e))
+        action_response = StepStatus.FAILED
+        action_msg = "Exception occurred while running step"
+        action_log = str(e)
+    else:
+        logger.info(f"Finished running step with name: {step.name}")
+
     pipe.send(
         {
             "step_response": {
@@ -113,64 +127,54 @@ def create_run(
         a completely initialized workflow run
     """
     print(workcell)
-    path = Path(experiment_path)
-    experiment_id = path.name.split("_id_")[-1]
 
-    # Start executing the steps
-    steps = []
-    for module in workflow.modules:
-        
-        if not (find_step_module(workcell, module.name)):
-            raise ValueError(f"Module {module} not in Workcell {workflow.modules}")
-   
-    kwargs =  workflow.model_dump()
-    kwargs.update({"label": workflow.name,
-        "payload": payload,
-        "experiment_id": experiment_id,
-        "experiment_path": str(experiment_path),
-        "simulate": simulate})
- 
+    validate_module_names(workflow, workcell)
+
     wf_run = WorkflowRun(
-        **kwargs
+        **workflow.model_dump(mode="python").update(
+            {
+                "label": workflow.name,
+                "payload": payload,
+                "experiment_id": Path(experiment_path).name.split("_id_")[-1],
+                "experiment_path": str(experiment_path),
+                "simulate": simulate,
+            }
+        )
     )
     wf_run.run_dir.mkdir(parents=True, exist_ok=True)
     wf_run.result_dir.mkdir(parents=True, exist_ok=True)
-    for step in workflow.flowdef:
-        # get module information from workcell file
-        step_module = find_step_module(workcell, step.module)
-        if not step_module:
-            raise ValueError(
-                f"No module found for step module: {step.module}, in step: {step}"
-            )
-        valid = False
-        for module in workflow.modules:
-            if step.module == module.name:
-                valid = True
-        if not (valid):
-            raise ValueError(f"Module {step.module} not in flow modules")
-        # replace position names with actual positions
-        if isinstance(step.args, dict) and len(step.args) > 0 and workcell.locations:
-            if step.module in workcell.locations.keys():
-                for key, value in step.args.items():
-                    # if hasattr(value, "__contains__") and "positions" in value:
-                    if str(value) in workcell.locations[step.module].keys():
-                        step.locations[key] = value
 
-        # Inject the payload
-        if isinstance(payload, dict):
-            if not isinstance(step.args, dict) or len(step.args) == 0:
-                continue
-            # TODO check if you can see the attr of this class and match them with vars in the yaml
-            (arg_keys, arg_values) = zip(*step.args.items())
-            for key, value in payload.items():
-                # Covers naming issues when referring to namespace from yaml file
-                if "payload." not in key:
-                    key = f"payload.{key}"
-                if key in arg_values:
-                    idx = arg_values.index(key)
-                    step_arg_key = arg_keys[idx]
-                    step.args[step_arg_key] = value
+    steps = []
+    for step in workflow.flowdef:
+        replace_positions(workcell, step)
+        inject_payload(payload, step)
         steps.append(step)
 
     wf_run.steps = steps
+
     return wf_run
+
+
+def replace_positions(workcell, step):
+    """Replaces the positions in the step with the actual positions from the workcell"""
+    if isinstance(step.args, dict) and len(step.args) > 0 and workcell.locations:
+        if step.module in workcell.locations.keys():
+            for key, value in step.args.items():
+                # if hasattr(value, "__contains__") and "positions" in value:
+                if str(value) in workcell.locations[step.module].keys():
+                    step.locations[key] = value
+
+
+def inject_payload(payload, step):
+    """Injects the payload into the step args"""
+    if len(step.args) > 0:
+        # TODO check if you can see the attr of this class and match them with vars in the yaml
+        (arg_keys, arg_values) = zip(*step.args.items())
+        for key, value in payload.items():
+            # Covers naming issues when referring to namespace from yaml file
+            if "payload." not in key:
+                key = f"payload.{key}"
+            if key in arg_values:
+                idx = arg_values.index(key)
+                step_arg_key = arg_keys[idx]
+                step.args[step_arg_key] = value
