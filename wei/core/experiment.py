@@ -1,15 +1,36 @@
 """Code for managing the Experiment logs on the server side"""
 
+import fnmatch
+import os
 from typing import Optional
 
-from wei.core import DATA_DIR
+from wei.core.config import Config
+from wei.core.data_classes import Experiment
 from wei.core.events import Events
+from wei.core.loggers import WEI_Logger
+
+
+def get_experiment_name(experiment_id: str):
+    return [
+        filename
+        for filename in os.listdir(Config.data_directory / "experiment")
+        if fnmatch.fnmatch(filename, f"*{experiment_id}*")
+    ][0]
+
+
+def get_experiment_log_directory(
+    experiment_id: str,
+):
+    return (
+        Config.data_directory
+        / "experiment"
+        / (str(get_experiment_name(experiment_id)) + "_id_" + experiment_id)
+    )
 
 
 def create_experiment(
-    experiment_name,
+    experiment_name: str,
     experiment_id: Optional[str] = None,
-    kafka_server: str = None,
 ) -> dict:
     """Create the files for logging and results of the system and log the start of the Experiment
 
@@ -26,18 +47,24 @@ def create_experiment(
     -------
     Dict
        A dictionary with the experiment log_dir value"""
+
+    if experiment_id is None:
+        experiment = Experiment(experiment_name=experiment_name)
+    else:
+        experiment = Experiment(
+            experiment_name=experiment_name, experiment_id=experiment_id
+        )
+    experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
+    experiment.run_dir.mkdir(parents=True, exist_ok=True)
+
     events = Events(
-        "localhost",
-        "8000",
-        experiment_name,
-        experiment_id,
-        kafka_server=kafka_server,
+        Config.log_server, Config.log_server_port, experiment_id, wei_internal=True
     )
-    log_dir = DATA_DIR / (str(experiment_name) + "_id_" + experiment_id)
-    runs_dir = log_dir / "runs"
-    result_dir = log_dir / "results"
-    log_dir.mkdir(parents=True, exist_ok=True)
-    result_dir.mkdir(parents=True, exist_ok=True)
-    runs_dir.mkdir(parents=True, exist_ok=True)
-    events.start_experiment(log_dir)
-    return {"exp_dir": log_dir}
+    events.start_experiment(experiment.experiment_dir)
+    return {"exp_dir": experiment.experiment_dir}
+
+
+def log_experiment_event(experiment_id: str, log_value: str) -> None:
+    """Logs a value to the log file for a given experiment"""
+    logger = WEI_Logger.get_experiment_logger(experiment_id)
+    logger.info(log_value)

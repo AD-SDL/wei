@@ -3,7 +3,7 @@ Router for the "workcells"/"wc" endpoints
 """
 import json
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from wei.core.config import Config

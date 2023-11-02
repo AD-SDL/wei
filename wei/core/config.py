@@ -2,13 +2,13 @@
 Handles the configuration of the engine and server.
 """
 
+import logging
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from typing import Optional
 
 from wei.core.data_classes import WorkcellData
 from wei.core.state_manager import StateManager
-
 
 # import os
 # from dotenv import load_dotenv
@@ -30,6 +30,8 @@ class Config:
     log_server = None
     log_server_port = None
     state_manager: Optional[StateManager] = None
+    data_directory = None
+    experiment_directory = None
 
     @staticmethod
     def load_engine_config(self, args: Namespace):
@@ -45,12 +47,16 @@ class Config:
             redis_host=args.redis_host,
             redis_port=args.redis_port,
         )
-        self.log_server = args.log_server
-        self.log_server_port = args.log_server_port
+        self.log_server = args.server
+        self.log_server_port = args.server_port
+        self.data_directory = Path(args.data_dir)
+        self.log_level = logging.INFO
 
     @staticmethod
     def load_server_config(self, args: Namespace):
         self.workcell = WorkcellData.from_yaml(args.workcell)
+        self.server_host = args.server
+        self.server_port = args.port
         self.redis_host = args.redis_host
         self.redis_port = args.redis_port
         self.state_manager = StateManager(
@@ -58,6 +64,7 @@ class Config:
             redis_host=args.redis_host,
             redis_port=args.redis_port,
         )
+        self.data_directory = Path(args.data_dir)
 
 
 def parse_args() -> Namespace:
@@ -107,5 +114,11 @@ def parse_args() -> Namespace:
         type=float,
         help="How long the engine waits between updates",
         default=1.0,
+    )
+    parser.add_argument(
+        "--data_dir",
+        type=Path,
+        help="The directory to store logs in",
+        default=Path.home() / ".wei",
     )
     return parser.parse_args()

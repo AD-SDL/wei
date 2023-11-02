@@ -2,14 +2,14 @@
 
 from pathlib import Path
 
-from wei import Experiment
+from wei import ExperimentClient
 
 
 def main():
     # The path to the Workflow definition yaml file
     wf_path = Path("./example_workflow.yaml")
     # This defines the Experiment object that will communicate with the server for workflows
-    exp = Experiment("127.0.0.1", "8000", "Example Program")
+    exp = ExperimentClient("127.0.0.1", "8000", "Example Program")
     # This initializes the connection to the server and the logs for this run of the program.
     exp.register_exp()
     # This runs the simulated_workflow a simulated workflow

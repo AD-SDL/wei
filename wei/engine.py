@@ -5,8 +5,8 @@ Engine Class and associated helpers and data
 import time
 
 from wei.core.config import Config, parse_args
-from wei.core.locations import initialize_workcell_locations
-from wei.core.modules import initialize_workcell_modules, update_active_modules
+from wei.core.location import initialize_workcell_locations
+from wei.core.module import initialize_workcell_modules, update_active_modules
 from wei.core.scheduler import Scheduler
 
 

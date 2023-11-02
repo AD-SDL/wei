@@ -7,6 +7,8 @@ from typing import Any, Optional
 
 import requests
 
+from wei.core.experiment import log_experiment_event
+
 # from diaspora_logger import DiasporaLogger
 
 # def log_event_local():
@@ -23,10 +25,8 @@ class Events:
         self,
         server_addr: str,
         server_port: str,
-        experiment_name: str,
         experiment_id: Optional[str] = None,
-        kafka_server: Optional[str] = None,
-        experiment_path: Optional[str] = None,
+        wei_internal: bool = False,
     ) -> None:
         """Initializes an Event Logging object
 
@@ -42,20 +42,16 @@ class Events:
             Human chosen name for experiment
 
         experiment_id: Optional[str]
-            Programatially generated experiment id, can be reused if needed
-
-        kafka_server: Optional[str]
-            Url of kafka server for logging
+            # Programmatically generated experiment id, can be reused if needed
 
         experiment_path: Optional[str]
-            Path for loggin the experiment on the server
+            Path for logging the experiment on the server
         """
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_id = experiment_id
-        self.experiment_name = experiment_name
-        self.experiment_path = experiment_path
         self.url = f"http://{self.server_addr}:{self.server_port}"
+        self.wei_internal = wei_internal
 
         # switch to auth file at some point
         # with open(Path("/home/rpl/kafka.txt").resolve(), "r") as f:
@@ -112,15 +108,17 @@ class Events:
             "event_name": event_name,
             "event_info": event_info,
         }
-        if log_dir:
-            self.experiment_path = log_dir
-        response = requests.post(
-            url,
-            params={
-                "log_value": str(log_value),
-                "experiment_path": self.experiment_path,
-            },
-        )
+
+        if self.wei_internal:
+            log_experiment_event(self.experiment_id, str(log_value))
+        else:
+            response = requests.post(
+                url,
+                params={
+                    "log_value": str(log_value),
+                    "experiment_path": self.experiment_path,
+                },
+            )
         try:
             # self.kafka_producer.send(
             # self.topic,
@@ -134,37 +132,23 @@ class Events:
 
         return self._return_response(response)
 
-    def start_experiment(self, log_dir: Optional[str] = ""):
+    def start_experiment(self):
         """logs the start of a given experiment
 
-        Parameters
-        ----------
-        dec_name : str
-            a description of the decision being made
-        dec_value: bool
-            the boolean value of that decision.
         Returns
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        self.experiment_path = log_dir
 
         return self._log_event("EXPERIMENT", "START")
 
-    def end_experiment(self, log_dir: Optional[str] = ""):
+    def end_experiment(self):
         """logs the end of an experiment
 
-        Parameters
-        ----------
-        dec_name : str
-            a description of the decision being made
-        dec_value: bool
-            the boolean value of that decision.
         Returns
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        self.experiment_path = log_dir
         return self._log_event("EXPERIMENT", "END")
 
     def log_decision(self, dec_name: str, dec_value: bool):
@@ -189,7 +173,7 @@ class Events:
         Parameters
         ----------
         comment: str
-            the comment to be looged
+            the comment to be logged
         Returns
         -------
         response: Dict
@@ -240,7 +224,7 @@ class Events:
         return self._log_event("GLOBUS", "GLADIER_RUNFLOW", {"flow_id": flow_id})
 
     def log_loop_start(self, loop_name: str):
-        """logs the start of a loop during an Experimet
+        """logs the start of a loop during an Experiment
 
         Parameters
         ----------
@@ -288,17 +272,17 @@ class Events:
             {"loop_name": loop_name, "condition": condition, "result": str(value)},
         )
 
-    def log_wf_start(self, wf_name, job_id):
-        """Peeks the most recent loop from the loop stack and logs its completion
+    def log_wf_start(self, wf_name: str, run_id: str):
+        """Logs the start of a workflow
 
 
         Parameters
         ----------
-        condition : str
-            A value describing the condition being checked to see if the loop will continue.
+        wf_name : str
+            The name of the workflow
 
-        value: bool
-            Whether or not the condition was met.
+        run_id: str
+            The run_id of the workflow.
 
         Returns
         -------
@@ -306,25 +290,25 @@ class Events:
            The JSON portion of the response from the server"""
 
         return self._log_event(
-            "WEI", "WORKFLOW_START", {"wf_name": str(wf_name), "run_id": str(job_id)}
+            "WEI", "WORKFLOW_START", {"wf_name": str(wf_name), "run_id": str(run_id)}
         )
 
-    def log_wf_end(self, wf_name, job_id):
-        """Peeks the most recent loop from the loop stack and logs its completion
+    def log_wf_end(self, wf_name: str, run_id: str):
+        """Logs the end of a workflow
 
 
         Parameters
         ----------
-        condition : str
-            A value describing the condition being checked to see if the loop will continue.
+        wf_name : str
+            The name of the workflow
 
-        value: bool
-            Whether or not the condition was met.
+        run_id: str
+            The run_id of the workflow.
 
         Returns
         -------
         Any
            The JSON portion of the response from the server"""
         return self._log_event(
-            "WEI", "WORKFLOW_END", {"wf_name": str(wf_name), "run_id": str(job_id)}
+            "WEI", "WORKFLOW_END", {"wf_name": str(wf_name), "run_id": str(run_id)}
         )

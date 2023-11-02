@@ -2,7 +2,6 @@
 
 from wei.core.config import Config
 from wei.core.data_classes import Location, WorkflowRun
-from wei.core.state_manager import StateManager
 
 state_manager = Config.state_manager
 

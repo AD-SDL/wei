@@ -1,17 +1,11 @@
 """The module that initializes and runs the step by step WEI workflow"""
-import logging
 from multiprocessing.connection import Connection
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-
-import requests
-import ulid
-from devtools import debug
+from typing import Any, Dict, Optional
 
 from wei.core.config import Config
 from wei.core.data_classes import (
+    Experiment,
     Module,
-    PathLike,
     Step,
     StepStatus,
     WorkcellData,
@@ -20,17 +14,9 @@ from wei.core.data_classes import (
 )
 from wei.core.interface import InterfaceMap
 from wei.core.loggers import WEI_Logger
-from wei.core.modules import validate_module_names
-from wei.core.state_manager import StateManager
-from wei.core.workcell import find_step_module
+from wei.core.module import validate_module_names
 
 state_manager = Config.state_manager
-
-
-def workflow_logger(workflow_run: WorkflowRun):
-    return WEI_Logger.get_logger(
-        f"{workflow_run.run_id}_run_log", log_dir=workflow_run.run_dir
-    )
 
 
 def check_step(exp_id, run_id, step: dict) -> bool:
@@ -60,7 +46,7 @@ def run_step(
     pipe: Connection,
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
-    logger = workflow_logger(wf_run)  # TODO
+    logger = WEI_Logger.get_workflow_run_logger(wf_run.run_id)
     step: Step = wf_run.steps[wf_run.step_index]
 
     logger.info(f"Started running step with name: {step.name}")
@@ -68,10 +54,14 @@ def run_step(
 
     interface = "simulate_callback" if wf_run.simulate else module.interface
 
+    experiment = Experiment(experiment_id=wf_run.experiment_id)
+
     try:
         action_response, action_msg, action_log = InterfaceMap.interfaces[
             interface
-        ].send_action(step, step_module=module, experiment_path=wf_run.experiment_path)
+        ].send_action(
+            step, step_module=module, experiment_path=experiment.experiment_dir
+        )
     except Exception as e:
         logger.info(f"Exception occurred while running step with name: {step.name}")
         logger.debug(str(e))
@@ -98,8 +88,8 @@ def run_step(
 def create_run(
     workflow: Workflow,
     workcell: WorkcellData,
+    experiment_id: str,
     payload: Optional[Dict[str, Any]] = None,
-    experiment_path: Optional[PathLike] = None,
     simulate: bool = False,
 ) -> WorkflowRun:
     """Pulls the workcell and builds a list of dictionary steps to be executed
@@ -135,8 +125,7 @@ def create_run(
             {
                 "label": workflow.name,
                 "payload": payload,
-                "experiment_id": Path(experiment_path).name.split("_id_")[-1],
-                "experiment_path": str(experiment_path),
+                "experiment_id": experiment_id,
                 "simulate": simulate,
             }
         )

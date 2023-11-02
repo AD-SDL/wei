@@ -4,7 +4,6 @@
 from wei.core.config import Config
 from wei.core.data_classes import Module, ModuleStatus, WorkcellData, Workflow
 from wei.core.interface import InterfaceMap
-from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
 
 state_manager = Config.state_manager
@@ -49,6 +48,7 @@ def query_module_status(module: Module) -> ModuleStatus:
         if module.state == ModuleStatus.INIT:
             print("No Module Interface for Module", str(module_name))
             return ModuleStatus.UNKNOWN
+
 
 def validate_module_names(workflow: Workflow, workcell: WorkcellData):
     """

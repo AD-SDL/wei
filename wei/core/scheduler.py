@@ -1,13 +1,11 @@
 """Handles scheduling workflows and executing steps on the workcell."""
 
 import multiprocessing as mpr
-from pathlib import Path
 
 from wei.core.config import Config
-from wei.core.data_classes import WorkflowRun, WorkflowStatus
+from wei.core.data_classes import Experiment, WorkflowRun, WorkflowStatus
 from wei.core.events import Events
-from wei.core.locations import update_source_and_target
-from wei.core.state_manager import StateManager
+from wei.core.location import update_source_and_target
 from wei.core.workcell import find_step_module
 from wei.core.workflow import check_step, run_step
 
@@ -33,17 +31,12 @@ class Scheduler:
         Updates state based on the given workflow and prior state.
         """
         if wf_run.status == WorkflowStatus.NEW:
-            exp_data = Path(wf_run.experiment_path).name.split("_id_")
-            exp_id = exp_data[-1]
-            wf_run.experiment_id = exp_id
-            exp_name = exp_data[0]
+            experiment = Experiment(experiment_id=wf_run.experiment_id)
             self.events[run_id] = Events(
                 Config.log_server,
                 Config.log_server_port,
-                exp_name,
-                exp_id,
-                Config.kafka_server,
-                wf_run.experiment_path,
+                experiment.experiment_id,
+                wei_internal=True,
             )
             self.events[run_id].log_wf_start(wf_run.name, run_id)
             update_source_and_target(wf_run)
@@ -52,8 +45,7 @@ class Scheduler:
         elif wf_run.status == WorkflowStatus.QUEUED:
             step_index = wf_run.step_index
             step = wf_run.steps[step_index]
-            exp_id = Path(wf_run.experiment_path).name.split("_id_")[-1]
-            if check_step(exp_id, run_id, step):
+            if check_step(wf_run.experiment_id, run_id, step):
                 send_conn, rec_conn = mpr.Pipe()
                 module = find_step_module(state_manager.get_workcell(), step.module)
                 step_process = mpr.Process(

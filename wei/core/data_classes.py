@@ -11,6 +11,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, computed_field, field_serializer, validator
 
+from wei.core.config import Config
+from wei.core.experiment import get_experiment_name
 from wei.core.interface import InterfaceMap
 
 _T = TypeVar("_T")
@@ -245,6 +247,29 @@ class WorkcellData(BaseModel):
     """Locations used by the workcell"""
 
 
+class Experiment(BaseModel):
+    experiment_id: str = Field(default=ulid.new().str)
+    """ID of the experiment"""
+    experiment_name: Optional[str] = get_experiment_name(experiment_id)
+    """The Experiment Name"""
+    experiment_dir: Optional[PathLike] = (
+        Config.data_directory
+        / "experiment"
+        / (str(get_experiment_name(experiment_id)) + "_id_" + experiment_id)
+    )
+    """Path to the experiment's log directory"""
+    run_dir: Optional[PathLike] = experiment_dir / "runs"
+    """Path to the experiment's run directory"""
+
+    @field_serializer("experiment_dir")
+    def serialize_experiment_dir(self, experiment_dir):
+        return str(experiment_dir)
+
+    @field_serializer("run_dir")
+    def serialize_run_dir(self, run_dir):
+        return str(run_dir)
+
+
 class WorkflowStatus(str, Enum):
     """Status for a workflow run"""
 
@@ -288,8 +313,6 @@ class WorkflowRun(Workflow):
     """history of the workflow"""
     experiment_id: Optional[str] = None
     """ID of the experiment this workflow is a part of"""
-    experiment_path: Optional[PathLike] = None
-    """Path to the experiment this workflow is a part of"""
     step_index: int = 0
     """Index of the current step"""
     simulate: bool = False
@@ -299,7 +322,10 @@ class WorkflowRun(Workflow):
     @property
     def run_dir(self) -> PathLike:
         """Path to the run directory"""
-        return Path(self.experiment_path, "runs", f"{self.name}_{self.run_id}")
+        return Path(
+            Experiment(experiment_id=self.experiment_id).run_dir,
+            f"{self.name}_{self.run_id}",
+        )
 
     @computed_field
     @property
@@ -376,13 +402,6 @@ class StepFileResponse(FileResponse):
                 action_log=action_log,
             ).to_headers(),
         )
-
-
-class ExperimentStatus(str, Enum):
-    """Status for an experiment"""
-
-    FAILED = "failed"
-    CREATED = "created"
 
 
 class Location(BaseModel):

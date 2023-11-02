@@ -3,7 +3,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from wei.core.data_classes import PathLike
+from wei.core.config import Config
+from wei.core.data_classes import Experiment, PathLike
 
 
 class WEI_Logger:
@@ -20,7 +21,7 @@ class WEI_Logger:
          Parameters
          ----------
          logger_name : str
-             The name that will refer to this unique loger
+             The name that will refer to this unique logger
          log_file: Optional[PathLike]
              The file that the log will reference
          level:
@@ -50,6 +51,50 @@ class WEI_Logger:
         return logger
 
     @staticmethod
+    def get_experiment_logger(
+        experiment_id: str,
+    ):
+        """Finds the existing logger with the given name or creates a new one if it doesn't exist
+
+        Parameters
+        ----------
+        experiment_id : str
+            The id of the experiment that will refer to this unique logger
+        Returns
+        -------
+        logger: Logger
+            The logging object with the appropriate handlers
+        """
+        experiment = Experiment(experiment_id)
+
+        return WEI_Logger.get_logger(
+            f"experiment_{experiment_id}",
+            experiment.experiment_dir,
+            log_level=Config.log_level,
+        )
+
+    @staticmethod
+    def get_workflow_run_logger(run_id: str):
+        """Finds the existing logger with the given name or creates a new one if it doesn't exist
+
+        Parameters
+        ----------
+        run_id : str
+            The id of the workflow run that will refer to this unique logger
+        Returns
+        -------
+        logger: Logger
+            The logging object with the appropriate handlers
+        """
+        wf_run = Config.state_manager.get_workflow_run(run_id)
+
+        return WEI_Logger.get_logger(
+            f"{run_id}_run_log",
+            wf_run.run_dir,
+            log_level=Config.log_level,
+        )
+
+    @staticmethod
     def get_logger(
         log_name: str,
         log_dir: Optional[Path] = None,
@@ -60,7 +105,7 @@ class WEI_Logger:
         Parameters
         ----------
         logger_name : str
-            The name that will refer to this unique loger
+            The name that will refer to this unique logger
         log_dir: Optional[PathLike]
             The path to file that the log will reference
         level:
@@ -94,52 +139,5 @@ class WEI_Logger:
             logger.setLevel(log_level)
             logger.addHandler(fileHandler)
             logger.addHandler(streamHandler)
-
-        return logger
-
-    @staticmethod
-    def to_json(
-        log_name: str,
-        log_dir: Optional[Path] = None,
-        log_level: int = logging.INFO,
-    ) -> logging.Logger:
-        """Returns a JSON blob processed from the given logs
-
-         Parameters
-         ----------
-         logger_name : str
-             The name that will refer to this unique loger
-         log_file: Optional[PathLike]
-             The file that the log will reference
-         level:
-             The output level of the log, INFO, ERROR etc, which describes which what will be logged.
-
-         Returns
-         -------
-        logger: Logger
-             The logging object with the appropriate handlers
-        """
-
-        if not logging.getLogger(log_name).hasHandlers():
-            logger = WEI_Logger._create_logger(
-                log_name,
-                log_dir / f"{log_name}.log",
-                log_level,
-            )
-        else:
-            logger = logging.getLogger(log_name)
-            # for handler in logger.handlers:
-            #     logger.removeHandler(handler)
-            # log_file = log_dir / f"{log_name}.log"
-            # log_file.parent.mkdir(parents=True, exist_ok=True)
-            # formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
-            # fileHandler = logging.FileHandler(log_file, mode="a+")
-            # fileHandler.setFormatter(formatter)
-            # streamHandler = logging.StreamHandler()
-            # streamHandler.setFormatter(formatter)
-
-            # logger.setLevel(log_level)
-            # logger.addHandler(fileHandler)
-            # logger.addHandler(streamHandler)
 
         return logger

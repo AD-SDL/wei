@@ -10,7 +10,7 @@ import ulid
 from wei.core.events import Events
 
 
-class Experiment:
+class ExperimentClient:
     """Methods for the running and logging of a WEI Experiment including running WEI workflows and logging"""
 
     def __init__(
@@ -19,7 +19,6 @@ class Experiment:
         server_port: str,
         experiment_name: str,
         experiment_id: Optional[str] = None,
-        kafka_server: Optional[str] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
 
@@ -37,8 +36,6 @@ class Experiment:
         experiment_id: Optional[str]
             Programmatically generated experiment id, can be reused if needed
 
-        kafka_server: Optional[str]
-            Url of kafka server for logging
         """
 
         self.server_addr = server_addr
@@ -50,16 +47,13 @@ class Experiment:
             self.experiment_id = experiment_id
         self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
-        self.kafka_server = kafka_server
         self.loops = []
         if not self.experiment_id:
             self.experiment_id = ulid.new().str
         self.events = Events(
             self.server_addr,
             self.server_port,
-            self.experiment_name,
             self.experiment_id,
-            kafka_server=self.kafka_server,
         )
 
     def _return_response(self, response: requests.Response):
@@ -102,7 +96,7 @@ class Experiment:
         with open(workflow_file, "rb") as (f):
             f2 = open(payload_path.expanduser(), "rb")
             params = {
-                "experiment_path": self.experiment_path,
+                "experiment_id": self.experiment_id,
                 "simulate": simulate,
             }
             response = requests.post(
@@ -204,8 +198,8 @@ class Experiment:
         response: Dict
            The JSON portion of the response from the server with the experiment log"""
 
-        url = f"{self.url}/runs/" + run_id + "/return"
-        response = requests.get(url, params={"experiment_path": self.experiment_path})
+        url = f"{self.url}/runs/" + run_id + "/log"
+        response = requests.get(url)
 
         return self._return_response(response)
 

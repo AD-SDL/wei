@@ -3,21 +3,21 @@ rpl\_wei
 
 .. automodule:: wei
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -28,7 +28,7 @@ rpl\_wei
    :recursive:
 
    wei.core
-   wei.exp_app
+   wei.experiment_client
    wei.processing
    wei.server
 

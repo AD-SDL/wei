@@ -2,16 +2,13 @@
 Router for the "runs" endpoints
 """
 import json
-import os
-import re
-from pathlib import Path
 
 import yaml
-from fastapi import APIRouter, File, Request, UploadFile
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 
 from wei.core.config import Config
-from wei.core.data_classes import Workflow, WorkflowRun, WorkflowStatus
+from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.loggers import WEI_Logger
 from wei.core.workflow import create_run
 
@@ -22,9 +19,9 @@ state_manager = Config.state_manager
 
 @router.post("/start")
 async def start_run(
+    experiment_id: str,
     workflow: UploadFile = File(...),
     payload: UploadFile = File(...),
-    experiment_path: str = "",
     simulate: bool = False,
 ) -> JSONResponse:
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
@@ -50,13 +47,11 @@ async def start_run(
         wf = Workflow(**yaml.safe_load(workflow_content_str))
         payload = await payload.read()
         payload = json.loads(payload)
-        log_dir = Path(experiment_path)
-        experiment_id = log_dir.name.split("_")[-1]
-        logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+        logger = WEI_Logger.get_experiment_logger(experiment_id)
         logger.info("Received job run request")
         workcell = state_manager.get_workcell()
 
-        wf_run = create_run(wf, workcell, payload, experiment_path)
+        wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
 
         with state_manager.state_lock():
             state_manager.set_workflow_run(wf_run.run_id, wf_run)
@@ -105,7 +100,7 @@ def get_run_status(
 
 
 @router.get("/{run_id}/log")
-async def log_run_return(run_id: str, experiment_path: str) -> str:
+async def log_run_return(run_id: str) -> str:
     """Parameters
     ----------
 
@@ -120,8 +115,7 @@ async def log_run_return(run_id: str, experiment_path: str) -> str:
     -------
     response: str
        a string with the log data for the run requested"""
-    log_dir = Path(experiment_path)
-    for file in os.listdir(log_dir / "wei_runs"):
-        if re.match(".*" + run_id, file):
-            with open(log_dir / "wei_runs" / file / "runLogger.log") as f:
-                return f.read()
+
+    wf_run = state_manager.get_workflow_run(run_id)
+    with open(wf_run.run_dir / f"{wf_run.run_id}_run_log") as f:
+        return f.read()

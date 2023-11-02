@@ -1,7 +1,7 @@
 """
 Router for the modules endpoints
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
 from wei.core.config import Config
