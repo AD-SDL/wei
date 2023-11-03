@@ -7,10 +7,11 @@ import warnings
 from typing import Callable, Dict, Union
 
 import redis
+import yaml
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
 from wei.core.data_classes import Location, Module, WorkcellData, WorkflowRun
-import yaml
+
 
 class StateManager:
     """

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from wei.config import Config, parse_args
+from wei.config import config, load_server_config, parse_args
 from wei.routers import experiments, locations, modules, runs, workcells
 
 
@@ -43,11 +43,11 @@ if __name__ == "__main__":
     import uvicorn
 
     args = parse_args()
-    Config.load_server_config(args)
+    load_server_config(args)
 
     uvicorn.run(
         "wei.server:app",
-        host=Config.server_host,
-        port=Config.server_port,
+        host=config.server_host,
+        port=config.server_port,
         reload=False,
     )

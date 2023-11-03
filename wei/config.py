@@ -5,12 +5,11 @@ Handles the configuration of the engine and server.
 import logging
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-from typing import Optional
-
-# from wei.core.data_classes import WorkcellData
 
 # import os
 # from dotenv import load_dotenv
+
+global config
 
 
 class Config:
@@ -33,32 +32,36 @@ class Config:
     data_directory = None
     experiment_directory = None
 
-    @staticmethod
-    def load_engine_config(self, args: Namespace):
-        # load_dotenv()
-        # WORKCELL_FILE = os.environ.get("WORKCELL_FILE", None)
-        self.workcell_file = args.workcell
-        self.redis_host = args.redis_host
-        self.redis_port = args.redis_port
-        self.update_interval = args.update_interval
-        self.reset_locations = args.reset_locations
-        self.redis_host=args.redis_host,
-        self.redis_port=args.redis_port,
-        self.log_server = args.server
-        self.log_server_port = args.server_port
-        self.data_directory = Path(args.data_dir)
-        self.log_level = logging.INFO
 
-    @staticmethod
-    def load_server_config(self, args: Namespace):
-        self.workcell_file = args.workcell
-        self.server_host = args.server
-        self.server_port = args.port
-        self.redis_host = args.redis_host
-        self.redis_port = args.redis_port
-        self.redis_host=args.redis_host,
-        self.redis_port=args.redis_port,
-        self.data_directory = Path(args.data_dir)
+def load_engine_config(args: Namespace):
+    # load_dotenv()
+    # WORKCELL_FILE = os.environ.get("WORKCELL_FILE", None)
+    global config
+    config = Config()
+    config.workcell_file = args.workcell
+    config.redis_host = args.redis_host
+    config.redis_port = args.redis_port
+    config.update_interval = args.update_interval
+    config.reset_locations = args.reset_locations
+    config.redis_host = (args.redis_host,)
+    config.redis_port = (args.redis_port,)
+    config.log_server = args.server
+    config.log_server_port = args.server_port
+    config.data_directory = Path(args.data_dir)
+    config.log_level = logging.INFO
+
+
+def load_server_config(args: Namespace):
+    global config
+    config = Config()
+    config.workcell_file = args.workcell
+    config.server_host = args.server
+    config.server_port = args.port
+    config.redis_host = args.redis_host
+    config.redis_port = args.redis_port
+    config.redis_host = (args.redis_host,)
+    config.redis_port = (args.redis_port,)
+    config.data_directory = Path(args.data_dir)
 
 
 def parse_args() -> Namespace:

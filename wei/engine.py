@@ -4,12 +4,12 @@ Engine Class and associated helpers and data
 
 import time
 
-from wei.config import Config, parse_args
+from wei.config import config, load_engine_config, parse_args
 from wei.core.data_classes import WorkcellData
-from wei.core.state_manager import StateManager
 from wei.core.location import initialize_workcell_locations
 from wei.core.module import initialize_workcell_modules, update_active_modules
 from wei.core.scheduler import Scheduler
+from wei.core.state_manager import StateManager
 
 
 class Engine:
@@ -20,14 +20,16 @@ class Engine:
 
     def __init__(self):
         """Initialize the scheduler."""
-        self.state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
-        self.state_manager.clear_state(reset_locations=Config.reset_locations)
-        self.update_interval = Config.update_interval
+        self.state_manager = StateManager(
+            config.workcell_file, config.redis_host, config.redis_port
+        )
+        self.state_manager.clear_state(reset_locations=config.reset_locations)
+        self.update_interval = config.update_interval
         self.scheduler = Scheduler(
             state_manager=self.state_manager,
         )
         with self.state_manager.state_lock():
-            self.state_manager.set_workcell(WorkcellData.from_yaml(Config.workcell))
+            self.state_manager.set_workcell(WorkcellData.from_yaml(config.workcell))
             initialize_workcell_modules()
             initialize_workcell_locations()
 
@@ -44,6 +46,6 @@ class Engine:
 if __name__ == "__main__":
     print("testing")
     args = parse_args()
-    Config.load_engine_config(args)
+    load_engine_config(args)
     engine = Engine()
     engine.spin()

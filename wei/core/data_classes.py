@@ -1,6 +1,8 @@
 """Dataclasses used for the workflows/cells"""
 
+import fnmatch
 import json
+import os
 from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar, Union
@@ -10,29 +12,31 @@ import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, computed_field, field_serializer, validator
-from wei.config import Config
-import os
-import fnmatch
+
+from wei.config import config
+
 _T = TypeVar("_T")
 
 PathLike = Union[str, Path]
 
 
 def get_experiment_name(experiment_id: str):
-    data_dir = str(Config.data_directory)
-    
+    data_dir = str(config.data_directory)
+
     return [
         filename
         for filename in os.listdir(str(data_dir) + "/experiment")
         if fnmatch.fnmatch(filename, f"*{experiment_id}*")
-        ][0]
+    ][0]
+
+
 class BaseModel(_BaseModel):
     """Allows any sub-class to inherit methods allowing for programmatic description of protocols
     Can load a yaml into a class and write a class into a yaml file.
     """
 
-    class Config:
-        """Config for the BaseModel"""
+    class config:
+        """config for the BaseModel"""
 
         use_enum_values = True  # Needed to serialize/deserialize enums
 
@@ -124,6 +128,7 @@ class Module(BaseModel):
     def validate_config(cls, v, values, **kwargs):
         """Validate the config field of the workcell config with special rules for each type of robot"""
         from wei.core.interface import InterfaceMap
+
         interface_type = values.get("interface", "").lower()
 
         if interface_type.lower() not in InterfaceMap.interfaces:
@@ -180,8 +185,8 @@ class Interface(BaseModel):
 class Step(BaseModel):
     """Container for a single step"""
 
-    class Config:
-        """Config for the step"""
+    class config:
+        """config for the step"""
 
         arbitrary_types_allowed = True
 
@@ -255,8 +260,6 @@ class WorkcellData(BaseModel):
 
 
 class Experiment(BaseModel):
-    
-
     experiment_id: str = Field(default=ulid.new().str)
     """ID of the experiment"""
 
@@ -264,27 +267,32 @@ class Experiment(BaseModel):
     @property
     def experiment_name(self) -> str:
         """Path to the result directory"""
-        return  get_experiment_name(self.experiment_id)
+        return get_experiment_name(self.experiment_id)
 
     @computed_field
     @property
     def experiment_dir(self) -> Path:
         """Path to the result directory"""
-        return Config.data_directory / "experiment" / (str(self.experiment_name) + "_id_" + self.experiment_id)
-    
+        return (
+            config.data_directory
+            / "experiment"
+            / (str(self.experiment_name) + "_id_" + self.experiment_id)
+        )
+
     @computed_field
     @property
     def run_dir(self) -> Path:
         """Path to the result directory"""
         return self.experiment_dir / "runs"
-    
+
     @field_serializer("experiment_dir")
     def serialize_experiment_dir(self, experiment_dir):
         return str(experiment_dir)
-    
+
     @field_serializer("run_dir")
     def serialize_run_dir(self, run_dir):
         return str(run_dir)
+
 
 class WorkflowStatus(str, Enum):
     """Status for a workflow run"""

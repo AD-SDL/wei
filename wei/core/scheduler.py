@@ -2,15 +2,16 @@
 
 import multiprocessing as mpr
 
-from wei.config import Config
+from wei.config import config
 from wei.core.data_classes import Experiment, WorkflowRun, WorkflowStatus
 from wei.core.events import Events
 from wei.core.location import update_source_and_target
+from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
 from wei.core.workflow import check_step, run_step
-from wei.core.state_manager import StateManager
 
-state_manager =  StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
+state_manager = StateManager(config.workcell_file, config.redis_host, config.redis_port)
+
 
 class Scheduler:
     def __init__(self):
@@ -33,8 +34,8 @@ class Scheduler:
         if wf_run.status == WorkflowStatus.NEW:
             experiment = Experiment(experiment_id=wf_run.experiment_id)
             self.events[run_id] = Events(
-                Config.log_server,
-                Config.log_server_port,
+                config.log_server,
+                config.log_server_port,
                 experiment.experiment_id,
                 wei_internal=True,
             )

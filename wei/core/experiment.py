@@ -1,22 +1,18 @@
 """Code for managing the Experiment logs on the server side"""
 
-import fnmatch
-import os
 from typing import Optional
 
-from wei.config import Config
+from wei.config import config
 from wei.core.data_classes import Experiment, get_experiment_name
 from wei.core.events import Events
 from wei.core.loggers import WEI_Logger
-
-
 
 
 def get_experiment_log_directory(
     experiment_id: str,
 ):
     return (
-        Config.data_directory
+        config.data_directory
         / "experiment"
         / (str(get_experiment_name(experiment_id)) + "_id_" + experiment_id)
     )
@@ -52,7 +48,7 @@ def create_experiment(
     experiment.run_dir.mkdir(parents=True, exist_ok=True)
 
     events = Events(
-        Config.log_server, Config.log_server_port, experiment_id, wei_internal=True
+        config.log_server, config.log_server_port, experiment_id, wei_internal=True
     )
     events.start_experiment(experiment.experiment_dir)
     return {"exp_dir": experiment.experiment_dir}
