@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
     parser = ArgumentParser()
     parser.add_argument("--port", type=int, default="2000", help="Port for the Node")
-    parser.add_argument("--host", type=int, default="0.0.0.0", help="Port for the Node")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Port for the Node")
     args = parser.parse_args()
     uvicorn.run(
         "dummy_rest_node:app",
