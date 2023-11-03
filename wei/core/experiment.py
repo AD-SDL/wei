@@ -2,17 +2,24 @@
 
 from typing import Optional
 
-from wei.config import config
+from wei.config import Config
 from wei.core.data_classes import Experiment, get_experiment_name
 from wei.core.events import Events
 from wei.core.loggers import WEI_Logger
+
+
+def get_experiment_event_server(experiment_id: str) -> Events:
+    """Returns the event server for a given experiment"""
+    return Events(
+        Config.server_host, Config.server_port, experiment_id, wei_internal=True
+    )
 
 
 def get_experiment_log_directory(
     experiment_id: str,
 ):
     return (
-        config.data_directory
+        Config.data_directory
         / "experiment"
         / (str(get_experiment_name(experiment_id)) + "_id_" + experiment_id)
     )
@@ -48,7 +55,7 @@ def create_experiment(
     experiment.run_dir.mkdir(parents=True, exist_ok=True)
 
     events = Events(
-        config.log_server, config.log_server_port, experiment_id, wei_internal=True
+        Config.server_host, Config.server_port, experiment_id, wei_internal=True
     )
     events.start_experiment(experiment.experiment_dir)
     return {"exp_dir": experiment.experiment_dir}

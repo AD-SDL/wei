@@ -165,7 +165,8 @@ class ROS2Interface(Interface):
                 wei_execution_node = weiExecNode(name)
         return wei_execution_node
 
-    def config_validator(self, config: dict) -> bool:
+    @staticmethod
+    def config_validator(config: dict) -> bool:
         """Validates the configuration for the interface
 
         Parameters

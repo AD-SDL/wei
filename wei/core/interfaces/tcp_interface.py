@@ -12,7 +12,8 @@ class TcpInterface(Interface):
         """Initializes the TCP interface"""
         pass
 
-    def config_validator(self, config: dict) -> bool:
+    @staticmethod
+    def config_validator(config: dict) -> bool:
         """Validates the configuration for the interface
 
         Parameters

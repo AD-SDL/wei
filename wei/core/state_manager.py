@@ -25,7 +25,8 @@ class StateManager:
         """
         Initialize a StateManager for a given workcell.
         """
-        workcell_name = yaml.safe_load(workcell_file)["name"]
+        with open(workcell_file, "r") as f:
+            workcell_name = yaml.safe_load(f)["name"]
         warnings.filterwarnings("ignore", category=InefficientAccessWarning)
         self._prefix = f"wei:{workcell_name}"
         self._redis_server = redis.Redis(
@@ -43,6 +44,9 @@ class StateManager:
         self._workcell = RedisDict(
             key=f"{self._prefix}:workcell", redis=self._redis_server
         )
+        self._state_change_marker = self._redis_server.get(
+            f"{self._prefix}:state_changed"
+        )
 
     # Locking Methods
     def state_lock(self) -> Redlock:
@@ -51,12 +55,6 @@ class StateManager:
         or where we don't want the state to be changing underneath us (i.e., in the engine).
         """
         return Redlock(key=f"{self._prefix}:state", masters={self._redis_server})
-
-    def is_state_locked(self) -> bool:
-        """
-        Returns true if the state is locked
-        """
-        return bool(self.state_lock().locked())
 
     # State Methods
     def get_state(self) -> dict:
@@ -79,6 +77,17 @@ class StateManager:
             self._locations.clear()
         self._workflow_runs.clear()
         self._workcell.clear()
+
+    def mark_state_changed(self):
+        return self._redis_server.incr(f"{self._prefix}:state_changed")
+
+    def has_state_changed(self):
+        state_change_marker = self._redis_server.get(f"{self._prefix}:state_changed")
+        if state_change_marker != self._state_change_marker:
+            self._state_change_marker = state_change_marker
+            return True
+        else:
+            return False
 
     # Workcell Methods
     def get_workcell(self) -> WorkcellData:
@@ -124,12 +133,14 @@ class StateManager:
         else:
             wf = WorkflowRun.model_validate(wf).model_dump(mode="json")
         self._workflow_runs[str(run_id)] = wf
+        self.mark_state_changed()
 
     def delete_workflow_run(self, run_id: Union[str, str]) -> None:
         """
         Deletes a workflow by ID
         """
         del self._workflow_runs[str(run_id)]
+        self.mark_state_changed()
 
     def update_workflow_run(self, run_id: str, func: Callable, *args) -> None:
         """
@@ -162,12 +173,14 @@ class StateManager:
         else:
             location = Location.model_validate(location).model_dump(mode="json")
         self._locations[location_name] = location
+        self.mark_state_changed()
 
     def delete_location(self, location_name: str) -> None:
         """
         Deletes a location by name
         """
         del self._locations[location_name]
+        self.mark_state_changed()
 
     def update_location(self, location_name: str, func: Callable, *args) -> None:
         """
@@ -200,12 +213,14 @@ class StateManager:
         else:
             module = Module.model_validate(module).model_dump(mode="json")
         self._modules[module_name] = module
+        self.mark_state_changed()
 
     def delete_module(self, module_name: str) -> None:
         """
         Deletes a module by name
         """
         del self._modules[module_name]
+        self.mark_state_changed()
 
     def update_module(self, module_name: str, func: Callable, *args) -> None:
         """

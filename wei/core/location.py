@@ -1,10 +1,10 @@
 """Provides methods and classes to work with locations"""
 
-from wei.config import config
+from wei.config import Config
 from wei.core.data_classes import Location, WorkflowRun
 from wei.core.state_manager import StateManager
 
-state_manager = StateManager(config.workcell_file, config.redis_host, config.redis_port)
+state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
 
 
 def initialize_workcell_locations():
@@ -15,6 +15,7 @@ def initialize_workcell_locations():
 
                 def update_coordinates(location, coordinates, module_name):
                     location.coordinates[module_name] = coordinates
+                    return location
 
                 state_manager.update_location(
                     location_name, update_coordinates, coordinates, module_name

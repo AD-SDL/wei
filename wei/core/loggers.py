@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from wei.config import config
+from wei.config import Config
 from wei.core.data_classes import Experiment, PathLike
 from wei.core.state_manager import StateManager
 
@@ -71,7 +71,7 @@ class WEI_Logger:
         return WEI_Logger.get_logger(
             f"experiment_{experiment_id}",
             experiment.experiment_dir,
-            log_level=config.log_level,
+            log_level=Config.log_level,
         )
 
     @staticmethod
@@ -88,14 +88,14 @@ class WEI_Logger:
             The logging object with the appropriate handlers
         """
         state_manager = StateManager(
-            config.workcell_file, config.redis_host, config.redis_port
+            Config.workcell_file, Config.redis_host, Config.redis_port
         )
         wf_run = state_manager.get_workflow_run(run_id)
 
         return WEI_Logger.get_logger(
             f"{run_id}_run_log",
             wf_run.run_dir,
-            log_level=config.log_level,
+            log_level=Config.log_level,
         )
 
     @staticmethod

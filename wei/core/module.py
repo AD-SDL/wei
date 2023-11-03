@@ -1,13 +1,13 @@
 """Provides methods and classes to work with modules"""
 
 
-from wei.config import config
+from wei.config import Config
 from wei.core.data_classes import Module, ModuleStatus, WorkcellData, Workflow
 from wei.core.interface import InterfaceMap
 from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
 
-state_manager = StateManager(config.workcell_file, config.redis_host, config.redis_port)
+state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
 
 
 def initialize_workcell_modules():
@@ -21,8 +21,10 @@ def update_active_modules(initial: bool = False):
     with state_manager.state_lock():
         for module_name, module in state_manager.get_all_modules().items():
             if module.active:
-                module.state = query_module_status(module)
-                state_manager.set_module(module_name, module)
+                state = query_module_status(module)
+                if state != module.state:
+                    module.state = state
+                    state_manager.set_module(module_name, module)
 
 
 def query_module_status(module: Module) -> ModuleStatus:

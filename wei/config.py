@@ -9,14 +9,13 @@ from pathlib import Path
 # import os
 # from dotenv import load_dotenv
 
-global config
-
 
 class Config:
     """
     Allows for shared configuration across the application
     """
 
+    configured = False
     workcell_file = None
     redis_host = None
     redis_server = None
@@ -25,51 +24,31 @@ class Config:
     update_interval = None
     server_host = None
     server_port = None
-    log_server = None
-    log_server_port = None
     redis_host = None
     redis_port = None
     data_directory = None
     experiment_directory = None
 
-
-def load_engine_config(args: Namespace):
-    # load_dotenv()
-    # WORKCELL_FILE = os.environ.get("WORKCELL_FILE", None)
-    global config
-    config = Config()
-    config.workcell_file = args.workcell
-    config.redis_host = args.redis_host
-    config.redis_port = args.redis_port
-    config.update_interval = args.update_interval
-    config.reset_locations = args.reset_locations
-    config.redis_host = (args.redis_host,)
-    config.redis_port = (args.redis_port,)
-    config.log_server = args.server
-    config.log_server_port = args.server_port
-    config.data_directory = Path(args.data_dir)
-    config.log_level = logging.INFO
-
-
-def load_server_config(args: Namespace):
-    global config
-    config = Config()
-    config.workcell_file = args.workcell
-    config.server_host = args.server
-    config.server_port = args.port
-    config.redis_host = args.redis_host
-    config.redis_port = args.redis_port
-    config.redis_host = (args.redis_host,)
-    config.redis_port = (args.redis_port,)
-    config.data_directory = Path(args.data_dir)
+    @staticmethod
+    def load_config(args: Namespace):
+        # load_dotenv()
+        # WORKCELL_FILE = os.environ.get("WORKCELL_FILE", None)
+        Config.workcell_file = args.workcell
+        Config.redis_host = args.redis_host
+        Config.redis_port = args.redis_port
+        Config.update_interval = args.update_interval
+        Config.reset_locations = args.reset_locations
+        Config.server_host = args.server
+        Config.server_port = args.port
+        Config.data_directory = Path(args.data_dir)
+        Config.log_level = logging.INFO
+        Config.configured = True
 
 
 def parse_args() -> Namespace:
     """Parse engine's command line arguments."""
     parser = ArgumentParser()
-    parser.add_argument(
-        "--workcell", type=Path, help="Path to workcell file", required=True
-    )
+    parser.add_argument("--workcell", type=Path, help="Path to workcell file")
     parser.add_argument(
         "--redis_host",
         type=str,
@@ -92,13 +71,13 @@ def parse_args() -> Namespace:
         "--server",
         type=str,
         help="url (no port) for the WEI server",
-        default="localhost",
+        default="0.0.0.0",
     )
     parser.add_argument(
         "--port",
         type=int,
         help="port for the WEI server",
-        default=8080,
+        default=8000,
     )
     parser.add_argument(
         "--reset_locations",
@@ -119,3 +98,8 @@ def parse_args() -> Namespace:
         default=Path.home() / ".wei",
     )
     return parser.parse_args()
+
+
+if not Config.configured:
+    args = parse_args()
+    Config.load_config(args)

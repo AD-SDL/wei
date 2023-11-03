@@ -10,12 +10,12 @@ services:
       - 8000:8000
     volumes:
       - ./wei:/wei/wei
-    command: python -m wei.server --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis
+    command: python -m wei.server --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis --port 8000
     depends_on:
       - wei_redis
-  engine:
+  wei_engine:
     image: wei
-    container_name: engine
+    container_name: wei_engine
     volumes:
       - ./wei:/wei/wei
     command: python -m wei.engine --workcell /wei/examples/example_workcell_docker.yaml --redis_host wei_redis --server wei_server

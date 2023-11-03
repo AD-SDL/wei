@@ -293,6 +293,26 @@ class Events:
             "WEI", "WORKFLOW_START", {"wf_name": str(wf_name), "run_id": str(run_id)}
         )
 
+    def log_wf_failed(self, wf_name: str, run_id: str):
+        """Logs a failed workflow
+
+
+        Parameters
+        ----------
+        wf_name : str
+            The name of the workflow
+
+        run_id: str
+            The run_id of the workflow.
+
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+        return self._log_event(
+            "WEI", "WORKFLOW_FAILED", {"wf_name": str(wf_name), "run_id": str(run_id)}
+        )
+
     def log_wf_end(self, wf_name: str, run_id: str):
         """Logs the end of a workflow
 

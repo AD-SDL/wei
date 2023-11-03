@@ -1,27 +1,30 @@
 """The module that initializes and runs the step by step WEI workflow"""
-from multiprocessing.connection import Connection
 from typing import Any, Dict, Optional
 
-from wei.config import config
+from wei.config import Config
 from wei.core.data_classes import (
     Experiment,
     Module,
     Step,
+    StepResponse,
     StepStatus,
     WorkcellData,
     Workflow,
     WorkflowRun,
+    WorkflowStatus,
 )
+from wei.core.experiment import get_experiment_event_server
 from wei.core.interface import InterfaceMap
+from wei.core.location import update_source_and_target
 from wei.core.loggers import WEI_Logger
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 
-print(config.workcell_file)
-state_manager = StateManager(config.workcell_file, config.redis_host, config.redis_port)
+print(Config.workcell_file)
+state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
 
 
-def check_step(exp_id, run_id, step: dict) -> bool:
+def check_step(exp_id, run_id, step: Step) -> bool:
     """Check if a step is valid."""
     if "target" in step.locations:
         location = state_manager.get_location(step.locations["target"])
@@ -45,7 +48,6 @@ def check_step(exp_id, run_id, step: dict) -> bool:
 def run_step(
     wf_run: WorkflowRun,
     module: Module,
-    pipe: Connection,
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
     logger = WEI_Logger.get_workflow_run_logger(wf_run.run_id)
@@ -64,27 +66,37 @@ def run_step(
         ].send_action(
             step, step_module=module, experiment_path=experiment.experiment_dir
         )
+        step_response = StepResponse(
+            action_response=action_response,
+            action_msg=action_msg,
+            action_log=action_log,
+        )
     except Exception as e:
         logger.info(f"Exception occurred while running step with name: {step.name}")
         logger.debug(str(e))
-        action_response = StepStatus.FAILED
-        action_msg = "Exception occurred while running step"
-        action_log = str(e)
+        step_response = StepResponse(
+            action_response=StepStatus.FAILED,
+            action_msg="Exception occurred while running step",
+            action_log=str(e),
+        )
     else:
         logger.info(f"Finished running step with name: {step.name}")
 
-    pipe.send(
-        {
-            "step_response": {
-                "action_response": str(action_response),
-                "action_msg": action_msg,
-                "action_log": action_log,
-            },
-            "step": step,
-            "locations": step.locations,
-            "log_dir": wf_run.run_dir,
-        }
-    )
+    wf_run.hist[step.name] = step_response
+    wf_run.hist["run_dir"] = wf_run.run_dir
+    if step_response.action_response == StepStatus.FAILED:
+        wf_run.status = WorkflowStatus.FAILED
+        get_experiment_event_server().log_wf_failed(wf_run.name, wf_run.run_id)
+    else:
+        if wf_run.step_index + 1 == len(wf_run.steps):
+            wf_run.status = WorkflowStatus.COMPLETED
+            get_experiment_event_server().log_wf_end(wf_run.name, wf_run.run_id)
+        else:
+            wf_run.status = WorkflowStatus.QUEUED
+        wf_run.step_index += 1
+    with state_manager.state_lock():
+        update_source_and_target(wf_run)
+        state_manager.set_workflow_run(wf_run)
 
 
 def create_run(
@@ -118,8 +130,6 @@ def create_run(
     steps: WorkflowRun
         a completely initialized workflow run
     """
-    print(workcell)
-
     validate_module_names(workflow, workcell)
 
     wf_run = WorkflowRun(

@@ -13,7 +13,6 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, computed_field, field_serializer, validator
 
-from wei.config import config
 
 _T = TypeVar("_T")
 
@@ -21,7 +20,8 @@ PathLike = Union[str, Path]
 
 
 def get_experiment_name(experiment_id: str):
-    data_dir = str(config.data_directory)
+    from wei.config import Config
+    data_dir = str(Config.data_directory)
 
     return [
         filename
@@ -35,7 +35,7 @@ class BaseModel(_BaseModel):
     Can load a yaml into a class and write a class into a yaml file.
     """
 
-    class config:
+    class Config:
         """config for the BaseModel"""
 
         use_enum_values = True  # Needed to serialize/deserialize enums
@@ -100,7 +100,7 @@ class Module(BaseModel):
     """type of the robot (e.g OT2, pf400, etc.) """
     interface: str
     """Type of client (e.g ros_wei_client)"""
-    config: Dict
+    config: Optional[Dict[str, Any]] = {}
     """the necessary configuration for the robot, arbitrary dict"""
     positions: Optional[dict] = {}
     """Optional, if the robot supports positions we will use them"""
@@ -126,7 +126,7 @@ class Module(BaseModel):
 
     @validator("config")
     def validate_config(cls, v, values, **kwargs):
-        """Validate the config field of the workcell config with special rules for each type of robot"""
+        """Validate the config field of the workcell config with special rules for each module interface"""
         from wei.core.interface import InterfaceMap
 
         interface_type = values.get("interface", "").lower()
@@ -136,9 +136,12 @@ class Module(BaseModel):
                 f"Interface '{interface_type}' for module {values.get('name')} is invalid"
             )
 
-        return InterfaceMap.interfaces[interface_type].config_validator(
-            values.get("config", {})
-        )
+        if InterfaceMap.interfaces[interface_type].config_validator(v):
+            return v
+        else:
+            raise ValueError(
+                f"Config for interface '{interface_type}' is invalid for module {values.get('name')}"
+            )
 
 
 class SimpleModule(BaseModel):
@@ -185,7 +188,7 @@ class Interface(BaseModel):
 class Step(BaseModel):
     """Container for a single step"""
 
-    class config:
+    class Config:
         """config for the step"""
 
         arbitrary_types_allowed = True
@@ -272,9 +275,10 @@ class Experiment(BaseModel):
     @computed_field
     @property
     def experiment_dir(self) -> Path:
+        from wei.config import Config
         """Path to the result directory"""
         return (
-            config.data_directory
+            Config.data_directory
             / "experiment"
             / (str(self.experiment_name) + "_id_" + self.experiment_id)
         )
@@ -329,7 +333,7 @@ class WorkflowRun(Workflow):
     """input information for a given workflow run"""
     status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
-    steps: Optional[Step] = []
+    steps: Step = []
     """WEI Processed Steps of the flow"""
     result: Dict = Field(default={})
     """result from the Workflow"""
