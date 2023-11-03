@@ -13,7 +13,6 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, computed_field, field_serializer, validator
 
-
 _T = TypeVar("_T")
 
 PathLike = Union[str, Path]
@@ -21,6 +20,7 @@ PathLike = Union[str, Path]
 
 def get_experiment_name(experiment_id: str):
     from wei.config import Config
+
     data_dir = str(Config.data_directory)
 
     return [
@@ -276,6 +276,7 @@ class Experiment(BaseModel):
     @property
     def experiment_dir(self) -> Path:
         from wei.config import Config
+
         """Path to the result directory"""
         return (
             Config.data_directory

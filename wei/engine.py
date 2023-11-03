@@ -15,7 +15,7 @@ from wei.core.state_manager import StateManager
 class Engine:
     """
     Handles scheduling workflows and executing steps on the workcell.
-    Pops incoming workflows off a redis-based queue (a LIST) and executes them.
+    Pops incoming workflows off a redis-based queue and executes them.
     """
 
     def __init__(self):
@@ -33,16 +33,20 @@ class Engine:
             initialize_workcell_locations()
 
     def spin(self):
-        """Run the scheduler, popping incoming workflows queued by the server and executing them."""
+        """
+        Continuously loop, updating module states every Config.update_interval seconds.
+        If the state of the workcell has changed, update the active modules and run the scheduler.
+        """
         print("Starting Process")
         last_check = time.time()
         while True:
             if time.time() - last_check > Config.update_interval:
                 update_active_modules()
+                last_check = time.time()
             if self.state_manager.has_state_changed():
-                self.scheduler.run_iteration()
                 update_active_modules()
-            time.sleep(Config.update_interval)
+                self.scheduler.run_iteration()
+                last_check = time.time()
 
 
 if __name__ == "__main__":
