@@ -6,6 +6,7 @@ import time
 
 from wei.config import Config, parse_args
 from wei.core.data_classes import WorkcellData
+from wei.core.state_manager import StateManager
 from wei.core.location import initialize_workcell_locations
 from wei.core.module import initialize_workcell_modules, update_active_modules
 from wei.core.scheduler import Scheduler
@@ -19,7 +20,7 @@ class Engine:
 
     def __init__(self):
         """Initialize the scheduler."""
-        self.state_manager = Config.state_manager
+        self.state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
         self.state_manager.clear_state(reset_locations=Config.reset_locations)
         self.update_interval = Config.update_interval
         self.scheduler = Scheduler(
@@ -41,6 +42,7 @@ class Engine:
 
 
 if __name__ == "__main__":
+    print("testing")
     args = parse_args()
     Config.load_engine_config(args)
     engine = Engine()

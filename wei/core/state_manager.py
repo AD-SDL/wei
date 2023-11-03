@@ -10,7 +10,7 @@ import redis
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
 from wei.core.data_classes import Location, Module, WorkcellData, WorkflowRun
-
+import yaml
 
 class StateManager:
     """
@@ -19,11 +19,12 @@ class StateManager:
     """
 
     def __init__(
-        self, workcell_name: str, redis_host="127.0.0.1", redis_port=6379
+        self, workcell_file: str, redis_host="127.0.0.1", redis_port=6379
     ) -> None:
         """
         Initialize a StateManager for a given workcell.
         """
+        workcell_name = yaml.safe_load(workcell_file)["name"]
         warnings.filterwarnings("ignore", category=InefficientAccessWarning)
         self._prefix = f"wei:{workcell_name}"
         self._redis_server = redis.Redis(

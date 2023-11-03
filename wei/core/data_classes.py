@@ -10,13 +10,22 @@ import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, computed_field, field_serializer, validator
-
-
+from wei.config import Config
+import os
+import fnmatch
 _T = TypeVar("_T")
 
 PathLike = Union[str, Path]
 
 
+def get_experiment_name(experiment_id: str):
+    data_dir = str(Config.data_directory)
+    
+    return [
+        filename
+        for filename in os.listdir(str(data_dir) + "/experiment")
+        if fnmatch.fnmatch(filename, f"*{experiment_id}*")
+        ][0]
 class BaseModel(_BaseModel):
     """Allows any sub-class to inherit methods allowing for programmatic description of protocols
     Can load a yaml into a class and write a class into a yaml file.
@@ -246,29 +255,36 @@ class WorkcellData(BaseModel):
 
 
 class Experiment(BaseModel):
-    from wei.core.experiment import Config, get_experiment_name
+    
 
     experiment_id: str = Field(default=ulid.new().str)
     """ID of the experiment"""
-    experiment_name: Optional[str] = get_experiment_name(experiment_id)
-    """The Experiment Name"""
-    experiment_dir: Optional[PathLike] = (
-        Config.data_directory
-        / "experiment"
-        / (str(experiment_name) + "_id_" + experiment_id)
-    )
-    """Path to the experiment's log directory"""
-    run_dir: Optional[PathLike] = experiment_dir / "runs"
-    """Path to the experiment's run directory"""
 
+    @computed_field
+    @property
+    def experiment_name(self) -> str:
+        """Path to the result directory"""
+        return  get_experiment_name(self.experiment_id)
+
+    @computed_field
+    @property
+    def experiment_dir(self) -> Path:
+        """Path to the result directory"""
+        return Config.data_directory / "experiment" / (str(self.experiment_name) + "_id_" + self.experiment_id)
+    
+    @computed_field
+    @property
+    def run_dir(self) -> Path:
+        """Path to the result directory"""
+        return self.experiment_dir / "runs"
+    
     @field_serializer("experiment_dir")
     def serialize_experiment_dir(self, experiment_dir):
         return str(experiment_dir)
-
+    
     @field_serializer("run_dir")
     def serialize_run_dir(self, run_dir):
         return str(run_dir)
-
 
 class WorkflowStatus(str, Enum):
     """Status for a workflow run"""

@@ -5,8 +5,9 @@ from wei.config import Config
 from wei.core.data_classes import Module, ModuleStatus, WorkcellData, Workflow
 from wei.core.interface import InterfaceMap
 from wei.core.workcell import find_step_module
+from wei.core.state_manager import StateManager
 
-state_manager = Config.state_manager
+state_manager =  StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
 
 
 def initialize_workcell_modules():

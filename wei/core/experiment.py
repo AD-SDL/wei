@@ -5,17 +5,11 @@ import os
 from typing import Optional
 
 from wei.config import Config
-from wei.core.data_classes import Experiment
+from wei.core.data_classes import Experiment, get_experiment_name
 from wei.core.events import Events
 from wei.core.loggers import WEI_Logger
 
 
-def get_experiment_name(experiment_id: str):
-    return [
-        filename
-        for filename in os.listdir(Config.data_directory / "experiment")
-        if fnmatch.fnmatch(filename, f"*{experiment_id}*")
-    ][0]
 
 
 def get_experiment_log_directory(

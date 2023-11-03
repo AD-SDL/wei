@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Optional
 
 # from wei.core.data_classes import WorkcellData
-from wei.core.state_manager import StateManager
 
 # import os
 # from dotenv import load_dotenv
@@ -29,7 +28,8 @@ class Config:
     server_port = None
     log_server = None
     log_server_port = None
-    state_manager: Optional[StateManager] = None
+    redis_host = None
+    redis_port = None
     data_directory = None
     experiment_directory = None
 
@@ -42,11 +42,8 @@ class Config:
         self.redis_port = args.redis_port
         self.update_interval = args.update_interval
         self.reset_locations = args.reset_locations
-        self.state_manager = StateManager(
-            workcell_name=self.workcell.name,
-            redis_host=args.redis_host,
-            redis_port=args.redis_port,
-        )
+        self.redis_host=args.redis_host,
+        self.redis_port=args.redis_port,
         self.log_server = args.server
         self.log_server_port = args.server_port
         self.data_directory = Path(args.data_dir)
@@ -59,11 +56,8 @@ class Config:
         self.server_port = args.port
         self.redis_host = args.redis_host
         self.redis_port = args.redis_port
-        self.state_manager = StateManager(
-            workcell_name=self.workcell.name,
-            redis_host=args.redis_host,
-            redis_port=args.redis_port,
-        )
+        self.redis_host=args.redis_host,
+        self.redis_port=args.redis_port,
         self.data_directory = Path(args.data_dir)
 
 

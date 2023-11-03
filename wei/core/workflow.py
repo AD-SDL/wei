@@ -15,8 +15,9 @@ from wei.core.data_classes import (
 from wei.core.interface import InterfaceMap
 from wei.core.loggers import WEI_Logger
 from wei.core.module import validate_module_names
-
-state_manager = Config.state_manager
+from wei.core.state_manager import StateManager
+print(Config.workcell_file)
+state_manager =  StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
 
 
 def check_step(exp_id, run_id, step: dict) -> bool:
