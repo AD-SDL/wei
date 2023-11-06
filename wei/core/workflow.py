@@ -1,9 +1,8 @@
 """The module that initializes and runs the step by step WEI workflow"""
 from typing import Any, Dict, Optional
 
-from wei.config import Config
 from wei.core.data_classes import (
-    Experiment,
+
     Module,
     Step,
     StepResponse,
@@ -13,15 +12,15 @@ from wei.core.data_classes import (
     WorkflowRun,
     WorkflowStatus,
 )
-from wei.core.experiment import get_experiment_event_server
+from wei.core.experiment import get_experiment_event_server, Experiment
 from wei.core.interface import InterfaceMap
 from wei.core.location import update_source_and_target
 from wei.core.loggers import WEI_Logger
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 
-print(Config.workcell_file)
-state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
+
+state_manager = StateManager()
 
 
 def check_step(exp_id, run_id, step: Step) -> bool:
@@ -50,7 +49,7 @@ def run_step(
     module: Module,
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
-    logger = WEI_Logger.get_workflow_run_logger(wf_run.run_id)
+    logger = WEI_Logger.get_workflow_run_logger(wf_run)
     step: Step = wf_run.steps[wf_run.step_index]
 
     logger.info(f"Started running step with name: {step.name}")
@@ -83,14 +82,14 @@ def run_step(
         logger.info(f"Finished running step with name: {step.name}")
 
     wf_run.hist[step.name] = step_response
-    wf_run.hist["run_dir"] = wf_run.run_dir
+    wf_run.hist["run_dir"] = str(wf_run.run_dir)
     if step_response.action_response == StepStatus.FAILED:
         wf_run.status = WorkflowStatus.FAILED
-        get_experiment_event_server().log_wf_failed(wf_run.name, wf_run.run_id)
+        get_experiment_event_server(wf_run.experiment_id).log_wf_failed(wf_run.name, wf_run.run_id)
     else:
         if wf_run.step_index + 1 == len(wf_run.steps):
             wf_run.status = WorkflowStatus.COMPLETED
-            get_experiment_event_server().log_wf_end(wf_run.name, wf_run.run_id)
+            get_experiment_event_server(wf_run.experiment_id).log_wf_end(wf_run.name, wf_run.run_id)
         else:
             wf_run.status = WorkflowStatus.QUEUED
         wf_run.step_index += 1
@@ -131,16 +130,16 @@ def create_run(
         a completely initialized workflow run
     """
     validate_module_names(workflow, workcell)
-
-    wf_run = WorkflowRun(
-        **workflow.model_dump(mode="python").update(
-            {
+    print(workflow)
+    wf_dict = workflow.model_dump()
+    wf_dict.update({
                 "label": workflow.name,
                 "payload": payload,
                 "experiment_id": experiment_id,
                 "simulate": simulate,
-            }
-        )
+            })
+    wf_run = WorkflowRun(
+        **wf_dict
     )
     wf_run.run_dir.mkdir(parents=True, exist_ok=True)
     wf_run.result_dir.mkdir(parents=True, exist_ok=True)
@@ -148,7 +147,8 @@ def create_run(
     steps = []
     for step in workflow.flowdef:
         replace_positions(workcell, step)
-        inject_payload(payload, step)
+        if payload:
+            inject_payload(payload, step)
         steps.append(step)
 
     wf_run.steps = steps
@@ -159,13 +159,13 @@ def create_run(
 def replace_positions(workcell, step):
     """Replaces the positions in the step with the actual positions from the workcell"""
     if isinstance(step.args, dict) and len(step.args) > 0 and workcell.locations:
+    
         if step.module in workcell.locations.keys():
             for key, value in step.args.items():
                 # if hasattr(value, "__contains__") and "positions" in value:
                 if str(value) in workcell.locations[step.module].keys():
-                    step.locations[key] = value
-
-
+                    step.args[key] = workcell.locations[step.module][value]
+          
 def inject_payload(payload, step):
     """Injects the payload into the step args"""
     if len(step.args) > 0:
@@ -179,3 +179,4 @@ def inject_payload(payload, step):
                 idx = arg_values.index(key)
                 step_arg_key = arg_keys[idx]
                 step.args[step_arg_key] = value
+

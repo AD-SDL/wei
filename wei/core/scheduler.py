@@ -2,7 +2,6 @@
 
 import multiprocessing as mpr
 
-from wei.config import Config
 from wei.core.data_classes import WorkflowStatus
 from wei.core.experiment import get_experiment_event_server
 from wei.core.location import update_source_and_target
@@ -10,7 +9,7 @@ from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
 from wei.core.workflow import check_step, run_step
 
-state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
+state_manager = StateManager()
 
 
 class Scheduler:

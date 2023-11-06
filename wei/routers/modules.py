@@ -4,12 +4,11 @@ Router for the modules endpoints
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from wei.config import Config
 from wei.core.state_manager import StateManager
 
 router = APIRouter()
 
-state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
+state_manager = StateManager()
 
 
 @router.get("/{module_name}/state")

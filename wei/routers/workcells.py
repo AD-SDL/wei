@@ -6,13 +6,13 @@ import json
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from wei.config import Config
+
 from wei.core.data_classes import WorkflowStatus
 from wei.core.state_manager import StateManager
 
 router = APIRouter()
 
-state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
+state_manager = StateManager()
 
 
 @router.get("/state", response_class=HTMLResponse)

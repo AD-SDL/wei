@@ -12,22 +12,11 @@ import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, computed_field, field_serializer, validator
-
+from wei.core.experiment import Experiment
 _T = TypeVar("_T")
 
 PathLike = Union[str, Path]
 
-
-def get_experiment_name(experiment_id: str):
-    from wei.config import Config
-
-    data_dir = str(Config.data_directory)
-
-    return [
-        filename
-        for filename in os.listdir(str(data_dir) + "/experiment")
-        if fnmatch.fnmatch(filename, f"*{experiment_id}*")
-    ][0]
 
 
 class BaseModel(_BaseModel):
@@ -262,41 +251,7 @@ class WorkcellData(BaseModel):
     """Locations used by the workcell"""
 
 
-class Experiment(BaseModel):
-    experiment_id: str = Field(default=ulid.new().str)
-    """ID of the experiment"""
 
-    @computed_field
-    @property
-    def experiment_name(self) -> str:
-        """Path to the result directory"""
-        return get_experiment_name(self.experiment_id)
-
-    @computed_field
-    @property
-    def experiment_dir(self) -> Path:
-        from wei.config import Config
-
-        """Path to the result directory"""
-        return (
-            Config.data_directory
-            / "experiment"
-            / (str(self.experiment_name) + "_id_" + self.experiment_id)
-        )
-
-    @computed_field
-    @property
-    def run_dir(self) -> Path:
-        """Path to the result directory"""
-        return self.experiment_dir / "runs"
-
-    @field_serializer("experiment_dir")
-    def serialize_experiment_dir(self, experiment_dir):
-        return str(experiment_dir)
-
-    @field_serializer("run_dir")
-    def serialize_run_dir(self, run_dir):
-        return str(run_dir)
 
 
 class WorkflowStatus(str, Enum):
@@ -334,7 +289,7 @@ class WorkflowRun(Workflow):
     """input information for a given workflow run"""
     status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
-    steps: Step = []
+    steps: List[Step] = []
     """WEI Processed Steps of the flow"""
     result: Dict = Field(default={})
     """result from the Workflow"""
@@ -367,7 +322,7 @@ class WorkflowRun(Workflow):
         return str(run_dir)
 
     @field_serializer("result_dir")
-    def serialize_dt(self, result_dir):
+    def serialize_result_dir(self, result_dir):
         return str(result_dir)
 
 

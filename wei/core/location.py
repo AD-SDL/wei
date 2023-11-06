@@ -4,7 +4,7 @@ from wei.config import Config
 from wei.core.data_classes import Location, WorkflowRun
 from wei.core.state_manager import StateManager
 
-state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
+state_manager = StateManager()
 
 
 def initialize_workcell_locations():

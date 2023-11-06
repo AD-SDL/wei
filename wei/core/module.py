@@ -7,7 +7,7 @@ from wei.core.interface import InterfaceMap
 from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
 
-state_manager = StateManager(Config.workcell_file, Config.redis_host, Config.redis_port)
+state_manager = StateManager()
 
 
 def initialize_workcell_modules():

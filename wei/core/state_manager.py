@@ -11,7 +11,7 @@ import yaml
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
 from wei.core.data_classes import Location, Module, WorkcellData, WorkflowRun
-
+from wei.config import Config
 
 class StateManager:
     """
@@ -20,34 +20,49 @@ class StateManager:
     """
 
     def __init__(
-        self, workcell_file: str, redis_host="127.0.0.1", redis_port=6379
+        self
     ) -> None:
         """
         Initialize a StateManager for a given workcell.
         """
-        with open(workcell_file, "r") as f:
-            workcell_name = yaml.safe_load(f)["name"]
         warnings.filterwarnings("ignore", category=InefficientAccessWarning)
-        self._prefix = f"wei:{workcell_name}"
-        self._redis_server = redis.Redis(
-            host=redis_host, port=redis_port, decode_responses=True
-        )
-        self._locations = RedisDict(
-            key=f"{self._prefix}:locations", redis=self._redis_server
-        )
-        self._modules = RedisDict(
-            key=f"{self._prefix}:modules", redis=self._redis_server
-        )
-        self._workflow_runs = RedisDict(
-            key=f"{self._prefix}:workflows", redis=self._redis_server
-        )
-        self._workcell = RedisDict(
-            key=f"{self._prefix}:workcell", redis=self._redis_server
-        )
-        self._state_change_marker = self._redis_server.get(
-            f"{self._prefix}:state_changed"
-        )
+        self.state_change_marker = 0
 
+    @property
+    def _prefix(self):
+        return f"wei:{Config.workcell_name}"
+    
+    @property
+    def _redis_server(self):
+        return redis.Redis(
+            host=Config.redis_host, port=Config.redis_port, decode_responses=True
+        )
+    @property
+    def _locations(self):
+            return RedisDict(
+                key=f"{self._prefix}:locations", redis=self._redis_server
+            )
+    
+    @property
+    def _modules(self):
+            return RedisDict(
+                key=f"{self._prefix}:modules", redis=self._redis_server
+            )
+    @property
+    def _workcell(self):
+            return RedisDict(
+                key=f"{self._prefix}:workcell", redis=self._redis_server
+            )
+    @property
+    def _workflow_runs(self):
+            return RedisDict(
+                key=f"{self._prefix}:workflow_runs", redis=self._redis_server
+            )
+    
+  
+    
+    
+    
     # Locking Methods
     def state_lock(self) -> Redlock:
         """
@@ -83,8 +98,8 @@ class StateManager:
 
     def has_state_changed(self):
         state_change_marker = self._redis_server.get(f"{self._prefix}:state_changed")
-        if state_change_marker != self._state_change_marker:
-            self._state_change_marker = state_change_marker
+        if state_change_marker != self.state_change_marker:
+            self.state_change_marker = state_change_marker
             return True
         else:
             return False
@@ -124,7 +139,7 @@ class StateManager:
             for run_id, workflow_run in self._workflow_runs.to_dict().items()
         }
 
-    def set_workflow_run(self, run_id: Union[str, str], wf: WorkflowRun) -> None:
+    def set_workflow_run(self, wf: WorkflowRun) -> None:
         """
         Sets a workflow by ID
         """
@@ -132,7 +147,7 @@ class StateManager:
             wf = wf.model_dump()
         else:
             wf = WorkflowRun.model_validate(wf).model_dump(mode="json")
-        self._workflow_runs[str(run_id)] = wf
+        self._workflow_runs[str(wf["run_id"])] = wf
         self.mark_state_changed()
 
     def delete_workflow_run(self, run_id: Union[str, str]) -> None:

@@ -41,7 +41,8 @@ app = FastAPI(
 
 if __name__ == "__main__":
     import uvicorn
-
+    args = Config.parse_args()
+    Config.load_config(args)
     uvicorn.run(
         "wei.server:app",
         host=Config.server_host,

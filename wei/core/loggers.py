@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Optional
 
 from wei.config import Config
-from wei.core.data_classes import Experiment, PathLike
-from wei.core.state_manager import StateManager
+from wei.core.data_classes import PathLike, WorkflowRun
+from wei.core.experiment import Experiment
 
 
 class WEI_Logger:
@@ -75,7 +75,7 @@ class WEI_Logger:
         )
 
     @staticmethod
-    def get_workflow_run_logger(run_id: str):
+    def get_workflow_run_logger(wf_run: WorkflowRun):
         """Finds the existing logger with the given name or creates a new one if it doesn't exist
 
         Parameters
@@ -87,13 +87,10 @@ class WEI_Logger:
         logger: Logger
             The logging object with the appropriate handlers
         """
-        state_manager = StateManager(
-            Config.workcell_file, Config.redis_host, Config.redis_port
-        )
-        wf_run = state_manager.get_workflow_run(run_id)
+       
 
         return WEI_Logger.get_logger(
-            f"{run_id}_run_log",
+            f"{wf_run.run_id}_run_log",
             wf_run.run_dir,
             log_level=Config.log_level,
         )

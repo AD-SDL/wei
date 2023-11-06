@@ -1,12 +1,54 @@
 """Code for managing the Experiment logs on the server side"""
 
+import fnmatch
+import os
 from typing import Optional
-
+import ulid
 from wei.config import Config
-from wei.core.data_classes import Experiment, get_experiment_name
 from wei.core.events import Events
-from wei.core.loggers import WEI_Logger
+from pathlib import Path
+class Experiment:
+    def __init__(self, experiment_id = None, experiment_name = None):
+        if experiment_id is None:
+            self.experiment_id = ulid.new().str
+        else:
+            self.experiment_id = experiment_id
+        if experiment_name is None:
+            self.experiment_name = self.get_experiment_name()
+        else:
+            self.experiment_name = experiment_name
+        self.experiment_dir = self.get_experiment_dir()
+        self.run_dir = self.get_run_dir()
+   
+    def get_experiment_name(self):
+        data_dir = str(Config.data_directory)
+        return [
+            filename
+            for filename in os.listdir(str(data_dir) + "/experiment")
+            if fnmatch.fnmatch(filename, f"*{self.experiment_id}*")
+        ][0]
 
+
+    def get_experiment_dir(self) -> Path:
+
+        """Path to the result directory"""
+        return (
+            Config.data_directory
+            / "experiment"
+            / (str(self.experiment_name) + "_id_" + self.experiment_id)
+        )
+   
+    def get_run_dir(self) -> Path:
+        """Path to the result directory"""
+        return self.experiment_dir / "runs"
+
+def get_experiment_name(experiment_id):
+        data_dir = str(Config.data_directory)
+        return [
+            filename
+            for filename in os.listdir(str(data_dir) + "/experiment")
+            if fnmatch.fnmatch(filename, f"*{experiment_id}*")
+        ][0]
 
 def get_experiment_event_server(experiment_id: str) -> Events:
     """Returns the event server for a given experiment"""
@@ -21,7 +63,7 @@ def get_experiment_log_directory(
     return (
         Config.data_directory
         / "experiment"
-        / (str(get_experiment_name(experiment_id)) + "_id_" + experiment_id)
+        / (str(Experiment(experiment_id).experiment_name) + "_id_" + experiment_id)
     )
 
 
@@ -57,11 +99,9 @@ def create_experiment(
     events = Events(
         Config.server_host, Config.server_port, experiment_id, wei_internal=True
     )
-    events.start_experiment(experiment.experiment_dir)
+    events.start_experiment()
     return {"exp_dir": experiment.experiment_dir}
 
 
-def log_experiment_event(experiment_id: str, log_value: str) -> None:
-    """Logs a value to the log file for a given experiment"""
-    logger = WEI_Logger.get_experiment_logger(experiment_id)
-    logger.info(log_value)
+
+

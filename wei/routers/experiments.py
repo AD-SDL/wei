@@ -4,20 +4,20 @@ Router for the "experiments"/"exp" endpoints
 from typing import Optional
 
 from fastapi import APIRouter
-
+from wei.core.loggers import WEI_Logger
 from wei.core.experiment import (
     create_experiment,
-    get_experiment_log_directory,
-    log_experiment_event,
+    get_experiment_log_directory
 )
 
 router = APIRouter()
 
 
 @router.post("/{experiment_id}/log")
-def log_experiment(experiment_path: str, log_value: str) -> None:
+def log_experiment(experiment_id: str, log_value: str) -> None:
     """Logs a value to the log file for a given experiment"""
-    log_experiment_event(experiment_path, log_value)
+    logger = WEI_Logger.get_experiment_logger(experiment_id)
+    logger.info(log_value)
 
 
 @router.get("/{experiment_id}/log")

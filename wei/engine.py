@@ -21,7 +21,6 @@ class Engine:
     def __init__(self):
         """Initialize the scheduler."""
         self.state_manager = StateManager(
-            Config.workcell_file, Config.redis_host, Config.redis_port
         )
         self.state_manager.clear_state(reset_locations=Config.reset_locations)
         self.scheduler = Scheduler()
@@ -38,17 +37,15 @@ class Engine:
         If the state of the workcell has changed, update the active modules and run the scheduler.
         """
         print("Starting Process")
-        last_check = time.time()
         while True:
-            if time.time() - last_check > Config.update_interval:
-                update_active_modules()
-                last_check = time.time()
-            if self.state_manager.has_state_changed():
-                update_active_modules()
+            update_active_modules()
+            if self.state_manager.has_state_changed(): 
                 self.scheduler.run_iteration()
-                last_check = time.time()
+            time.sleep(Config.update_interval)
 
 
 if __name__ == "__main__":
+    args = Config.parse_args()
+    Config.load_config(args)
     engine = Engine()
     engine.spin()

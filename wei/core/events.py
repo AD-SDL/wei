@@ -106,19 +106,19 @@ class Events:
             "event_name": event_name,
             "event_info": event_info,
         }
-
+        response = {}
         if self.wei_internal:
-            from wei.core.experiment import log_experiment_event
-
-            log_experiment_event(self.experiment_id, str(log_value))
+            from wei.core.loggers import WEI_Logger
+            logger = WEI_Logger.get_experiment_logger(self.experiment_id)
+            logger.info(log_value)
         else:
-            response = requests.post(
+            response = self._return_response(requests.post(
                 url,
                 params={
                     "log_value": str(log_value),
                     "experiment_path": self.experiment_path,
                 },
-            )
+            ))
         try:
             # self.kafka_producer.send(
             # self.topic,
@@ -130,7 +130,7 @@ class Events:
             print(str(e))
             print("Kafka Unavailable")
 
-        return self._return_response(response)
+        return response
 
     def start_experiment(self):
         """logs the start of a given experiment
