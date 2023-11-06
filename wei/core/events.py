@@ -3,7 +3,7 @@
 # import time
 
 # from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -23,7 +23,7 @@ class Events:
         self,
         server_addr: str,
         server_port: str,
-        experiment_id: Optional[str] = None,
+        experiment_id: str,
         wei_internal: bool = False,
     ) -> None:
         """Initializes an Event Logging object
@@ -66,9 +66,9 @@ class Events:
         self.topic = "rpl_test"
         self.kafka_producer = None  # kafka_logger
 
-        self.loops = []
+        self.loops: list[str] = []
 
-    def _return_response(self, response: requests.Response):
+    def _return_response(self, response: requests.Response) -> Dict[Any, Any]:
         """processes the response of a Post request
 
         Parameters
@@ -83,11 +83,11 @@ class Events:
         if response.status_code != 200:
             return {"http_error": response.status_code}
 
-        return response.json()
+        return dict(response.json())
 
     def _log_event(
-        self, event_type, event_name, event_info: Optional[Any] = "", log_dir=""
-    ):
+        self, event_type: str, event_name: str, event_info: Optional[Any] = ""
+    ) -> Dict[Any, Any]:
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -109,16 +109,18 @@ class Events:
         response = {}
         if self.wei_internal:
             from wei.core.loggers import WEI_Logger
-            logger = WEI_Logger.get_experiment_logger(self.experiment_id)
+
+            logger = WEI_Logger.get_experiment_logger(str(self.experiment_id))
             logger.info(log_value)
         else:
-            response = self._return_response(requests.post(
-                url,
-                params={
-                    "log_value": str(log_value),
-                    "experiment_path": self.experiment_path,
-                },
-            ))
+            response = self._return_response(
+                requests.post(
+                    url,
+                    params={
+                        "log_value": str(log_value),
+                    },
+                )
+            )
         try:
             # self.kafka_producer.send(
             # self.topic,
@@ -132,7 +134,7 @@ class Events:
 
         return response
 
-    def start_experiment(self):
+    def start_experiment(self) -> Dict[Any, Any]:
         """logs the start of a given experiment
 
         Returns
@@ -142,7 +144,7 @@ class Events:
 
         return self._log_event("EXPERIMENT", "START")
 
-    def end_experiment(self):
+    def end_experiment(self) -> Dict[Any, Any]:
         """logs the end of an experiment
 
         Returns
@@ -151,7 +153,7 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event("EXPERIMENT", "END")
 
-    def log_decision(self, dec_name: str, dec_value: bool):
+    def log_decision(self, dec_name: str, dec_value: bool) -> Dict[Any, Any]:
         """logs an decision in the proper place for the given experiment
 
         Parameters
@@ -168,7 +170,7 @@ class Events:
             "CHECK", dec_name.capitalize(), {"dec_value": str(dec_value)}
         )
 
-    def log_comment(self, comment: str):
+    def log_comment(self, comment: str) -> Dict[Any, Any]:
         """logs a comment on the run
         Parameters
         ----------
@@ -180,7 +182,7 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event("COMMENT", comment)
 
-    def log_local_compute(self, func_name):
+    def log_local_compute(self, func_name: str) -> Dict[Any, Any]:
         """Logs a local function running on the system.
         Parameters
         ----------
@@ -194,7 +196,7 @@ class Events:
 
         return self._log_event("LOCAL", "COMPUTE", {"function_name": func_name})
 
-    def log_globus_compute(self, func_name):
+    def log_globus_compute(self, func_name: str) -> Dict[Any, Any]:
         """logs a function running using Globus Compute
 
         Parameters
@@ -207,7 +209,7 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event("GLOBUS", "COMPUTE", {"function_name": func_name})
 
-    def log_globus_flow(self, flow_name: str, flow_id):
+    def log_globus_flow(self, flow_name: str, flow_id: Any) -> Dict[Any, Any]:
         """logs a function running using Globus Gladier
 
         Parameters
@@ -221,9 +223,13 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        return self._log_event("GLOBUS", "GLADIER_RUNFLOW", {"flow_id": flow_id})
+        return self._log_event(
+            "GLOBUS",
+            "GLADIER_RUNFLOW",
+            {"flow_name": flow_name, "flow_id": str(flow_id)},
+        )
 
-    def log_loop_start(self, loop_name: str):
+    def log_loop_start(self, loop_name: str) -> Dict[Any, Any]:
         """logs the start of a loop during an Experiment
 
         Parameters
@@ -238,7 +244,7 @@ class Events:
         self.loops.append(loop_name)
         return self._log_event("LOOP", "START", {"loop_name": loop_name})
 
-    def log_loop_end(self):
+    def log_loop_end(self) -> Dict[Any, Any]:
         """Pops the most recent loop from the loop stack and logs its completion
 
 
@@ -249,7 +255,7 @@ class Events:
         loop_name = self.loops.pop()
         return self._log_event("LOOP", "END", {"loop_name": loop_name})
 
-    def log_loop_check(self, condition, value):
+    def log_loop_check(self, condition: Any, value: Any) -> Dict[Any, Any]:
         """Peeks the most recent loop from the loop stack and logs its completion
 
 
@@ -272,7 +278,7 @@ class Events:
             {"loop_name": loop_name, "condition": condition, "result": str(value)},
         )
 
-    def log_wf_start(self, wf_name: str, run_id: str):
+    def log_wf_start(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
         """Logs the start of a workflow
 
 
@@ -293,7 +299,7 @@ class Events:
             "WEI", "WORKFLOW_START", {"wf_name": str(wf_name), "run_id": str(run_id)}
         )
 
-    def log_wf_failed(self, wf_name: str, run_id: str):
+    def log_wf_failed(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
         """Logs a failed workflow
 
 
@@ -313,7 +319,7 @@ class Events:
             "WEI", "WORKFLOW_FAILED", {"wf_name": str(wf_name), "run_id": str(run_id)}
         )
 
-    def log_wf_end(self, wf_name: str, run_id: str):
+    def log_wf_end(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
         """Logs the end of a workflow
 
 

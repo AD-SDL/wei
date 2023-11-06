@@ -1,4 +1,6 @@
 """Handling simulated execution for steps in the RPL-SDL efforts"""
+from typing import Any
+
 from wei.core.data_classes import Interface, Step
 
 
@@ -28,7 +30,7 @@ class SimulateInterface(Interface):
         pass
 
     @staticmethod
-    def config_validator(config: dict) -> bool:
+    def config_validator(config: dict[str, Any]) -> bool:
         """Validates the configuration for the interface"""
         return True
 

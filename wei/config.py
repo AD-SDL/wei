@@ -5,10 +5,8 @@ Handles the configuration of the engine and server.
 import logging
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-import yaml
 
-# import os
-# from dotenv import load_dotenv
+import yaml
 
 
 class Config:
@@ -16,27 +14,25 @@ class Config:
     Allows for shared configuration across the application
     """
 
-    configured = False
-    workcell_file = None
-    redis_host = None
-    redis_server = None
-    kafka_server = None
-    reset_locations = None
-    update_interval = None
-    server_host = None
-    server_port = None
-    redis_host = None
-    redis_port = None
-    data_directory = None
-    experiment_directory = None
+    configured: bool = False
+    workcell_file: str
+    workcell_name: str
+    kafka_server: str
+    reset_locations: bool
+    update_interval: float
+    server_host: str
+    server_port: int
+    redis_host: str
+    redis_port: int
+    data_directory: Path
+    log_level: int
 
     @staticmethod
-    def load_config(args: Namespace):
-        # load_dotenv()
-        # WORKCELL_FILE = os.environ.get("WORKCELL_FILE", None)
+    def load_config(args: Namespace) -> None:
+        """Populates the config from the command line arguments"""
         Config.workcell_file = args.workcell
         with open(args.workcell, "r") as f:
-            Config.workcell_name = yaml.safe_load(f)["name"]
+            Config.workcell_name = str(yaml.safe_load(f)["name"])
         Config.redis_host = args.redis_host
         Config.redis_port = args.redis_port
         Config.update_interval = args.update_interval
@@ -101,5 +97,3 @@ class Config:
             default=Path.home() / ".wei",
         )
         return parser.parse_args()
-
-

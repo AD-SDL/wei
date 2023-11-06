@@ -6,7 +6,6 @@ import json
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse
 
-
 from wei.core.data_classes import WorkflowStatus
 from wei.core.state_manager import StateManager
 

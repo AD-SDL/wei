@@ -1,5 +1,6 @@
 """Handling ZMQ execution for steps in the RPL-SDL efforts"""
 import json
+from typing import Any
 
 import zmq
 
@@ -14,7 +15,7 @@ class ZmqInterface(Interface):
         pass
 
     @staticmethod
-    def config_validator(config: dict) -> bool:
+    def config_validator(config: dict[str, Any]) -> bool:
         """Validates the configuration for the interface
 
         Parameters

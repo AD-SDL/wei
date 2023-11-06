@@ -1,6 +1,8 @@
 """
 Router for the modules endpoints
 """
+from typing import Union
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
@@ -14,7 +16,7 @@ state_manager = StateManager()
 @router.get("/{module_name}/state")
 def mod(
     module_name: str,
-) -> JSONResponse:
+) -> Union[JSONResponse, HTTPException]:
     """
     Gets the state of a given module
     Parameters

@@ -1,6 +1,6 @@
 """Handling execution for steps in the RPL-SDL efforts"""
 import json
-from typing import Tuple
+from typing import Any, Tuple
 
 from wei.core.data_classes import Interface, Module, Step
 
@@ -13,7 +13,7 @@ class TcpInterface(Interface):
         pass
 
     @staticmethod
-    def config_validator(config: dict) -> bool:
+    def config_validator(config: dict[str, Any]) -> bool:
         """Validates the configuration for the interface
 
         Parameters

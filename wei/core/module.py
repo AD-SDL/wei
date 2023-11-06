@@ -1,7 +1,6 @@
 """Provides methods and classes to work with modules"""
 
 
-from wei.config import Config
 from wei.core.data_classes import Module, ModuleStatus, WorkcellData, Workflow
 from wei.core.interface import InterfaceMap
 from wei.core.state_manager import StateManager
@@ -10,14 +9,16 @@ from wei.core.workcell import find_step_module
 state_manager = StateManager()
 
 
-def initialize_workcell_modules():
+def initialize_workcell_modules() -> None:
+    """Initialize all active modules in the workcell."""
     for module in state_manager.get_workcell().modules:
         if not module.active:
             continue
         state_manager.set_module(module.name, module)
 
 
-def update_active_modules(initial: bool = False):
+def update_active_modules(initial: bool = False) -> None:
+    """Update all active modules in the workcell."""
     with state_manager.state_lock():
         for module_name, module in state_manager.get_all_modules().items():
             if module.active:
@@ -30,19 +31,18 @@ def update_active_modules(initial: bool = False):
 def query_module_status(module: Module) -> ModuleStatus:
     """Update a single module's state by querying the module."""
     module_name = module.name
+    state = ModuleStatus.UNKNOWN
     if module.interface in InterfaceMap.interfaces:
         try:
             interface = InterfaceMap.interfaces[module.interface]
-            state = interface.get_state(module.config)
-            if isinstance(state, dict):
-                state = state["State"]
+            working_state = interface.get_state(module)
+            if isinstance(working_state, dict):
+                working_state = working_state["State"]
 
-            if not (state == ""):
+            if not (working_state == ""):
                 if module.state == ModuleStatus.INIT:
                     print("Module Found: " + str(module_name))
-                return ModuleStatus(state)
-            else:
-                module.state = ModuleStatus.UNKNOWN
+                state = ModuleStatus(state)
         except Exception as e:  # noqa
             if module.state == ModuleStatus.INIT:
                 print(e)
@@ -50,10 +50,10 @@ def query_module_status(module: Module) -> ModuleStatus:
     else:
         if module.state == ModuleStatus.INIT:
             print("No Module Interface for Module", str(module_name))
-            return ModuleStatus.UNKNOWN
+    return state
 
 
-def validate_module_names(workflow: Workflow, workcell: WorkcellData):
+def validate_module_names(workflow: Workflow, workcell: WorkcellData) -> None:
     """
     Validates that
         - the modules in the workflow.flowdef are also in the workflow.modules
