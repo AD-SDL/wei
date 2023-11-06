@@ -54,16 +54,19 @@ def update_source_and_target(wf_run: WorkflowRun) -> None:
         return object
 
     if step_index < len(wf_run.steps):
+        print(steps[step_index].locations)
         if "target" in steps[step_index].locations:
             state_manager.update_location(
                 steps[step_index].locations["target"],
                 append_element_to_queue,
                 wf_run.run_id,
             )
+        print(steps[step_index].module)
+        print(state_manager.get_workcell())
         state_manager.update_module(
             steps[step_index].module, append_element_to_queue, wf_run.run_id
         )
-
+        print("thingy")
     if step_index > 0:
         state_manager.update_module(
             steps[step_index - 1].module,

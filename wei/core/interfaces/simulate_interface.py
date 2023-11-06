@@ -1,5 +1,5 @@
 """Handling simulated execution for steps in the RPL-SDL efforts"""
-from wei.core.data_classes import Interface, Step
+from wei.core.data_classes import Interface, Step, StepStatus
 
 
 def silent_callback(step: Step, **kwargs):
@@ -17,7 +17,7 @@ def silent_callback(step: Step, **kwargs):
 
     """
     print(step)
-    return "silent", step.action, ""
+    return StepStatus.SUCCEEDED, step.action, ""
 
 
 class SimulateInterface(Interface):

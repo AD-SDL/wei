@@ -214,6 +214,7 @@ class StateManager:
         """
         Returns a module by name
         """
+        print(self._modules)
         return Module.model_validate(self._modules[module_name])
 
     def get_all_modules(self) -> Dict[str, Module]:
@@ -247,4 +248,6 @@ class StateManager:
         """
         Updates the state of a module.
         """
+        print(module_name)
+        print(self._workcell)
         self.set_module(module_name, func(self.get_module(module_name), *args))

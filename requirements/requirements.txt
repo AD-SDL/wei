@@ -12,4 +12,5 @@ redis==4.2.2
 python-dotenv==1.0.0
 
 pottery==3.0.0
-
+lupa==2.0
+fakeredis==2.20.0

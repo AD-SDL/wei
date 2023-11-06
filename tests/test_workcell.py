@@ -9,13 +9,12 @@ from test_base import TestWEI_Base
 
 class Test_Workcell_Base(TestWEI_Base):
     def test_workcell_property(self):
-        from wei.core.workcell import Workcell
+        from wei.core.workcell import WorkcellData
 
-        workcell_config_path = Path("tests/test_workcell.yaml")
-        workcell_def = yaml.safe_load(workcell_config_path.read_text())
-        workcell = Workcell(workcell_def)
+        workcell_config_path = Path("./test_workcell.yaml")
+        workcell = WorkcellData.from_yaml(workcell_config_path)
 
-        debug(workcell.workcell)
+        debug(workcell)
         assert workcell is not None
 
     def test_payload(self):
