@@ -45,16 +45,18 @@ async def start_run(
     workflow_content = await workflow.read()
     workflow_content_str = workflow_content.decode("utf-8")
     wf = Workflow(**yaml.safe_load(workflow_content_str))
+    print(wf)
     payload = await payload.read()
     payload = json.loads(payload)
     logger = WEI_Logger.get_experiment_logger(experiment_id)
     logger.info("Received job run request")
     workcell = state_manager.get_workcell()
-
+    
     wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
-
+    
     with state_manager.state_lock():
         state_manager.set_workflow_run(wf_run)
+        print("hi")
     return JSONResponse(
         content={
             "wf": wf_run.model_dump(mode="json"),

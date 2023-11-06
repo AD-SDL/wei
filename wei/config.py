@@ -6,7 +6,7 @@ import logging
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 import yaml
-
+import fakeredis
 # import os
 # from dotenv import load_dotenv
 
@@ -17,18 +17,19 @@ class Config:
     """
 
     configured = False
-    workcell_file = None
-    redis_host = None
-    redis_server = None
+    workcell_file = Path("./test_workcell.yaml")
+    workcell_name = "test_workcell"
     kafka_server = None
-    reset_locations = None
-    update_interval = None
-    server_host = None
-    server_port = None
-    redis_host = None
-    redis_port = None
-    data_directory = None
-    experiment_directory = None
+    reset_locations = "True"
+    update_interval = 1.0
+    server_host = "0.0.0.0"
+    server_port = "8000"
+    redis_host = "localhost"
+    redis_port = "6379"
+    data_directory = Path(".")
+    fakeredis = fakeredis.FakeStrictRedis(version=6)
+    log_level = 1
+    test = True
 
     @staticmethod
     def load_config(args: Namespace):
@@ -46,7 +47,6 @@ class Config:
         Config.data_directory = Path(args.data_dir)
         Config.log_level = logging.INFO
         Config.configured = True
-
     @staticmethod
     def parse_args() -> Namespace:
         """Parse engine's command line arguments."""
@@ -56,7 +56,7 @@ class Config:
             "--redis_host",
             type=str,
             help="url (no port) for Redis server",
-            default="localhost",
+            default="",
         )
         parser.add_argument(
             "--redis_port",

@@ -5,7 +5,7 @@ StateManager for WEI
 
 import warnings
 from typing import Callable, Dict, Union
-
+import fakeredis
 import redis
 import yaml
 from pottery import InefficientAccessWarning, RedisDict, Redlock
@@ -34,6 +34,8 @@ class StateManager:
     
     @property
     def _redis_server(self):
+        if Config.test:
+            return Config.fakeredis
         return redis.Redis(
             host=Config.redis_host, port=Config.redis_port, decode_responses=True
         )
@@ -109,6 +111,7 @@ class StateManager:
         """
         Returns the current workcell as a WorkcellData object
         """
+        print(self._workcell)
         return WorkcellData.model_validate(self._workcell.to_dict())
 
     def set_workcell(self, workcell: WorkcellData) -> None:
@@ -146,6 +149,9 @@ class StateManager:
         if isinstance(wf, WorkflowRun):
             wf = wf.model_dump()
         else:
+            print(wf)
+            print("here")
+            print()
             wf = WorkflowRun.model_validate(wf).model_dump(mode="json")
         self._workflow_runs[str(wf["run_id"])] = wf
         self.mark_state_changed()
