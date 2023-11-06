@@ -30,10 +30,7 @@ def show() -> JSONResponse:
        the state of the workcell
     """
     with state_manager.state_lock():
-        wc_state = json.loads(state_manager.get_state())
-    return JSONResponse(
-        content={"wc_state": json.dumps(wc_state)}
-    )  # templates.TemplateResponse("item.html", {"request": request, "wc_state": wc_state})
+        return JSONResponse(content={"wc_state": json.dumps(state_manager.get_state())})
 
 
 @router.delete("/clear_runs")
@@ -50,12 +47,12 @@ async def clear_runs() -> JSONResponse:
          the state of the workflows
     """
     with state_manager.state_lock():
-        for workflow in state_manager.get_all_workflow_runs():
+        for run_id, wf_run in state_manager.get_all_workflow_runs().items():
             if (
-                workflow.status == WorkflowStatus.COMPLETED
-                or workflow.status == WorkflowStatus.FAILED
+                wf_run.status == WorkflowStatus.COMPLETED
+                or wf_run.status == WorkflowStatus.FAILED
             ):
-                state_manager.delete_workflow_run(workflow.run_id)
+                state_manager.delete_workflow_run(run_id)
         return JSONResponse(
             content={"Workflows": str(state_manager.get_all_workflow_runs())}
         )

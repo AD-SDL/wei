@@ -51,7 +51,7 @@ class BaseModel(_BaseModel):
         """
         with open(filename) as fp:
             raw_data = yaml.safe_load(fp)
-        return cls(**raw_data)  # type: ignore[call-arg]
+        return cls(**raw_data)
 
 
 class Tag(BaseModel):
@@ -140,7 +140,7 @@ class SimpleModule(BaseModel):
 
 
 class Interface(BaseModel):
-    """standardizes communications with different daemons"""
+    """standardizes communications with various module interface implementations"""
 
     name: str
     """"""

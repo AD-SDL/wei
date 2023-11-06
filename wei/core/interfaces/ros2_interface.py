@@ -5,8 +5,8 @@ from wei.config import Config
 from wei.core.data_classes import Interface, Module, Step
 
 try:
-    import rclpy
-    from wei_executor.weiExecutorNode import weiExecNode
+    import rclpy  # type: ignore
+    from wei_executor.weiExecutorNode import weiExecNode  # type: ignore
 except ImportError:
     print("ROS Environment not found... Cannot use ROS2Interface")
 
@@ -66,7 +66,7 @@ class ROS2Interface(Interface):
 
         """
         wei_execution_node = ROS2Interface.__init_rclpy(
-            Config.workcell_name + "_wei_exec_node"
+            Config.workcell_name + "_exec_node"
         )
         msg = {
             "node": module.config["ros_node_address"],
