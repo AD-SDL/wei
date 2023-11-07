@@ -32,6 +32,7 @@ class Experiment:
                 - If not provided, will be looked up using the experiment_id
                 - Must be provided if the experiment_dir is not yet created
         """
+        self.experiments_dir = Config.data_directory / "experiments"
         if experiment_id is None:
             self.experiment_id = ulid.new().str
         else:
@@ -43,20 +44,17 @@ class Experiment:
 
     def get_experiment_name(self) -> str:
         """Returns the name of the experiment using the experiment_id"""
-        data_dir = str(Config.data_directory)
         return [
             filename
-            for filename in os.listdir(str(data_dir) + "/experiment")
+            for filename in os.listdir(str(self.experiments_dir))
             if fnmatch.fnmatch(filename, f"*{self.experiment_id}*")
-        ][0]
+        ][0].split("_id_")[0]
 
     @property
     def experiment_dir(self) -> Path:
         """Path to the result directory"""
-        return (
-            Config.data_directory
-            / "experiment"
-            / (str(self.experiment_name) + "_id_" + self.experiment_id)
+        return self.experiments_dir / (
+            str(self.experiment_name) + "_id_" + self.experiment_id
         )
 
     @property
@@ -108,12 +106,9 @@ def create_experiment(
     Dict
        A dictionary with the experiment log_dir value"""
 
-    if experiment_id is None:
-        experiment = Experiment(experiment_name=experiment_name)
-    else:
-        experiment = Experiment(
-            experiment_name=experiment_name, experiment_id=experiment_id
-        )
+    experiment = Experiment(
+        experiment_name=experiment_name, experiment_id=experiment_id
+    )
     experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
     experiment.run_dir.mkdir(parents=True, exist_ok=True)
 

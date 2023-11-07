@@ -41,7 +41,7 @@ def show_states() -> JSONResponse:
         )
 
 
-@router.get("/{location}/state")
+@router.get("/{location}/state", response_model=None)
 def loc(
     location: str,
 ) -> Union[JSONResponse, HTTPException]:

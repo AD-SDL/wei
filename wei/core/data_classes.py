@@ -324,6 +324,10 @@ class WorkflowRun(Workflow):
     def _serialize_result_dir(self, result_dir: Path) -> str:
         return str(result_dir)
 
+    @field_serializer("run_log")
+    def _serialize_run_log(self, run_log: Path) -> str:
+        return str(run_log)
+
 
 class StepStatus(str, Enum):
     """Status for a step of a workflow"""

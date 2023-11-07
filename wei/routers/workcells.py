@@ -1,8 +1,6 @@
 """
 Router for the "workcells"/"wc" endpoints
 """
-import json
-
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse
 
@@ -30,7 +28,7 @@ def show() -> JSONResponse:
        the state of the workcell
     """
     with state_manager.state_lock():
-        return JSONResponse(content={"wc_state": json.dumps(state_manager.get_state())})
+        return JSONResponse(content=state_manager.get_state())
 
 
 @router.delete("/clear_runs")

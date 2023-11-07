@@ -15,7 +15,7 @@ class ROS2Interface(Interface):
     """Basic Interface for interacting with WEI modules using ROS2"""
 
     @staticmethod
-    def __init_rclpy(name: str) -> weiExecNode:
+    def __init_rclpy(name: str) -> Any:
         if not rclpy:
             raise ImportError("ROS2 environment not found")
         if not rclpy.utilities.ok():

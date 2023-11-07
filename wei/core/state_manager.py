@@ -32,7 +32,7 @@ class StateManager:
         return f"wei:{Config.workcell_name}"
 
     @property
-    def _redis_server(self) -> Redis[str]:
+    def _redis_server(self) -> Redis:  # type: ignore
         return Redis(
             host=Config.redis_host, port=Config.redis_port, decode_responses=True
         )

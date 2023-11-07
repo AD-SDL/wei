@@ -13,8 +13,8 @@ router = APIRouter()
 state_manager = StateManager()
 
 
-@router.get("/{module_name}/state")
-def mod(
+@router.get("/{module_name}/state", response_model=None)
+def get_module(
     module_name: str,
 ) -> Union[JSONResponse, HTTPException]:
     """

@@ -124,7 +124,7 @@ class WEI_Logger:
                 for handler in logger.handlers:
                     logger.removeHandler(handler)
 
-            log_file = Path(log_dir, f"{log_name}.log")
+            log_file = Path(log_dir) / f"{log_name}.log"
             log_file.parent.mkdir(parents=True, exist_ok=True)
             formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
             fileHandler = logging.FileHandler(log_file, mode="a+")

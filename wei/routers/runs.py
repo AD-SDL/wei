@@ -47,6 +47,8 @@ async def start_run(
         wf = Workflow(**yaml.safe_load(workflow_content_str))
         payload_bytes = await payload.read()
         payload_dict = json.loads(payload_bytes)
+        if payload_dict is None:
+            payload_dict = {}
         logger = WEI_Logger.get_experiment_logger(experiment_id)
         logger.info("Received job run request")
         workcell = state_manager.get_workcell()
