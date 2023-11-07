@@ -4,14 +4,14 @@ StateManager for WEI
 
 
 import warnings
-from typing import Callable, Dict, Union
-import fakeredis
+from typing import Any, Callable, Dict, Union
+
 import redis
-import yaml
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
-from wei.core.data_classes import Location, Module, WorkcellData, WorkflowRun
 from wei.config import Config
+from wei.core.data_classes import Location, Module, WorkcellData, WorkflowRun
+
 
 class StateManager:
     """
@@ -19,52 +19,42 @@ class StateManager:
     optimistic check-and-set and locking.
     """
 
-    def __init__(
-        self
-    ) -> None:
+    state_change_marker: Union[str, None] = "0"
+
+    def __init__(self) -> None:
         """
         Initialize a StateManager for a given workcell.
         """
         warnings.filterwarnings("ignore", category=InefficientAccessWarning)
-        self.state_change_marker = 0
 
     @property
-    def _prefix(self):
+    def _prefix(self) -> str:
         return f"wei:{Config.workcell_name}"
-    
+
     @property
-    def _redis_server(self):
+    def _redis_server(self) -> Any:
         if Config.test:
-            return Config.fakeredis
+            return Config.fake_redis
         return redis.Redis(
             host=Config.redis_host, port=Config.redis_port, decode_responses=True
         )
+
     @property
-    def _locations(self):
-            return RedisDict(
-                key=f"{self._prefix}:locations", redis=self._redis_server
-            )
-    
+    def _locations(self) -> RedisDict:
+        return RedisDict(key=f"{self._prefix}:locations", redis=self._redis_server)
+
     @property
-    def _modules(self):
-            return RedisDict(
-                key=f"{self._prefix}:modules", redis=self._redis_server
-            )
+    def _modules(self) -> RedisDict:
+        return RedisDict(key=f"{self._prefix}:modules", redis=self._redis_server)
+
     @property
-    def _workcell(self):
-            return RedisDict(
-                key=f"{self._prefix}:workcell", redis=self._redis_server
-            )
+    def _workcell(self) -> RedisDict:
+        return RedisDict(key=f"{self._prefix}:workcell", redis=self._redis_server)
+
     @property
-    def _workflow_runs(self):
-            return RedisDict(
-                key=f"{self._prefix}:workflow_runs", redis=self._redis_server
-            )
-    
-  
-    
-    
-    
+    def _workflow_runs(self) -> RedisDict:
+        return RedisDict(key=f"{self._prefix}:workflow_runs", redis=self._redis_server)
+
     # Locking Methods
     def state_lock(self) -> Redlock:
         """
@@ -74,7 +64,7 @@ class StateManager:
         return Redlock(key=f"{self._prefix}:state", masters={self._redis_server})
 
     # State Methods
-    def get_state(self) -> dict:
+    def get_state(self) -> Dict[str, Dict[Any, Any]]:
         """
         Return a dict containing the current state of the workcell.
         """
@@ -85,7 +75,7 @@ class StateManager:
             "workcell": self._workcell.to_dict(),
         }
 
-    def clear_state(self, reset_locations=True) -> None:
+    def clear_state(self, reset_locations: bool = True) -> None:
         """
         Clears the state of the workcell, optionally leaving the locations state intact.
         """
@@ -95,10 +85,12 @@ class StateManager:
         self._workflow_runs.clear()
         self._workcell.clear()
 
-    def mark_state_changed(self):
+    def mark_state_changed(self) -> int:
+        """Marks the state as changed and returns the current state change counter"""
         return self._redis_server.incr(f"{self._prefix}:state_changed")
 
-    def has_state_changed(self):
+    def has_state_changed(self) -> bool:
+        """Returns True if the state has changed since the last time this method was called"""
         state_change_marker = self._redis_server.get(f"{self._prefix}:state_changed")
         if state_change_marker != self.state_change_marker:
             self.state_change_marker = state_change_marker
@@ -118,7 +110,7 @@ class StateManager:
         """
         Sets the active workcell
         """
-        self._workcell.update(workcell.model_dump(mode="json"))
+        self._workcell.update(**workcell.model_dump(mode="json"))
 
     def clear_workcell(self) -> None:
         """
@@ -133,12 +125,12 @@ class StateManager:
         """
         return WorkflowRun.model_validate(self._workflow_runs[str(run_id)])
 
-    def get_all_workflow_runs(self) -> Dict[Union[str, str], WorkflowRun]:
+    def get_all_workflow_runs(self) -> Dict[str, WorkflowRun]:
         """
         Returns all workflows
         """
         return {
-            run_id: WorkflowRun.model_validate(workflow_run)
+            str(run_id): WorkflowRun.model_validate(workflow_run)
             for run_id, workflow_run in self._workflow_runs.to_dict().items()
         }
 
@@ -147,13 +139,10 @@ class StateManager:
         Sets a workflow by ID
         """
         if isinstance(wf, WorkflowRun):
-            wf = wf.model_dump()
+            wf_dump = wf.model_dump()
         else:
-            print(wf)
-            print("here")
-            print()
-            wf = WorkflowRun.model_validate(wf).model_dump(mode="json")
-        self._workflow_runs[str(wf["run_id"])] = wf
+            wf_dump = WorkflowRun.model_validate(wf).model_dump(mode="json")
+        self._workflow_runs[str(wf_dump["run_id"])] = wf_dump
         self.mark_state_changed()
 
     def delete_workflow_run(self, run_id: Union[str, str]) -> None:
@@ -163,11 +152,11 @@ class StateManager:
         del self._workflow_runs[str(run_id)]
         self.mark_state_changed()
 
-    def update_workflow_run(self, run_id: str, func: Callable, *args) -> None:
+    def update_workflow_run(self, run_id: str, func: Callable, *args: Any, **kwargs: Any) -> None:  # type: ignore [type-arg]
         """
         Updates the state of a workflow.
         """
-        self.set_workflow_run(str(run_id), func(self.get_workflow_run(run_id), *args))
+        self.set_workflow_run(func(self.get_workflow_run(run_id), *args, **kwargs))
 
     # Location Methods
     def get_location(self, location_name: str) -> Location:
@@ -181,19 +170,21 @@ class StateManager:
         Returns all locations
         """
         return {
-            location_name: Location.model_validate(location)
+            str(location_name): Location.model_validate(location)
             for location_name, location in self._locations.to_dict().items()
         }
 
-    def set_location(self, location_name: str, location: Union[Location, Dict]) -> None:
+    def set_location(
+        self, location_name: str, location: Union[Location, Dict[str, Any]]
+    ) -> None:
         """
         Sets a location by name
         """
         if isinstance(location, Location):
-            location = location.model_dump(mode="json")
+            location_dump = location.model_dump(mode="json")
         else:
-            location = Location.model_validate(location).model_dump(mode="json")
-        self._locations[location_name] = location
+            location_dump = Location.model_validate(location).model_dump(mode="json")
+        self._locations[location_name] = location_dump
         self.mark_state_changed()
 
     def delete_location(self, location_name: str) -> None:
@@ -203,11 +194,13 @@ class StateManager:
         del self._locations[location_name]
         self.mark_state_changed()
 
-    def update_location(self, location_name: str, func: Callable, *args) -> None:
+    def update_location(self, location_name: str, func: Callable, *args: Any, **kwargs: Any) -> None:  # type: ignore [type-arg]
         """
         Updates the state of a location.
         """
-        self.set_location(location_name, func(self.get_location(location_name), *args))
+        self.set_location(
+            location_name, func(self.get_location(location_name), *args, **kwargs)
+        )
 
     # Module Methods
     def get_module(self, module_name: str) -> Module:
@@ -222,19 +215,21 @@ class StateManager:
         Returns a module by name
         """
         return {
-            module_name: Module.model_validate(module)
+            str(module_name): Module.model_validate(module)
             for module_name, module in self._modules.to_dict().items()
         }
 
-    def set_module(self, module_name: str, module: Union[Module, Dict]) -> None:
+    def set_module(
+        self, module_name: str, module: Union[Module, Dict[str, Any]]
+    ) -> None:
         """
         Sets a module by name
         """
         if isinstance(module, Module):
-            module = module.model_dump(mode="json")
+            module_dump = module.model_dump(mode="json")
         else:
-            module = Module.model_validate(module).model_dump(mode="json")
-        self._modules[module_name] = module
+            module_dump = Module.model_validate(module).model_dump(mode="json")
+        self._modules[module_name] = module_dump
         self.mark_state_changed()
 
     def delete_module(self, module_name: str) -> None:
@@ -244,10 +239,10 @@ class StateManager:
         del self._modules[module_name]
         self.mark_state_changed()
 
-    def update_module(self, module_name: str, func: Callable, *args) -> None:
+    def update_module(self, module_name: str, func: Callable, *args: Any, **kwargs: Any) -> None:  # type: ignore [type-arg]
         """
         Updates the state of a module.
         """
-        print(module_name)
-        print(self._workcell)
-        self.set_module(module_name, func(self.get_module(module_name), *args))
+        self.set_module(
+            module_name, func(self.get_module(module_name), *args, **kwargs)
+        )

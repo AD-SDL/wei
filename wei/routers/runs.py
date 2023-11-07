@@ -41,39 +41,39 @@ async def start_run(
     response: Dict
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    #try:
-    workflow_content = await workflow.read()
-    workflow_content_str = workflow_content.decode("utf-8")
-    wf = Workflow(**yaml.safe_load(workflow_content_str))
-    print(wf)
-    payload = await payload.read()
-    payload = json.loads(payload)
-    logger = WEI_Logger.get_experiment_logger(experiment_id)
-    logger.info("Received job run request")
-    workcell = state_manager.get_workcell()
-    
-    wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
-    
-    with state_manager.state_lock():
-        state_manager.set_workflow_run(wf_run)
-        print("hi")
-    return JSONResponse(
-        content={
-            "wf": wf_run.model_dump(mode="json"),
-            "run_id": wf_run.run_id,
-            "status": str(wf_run.status),
-        }
-    )
-    # except Exception as e:  # noqa
-    #     print(e)
-    #     return JSONResponse(
-    #         status_code=500,
-    #         content={
-    #             "wf": wf.model_dump(mode="json"),
-    #             "error": f"Error: {e}",
-    #             "status": str(WorkflowStatus.FAILED),
-    #         },
-    #     )
+    try:
+        workflow_content = await workflow.read()
+        workflow_content_str = workflow_content.decode("utf-8")
+        wf = Workflow(**yaml.safe_load(workflow_content_str))
+        payload_bytes = await payload.read()
+        payload_dict = json.loads(payload_bytes)
+        if payload_dict is None:
+            payload_dict = {}
+        logger = WEI_Logger.get_experiment_logger(experiment_id)
+        logger.info("Received job run request")
+        workcell = state_manager.get_workcell()
+
+        wf_run = create_run(wf, workcell, experiment_id, payload_dict, simulate)
+
+        with state_manager.state_lock():
+            state_manager.set_workflow_run(wf_run)
+        return JSONResponse(
+            content={
+                "wf": wf_run.model_dump(mode="json"),
+                "run_id": wf_run.run_id,
+                "status": str(wf_run.status),
+            }
+        )
+    except Exception as e:  # noqa
+        print(e)
+        return JSONResponse(
+            status_code=500,
+            content={
+                "wf": wf.model_dump(mode="json"),
+                "error": f"Error: {e}",
+                "status": str(WorkflowStatus.FAILED),
+            },
+        )
 
 
 @router.get("/{run_id}/state")
@@ -119,5 +119,5 @@ async def log_run_return(run_id: str) -> str:
        a string with the log data for the run requested"""
 
     wf_run = state_manager.get_workflow_run(run_id)
-    with open(wf_run.run_dir / f"{wf_run.run_id}_run_log") as f:
+    with open(wf_run.run_log) as f:
         return f.read()

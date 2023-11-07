@@ -1,7 +1,6 @@
 """The logging system that helps track events for the system"""
 import logging
 from pathlib import Path
-from typing import Optional
 
 from wei.config import Config
 from wei.core.data_classes import PathLike, WorkflowRun
@@ -14,9 +13,9 @@ class WEI_Logger:
     @staticmethod
     def _create_logger(
         logger_name: str,
-        log_file: Optional[PathLike] = None,
+        log_file: PathLike,
         level: int = logging.INFO,
-    ):
+    ) -> logging.Logger:
         """Creates a logger that attaches to the given file
 
          Parameters
@@ -33,10 +32,7 @@ class WEI_Logger:
              The logging object with the appropriate handlers
         """
 
-        if log_file is None:
-            log_file = Path().resolve() / f"{logger_name}.log"
-
-        log_file.parent.mkdir(parents=True, exist_ok=True)
+        Path(log_file).parent.mkdir(parents=True, exist_ok=True)
 
         logger = logging.getLogger(logger_name)
         formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
@@ -54,7 +50,7 @@ class WEI_Logger:
     @staticmethod
     def get_experiment_logger(
         experiment_id: str,
-    ):
+    ) -> logging.Logger:
         """Finds the existing logger with the given name or creates a new one if it doesn't exist
 
         Parameters
@@ -75,7 +71,7 @@ class WEI_Logger:
         )
 
     @staticmethod
-    def get_workflow_run_logger(wf_run: WorkflowRun):
+    def get_workflow_run_logger(wf_run: WorkflowRun) -> logging.Logger:
         """Finds the existing logger with the given name or creates a new one if it doesn't exist
 
         Parameters
@@ -87,7 +83,6 @@ class WEI_Logger:
         logger: Logger
             The logging object with the appropriate handlers
         """
-       
 
         return WEI_Logger.get_logger(
             f"{wf_run.run_id}_run_log",
@@ -98,7 +93,7 @@ class WEI_Logger:
     @staticmethod
     def get_logger(
         log_name: str,
-        log_dir: Optional[Path] = None,
+        log_dir: PathLike,
         log_level: int = logging.INFO,
     ) -> logging.Logger:
         """Finds the existing logger with the given name or creates a new one if it doesn't exist
@@ -129,7 +124,7 @@ class WEI_Logger:
                 for handler in logger.handlers:
                     logger.removeHandler(handler)
 
-            log_file = log_dir / f"{log_name}.log"
+            log_file = Path(log_dir) / f"{log_name}.log"
             log_file.parent.mkdir(parents=True, exist_ok=True)
             formatter = logging.Formatter("%(asctime)s (%(levelname)s): %(message)s")
             fileHandler = logging.FileHandler(log_file, mode="a+")

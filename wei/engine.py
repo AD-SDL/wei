@@ -18,10 +18,9 @@ class Engine:
     Pops incoming workflows off a redis-based queue and executes them.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the scheduler."""
-        self.state_manager = StateManager(
-        )
+        self.state_manager = StateManager()
         self.state_manager.clear_state(reset_locations=Config.reset_locations)
         self.scheduler = Scheduler()
         with self.state_manager.state_lock():
@@ -31,7 +30,7 @@ class Engine:
             initialize_workcell_modules()
             initialize_workcell_locations()
 
-    def spin(self):
+    def spin(self) -> None:
         """
         Continuously loop, updating module states every Config.update_interval seconds.
         If the state of the workcell has changed, update the active modules and run the scheduler.
@@ -39,7 +38,7 @@ class Engine:
         print("Starting Process")
         while True:
             update_active_modules()
-            if self.state_manager.has_state_changed(): 
+            if self.state_manager.has_state_changed():
                 self.scheduler.run_iteration()
             time.sleep(Config.update_interval)
 
