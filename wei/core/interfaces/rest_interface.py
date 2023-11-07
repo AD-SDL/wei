@@ -68,16 +68,16 @@ class RestInterface(Interface):
                 path = Path(
                     kwargs["experiment_path"],
                     "results",
-                    step.id + "_" + response.action_msg,
+                    step.id + "_" + Path(response.action_msg).name,
                 )
+                path.parent.mkdir(parents=True, exist_ok=True)
             else:
-                path = Path(step.id + response.action_msg)
+                path = Path(step.id + "_" + Path(response.action_msg).name)
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
             response.action_msg = str(path)
         else:
             response = StepResponse.model_validate(rest_response.json())
-        print(response)
         action_response = response.action_response
         action_msg = response.action_msg
         action_log = response.action_log

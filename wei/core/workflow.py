@@ -1,5 +1,6 @@
 """The module that initializes and runs the step by step WEI workflow"""
 from typing import Any, Dict, Optional
+import traceback
 
 from wei.core.data_classes import (
     Module,
@@ -71,11 +72,13 @@ def run_step(
     except Exception as e:
         logger.info(f"Exception occurred while running step with name: {step.name}")
         logger.debug(str(e))
+        logger.debug(traceback.format_exc())
         step_response = StepResponse(
             action_response=StepStatus.FAILED,
             action_msg="Exception occurred while running step",
             action_log=str(e),
         )
+        print(traceback.format_exc())
     else:
         logger.info(f"Finished running step with name: {step.name}")
 
@@ -132,7 +135,6 @@ def create_run(
         a completely initialized workflow run
     """
     validate_module_names(workflow, workcell)
-    print(workflow)
     wf_dict = workflow.model_dump()
     wf_dict.update(
         {

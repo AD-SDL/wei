@@ -42,7 +42,6 @@ async def start_run(
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
     try:
-        print(state_manager._redis_server)
         workflow_content = await workflow.read()
         workflow_content_str = workflow_content.decode("utf-8")
         wf = Workflow(**yaml.safe_load(workflow_content_str))

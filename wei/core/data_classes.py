@@ -354,18 +354,19 @@ class StepResponse(BaseModel):
     def to_headers(self) -> Dict[str, str]:
         """Converts the response to a dictionary of headers"""
         return {
-            "X-WEI-action_response": str(self.action_response),
-            "X-WEI-action_msg": self.action_msg,
-            "X-WEI-action_log": self.action_log,
+            "x-wei-action_response": str(self.action_response),
+            "x-wei-action_msg": self.action_msg,
+            "x-wei-action_log": self.action_log,
         }
 
     @classmethod
     def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
         """Creates a StepResponse from the headers of a file response"""
+        print(headers)
         return cls(
-            action_response=StepStatus(headers["X-WEI-action_response"]),
-            action_msg=headers["X-WEI-action_msg"],
-            action_log=headers["X-WEI-action_log"],
+            action_response=StepStatus(headers["x-wei-action_response"]),
+            action_msg=headers["x-wei-action_msg"],
+            action_log=headers["x-wei-action_log"],
         )
 
 

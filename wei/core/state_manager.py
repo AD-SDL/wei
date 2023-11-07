@@ -103,7 +103,6 @@ class StateManager:
         """
         Returns the current workcell as a WorkcellData object
         """
-        print(self._workcell)
         return WorkcellData.model_validate(self._workcell.to_dict())
 
     def set_workcell(self, workcell: WorkcellData) -> None:
@@ -207,7 +206,6 @@ class StateManager:
         """
         Returns a module by name
         """
-        print(self._modules)
         return Module.model_validate(self._modules[module_name])
 
     def get_all_modules(self) -> Dict[str, Module]:

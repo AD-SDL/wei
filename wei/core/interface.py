@@ -1,4 +1,4 @@
-"""standardizes communications with different damons"""
+"""standardizes communications with different types of module interfaces"""
 
 from typing import Union, Dict, Type
 
