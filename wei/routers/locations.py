@@ -1,9 +1,12 @@
 """
 Router for the "locations" endpoints
 """
+from typing import Union
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
+from wei.core.data_classes import Location
 from wei.core.state_manager import StateManager
 
 router = APIRouter()
@@ -38,10 +41,10 @@ def show_states() -> JSONResponse:
         )
 
 
-@router.get("/{location}/state")
+@router.get("/{location}/state", response_model=None)
 def loc(
     location: str,
-) -> JSONResponse:
+) -> Union[JSONResponse, HTTPException]:
     """
 
     Describes the state of the workcell locations
@@ -85,8 +88,8 @@ async def update(
          the state of the workcell locations, with the id of the run that last filled the location
     """
 
-    def update_location_state(location: dict, value: str) -> dict:
-        location["state"] = "Empty"
+    def update_location_state(location: Location, value: str) -> Location:
+        location.state = value
         return location
 
     with state_manager.state_lock():

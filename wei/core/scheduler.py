@@ -13,7 +13,14 @@ state_manager = StateManager()
 
 
 class Scheduler:
-    def run_iteration(self):
+    """Handles scheduling workflow steps on the workcell."""
+
+    def run_iteration(self) -> None:
+        """
+        Runs a single iteration of the scheduler, checking each workflow to see if it is able to run.
+        If a workflow is able to run, it is started in a separate process.
+        Workflows are processed in the order they are received, so older workflows have priority.
+        """
         with state_manager.state_lock():
             # * Update all queued workflows
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():

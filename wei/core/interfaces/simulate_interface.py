@@ -1,8 +1,10 @@
 """Handling simulated execution for steps in the RPL-SDL efforts"""
-from wei.core.data_classes import Interface, Step, StepStatus
+from typing import Any, Tuple, Dict
+
+from wei.core.data_classes import Interface, Module, Step, StepStatus
 
 
-def silent_callback(step: Step, **kwargs):
+def silent_callback(step: Step, **kwargs: Any) -> Tuple[str, str, str]:
     """prints a single step from a workflow using no messaging framework
 
     Parameters
@@ -23,15 +25,12 @@ def silent_callback(step: Step, **kwargs):
 class SimulateInterface(Interface):
     """A simulated interface for testing WEI workflows"""
 
-    def __init__(self):
-        """Initializes the simulated interface"""
-        pass
-
     @staticmethod
-    def config_validator(config: dict) -> bool:
+    def config_validator(config: Dict[str, Any]) -> bool:
         """Validates the configuration for the interface"""
         return True
 
-    def send_action(step: Step, **kwargs):
+    @staticmethod
+    def send_action(step: Step, module: Module, **kwargs: Any) -> Tuple[str, str, str]:
         """Pretends to execute a single step from a workflow, really just prints the step"""
         return silent_callback(step, **kwargs)

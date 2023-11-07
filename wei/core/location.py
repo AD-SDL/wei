@@ -1,19 +1,23 @@
 """Provides methods and classes to work with locations"""
 
-from wei.config import Config
-from wei.core.data_classes import Location, WorkflowRun
+from typing import Any, Union
+
+from wei.core.data_classes import Location, Module, WorkflowRun
 from wei.core.state_manager import StateManager
 
 state_manager = StateManager()
 
 
-def initialize_workcell_locations():
+def initialize_workcell_locations() -> None:
+    """Initialize all locations in the workcell."""
     workcell = state_manager.get_workcell()
     for module_name in workcell.locations:
         for location_name, coordinates in workcell.locations[module_name].items():
             try:
 
-                def update_coordinates(location, coordinates, module_name):
+                def update_coordinates(
+                    location: Location, coordinates: Any, module_name: str
+                ) -> Location:
                     location.coordinates[module_name] = coordinates
                     return location
 
@@ -38,18 +42,24 @@ def update_source_and_target(wf_run: WorkflowRun) -> None:
     steps = wf_run.steps
 
     # Define some helper functions to update the "queue" properties of modules and locations
-    def remove_element_from_queue(object, element):
+    def remove_element_from_queue(
+        object: Union[Location, Module], element: str
+    ) -> Union[Location, Module]:
         try:
             object.queue.remove(element)
         except ValueError:
             pass
         return object
 
-    def append_element_to_queue(object, element):
+    def append_element_to_queue(
+        object: Union[Location, Module], element: str
+    ) -> Union[Location, Module]:
         object.queue.append(element)
         return object
 
-    def update_location_state(object, element):
+    def update_location_state(
+        object: Union[Location, Module], element: str
+    ) -> Union[Location, Module]:
         object.state = element
         return object
 

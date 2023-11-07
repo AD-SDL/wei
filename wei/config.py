@@ -5,10 +5,9 @@ Handles the configuration of the engine and server.
 import logging
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
-import yaml
+
 import fakeredis
-# import os
-# from dotenv import load_dotenv
+import yaml
 
 
 class Config:
@@ -27,17 +26,16 @@ class Config:
     redis_host = "localhost"
     redis_port = "6379"
     data_directory = Path("./tests")
-    fakeredis = fakeredis.FakeStrictRedis(version=6)
+    fake_redis = fakeredis.FakeStrictRedis(version=6)
     log_level = 1
     test = True
 
     @staticmethod
-    def load_config(args: Namespace):
-        # load_dotenv()
-        # WORKCELL_FILE = os.environ.get("WORKCELL_FILE", None)
+    def load_config(args: Namespace) -> None:
+        """Populates the config from the command line arguments"""
         Config.workcell_file = args.workcell
         with open(args.workcell, "r") as f:
-            Config.workcell_name = yaml.safe_load(f)["name"]
+            Config.workcell_name = str(yaml.safe_load(f)["name"])
         Config.redis_host = args.redis_host
         Config.redis_port = args.redis_port
         Config.update_interval = args.update_interval
@@ -47,6 +45,7 @@ class Config:
         Config.data_directory = Path(args.data_dir)
         Config.log_level = logging.INFO
         Config.configured = True
+
     @staticmethod
     def parse_args() -> Namespace:
         """Parse engine's command line arguments."""
@@ -101,5 +100,3 @@ class Config:
             default=Path.home() / ".wei",
         )
         return parser.parse_args()
-
-

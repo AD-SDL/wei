@@ -7,8 +7,8 @@ from wei.config import Config
 from wei.routers import experiments, locations, modules, runs, workcells
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+@asynccontextmanager  # type: ignore
+async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     """Initial run function for the app, parses the workcell argument
         Parameters
         ----------
@@ -41,6 +41,7 @@ app = FastAPI(
 
 if __name__ == "__main__":
     import uvicorn
+
     args = Config.parse_args()
     Config.load_config(args)
     uvicorn.run(

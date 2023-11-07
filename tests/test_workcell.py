@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import yaml
 from devtools import debug
 from test_base import TestWEI_Base
 
