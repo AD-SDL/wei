@@ -33,12 +33,14 @@ class TestWEI_Locations(TestWEI_Base):
                 )
 
                 response = json.loads(v.body)
+                print(response)
                 self.assertListEqual(
                     response["wf"]["steps"][1]["args"]["source"], [0, 0, 0, 0, 0, 0]
                 )
                 self.assertListEqual(
                     response["wf"]["steps"][1]["args"]["target"], [0, 0, 0, 0, 0, 0]
                 )
+
 
     def test_workflow_running(self):
         from pathlib import Path
@@ -52,7 +54,7 @@ class TestWEI_Locations(TestWEI_Base):
         print(workflow_def)
         
         with open("test.json", 'w') as f2:
-            json.dump({}, f2)
+            json.dump({"test": 5}, f2)
         with open(workflow_config_path, "rb") as f:
             with open("test.json", "rb") as f2:
                 file = UploadFile(f)
