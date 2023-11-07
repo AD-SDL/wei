@@ -19,7 +19,7 @@ class TestWEI_Locations(TestWEI_Base):
         #from wei.core.workflow import WorkflowRunner
         state_manager = StateManager()
         state_manager.set_workcell(WorkcellData.from_yaml("tests/test_workcell.yaml"))
-        workflow_config_path = Path("test_workflow.yaml")
+        workflow_config_path = Path("tests/test_workflow.yaml")
         workflow_def = yaml.safe_load(workflow_config_path.read_text())
         arg_before_replace = workflow_def["flowdef"][1]["args"]
         self.assertEqual(arg_before_replace["source"], "webcam.pos")
