@@ -11,7 +11,7 @@ class Test_Workcell_Base(TestWEI_Base):
     def test_workcell_property(self):
         from wei.core.workcell import WorkcellData
 
-        workcell_config_path = Path("./test_workcell.yaml")
+        workcell_config_path = Path("tests/test_workcell.yaml")
         workcell = WorkcellData.from_yaml(workcell_config_path)
 
         debug(workcell)
