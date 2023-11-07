@@ -34,7 +34,7 @@ services:
     container_name: sleeper_node
     volumes:
       - ./wei:/wei/wei
-    command: python /wei/examples/example_clients/sleep_rest_node.py
+    command: python /wei/examples/example_nodes/sleep_rest_node.py
     ports:
       - 2000:2000
   webcam_node:
@@ -46,7 +46,7 @@ services:
       - /dev/video0:/dev/video0
     ports:
       - 2001:2001
-    command: python /wei/examples/example_clients/webcam_rest_node.py
+    command: python /wei/examples/example_nodes/webcam_rest_node.py
   wei_jupyter:
     image: wei_jupyter
     container_name: wei_jupyter

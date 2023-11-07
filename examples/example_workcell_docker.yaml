@@ -24,8 +24,10 @@ modules:
     config:
       rest_node_address: "http://webcam_node:2001"
       rest_node_auth: ""
-    workcell_coordinates: [15, 0, 0, 0, 0, 0]
+    workcell_coordinates: [10, 0, 0, 0, 0, 0]
 
 locations:
   webcam:
-    webcam.pos: [0, 0, 0, 0, 0, 0]
+    webcam.pos: 0
+  workcell:
+    webcam.pos: [15, 0, 0, 0, 0, 0]

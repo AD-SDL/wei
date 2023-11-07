@@ -16,7 +16,7 @@ from wei_services.srv import WeiActions, WeiDescription
 class Example_Client(Node):
 
     """
-    The init function is neccesary for the sealerNode class to initialize all variables, parameters, and other functions.
+    The init function is necessary for the sealerNode class to initialize all variables, parameters, and other functions.
     Inside the function the parameters exist, and calls to other functions and services are made so they can be executed in main.
     """
 
@@ -26,7 +26,7 @@ class Example_Client(Node):
         super().__init__(TEMP_NODE_NAME)
         self.node_name = self.get_name()
 
-        self.state = "UNKOWN"
+        self.state = "UNKNOWN"
         self.robot_status = ""
         self.action_flag = "READY"
         self.reset_request_count = 0
@@ -113,7 +113,7 @@ class Example_Client(Node):
         -----------
         request: str
             Request to the robot to perform an action
-        respone: bool
+        response: bool
             If action is performed
 
         Returns

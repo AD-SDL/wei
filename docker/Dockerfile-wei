@@ -12,9 +12,10 @@ COPY examples /wei/examples
 
 
 # Install dependencies
-RUN python -m pip install --upgrade pip
-RUN pip install -r wei/requirements/requirements.txt
-RUN pip install -r wei/requirements/dev.txt
+RUN python -m pip install --upgrade pip wheel setuptools && \
+    pip install --no-cache-dir -r wei/requirements/requirements.txt && \
+    pip install --no-cache-dir -r wei/requirements/dev.txt && \
+    pip install --no-cache-dir -r wei/requirements/examples.txt
 
 # Install wei
 RUN pip install -e /wei

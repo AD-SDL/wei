@@ -15,6 +15,7 @@ class StepExecutor:
         step_module: Module,
         logger: Optional[logging.Logger] = None,
         simulate: bool = False,
+        exp_path: Optional[str] = None,
         **kwargs,
     ) -> StepStatus:
         """Executes a single step from a workflow without making any message calls
@@ -29,9 +30,9 @@ class StepExecutor:
         action_response: StepStatus
             A status of the step (in theory provides async support with IDLE, RUNNING, but for now is just SUCCEEDED/FAILED)
         action_msg: str
-            the data or informtaion returned from running the step.
+            the data or information returned from running the step.
         action_log: str
-            A record of the exeution of the step
+            A record of the execution of the step
 
         """
         assert (
@@ -45,11 +46,11 @@ class StepExecutor:
         if simulate:
             action_response, action_msg, action_log = Interface_Map.function[
                 "simulate_callback"
-            ].send_action(step, step_module=step_module)
+            ].send_action(step, step_module=step_module, exp_path=exp_path)
         else:
             action_response, action_msg, action_log = Interface_Map.function[
                 step_module.interface
-            ].send_action(step, step_module=step_module)
+            ].send_action(step, step_module=step_module, exp_path=exp_path)
 
         logger.info(f"Finished running step with name: {step.name}")
 

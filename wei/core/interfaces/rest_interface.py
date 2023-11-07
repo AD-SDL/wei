@@ -1,10 +1,11 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
 import json
+from pathlib import Path
 from typing import Tuple
 
 import requests
 
-from wei.core.data_classes import Interface, Module, Step
+from wei.core.data_classes import Interface, Module, Step, StepResponse
 
 
 class RestInterface(Interface):
@@ -41,10 +42,26 @@ class RestInterface(Interface):
             url,
             headers=headers,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
-        ).json()
-        action_response = rest_response["action_response"]
-        action_msg = rest_response["action_msg"]
-        action_log = rest_response["action_log"]
+        )
+        if "X-WEI-action_response" in rest_response.headers:
+            response = StepResponse.from_headers(rest_response.headers)
+            if "exp_path" in kwargs.keys():
+                path = Path(
+                    kwargs["exp_path"],
+                    "results",
+                    step.id + "_" + response.action_msg,
+                )
+            else:
+                path = Path(step.id + response.action_msg)
+            with open(str(path), "wb") as f:
+                f.write(rest_response.content)
+            response.action_msg = str(path)
+        else:
+            response = StepResponse.model_validate(rest_response.json())
+        print(response)
+        action_response = response.action_response
+        action_msg = response.action_msg
+        action_log = response.action_log
 
         return action_response, action_msg, action_log
 

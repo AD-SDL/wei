@@ -7,6 +7,7 @@ from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar, Union
 
 import ulid
 import yaml
+from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
 from pydantic import Field, validator
 
@@ -302,6 +303,59 @@ class StepStatus(str, Enum):
     FAILED = "failed"
 
 
+class StepResponse(BaseModel):
+    """
+    Standard Response returned by module interfaces
+    in response to action requests
+    """
+
+    action_response: StepStatus = StepStatus.SUCCEEDED
+    """Whether the action succeeded, failed, is running, or is idle"""
+    action_msg: str = ""
+    """Any result from the action. If the result is a file, this should be the file name"""
+    action_log: str = ""
+    """Error or log messages resulting from the action"""
+
+    def to_headers(self) -> Dict[str, str]:
+        """Converts the response to a dictionary of headers"""
+        return {
+            "X-WEI-action_response": str(self.action_response),
+            "X-WEI-action_msg": self.action_msg,
+            "X-WEI-action_log": self.action_log,
+        }
+
+    @classmethod
+    def from_headers(cls, headers: Dict):
+        """Creates a StepResponse from the headers of a file response"""
+        return cls(
+            action_response=StepStatus(headers["X-WEI-action_response"]),
+            action_msg=headers["X-WEI-action_msg"],
+            action_log=headers["X-WEI-action_log"],
+        )
+
+
+class StepFileResponse(FileResponse):
+    """
+    Convenience wrapper for FastAPI's FileResponse class
+    If not using FastAPI, return a response with
+        - The file object as the response content
+        - The StepResponse parameters as custom headers, prefixed with "X-WEI-"
+    """
+
+    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
+        """
+        Returns a FileResponse with the given path as the response content
+        """
+        return super().__init__(
+            path=path,
+            headers=StepResponse(
+                action_response=action_response,
+                action_msg=str(path),
+                action_log=action_log,
+            ).to_headers(),
+        )
+
+
 class ExperimentStatus(str, Enum):
     """Status for an experiment"""
 
@@ -314,7 +368,7 @@ class Location(BaseModel):
 
     name: str
     """Name of the location"""
-    workcell_coordinates: Any
+    coordinates: Dict[str, Any]
     """Coordinates of the location"""
     state: Optional[str] = "Empty"
     """State of the location"""
