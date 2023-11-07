@@ -17,7 +17,7 @@ class Config:
     """
 
     configured = False
-    workcell_file = Path("./test_workcell.yaml")
+    workcell_file = Path("tests/test_workcell.yaml")
     workcell_name = "test_workcell"
     kafka_server = None
     reset_locations = "True"
@@ -26,7 +26,7 @@ class Config:
     server_port = "8000"
     redis_host = "localhost"
     redis_port = "6379"
-    data_directory = Path(".")
+    data_directory = Path("/tests")
     fakeredis = fakeredis.FakeStrictRedis(version=6)
     log_level = 1
     test = True
