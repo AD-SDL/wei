@@ -45,6 +45,7 @@ class Config:
         Config.data_directory = Path(args.data_dir)
         Config.log_level = logging.INFO
         Config.configured = True
+        Config.test = False
 
     @staticmethod
     def parse_args() -> Namespace:
@@ -55,7 +56,7 @@ class Config:
             "--redis_host",
             type=str,
             help="url (no port) for Redis server",
-            default="",
+            default="localhost",
         )
         parser.add_argument(
             "--redis_port",
