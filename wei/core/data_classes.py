@@ -208,12 +208,13 @@ class Step(BaseModel):
             try:
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
-                if arg_path.exists():
-                    try:
-                        yaml.safe_load(arg_path.open("r"))
-                        v[key] = yaml.safe_load(arg_path.open("r"))
-                    except IsADirectoryError:
-                        pass
+                if (
+                    arg_path.exists()
+                    and not arg_path.is_dir
+                    and (arg_path.suffix == ".yaml" or arg_path.suffix == ".yml")
+                ):
+                    yaml.safe_load(arg_path.open("r"))
+                    v[key] = yaml.safe_load(arg_path.open("r"))
             except TypeError:  # Is not a file
                 pass
 
@@ -362,15 +363,7 @@ class StepResponse(BaseModel):
     @classmethod
     def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
         """Creates a StepResponse from the headers of a file response"""
-        print(headers["x-wei-action_response"])
-        try:
-           cls(
-            action_response=StepStatus(headers["x-wei-action_response"]),
-            action_msg=headers["x-wei-action_msg"],
-            action_log=headers["x-wei-action_log"],
-        )
-        except Exception as e:
-            print(e)
+        print(headers)
         return cls(
             action_response=StepStatus(headers["x-wei-action_response"]),
             action_msg=headers["x-wei-action_msg"],

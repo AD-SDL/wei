@@ -2,7 +2,7 @@
 Router for the "experiments"/"exp" endpoints
 """
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from fastapi import APIRouter
 

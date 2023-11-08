@@ -2,11 +2,12 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
 
 import requests
 import ulid
 
+from wei.core.data_classes import WorkflowStatus
 from wei.core.events import Events
 
 
@@ -92,7 +93,7 @@ class ExperimentClient:
         payload_path = Path("~/.wei/temp/payload.txt")
         with open(payload_path.expanduser(), "w") as payload_file_handle:
             json.dump(payload, payload_file_handle)
-        with open(workflow_file, "rb") as workflow_file_handle:
+        with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
             with open(payload_path.expanduser(), "rb") as payload_file_handle:
                 params = {
                     "experiment_id": self.experiment_id,
@@ -119,13 +120,14 @@ class ExperimentClient:
         response_dict = self._return_response(response)
         if blocking:
             job_status = self.query_run(response_dict["run_id"])
-            print(job_status)
             while (
-                job_status["status"] != "completed"
-                and job_status["status"] != "failure"
+                job_status["status"] != WorkflowStatus.COMPLETED
+                and job_status["status"] != WorkflowStatus.FAILED
             ):
                 job_status = self.query_run(response_dict["run_id"])
-                print(f"Status: {job_status['status']}")
+                print(
+                    f"Step: {job_status['step_index']}; Status: {job_status['status']}"
+                )
                 time.sleep(1)
             return job_status
         return response_dict

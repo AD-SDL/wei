@@ -1,6 +1,7 @@
 """Handling ZMQ execution for steps in the RPL-SDL efforts"""
 import json
-from typing import Any, Tuple, Dict
+from typing import Any, Dict, Tuple
+
 import zmq
 
 from wei.core.data_classes import Interface, Module, Step
