@@ -74,10 +74,7 @@ class RestInterface(Interface):
                 print(path)
                 path.parent.mkdir(parents=True, exist_ok=True)
             else:
-                path = Path(step.id +"_"+ response.action_msg)
-                
-            print(path)
-                path = Path(step.id + "_" + Path(response.action_msg).name)
+                 path = Path(step.id + "_" + Path(response.action_msg).name)
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
                 print("wrotefile")
