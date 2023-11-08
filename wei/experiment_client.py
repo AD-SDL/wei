@@ -146,6 +146,12 @@ class ExperimentClient:
                         results[id] = run_status
             time.sleep(1)
         return results
+    
+    def get_file(self, result_path: str, step_id: str,  filename):
+        url = f"{self.url}/experiments/{self.experiment_id}/file"
+        path = Path(result_path, step_id+ "_"+filename)
+        response = requests.get(url, params={"filepath": path})
+
 
     def register_exp(self) -> Dict[Any, Any]:
         """Initializes an Experiment, and creates its log files

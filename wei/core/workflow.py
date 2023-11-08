@@ -70,7 +70,7 @@ def run_step(
         )
     except Exception as e:
         logger.info(f"Exception occurred while running step with name: {step.name}")
-        logger.debug(str(e))
+        logger.info(str(e))
         step_response = StepResponse(
             action_response=StepStatus.FAILED,
             action_msg="Exception occurred while running step",
@@ -95,11 +95,14 @@ def run_step(
         else:
             wf_run.status = WorkflowStatus.QUEUED
         wf_run.step_index += 1
+    print("done2")
     with state_manager.state_lock():
         update_source_and_target(wf_run)
         state_manager.set_workflow_run(wf_run)
+        print("adfjlkasjdf;lkasjf")
+        get_experiment_event_server(wf_run.experiment_id).log_comment(str(state_manager.get_workflow_run(wf_run.run_id).step_index))
 
-
+    print("after")
 def create_run(
     workflow: Workflow,
     workcell: WorkcellData,
@@ -132,7 +135,6 @@ def create_run(
         a completely initialized workflow run
     """
     validate_module_names(workflow, workcell)
-    print(workflow)
     wf_dict = workflow.model_dump()
     wf_dict.update(
         {

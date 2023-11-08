@@ -30,6 +30,15 @@ async def log_return(experiment_id: str) -> str:
     ) as f:
         return f.read()
 
+@router.get("/{experiment_id}/file")
+async def get_file(filepath: str) -> str:
+    """Returns the log for a given experiment"""
+
+    with open(
+        Path(filepath), 
+        "r",
+    ) as f:
+        return f.read()
 
 @router.post("/")
 def process_exp(

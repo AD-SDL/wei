@@ -46,6 +46,7 @@ class TestWEI_Locations(TestWEI_Base):
         from pathlib import Path
 
         state_manager = StateManager()
+        print(state_manager.state_lock())
         engine = Engine()
         state_manager.set_workcell(WorkcellData.from_yaml("tests/test_workcell.yaml"))
         workflow_config_path = Path("tests/test_workflow.yaml")
@@ -76,8 +77,30 @@ class TestWEI_Locations(TestWEI_Base):
                     response["wf"]["steps"][1]["args"]["target"], [0, 0, 0, 0, 0, 0]
                 )
         scheduler = Scheduler()
-
+        print(state_manager.state_lock())
         scheduler.run_iteration()
+        with state_manager.state_lock():
+            print("testing here")
+        
+        v = get_run_status(response["run_id"])
+        scheduler.run_iteration()
+        print(state_manager.get_workflow_run(response["run_id"]))
+        print("first")
         v = get_run_status(response["run_id"])
         scheduler.run_iteration()
         v = get_run_status(response["run_id"])
+        print(v)
+        with state_manager.state_lock():
+            print("second")
+        scheduler.run_iteration()
+        # while  state_manager.get_workflow_run(response["run_id"]).step_index == 0:
+        #     pass
+        scheduler.run_iteration()
+        scheduler.run_iteration()
+        scheduler.run_iteration()
+        with state_manager.state_lock():
+            print("testing here")
+        print(state_manager.get_workflow_run(response["run_id"]))
+        print(state_manager.state_lock())
+        print(v)
+        raise('e')
