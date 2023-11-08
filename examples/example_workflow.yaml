@@ -28,4 +28,4 @@ flowdef:
     module: webcam
     action: take_picture
     args:
-      image_name: "snapshot.jpg"
+      file_name: "snapshot.jpg"

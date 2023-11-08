@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from fastapi import APIRouter
+from fastapi.responses import FileResponse
 
 from wei.core.experiment import Experiment, create_experiment
 from wei.core.loggers import WEI_Logger
@@ -33,12 +34,7 @@ async def log_return(experiment_id: str) -> str:
 @router.get("/{experiment_id}/file")
 async def get_file(filepath: str) -> str:
     """Returns the log for a given experiment"""
-
-    with open(
-        Path(filepath), 
-        "r",
-    ) as f:
-        return f.read()
+    return FileResponse(filepath)
 
 @router.post("/")
 def process_exp(

@@ -65,16 +65,15 @@ class RestInterface(Interface):
         if "x-wei-action_response" in rest_response.headers:
             response = StepResponse.from_headers(dict(rest_response.headers))
             print("here2")
-            if "experiment_path" in kwargs.keys():
+            if "run_dir" in kwargs.keys():
                 path = Path(
-                    kwargs["experiment_path"],
-                    "runs",
-                    step.id + "_" + response.action_msg,
+                    kwargs["run_dir"],
+                    "results",
+                    Path(step.id + "_" + Path(response.action_msg).name)
                 )
-                print(path)
                 path.parent.mkdir(parents=True, exist_ok=True)
             else:
-                 path = Path(step.id + "_" + Path(response.action_msg).name)
+                path = Path(step.id + "_" + Path(response.action_msg).name)
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
                 print("wrotefile")

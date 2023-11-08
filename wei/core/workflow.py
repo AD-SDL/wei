@@ -62,7 +62,7 @@ def run_step(
         action_response, action_msg, action_log = InterfaceMap.interfaces[
             interface
         ].send_action(
-            step=step, module=module, experiment_path=experiment.experiment_dir
+            step=step, module=module, run_dir=wf_run.run_dir
         )
         step_response = StepResponse(
             action_response=action_response,

@@ -82,7 +82,7 @@ def do_action(
     state = ModuleStatus.BUSY
     try:
         if action_handle == "take_picture":
-            image_name = json.loads(action_vars)["image_name"]
+            image_name = json.loads(action_vars)["file_name"]
             camera = cv2.VideoCapture(0)
             _, frame = camera.read()
             cv2.imwrite(image_name, frame)
