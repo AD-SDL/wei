@@ -98,14 +98,12 @@ def run_step(
         else:
             wf_run.status = WorkflowStatus.QUEUED
         wf_run.step_index += 1
-    print("done2")
+
     with state_manager.state_lock():
         update_source_and_target(wf_run)
         state_manager.set_workflow_run(wf_run)
-        print("adfjlkasjdf;lkasjf")
         get_experiment_event_server(wf_run.experiment_id).log_comment(str(state_manager.get_workflow_run(wf_run.run_id).step_index))
 
-    print("after")
 def create_run(
     workflow: Workflow,
     workcell: WorkcellData,

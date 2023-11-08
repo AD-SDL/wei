@@ -64,7 +64,6 @@ class RestInterface(Interface):
         )
         if "x-wei-action_response" in rest_response.headers:
             response = StepResponse.from_headers(dict(rest_response.headers))
-            print("here2")
             if "run_dir" in kwargs.keys():
                 path = Path(
                     kwargs["run_dir"],
@@ -76,7 +75,6 @@ class RestInterface(Interface):
                 path = Path(step.id + "_" + Path(response.action_msg).name)
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
-                print("wrotefile")
             response.action_msg = str(path)
         else:
             response = StepResponse.model_validate(rest_response.json())
