@@ -8,8 +8,9 @@ from test_base import TestWEI_Base
 from wei.core.data_classes import WorkcellData
 from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
-from wei.routers.runs import get_run_status, start_run
 from wei.engine import Engine
+from wei.routers.runs import get_run_status, start_run
+
 
 class TestWEI_Locations(TestWEI_Base):
     def test_workflow_replace_locations(self):
@@ -41,7 +42,6 @@ class TestWEI_Locations(TestWEI_Base):
                     response["wf"]["steps"][1]["args"]["target"], [0, 0, 0, 0, 0, 0]
                 )
 
-
     def test_workflow_running(self):
         from pathlib import Path
 
@@ -52,8 +52,8 @@ class TestWEI_Locations(TestWEI_Base):
         workflow_def = yaml.safe_load(workflow_config_path.read_text())
         arg_before_replace = workflow_def["flowdef"][1]["args"]
         print(workflow_def)
-        
-        with open("test.json", 'w') as f2:
+
+        with open("test.json", "w") as f2:
             json.dump({"test": 5}, f2)
         with open(workflow_config_path, "rb") as f:
             with open("test.json", "rb") as f2:

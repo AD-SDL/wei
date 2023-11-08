@@ -1,6 +1,6 @@
 """standardizes communications with different types of module interfaces"""
 
-from typing import Union, Dict, Type
+from typing import Dict, Type, Union
 
 from wei.core.interfaces.rest_interface import RestInterface
 from wei.core.interfaces.ros2_interface import ROS2Interface

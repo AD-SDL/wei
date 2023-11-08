@@ -1,7 +1,7 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
 import json
 from pathlib import Path
-from typing import Any, Tuple, Dict
+from typing import Any, Dict, Tuple
 
 import requests
 
@@ -62,7 +62,7 @@ class RestInterface(Interface):
             url,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
         )
-        if "X-WEI-action_response" in rest_response.headers:
+        if "x-wei-action_response" in rest_response.headers:
             response = StepResponse.from_headers(dict(rest_response.headers))
             if "experiment_path" in kwargs.keys():
                 path = Path(

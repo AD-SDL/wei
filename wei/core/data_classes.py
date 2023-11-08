@@ -208,12 +208,13 @@ class Step(BaseModel):
             try:
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
-                if arg_path.exists():
-                    try:
-                        yaml.safe_load(arg_path.open("r"))
-                        v[key] = yaml.safe_load(arg_path.open("r"))
-                    except IsADirectoryError:
-                        pass
+                if (
+                    arg_path.exists()
+                    and not arg_path.is_dir
+                    and (arg_path.suffix == ".yaml" or arg_path.suffix == ".yml")
+                ):
+                    yaml.safe_load(arg_path.open("r"))
+                    v[key] = yaml.safe_load(arg_path.open("r"))
             except TypeError:  # Is not a file
                 pass
 
@@ -375,7 +376,7 @@ class StepFileResponse(FileResponse):
     Convenience wrapper for FastAPI's FileResponse class
     If not using FastAPI, return a response with
         - The file object as the response content
-        - The StepResponse parameters as custom headers, prefixed with "X-WEI-"
+        - The StepResponse parameters as custom headers, prefixed with "x-wei-"
     """
 
     def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):

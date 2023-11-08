@@ -3,7 +3,7 @@
 import fnmatch
 import os
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import ulid
 

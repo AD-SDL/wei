@@ -1,6 +1,6 @@
 """The module that initializes and runs the step by step WEI workflow"""
-from typing import Any, Dict, Optional
 import traceback
+from typing import Any, Dict, Optional
 
 from wei.core.data_classes import (
     Module,

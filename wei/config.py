@@ -26,7 +26,7 @@ class Config:
     redis_host = "localhost"
     redis_port = "6379"
     data_directory = Path("./tests")
-    fake_redis = fakeredis.FakeStrictRedis(version=6) # type: ignore
+    fake_redis = fakeredis.FakeStrictRedis(version=6)  # type: ignore
     log_level = 1
     test = True
 
