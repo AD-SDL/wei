@@ -18,6 +18,10 @@ _T = TypeVar("_T")
 PathLike = Union[str, Path]
 
 
+def ulid_factory():
+    return ulid.new().str
+
+
 class BaseModel(_BaseModel):
     """Allows any sub-class to inherit methods allowing for programmatic description of protocols
     Can load a yaml into a class and write a class into a yaml file.
@@ -100,7 +104,7 @@ class Module(BaseModel):
     """Whether or not the robot is active"""
 
     # Runtime values
-    id: str = Field(default=ulid.new().str)
+    id: str = Field(default_factory=ulid_factory)
     """Robot id"""
     state: ModuleStatus = Field(default=ModuleStatus.INIT)
     """Current state of the module"""
@@ -194,7 +198,7 @@ class Step(BaseModel):
     """Other steps required to be done before this can start"""
     priority: Optional[int] = None
     """For scheduling"""
-    id: str = Field(default=ulid.new().str)
+    id: str = Field(default_factory=ulid_factory)
     """ID of step"""
     comment: Optional[str] = None
     """Notes about step"""
@@ -272,7 +276,7 @@ class WorkflowRun(Workflow):
 
     label: Optional[str] = None
     """Label for the workflow run"""
-    run_id: str = Field(default=ulid.new().str)
+    run_id: str = Field(default_factory=ulid_factory)
     """ID of the workflow run"""
     payload: Dict[str, Any] = {}
     """input information for a given workflow run"""

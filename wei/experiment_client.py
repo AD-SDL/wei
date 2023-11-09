@@ -149,7 +149,6 @@ class ExperimentClient:
                 prior_index = step_index
             return run_info
         else:
-            time.sleep(1)
             run_info = self.query_run(response_dict["run_id"])
             return run_info
 

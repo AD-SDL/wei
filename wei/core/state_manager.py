@@ -84,6 +84,9 @@ class StateManager:
             self._locations.clear()
         self._workflow_runs.clear()
         self._workcell.clear()
+        self.state_change_marker = "0"
+        self._redis_server.set(f"{self._prefix}:state_changed", "0")
+        self.mark_state_changed()
 
     def mark_state_changed(self) -> int:
         """Marks the state as changed and returns the current state change counter"""

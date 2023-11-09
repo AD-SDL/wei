@@ -49,4 +49,4 @@ class Scheduler:
                         print(
                             f"Starting step {wf_run.name}.{step.name} for run: {run_id}"
                         )
-                    state_manager.set_workflow_run(wf_run)
+                        state_manager.set_workflow_run(wf_run)

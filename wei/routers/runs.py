@@ -50,7 +50,7 @@ async def start_run(
         if payload_dict is None:
             payload_dict = {}
         logger = WEI_Logger.get_experiment_logger(experiment_id)
-        logger.info("Received job run request")
+        logger.info(f"Received job run request: {wf.name}")
         workcell = state_manager.get_workcell()
 
         wf_run = create_run(wf, workcell, experiment_id, payload_dict, simulate)
