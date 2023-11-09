@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from wei.core.experiment import Experiment, create_experiment
 from wei.core.loggers import WEI_Logger
@@ -17,6 +18,7 @@ def log_experiment(experiment_id: str, log_value: str) -> None:
     """Logs a value to the log file for a given experiment"""
     logger = WEI_Logger.get_experiment_logger(experiment_id)
     logger.info(log_value)
+    return JSONResponse(status_code=200, content={"logged": log_value})
 
 
 @router.get("/{experiment_id}/log")
@@ -30,15 +32,17 @@ async def log_return(experiment_id: str) -> str:
     ) as f:
         return f.read()
 
+
 @router.get("/{experiment_id}/file")
 async def get_file(filepath: str) -> str:
     """Returns the log for a given experiment"""
 
     with open(
-        Path(filepath), 
+        Path(filepath),
         "r",
     ) as f:
         return f.read()
+
 
 @router.post("/")
 def process_exp(

@@ -81,7 +81,7 @@ class TestWEI_Locations(TestWEI_Base):
         scheduler.run_iteration()
         with state_manager.state_lock():
             print("testing here")
-        
+
         v = get_run_status(response["run_id"])
         scheduler.run_iteration()
         print(state_manager.get_workflow_run(response["run_id"]))
@@ -103,4 +103,4 @@ class TestWEI_Locations(TestWEI_Base):
         print(state_manager.get_workflow_run(response["run_id"]))
         print(state_manager.state_lock())
         print(v)
-        raise('e')
+        raise ("e")

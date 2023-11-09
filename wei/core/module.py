@@ -39,7 +39,7 @@ def query_module_status(module: Module) -> ModuleStatus:
             if isinstance(working_state, dict):
                 working_state = working_state["State"]
 
-            if not (working_state == ""):
+            if not (working_state == "" or working_state == "UNKNOWN"):
                 if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
                     print("Module Found: " + str(module_name))
                 state = ModuleStatus(working_state)

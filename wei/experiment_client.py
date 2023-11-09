@@ -119,17 +119,29 @@ class ExperimentClient:
         print(json.dumps(response.json(), indent=2))
         response_dict = self._return_response(response)
         if blocking:
-            job_status = self.query_run(response_dict["run_id"])
-            while (
-                job_status["status"] != WorkflowStatus.COMPLETED
-                and job_status["status"] != WorkflowStatus.FAILED
-            ):
-                job_status = self.query_run(response_dict["run_id"])
-                print(
-                    f"Step: {job_status['step_index']}; Status: {job_status['status']}"
-                )
+            prior_status = None
+            prior_index = None
+            while True:
+                run_info = self.query_run(response_dict["run_id"])
+                status = run_info["status"]
+                step_index = run_info["step_index"]
+                if prior_status != status or prior_index != step_index:
+                    print()
+                    print(
+                        f"{run_info['name']} [{step_index}]: {run_info['steps'][step_index]['name']} ({run_info['status']})",
+                        end="",
+                    )
+                else:
+                    print(".", end="")
                 time.sleep(1)
-            return job_status
+                if run_info["status"] in [
+                    WorkflowStatus.COMPLETED,
+                    WorkflowStatus.FAILED,
+                ]:
+                    break
+                prior_status = status
+                prior_index = step_index
+            return run_info
         return response_dict
 
     def await_runs(self, run_list: List[str]) -> Dict[Any, Any]:
@@ -148,12 +160,11 @@ class ExperimentClient:
                         results[id] = run_status
             time.sleep(1)
         return results
-    
-    def get_file(self, result_path: str, step_id: str,  filename):
-        url = f"{self.url}/experiments/{self.experiment_id}/file"
-        path = Path(result_path, step_id+ "_"+filename)
-        response = requests.get(url, params={"filepath": path})
 
+    def get_file(self, result_path: str, step_id: str, filename):
+        url = f"{self.url}/experiments/{self.experiment_id}/file"
+        path = Path(result_path, step_id + "_" + filename)
+        response = requests.get(url, params={"filepath": path})
 
     def register_exp(self) -> Dict[Any, Any]:
         """Initializes an Experiment, and creates its log files
