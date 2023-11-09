@@ -82,7 +82,7 @@ def do_action(
     state = ModuleStatus.BUSY
     try:
         if action_handle == "take_picture":
-            image_name = json.loads(action_vars)["image_name"]
+            image_name = json.loads(action_vars)["file_name"]
             camera = cv2.VideoCapture(0)
             _, frame = camera.read()
             cv2.imwrite(image_name, frame)
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     import uvicorn
 
     parser = ArgumentParser()
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host IP")
+    parser.add_argument("--host", type=str, default="10.0.0.219", help="Host IP")
     parser.add_argument("--port", type=str, default="2001", help="Port to serve on")
     args = parser.parse_args()
 

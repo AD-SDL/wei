@@ -1,11 +1,11 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
 import json
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 import requests
 
-from wei.core.data_classes import Interface, Module, Step, StepResponse
+from wei.core.data_classes import Interface, Module, Step, StepResponse, StepStatus
 
 
 class RestInterface(Interface):
@@ -15,8 +15,30 @@ class RestInterface(Interface):
         """Initializes the REST interface"""
         pass
 
-    def send_action(step: Step, **kwargs) -> Tuple[str, str, str]:
-        """Executes a single step from a workflow using a TCP messaging framework
+    @staticmethod
+    def config_validator(config: Dict[str, Any]) -> bool:
+        """Validates the configuration for the interface
+
+        Parameters
+        ----------
+        config : Dict
+            The configuration for the module
+
+        Returns
+        -------
+        bool
+            Whether the configuration is valid or not
+        """
+        for key in ["rest_node_address"]:
+            if key not in config:
+                return False
+        return True
+
+    @staticmethod
+    def send_action(
+        step: Step, module: Module, **kwargs: Any
+    ) -> Tuple[StepStatus, str, str]:
+        """Executes a single step from a workflow using a REST API
 
         Parameters
         ----------
@@ -33,58 +55,58 @@ class RestInterface(Interface):
             A record of the execution of the step
 
         """
-        module: Module = kwargs["step_module"]
         base_url = module.config["rest_node_address"]
         url = base_url + "/action"  # step.args["endpoint"]
-        headers = {}
 
         rest_response = requests.post(
             url,
-            headers=headers,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
         )
-        if "X-WEI-action_response" in rest_response.headers:
-            response = StepResponse.from_headers(rest_response.headers)
-            if "exp_path" in kwargs.keys():
+        if "x-wei-action_response" in rest_response.headers:
+            response = StepResponse.from_headers(dict(rest_response.headers))
+            if "run_dir" in kwargs.keys():
                 path = Path(
-                    kwargs["exp_path"],
+                    kwargs["run_dir"],
                     "results",
-                    step.id + "_" + response.action_msg,
+                    Path(step.id + "_" + Path(response.action_msg).name),
                 )
+                path.parent.mkdir(parents=True, exist_ok=True)
             else:
-                path = Path(step.id + response.action_msg)
+                path = Path(step.id + "_" + Path(response.action_msg).name)
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
             response.action_msg = str(path)
         else:
             response = StepResponse.model_validate(rest_response.json())
-        print(response)
         action_response = response.action_response
         action_msg = response.action_msg
         action_log = response.action_log
 
         return action_response, action_msg, action_log
 
-    def get_about(config: dict) -> requests.Response:
+    @staticmethod
+    def get_about(module: Module, **kwargs: Any) -> Any:
         """Gets the about information from the node"""
-        url = config["rest_node_address"]
+        url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/about",
         ).json()
         return rest_response
 
-    def get_state(config: dict) -> requests.Response:
+    @staticmethod
+    def get_state(module: Module, **kwargs: Any) -> Any:
         """Gets the state information from the node"""
-        url = config["rest_node_address"]
+        url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/state",
         ).json()
         return rest_response
 
-    def get_resources(config: dict) -> requests.Response:
+    @staticmethod
+    def get_resources(module: Module, **kwargs: Any) -> Any:
         """Gets the resources information from the node"""
-        url = config["rest_node_address"]
+        url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/resources",
         ).json()
-        return rest_response
+        return dict(rest_response)

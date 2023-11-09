@@ -1,29 +1,29 @@
 rpl\_wei.exp\_app
 =================
 
-.. automodule:: wei.exp_app
+.. automodule:: wei.experiment_client
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
+
+
+
+
+
+
+
+
    .. rubric:: Classes
 
    .. autosummary::
-   
-      Experiment
-   
-   
 
-   
-   
-   
+      ExperimentClient
+
+
+
+
+
+
 
 
 
