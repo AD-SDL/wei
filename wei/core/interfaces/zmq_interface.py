@@ -1,5 +1,6 @@
 """Handling ZMQ execution for steps in the RPL-SDL efforts"""
 import json
+from typing import Any, Dict, Tuple
 
 import zmq
 
@@ -9,11 +10,27 @@ from wei.core.data_classes import Interface, Module, Step
 class ZmqInterface(Interface):
     """Basic Interface for interacting with WEI modules using ZMQ"""
 
-    def __init__(self):
-        """Initializes the ZMQ interface"""
-        pass
+    @staticmethod
+    def config_validator(config: Dict[str, Any]) -> bool:
+        """Validates the configuration for the interface
 
-    def send_action(step: Step, **kwargs):
+        Parameters
+        ----------
+        config : dict
+            The configuration for the module
+
+        Returns
+        -------
+        bool
+            Whether the configuration is valid or not
+        """
+        for key in ["zmq_node_address", "zmq_node_port"]:
+            if key not in config:
+                return False
+        return True
+
+    @staticmethod
+    def send_action(step: Step, module: Module, **kwargs: Any) -> Tuple[str, str, str]:
         """Executes a single step from a workflow using a ZMQ messaging framework with the ZMQ library
 
         Parameters
@@ -31,7 +48,6 @@ class ZmqInterface(Interface):
             A record of the execution of the step
 
         """
-        module: Module = kwargs["step_module"]
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
         socket.connect(
@@ -42,15 +58,14 @@ class ZmqInterface(Interface):
             "action_handle": step.action,
             "action_vars": step.args,
         }
-        msg = json.dumps(msg)
-        socket.send_string(msg)
+        socket.send_string(json.dumps(msg))
         zmq_response = (
             socket.recv().decode()
         )  # does this need to be decoded with "utf-8"?
-        zmq_response = json.loads(zmq_response)
-        action_response = zmq_response.get("action_response")
-        action_msg = zmq_response.get("action_msg")
-        action_log = zmq_response.get("action_log")
+        zmq_response_dict = json.loads(zmq_response)
+        action_response = zmq_response_dict.get("action_response")
+        action_msg = zmq_response_dict.get("action_msg")
+        action_log = zmq_response_dict.get("action_log")
 
         socket.close()
         context.term()

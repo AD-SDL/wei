@@ -9,10 +9,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+from wei.core.data_classes import ModuleStatus, StepResponse, StepStatus
+
 workcell = None
 global state
-host = "0.0.0.0"  # Allows all connections from local network
-local_port = 2000
 
 
 @asynccontextmanager
@@ -28,10 +28,10 @@ async def lifespan(app: FastAPI):
         -------
         None"""
     try:
-        state = "IDLE"
+        state = ModuleStatus.IDLE
     except Exception as err:
         print(err)
-        state = "ERROR"
+        state = ModuleStatus.ERROR
 
     # Yield control to the application
     yield
@@ -48,7 +48,7 @@ app = FastAPI(
 @app.get("/state")
 def get_state():
     global state
-    if state != "BUSY":
+    if state != ModuleStatus.BUSY:
         pass
     return JSONResponse(content={"State": state})
 
@@ -71,57 +71,53 @@ def do_action(
     action_vars: str,
 ):
     global state
-    if state == "BUSY":
-        response_content = {
-            "action_msg": "StepStatus.Failed",
-            "action_response": "False",
-            "action_log": "Node is busy",
-        }
-        return JSONResponse(content=response_content)
-    state = "BUSY"
+    if state == ModuleStatus.BUSY:
+        return StepResponse(
+            action_response=StepStatus.Failed,
+            action_msg="",
+            action_log="Node is busy",
+        )
+    state = ModuleStatus.BUSY
     if action_handle:
         try:
             action_vars = json.loads(action_vars)
             print(type(action_vars))
             t = action_vars["t"]
             time.sleep(int(t))
-            response_content = {
-                "action_msg": "StepStatus.Succeeded",
-                "action_response": "True",
-                "action_log": "",
-            }
-            state = "IDLE"
+            state = ModuleStatus.IDLE
             print("success")
-            return JSONResponse(content=response_content)
+            return StepResponse(
+                action_response=StepStatus.SUCCEEDED,
+                action_msg="True",
+                action_log="",
+            )
         except Exception as e:
             print(e)
-            response_content = {
-                "action_msg": "StepStatus.Failed",
-                "action_response": "False",
-                "action_log": str(e),
-            }
-            state = "IDLE"
-            return JSONResponse(content=response_content)
+            state = ModuleStatus.ERROR
+            return StepResponse(
+                action_response=StepStatus.FAILED,
+                action_msg="False",
+                action_log=str(e),
+            )
     else:
-        response_content = {
-            "action_msg": "StepStatus.Failed",
-            "action_response": "False",
-            "action_log": "Action not supported",
-        }
-        state = "IDLE"
-        return JSONResponse(content=response_content)
+        state = ModuleStatus.IDLE
+        return StepResponse(
+            action_response=StepStatus.FAILED,
+            action_msg="False",
+            action_log="Action not supported",
+        )
 
 
 if __name__ == "__main__":
     import uvicorn
 
     parser = ArgumentParser()
-    parser.add_argument("--port", type=int, help="Port for the Node")
+    parser.add_argument("--port", type=int, default="2000", help="Port for the Node")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Port for the Node")
     args = parser.parse_args()
     uvicorn.run(
         "dummy_rest_node:app",
-        host=host,
+        host=args.host,
         port=args.port,
         reload=True,
-        ws_max_size=100000000000000000000000000000000000000,
     )

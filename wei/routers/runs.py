@@ -2,27 +2,26 @@
 Router for the "runs" endpoints
 """
 import json
-import os
-import re
-from pathlib import Path
 
 import yaml
-from fastapi import APIRouter, File, Request, UploadFile
+from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import WorkflowRun, WorkflowStatus
+from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.loggers import WEI_Logger
-from wei.core.workflow import WorkflowRunner
+from wei.core.state_manager import StateManager
+from wei.core.workflow import create_run
 
 router = APIRouter()
+
+state_manager = StateManager()
 
 
 @router.post("/start")
 async def start_run(
-    request: Request,
+    experiment_id: str,
     workflow: UploadFile = File(...),
     payload: UploadFile = File(...),
-    experiment_path: str = "",
     simulate: bool = False,
 ) -> JSONResponse:
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
@@ -42,65 +41,45 @@ async def start_run(
     response: Dict
        a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    state_manager = request.app.state_manager
     try:
-        log_dir = Path(experiment_path)
-        wf = WorkflowRun(
-            name=Path(workflow.filename).name.split(".")[0],
-            modules=[],
-            flowdef=[],
-            experiment_path=str(log_dir),
-        )
-        wf.label = wf.name
-        wf.run_dir = str(Path(log_dir, "runs", f"{wf.name}_{wf.run_id}"))
-        experiment_id = log_dir.name.split("_")[-1]
-        logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
-        logger.info("Received job run request")
-
         workflow_content = await workflow.read()
-        payload = await payload.read()
-        # Decode the bytes object to a string
         workflow_content_str = workflow_content.decode("utf-8")
-        wf.payload = json.loads(payload)
-        workflow_runner = WorkflowRunner(
-            workflow_def=yaml.safe_load(workflow_content_str),
-            workcell=state_manager.get_workcell(),
-            payload=wf.payload,
-            experiment_path=str(experiment_path),
-            run_id=wf.run_id,
-            simulate=simulate,
-            workflow_name=wf.name,
-        )
+        wf = Workflow(**yaml.safe_load(workflow_content_str))
+        payload_bytes = await payload.read()
+        payload_dict = json.loads(payload_bytes)
+        if payload_dict is None:
+            payload_dict = {}
+        logger = WEI_Logger.get_experiment_logger(experiment_id)
+        logger.info(f"Received job run request: {wf.name}")
+        workcell = state_manager.get_workcell()
 
-        flowdef = []
+        wf_run = create_run(wf, workcell, experiment_id, payload_dict, simulate)
 
-        for step in workflow_runner.steps:
-            flowdef.append(
-                {
-                    "step": json.loads(step["step"].json()),
-                    "locations": step["locations"],
-                }
-            )
-        wf.flowdef = flowdef
         with state_manager.state_lock():
-            state_manager.set_workflow_run(wf.run_id, wf)
+            state_manager.set_workflow_run(wf_run)
+        return JSONResponse(
+            content={
+                "wf": wf_run.model_dump(mode="json"),
+                "run_id": wf_run.run_id,
+                "status": str(wf_run.status),
+            }
+        )
     except Exception as e:  # noqa
         print(e)
-        wf.status = WorkflowStatus.FAILED
-        wf.hist["validation"] = f"Error: {e}"
-        with state_manager.state_lock():
-            state_manager.set_workflow_run(wf.run_id, wf)
-    return JSONResponse(
-        content={
-            "wf": wf.model_dump(mode="json"),
-            "run_id": wf.run_id,
-            "status": str(wf.status),
-        }
-    )
+        return JSONResponse(
+            status_code=500,
+            content={
+                "wf": wf.model_dump(mode="json"),
+                "error": f"Error: {e}",
+                "status": str(WorkflowStatus.FAILED),
+            },
+        )
 
 
 @router.get("/{run_id}/state")
-def get_run_status(run_id: str, request: Request) -> JSONResponse:
+def get_run_status(
+    run_id: str,
+) -> JSONResponse:
     """Pulls the status of a job on the queue
 
     Parameters
@@ -114,7 +93,6 @@ def get_run_status(run_id: str, request: Request) -> JSONResponse:
      response: Dict
        a dictionary including the status on the queueing, and the result of the job if it's done
     """
-    state_manager = request.app.state_manager
     try:
         with state_manager.state_lock():
             workflow = state_manager.get_workflow_run(run_id)
@@ -124,7 +102,7 @@ def get_run_status(run_id: str, request: Request) -> JSONResponse:
 
 
 @router.get("/{run_id}/log")
-async def log_run_return(run_id: str, experiment_path: str) -> str:
+async def log_run_return(run_id: str) -> str:
     """Parameters
     ----------
 
@@ -139,8 +117,7 @@ async def log_run_return(run_id: str, experiment_path: str) -> str:
     -------
     response: str
        a string with the log data for the run requested"""
-    log_dir = Path(experiment_path)
-    for file in os.listdir(log_dir / "wei_runs"):
-        if re.match(".*" + run_id, file):
-            with open(log_dir / "wei_runs" / file / "runLogger.log") as f:
-                return f.read()
+
+    wf_run = state_manager.get_workflow_run(run_id)
+    with open(wf_run.run_log) as f:
+        return f.read()

@@ -2,35 +2,48 @@
 Router for the "experiments"/"exp" endpoints
 """
 from pathlib import Path
+from typing import Dict, Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
+from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.experiment import start_experiment
+from wei.core.experiment import Experiment, create_experiment
 from wei.core.loggers import WEI_Logger
 
 router = APIRouter()
 
 
 @router.post("/{experiment_id}/log")
-def log_experiment(experiment_path: str, log_value: str) -> None:
+def log_experiment(experiment_id: str, log_value: str) -> None:
     """Logs a value to the log file for a given experiment"""
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.split("_id_")[-1]
-    logger = WEI_Logger.get_logger("log_" + experiment_id, log_dir)
+    logger = WEI_Logger.get_experiment_logger(experiment_id)
     logger.info(log_value)
+    return JSONResponse(status_code=200, content={"logged": log_value})
 
 
 @router.get("/{experiment_id}/log")
-async def log_return(experiment_path: str) -> str:
+async def log_return(experiment_id: str) -> str:
     """Returns the log for a given experiment"""
-    log_dir = Path(experiment_path)
-    experiment_id = log_dir.name.split("_")[-1]
-    with open(log_dir / Path("log_" + experiment_id + ".log"), "r") as f:
+    experiment = Experiment(experiment_id=experiment_id)
+
+    with open(
+        experiment.experiment_log_file,
+        "r",
+    ) as f:
         return f.read()
 
 
+@router.get("/{experiment_id}/file")
+async def get_file(filepath: str) -> str:
+    """Returns the log for a given experiment"""
+    return FileResponse(filepath)
+
+
 @router.post("/")
-def process_exp(experiment_name: str, experiment_id: str, request: Request) -> dict:
+def process_exp(
+    experiment_name: str,
+    experiment_id: Optional[str] = None,
+) -> Dict[str, Path]:
     """Pulls an experiment and creates the files and logger for it
 
     Parameters
@@ -46,6 +59,4 @@ def process_exp(experiment_name: str, experiment_id: str, request: Request) -> d
 
     """
 
-    # Decode the bytes object to a string
-    # Generate UUID for the experiment, really this should be done by the client (Experiment class)
-    return start_experiment(experiment_name, experiment_id, request.app.kafka_server)
+    return create_experiment(experiment_name, experiment_id)

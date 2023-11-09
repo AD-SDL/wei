@@ -1,14 +1,21 @@
 """
 Router for the "locations" endpoints
 """
-from fastapi import APIRouter, HTTPException, Request
+from typing import Union
+
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
+
+from wei.core.data_classes import Location
+from wei.core.state_manager import StateManager
 
 router = APIRouter()
 
+state_manager = StateManager()
+
 
 @router.get("/states")
-def show_states(request: Request) -> JSONResponse:
+def show_states() -> JSONResponse:
     """
 
     Describes the state of the workcell locations
@@ -22,8 +29,6 @@ def show_states(request: Request) -> JSONResponse:
      response: Dict
        the state of the workcell locations, with the id of the run that last filled the location
     """
-
-    state_manager = request.app.state_manager
 
     with state_manager.state_lock():
         return JSONResponse(
@@ -36,8 +41,10 @@ def show_states(request: Request) -> JSONResponse:
         )
 
 
-@router.get("/{location}/state")
-def loc(location: str, request: Request) -> JSONResponse:
+@router.get("/{location}/state", response_model=None)
+def loc(
+    location: str,
+) -> Union[JSONResponse, HTTPException]:
     """
 
     Describes the state of the workcell locations
@@ -50,8 +57,6 @@ def loc(location: str, request: Request) -> JSONResponse:
      response: Dict
        the state of the workcell locations, with the id of the run that last filled the location
     """
-    state_manager = request.app.state_manager
-
     try:
         with state_manager.state_lock():
             return JSONResponse(
@@ -67,7 +72,8 @@ def loc(location: str, request: Request) -> JSONResponse:
 
 @router.post("/{location_name}/set")
 async def update(
-    location_name: str, experiment_id: str, request: Request
+    location_name: str,
+    experiment_id: str,
 ) -> JSONResponse:
     """
     Manually update the state of a location in the workcell.
@@ -81,10 +87,9 @@ async def update(
         response: Dict
          the state of the workcell locations, with the id of the run that last filled the location
     """
-    state_manager = request.app.state_manager
 
-    def update_location_state(location: dict, value: str) -> dict:
-        location["state"] = "Empty"
+    def update_location_state(location: Location, value: str) -> Location:
+        location.state = value
         return location
 
     with state_manager.state_lock():

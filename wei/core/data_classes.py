@@ -3,17 +3,23 @@
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, ClassVar, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import ulid
 import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, validator
+from pydantic import Field, computed_field, field_serializer, validator
+
+from wei.core.experiment import Experiment
 
 _T = TypeVar("_T")
 
 PathLike = Union[str, Path]
+
+
+def ulid_factory():
+    return ulid.new().str
 
 
 class BaseModel(_BaseModel):
@@ -22,7 +28,7 @@ class BaseModel(_BaseModel):
     """
 
     class Config:
-        """Config for the BaseModel"""
+        """config for the BaseModel"""
 
         use_enum_values = True  # Needed to serialize/deserialize enums
 
@@ -49,7 +55,7 @@ class BaseModel(_BaseModel):
         """
         with open(filename) as fp:
             raw_data = yaml.safe_load(fp)
-        return cls(**raw_data)  # type: ignore[call-arg]
+        return cls(**raw_data)
 
 
 class Tag(BaseModel):
@@ -86,95 +92,91 @@ class Module(BaseModel):
     """type of the robot (e.g OT2, pf400, etc.) """
     interface: str
     """Type of client (e.g ros_wei_client)"""
-    config: Dict
+    config: Dict[str, Any] = {}
     """the necessary configuration for the robot, arbitrary dict"""
-    positions: Optional[dict] = {}
-    """Optional, if the robot supports positions we will use them"""
+    locations: List[str] = []
+    """Optional, associates named locations with a module"""
     tag: Optional[Tag] = None
     """Vision tag"""
-    workcell_coordinates: Optional[List] = []
+    workcell_coordinates: Optional[Any] = None
     """location in workcell"""
     active: Optional[bool] = True
     """Whether or not the robot is active"""
 
     # Runtime values
-    id: str = Field(default=ulid.new().str)
+    id: str = Field(default_factory=ulid_factory)
     """Robot id"""
-    state: Optional[ModuleStatus] = Field(default=ModuleStatus.INIT)
+    state: ModuleStatus = Field(default=ModuleStatus.INIT)
     """Current state of the module"""
-    queue: Optional[List[str]] = []
+    queue: List[str] = []
     """Queue of workflows to be run at this location"""
 
     @property
-    def location(self):
+    def location(self) -> Any:
         """Alias for workcell_coordinates"""
         return self.workcell_coordinates
 
     @validator("config")
-    def validate_config(cls, v, values, **kwargs):
-        """Validate the config field of the workcell config with special rules for each type of robot"""
-        config_validation = json.load(cls.config_validation.open())
-        interface_type = values.get("interface", "").lower()
+    def validate_config(cls, v: Any, values: Dict[str, Any], **kwargs: Any) -> Any:
+        """Validate the config field of the workcell config with special rules for each module interface"""
+        from wei.core.interface import InterfaceMap
 
-        if interface_type.lower() not in config_validation:
+        interface_type = str(values.get("interface", "")).lower()
+
+        if interface_type.lower() not in InterfaceMap.interfaces:
             raise ValueError(
-                f"Module type {interface_type} not in configuration validators"
+                f"Interface '{interface_type}' for module {values.get('name')} is invalid"
             )
 
-        req_fields = config_validation[interface_type]
-        for field in req_fields:
-            if field not in v:
-                raise ValueError(f"Required field `{field}` not in values")
-
-        return v
+        if InterfaceMap.interfaces[interface_type].config_validator(v):
+            return v
+        else:
+            raise ValueError(
+                f"Config for interface '{interface_type}' is invalid for module {values.get('name')}"
+            )
 
 
 class SimpleModule(BaseModel):
     """Simple module for use in the workflow file (does not need as much info)"""
 
     name: str
-    """Name, should correspond with a module rosnode"""
+    """Name, should correspond with a module ros node"""
 
 
 class Interface(BaseModel):
-    """standardizes communications with different daemons"""
+    """standardizes communications with various module interface implementations"""
 
     name: str
     """"""
 
-    def send_action(self, action):
+    @staticmethod
+    def send_action(
+        step: "Step", module: Module, **kwargs: Any
+    ) -> Tuple[str, str, str]:
         """sends an action"""
-        print(action)
-        print("Send Action not implemented")
-        return {}
+        raise NotImplementedError()
 
-    def get_about(
-        self,
-    ):
+    @staticmethod
+    def get_about(module: Module, **kwargs: Any) -> Any:
         """gets about information"""
-        print("Get About not implemented")
-        return {}
+        raise NotImplementedError()
 
-    def get_state(
-        self,
-    ):
+    @staticmethod
+    def get_state(module: Module, **kwargs: Any) -> Any:
         """gets the robot state"""
-        print("Get State not implemented")
-        return {}
+        raise NotImplementedError()
 
-    def get_resources(
-        self,
-    ):
+    @staticmethod
+    def get_resources(module: Module, **kwargs: Any) -> Any:
         """gets the robot resources"""
-        print("Get Resources not implemented")
-        return {}
+        raise NotImplementedError()
 
 
 class Step(BaseModel):
     """Container for a single step"""
 
     class Config:
-        """Config for the step"""
+        """config for the step"""
 
         arbitrary_types_allowed = True
 
@@ -184,37 +186,37 @@ class Step(BaseModel):
     """Module used in the step"""
     action: str
     """The command type to get executed by the robot"""
-    args: Optional[Dict] = {}
+    args: Dict[str, Any] = {}
     """Arguments for instruction"""
     checks: Optional[str] = None
     """For future use"""
-    requirements: Optional[Dict] = {}
+    locations: Dict[str, Any] = {}
+    """locations referenced in the step"""
+    requirements: Dict[str, Any] = {}
     """Equipment/resources needed in module"""
     dependencies: List[str] = []
     """Other steps required to be done before this can start"""
     priority: Optional[int] = None
     """For scheduling"""
-    id: str = Field(default=ulid.new().str)
+    id: str = Field(default_factory=ulid_factory)
     """ID of step"""
     comment: Optional[str] = None
     """Notes about step"""
 
-    # Assumes any path given to args is a yaml file
-    # TODO consider if we want any other files given to the workflow files
+    # Load any yaml arguments
     @validator("args")
-    def validate_args_dict(cls, v, **kwargs):
+    def validate_args_dict(cls, v: Any, **kwargs: Any) -> Any:
         """asserts that args dict is assembled correctly"""
         assert isinstance(v, dict), "Args is not a dictionary"
         for key, arg_data in v.items():
             try:
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
-                if arg_path.exists():
-                    try:
-                        yaml.safe_load(arg_path.open("r"))
-                        v[key] = yaml.safe_load(arg_path.open("r"))
-                    except IsADirectoryError:
-                        pass
+                if arg_path.exists() and (
+                    arg_path.suffix == ".yaml" or arg_path.suffix == ".yml"
+                ):
+                    yaml.safe_load(arg_path.open("r"))
+                    v[key] = yaml.safe_load(arg_path.open("r"))
             except TypeError:  # Is not a file
                 pass
 
@@ -237,11 +239,11 @@ class WorkcellData(BaseModel):
 
     name: str
     """Name of the workflow"""
-    config: Optional[Dict[str, Any]] = {}
+    config: Dict[str, Any] = {}
     """Globus search index, needed for publishing"""
     modules: List[Module]
     """The modules available to a workcell"""
-    locations: Optional[Dict[str, Any]] = {}
+    locations: Dict[str, Any] = {}
     """Locations used by the workcell"""
 
 
@@ -263,12 +265,10 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     modules: List[SimpleModule]
     """List of modules needed for the workflow"""
-    flowdef: List[Union[Step, Dict]]
-    """Steps of the flow"""
+    flowdef: List[Step]
+    """User Submitted Steps of the flow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
-    payload: Optional[Dict] = {}
-    """input information for a given workflow run"""
 
 
 class WorkflowRun(Workflow):
@@ -276,22 +276,60 @@ class WorkflowRun(Workflow):
 
     label: Optional[str] = None
     """Label for the workflow run"""
-    run_id: str = Field(default=ulid.new().str)
+    run_id: str = Field(default_factory=ulid_factory)
     """ID of the workflow run"""
+    payload: Dict[str, Any] = {}
+    """input information for a given workflow run"""
     status: WorkflowStatus = Field(default=WorkflowStatus.NEW)
     """current status of the workflow"""
-    result: Dict = Field(default={})
+    steps: List[Step] = []
+    """WEI Processed Steps of the flow"""
+    result: Dict[str, Any] = Field(default={})
     """result from the Workflow"""
-    hist: Dict = Field(default={})
+    hist: Dict[str, Any] = Field(default={})
     """history of the workflow"""
-    experiment_id: Optional[str] = None
+    experiment_id: str = ""
     """ID of the experiment this workflow is a part of"""
-    experiment_path: Optional[PathLike] = None
-    """Path to the experiment this workflow is a part of"""
     step_index: int = 0
     """Index of the current step"""
-    run_dir: Optional[PathLike] = None
-    """Path to the run directory"""
+    simulate: bool = False
+    """Whether or not this workflow is being simulated"""
+
+    @computed_field  # type: ignore
+    @property
+    def run_dir(self) -> Path:
+        """Path to the run directory"""
+        return Path(
+            Experiment(experiment_id=self.experiment_id).run_dir,
+            f"{self.name}_{self.run_id}",
+        )
+
+    @computed_field  # type: ignore
+    @property
+    def run_log(self) -> Path:
+        """Path to the run directory"""
+        return Path(
+            self.run_dir,
+            self.run_id + "_run_log.log",
+        )
+
+    @computed_field  # type: ignore
+    @property
+    def result_dir(self) -> Path:
+        """Path to the result directory"""
+        return Path(self.run_dir, "results")
+
+    @field_serializer("run_dir")
+    def _serialize_run_dir(self, run_dir: Path) -> str:
+        return str(run_dir)
+
+    @field_serializer("result_dir")
+    def _serialize_result_dir(self, result_dir: Path) -> str:
+        return str(result_dir)
+
+    @field_serializer("run_log")
+    def _serialize_run_log(self, run_log: Path) -> str:
+        return str(run_log)
 
 
 class StepStatus(str, Enum):
@@ -319,18 +357,19 @@ class StepResponse(BaseModel):
     def to_headers(self) -> Dict[str, str]:
         """Converts the response to a dictionary of headers"""
         return {
-            "X-WEI-action_response": str(self.action_response),
-            "X-WEI-action_msg": self.action_msg,
-            "X-WEI-action_log": self.action_log,
+            "x-wei-action_response": str(self.action_response),
+            "x-wei-action_msg": self.action_msg,
+            "x-wei-action_log": self.action_log,
         }
 
     @classmethod
-    def from_headers(cls, headers: Dict):
+    def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
         """Creates a StepResponse from the headers of a file response"""
+
         return cls(
-            action_response=StepStatus(headers["X-WEI-action_response"]),
-            action_msg=headers["X-WEI-action_msg"],
-            action_log=headers["X-WEI-action_log"],
+            action_response=StepStatus(headers["x-wei-action_response"]),
+            action_msg=headers["x-wei-action_msg"],
+            action_log=headers["x-wei-action_log"],
         )
 
 
@@ -339,7 +378,7 @@ class StepFileResponse(FileResponse):
     Convenience wrapper for FastAPI's FileResponse class
     If not using FastAPI, return a response with
         - The file object as the response content
-        - The StepResponse parameters as custom headers, prefixed with "X-WEI-"
+        - The StepResponse parameters as custom headers, prefixed with "x-wei-"
     """
 
     def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
@@ -356,13 +395,6 @@ class StepFileResponse(FileResponse):
         )
 
 
-class ExperimentStatus(str, Enum):
-    """Status for an experiment"""
-
-    FAILED = "failed"
-    CREATED = "created"
-
-
 class Location(BaseModel):
     """Container for a location"""
 
@@ -370,7 +402,7 @@ class Location(BaseModel):
     """Name of the location"""
     coordinates: Dict[str, Any]
     """Coordinates of the location"""
-    state: Optional[str] = "Empty"
+    state: str = "Empty"
     """State of the location"""
-    queue: Optional[List[str]] = []
+    queue: List[str] = []
     """Queue of workflows to be run at this location"""
