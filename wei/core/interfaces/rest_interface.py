@@ -64,11 +64,11 @@ class RestInterface(Interface):
         )
         if "x-wei-action_response" in rest_response.headers:
             response = StepResponse.from_headers(dict(rest_response.headers))
-            if "experiment_path" in kwargs.keys():
+            if "run_dir" in kwargs.keys():
                 path = Path(
-                    kwargs["experiment_path"],
-                    "runs",
-                    step.id + "_" + response.action_msg,
+                    kwargs["run_dir"],
+                    "results",
+                    Path(step.id + "_" + Path(response.action_msg).name)
                 )
                 path.parent.mkdir(parents=True, exist_ok=True)
             else:
