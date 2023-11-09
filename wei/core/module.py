@@ -19,12 +19,12 @@ def initialize_workcell_modules() -> None:
 
 def update_active_modules(initial: bool = False) -> None:
     """Update all active modules in the workcell."""
-    with state_manager.state_lock():
-        for module_name, module in state_manager.get_all_modules().items():
-            if module.active:
-                state = query_module_status(module)
-                if state != module.state:
-                    module.state = state
+    for module_name, module in state_manager.get_all_modules().items():
+        if module.active:
+            state = query_module_status(module)
+            if state != module.state:
+                module.state = state
+                with state_manager.state_lock():
                     state_manager.set_module(module_name, module)
 
 

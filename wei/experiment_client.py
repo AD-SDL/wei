@@ -66,9 +66,9 @@ class ExperimentClient:
     def start_run(
         self,
         workflow_file: Path,
-        payload: Optional[Dict[Any, Any]] = None,
-        simulate: Optional[bool] = False,
-        blocking: Optional[bool] = True,
+        payload: Dict[Any, Any] = {},
+        simulate: bool = False,
+        blocking: bool = True,
     ) -> Dict[Any, Any]:
         """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
@@ -126,23 +126,32 @@ class ExperimentClient:
                 status = run_info["status"]
                 step_index = run_info["step_index"]
                 if prior_status != status or prior_index != step_index:
+                    if step_index < len(run_info["steps"]):
+                        step_name = run_info['steps'][step_index]['name']
+                    else:
+                        step_name = "Workflow End"
                     print()
                     print(
-                        f"{run_info['name']} [{step_index}]: {run_info['steps'][step_index]['name']} ({run_info['status']})",
+                        f"{run_info['name']} [{step_index}]: {step_name} ({run_info['status']})",
                         end="",
+                        flush=True,
                     )
                 else:
-                    print(".", end="")
+                    print(".", end="", flush=True)
                 time.sleep(1)
                 if run_info["status"] in [
                     WorkflowStatus.COMPLETED,
                     WorkflowStatus.FAILED,
                 ]:
+                    print()
                     break
                 prior_status = status
                 prior_index = step_index
             return run_info
-        return response_dict
+        else:
+            time.sleep(1)
+            run_info = self.query_run(response_dict["run_id"])
+            return run_info
 
     def await_runs(self, run_list: List[str]) -> Dict[Any, Any]:
         """
