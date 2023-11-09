@@ -12,7 +12,7 @@ from wei.core.data_classes import (
     WorkflowRun,
     WorkflowStatus,
 )
-from wei.core.experiment import Experiment, get_experiment_event_server
+from wei.core.experiment import get_experiment_event_server
 from wei.core.interface import InterfaceMap
 from wei.core.location import update_source_and_target
 from wei.core.loggers import WEI_Logger
@@ -56,14 +56,10 @@ def run_step(
 
     interface = "simulate_callback" if wf_run.simulate else module.interface
 
-    experiment = Experiment(experiment_id=wf_run.experiment_id)
-
     try:
         action_response, action_msg, action_log = InterfaceMap.interfaces[
             interface
-        ].send_action(
-            step=step, module=module, run_dir=wf_run.run_dir
-        )
+        ].send_action(step=step, module=module, run_dir=wf_run.run_dir)
         step_response = StepResponse(
             action_response=action_response,
             action_msg=action_msg,

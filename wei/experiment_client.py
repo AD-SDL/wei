@@ -127,7 +127,7 @@ class ExperimentClient:
                 step_index = run_info["step_index"]
                 if prior_status != status or prior_index != step_index:
                     if step_index < len(run_info["steps"]):
-                        step_name = run_info['steps'][step_index]['name']
+                        step_name = run_info["steps"][step_index]["name"]
                     else:
                         step_name = "Workflow End"
                     print()
@@ -169,12 +169,12 @@ class ExperimentClient:
                         results[id] = run_status
             time.sleep(1)
         return results
-    
+
     def get_file(self, input_filepath: str, output_filepath: str):
         url = f"{self.url}/experiments/{self.experiment_id}/file"
-     
+
         response = requests.get(url, params={"filepath": input_filepath})
-        with open(output_filepath, 'wb') as f:
+        with open(output_filepath, "wb") as f:
             f.write(response.content)
 
     def register_exp(self) -> Dict[Any, Any]:

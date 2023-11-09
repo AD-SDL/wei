@@ -68,7 +68,7 @@ class RestInterface(Interface):
                 path = Path(
                     kwargs["run_dir"],
                     "results",
-                    Path(step.id + "_" + Path(response.action_msg).name)
+                    Path(step.id + "_" + Path(response.action_msg).name),
                 )
                 path.parent.mkdir(parents=True, exist_ok=True)
             else:

@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-import cv2
+
 from wei import ExperimentClient
 
 
@@ -17,7 +17,7 @@ def main():
     flow_info = exp.start_run(wf_path.resolve(), simulate=False, blocking=True)
     print(json.dumps(flow_info, indent=2))
     exp.get_file(flow_info["hist"]["Take Picture"]["action_msg"], "test2.jpg")
-   
+
 
 if __name__ == "__main__":
     main()

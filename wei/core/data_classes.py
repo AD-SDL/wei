@@ -361,7 +361,7 @@ class StepResponse(BaseModel):
     @classmethod
     def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
         """Creates a StepResponse from the headers of a file response"""
-        
+
         return cls(
             action_response=StepStatus(headers["x-wei-action_response"]),
             action_msg=headers["x-wei-action_msg"],
