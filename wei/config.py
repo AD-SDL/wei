@@ -20,9 +20,9 @@ class Config:
     workcell_name = "test_workcell"
     kafka_server = ""
     reset_locations = True
-    update_interval = 1.0
+    update_interval = 10.0
     server_host = "0.0.0.0"
-    server_port = "8000"
+    server_port = 8000
     redis_host = "localhost"
     redis_port = "6379"
     data_directory = Path("./tests")
@@ -92,7 +92,7 @@ class Config:
             "--update_interval",
             type=float,
             help="How long the engine waits between updates",
-            default=1.0,
+            default=10.0,
         )
         parser.add_argument(
             "--data_dir",

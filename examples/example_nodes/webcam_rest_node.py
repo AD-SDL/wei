@@ -4,6 +4,7 @@ REST-based node that interfaces with WEI and provides a USB camera interface
 import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
+from typing import Union
 
 import cv2
 from fastapi import FastAPI
@@ -16,11 +17,11 @@ from wei.core.data_classes import (
     StepStatus,
 )
 
-global state
+state: ModuleStatus
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+@asynccontextmanager # type: ignore
+async def lifespan(app: FastAPI) -> None:
     global state
     """Initial run function for the app, initializes state
         Parameters
@@ -50,28 +51,28 @@ app = FastAPI(
 
 
 @app.get("/state")
-def get_state():
+def get_state() -> JSONResponse:
     global state
     return JSONResponse(content={"State": state})
 
 
 @app.get("/about")
-async def about():
+async def about() -> JSONResponse:
     global state
     return JSONResponse(content={"State": state})
 
 
 @app.get("/resources")
-async def resources():
+async def resources() -> JSONResponse:
     global state
     return JSONResponse(content={"State": state})
 
 
-@app.post("/action")
+@app.post("/action", response_model=None)
 def do_action(
     action_handle: str,
     action_vars: str,
-) -> StepResponse:
+) -> Union[StepResponse, StepFileResponse]:
     global state
     if state == ModuleStatus.BUSY:
         return StepResponse(
@@ -116,7 +117,7 @@ if __name__ == "__main__":
     import uvicorn
 
     parser = ArgumentParser()
-    parser.add_argument("--host", type=str, default="10.0.0.219", help="Host IP")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host IP")
     parser.add_argument("--port", type=str, default="2001", help="Port to serve on")
     args = parser.parse_args()
 

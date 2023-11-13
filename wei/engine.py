@@ -36,11 +36,14 @@ class Engine:
         If the state of the workcell has changed, update the active modules and run the scheduler.
         """
         print("Starting Process")
+        tick = time.time()
         while True:
-            update_active_modules()
+            if time.time() - tick > Config.update_interval:
+                update_active_modules()
+                tick = time.time()
             if self.state_manager.has_state_changed():
                 self.scheduler.run_iteration()
-            time.sleep(Config.update_interval)
+                update_active_modules()
 
 
 if __name__ == "__main__":

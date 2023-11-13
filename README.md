@@ -4,7 +4,7 @@
 <!-- [![PyPI version](https://badge.fury.io/py/mdlearn.svg)](https://badge.fury.io/py/mdlearn) -->
 <!-- [![Documentation Status](https://readthedocs.org/projects/mdlearn/badge/?version=latest)](https://mdlearn.readthedocs.io/en/latest/?badge=latest) -->
 
-RPL workcell execution interface
+The Workcell Execution Interface (WEI) for Self Driving Laboratories (SDLs)
 
 For more details and specific examples of how to use wei, please see our [documentation](https://rpl-wei.readthedocs.io/en/latest/).
 
@@ -12,9 +12,8 @@ For more details and specific examples of how to use wei, please see our [docume
 - [wei](#wei)
   - [Table of Contents](#table-of-contents)
   - [Installation](#installation)
-    - [Install latest version with PyPI](#install-latest-version-with-pypi)
-    - [Development install](#development-install)
-  - [Testing](#testing)
+    - [Bare-Metal Install](#bare-metal-install)
+    - [Docker Install](#docker-install)
   - [Usage](#usage)
   - [Contributing](#contributing)
   - [Acknowledgments](#acknowledgments)
@@ -22,9 +21,11 @@ For more details and specific examples of how to use wei, please see our [docume
 
 ## Installation
 
-1. Clone the repository into the desired location. This tutorial will assume it is installed in a folder called `~/workspace/wei`
+### Bare-Metal Install
+
+1. Clone the repository.
 2. Install [Redis](https://redis.io/docs/getting-started/) and [TMUX](https://github.com/tmux/tmux/wiki/Installing)
-3. Within `~/workspace/wei` run the following:
+3. Within the cloned repository, run the following:
 
 ```
 pip3 install --upgrade pip setuptools wheel
@@ -33,26 +34,33 @@ pip3 install -r requirements/requirements.txt
 pip3 install -e .
 ```
 
+### Docker Install
+
+1. [Install Docker](https://docs.docker.com/engine/install/) for your platform of choice
+2. Clone the repository.
+3. Within the cloned repository, run the following:
+
+```
+docker/build_wei.sh
+```
 
 ## Usage
 
-### Starting the server
+### Running the Examples (Bare-Metal Install)
 
-1. Update the `folder` variable in `examples/run_wei_server_with_examples.sh` to point to your WEI install
-2. From a new terminal run
+1. Run `examples/run_examples.sh`
+2. In the corresponding TMUX session, you should see a number of windows corresponding to each component of WEI. Check each tab to ensure the servers are up and operating properly
+3. In the last window, you should see a python command pre-populated. Press enter to run this example experiment script
+5. If you have an attached webcam, you can change the `SIMULATED` flag in `examples/experiment_example.py` to False to test taking an actual picture.
 
-```
-cd ~/workspace/wei
-bash examples/run_wei_server.sh
-```
+### Running the Examples (Docker Install )
 
-This will run a redis server (window 0), a worker that pulls workflows from a redis-based queue (window 1), and a server that takes incoming workflows from the client and puts them onto the redis-based queue (window 2). It will also run 2 example nodes: a Sleep node and a Camera node.
+1. Run `docker/start_wei.sh`
+2. In your browser, navigate to `localhost:8888`
+3. Enter `wei` as the token
+4. Navigate to `examples/experiment_example.ipynb` and run the cells in the Jupyter Notebook to run an example WEI Experiment
+5. If you have an attached webcam, you can change the `SIMULATED` flag to False to test taking an actual picture.
 
-To test running an experiment, run:
-
-```
-python examples/run_example.py
-```
 
 ## Contributing
 

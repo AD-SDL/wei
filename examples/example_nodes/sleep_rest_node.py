@@ -5,17 +5,19 @@ import json
 import time
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from wei.core.data_classes import ModuleStatus, StepResponse, StepStatus
 
-global state, module_resources
+state: ModuleStatus
+module_resources: Any
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+@asynccontextmanager # type: ignore
+async def lifespan(app: FastAPI) -> None:
     global state, module_resources
     """Initial run function for the app, initializes the state
         Parameters
@@ -46,21 +48,21 @@ app = FastAPI(
 
 
 @app.get("/state")
-def get_state():
+def get_state() -> JSONResponse:
     """Returns the current state of the module"""
     global state
     return JSONResponse(content={"State": state})
 
 
 @app.get("/about")
-async def about():
+async def about() -> JSONResponse:
     """Returns a description of the actions and resources the module supports"""
     global state
     return JSONResponse(content={"About": ""})
 
 
 @app.get("/resources")
-async def resources():
+async def resources() -> JSONResponse:
     """Returns the current resources available to the module"""
     global state, module_resources
     return JSONResponse(content={"Resources": module_resources})

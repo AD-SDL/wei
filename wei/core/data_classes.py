@@ -18,7 +18,7 @@ _T = TypeVar("_T")
 PathLike = Union[str, Path]
 
 
-def ulid_factory():
+def ulid_factory() -> str:
     return ulid.new().str
 
 

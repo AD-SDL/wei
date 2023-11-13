@@ -37,7 +37,7 @@ class StateManager:
             return Config.fake_redis
         return redis.Redis(
             host=Config.redis_host, port=Config.redis_port, decode_responses=True
-        )
+        )  # type: ignore
 
     @property
     def _locations(self) -> RedisDict:
@@ -90,7 +90,7 @@ class StateManager:
 
     def mark_state_changed(self) -> int:
         """Marks the state as changed and returns the current state change counter"""
-        return self._redis_server.incr(f"{self._prefix}:state_changed")
+        return int(self._redis_server.incr(f"{self._prefix}:state_changed"))
 
     def has_state_changed(self) -> bool:
         """Returns True if the state has changed since the last time this method was called"""

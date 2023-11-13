@@ -101,7 +101,7 @@ class ExperimentClient:
                 }
                 response = requests.post(
                     url,
-                    params=params,
+                    params=params,  # type: ignore
                     json=payload,
                     files={
                         "workflow": (
@@ -169,7 +169,7 @@ class ExperimentClient:
             time.sleep(1)
         return results
 
-    def get_file(self, input_filepath: str, output_filepath: str):
+    def get_file(self, input_filepath: str, output_filepath: str) -> None:
         url = f"{self.url}/experiments/{self.experiment_id}/file"
 
         response = requests.get(url, params={"filepath": input_filepath})
