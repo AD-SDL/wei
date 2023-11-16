@@ -1,20 +1,17 @@
-# As well as these dev tools:
-mypy
-build==1.0.3
 black[jupyter]
+build==1.0.3
 flake8
-pytest
 isort
-pylint
-pydocstyle
+mypy
 pre-commit
-
-# mypy type stubs:
-types-PyYAML
+pydocstyle
+pylint
+pytest
 types-aiofiles
+types-jwt
 types-orjson
 types-python-dateutil
+types-PyYAML
 types-redis
 types-requests
 types-ujson
-types-jwt
