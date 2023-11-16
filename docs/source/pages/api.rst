@@ -1,7 +1,7 @@
-API 
+API
 ===
 
-WEI API documentation. 
+WEI API documentation.
 
 .. autosummary::
     :toctree: _autosummary

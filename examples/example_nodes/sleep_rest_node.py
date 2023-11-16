@@ -16,7 +16,7 @@ state: ModuleStatus
 module_resources: Any
 
 
-@asynccontextmanager # type: ignore
+@asynccontextmanager  # type: ignore
 async def lifespan(app: FastAPI) -> None:
     global state, module_resources
     """Initial run function for the app, initializes the state

@@ -7,6 +7,7 @@ from wei import ExperimentClient
 
 SIMULATE = True
 
+
 def main() -> None:
     # The path to the Workflow definition yaml file
     wf_path = Path(__file__).parent / "example_yaml/example_workflow.yaml"
@@ -19,7 +20,9 @@ def main() -> None:
     print(json.dumps(flow_info, indent=2))
     # If the workflow run isn't simulated, the below line can be used to fetch the result and save it in our local directory
     if not SIMULATE:
-        exp.get_file(flow_info["hist"]["Take Picture"]["action_msg"], "experiment_output.jpg")
+        exp.get_file(
+            flow_info["hist"]["Take Picture"]["action_msg"], "experiment_output.jpg"
+        )
 
 
 if __name__ == "__main__":

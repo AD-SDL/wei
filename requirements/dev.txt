@@ -7,6 +7,7 @@ pytest
 isort
 pylint
 pydocstyle
+pre-commit
 
 # mypy type stubs:
 types-PyYAML

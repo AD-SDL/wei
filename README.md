@@ -15,6 +15,7 @@ For more details and specific examples of how to use wei, please see our [docume
     - [Bare-Metal Install](#bare-metal-install)
     - [Docker Install](#docker-install)
   - [Usage](#usage)
+  - [Development](#usage)
   - [Contributing](#contributing)
   - [Acknowledgments](#acknowledgments)
   - [License](#license)
@@ -29,8 +30,8 @@ For more details and specific examples of how to use wei, please see our [docume
 
 ```
 pip3 install --upgrade pip setuptools wheel
-pip3 install -r requirements/dev.txt
 pip3 install -r requirements/requirements.txt
+pip3 install -r requirements/examples.txt
 pip3 install -e .
 ```
 
@@ -60,6 +61,19 @@ docker/build_wei.sh
 3. Enter `wei` as the token
 4. Navigate to `examples/experiment_example.ipynb` and run the cells in the Jupyter Notebook to run an example WEI Experiment
 5. If you have an attached webcam, you can change the `SIMULATED` flag to False to test taking an actual picture.
+
+## Development
+
+```
+pip install -r requirements/dev.txt
+pip install -r requirements/requirements.txt
+pre-commit install
+```
+
+- To run pre-commit checks before committing, run `pre-commit run --all-files`
+- To skip flake8 during commits, use `SKIP=flake8 git commit ...`
+- To skip all pre-commit hooks, use `git commit --no-verify ...`
+- See [pre-commit documentation](https://pre-commit.com) for more
 
 
 ## Contributing

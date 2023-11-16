@@ -15,7 +15,7 @@ black:
 isort:
 	isort --atomic $(package_name) $(extra_folders)
 
-format: isort black 
+format: isort black
 
 lint: format
 	$(black) --check --diff

@@ -8,7 +8,8 @@ from test_base import TestWEI_Base
 from wei.core.data_classes import WorkcellData
 from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
-from wei.engine import Engine
+
+# from wei.engine import Engine
 from wei.routers.runs import get_run_status, start_run
 
 
@@ -47,11 +48,11 @@ class TestWEI_Locations(TestWEI_Base):
 
         state_manager = StateManager()
         print(state_manager.state_lock())
-        engine = Engine()
+        # engine = Engine()
         state_manager.set_workcell(WorkcellData.from_yaml("tests/test_workcell.yaml"))
         workflow_config_path = Path("tests/test_workflow.yaml")
         workflow_def = yaml.safe_load(workflow_config_path.read_text())
-        arg_before_replace = workflow_def["flowdef"][1]["args"]
+        # arg_before_replace = workflow_def["flowdef"][1]["args"]
         print(workflow_def)
 
         with open("test.json", "w") as f2:
