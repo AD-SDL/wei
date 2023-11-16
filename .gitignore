@@ -230,6 +230,9 @@ cython_debug/
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
+# Vim
+*.swp
+
 # Local History for Visual Studio Code
 .history/
 
