@@ -286,3 +286,6 @@ logs/
 
 # Image Artifacts
 **/*.jpg
+
+# PDM
+.pdm-python

@@ -104,4 +104,4 @@ class TestWEI_Locations(TestWEI_Base):
         print(state_manager.get_workflow_run(response["run_id"]))
         print(state_manager.state_lock())
         print(v)
-        raise ("e")
+        raise AssertionError()

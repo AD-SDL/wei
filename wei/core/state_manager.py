@@ -154,7 +154,9 @@ class StateManager:
         del self._workflow_runs[str(run_id)]
         self.mark_state_changed()
 
-    def update_workflow_run(self, run_id: str, func: Callable, *args: Any, **kwargs: Any) -> None:  # type: ignore [type-arg]
+    def update_workflow_run(
+        self, run_id: str, func: Callable, *args: Any, **kwargs: Any
+    ) -> None:  # type: ignore [type-arg]
         """
         Updates the state of a workflow.
         """
@@ -196,7 +198,9 @@ class StateManager:
         del self._locations[location_name]
         self.mark_state_changed()
 
-    def update_location(self, location_name: str, func: Callable, *args: Any, **kwargs: Any) -> None:  # type: ignore [type-arg]
+    def update_location(
+        self, location_name: str, func: Callable, *args: Any, **kwargs: Any
+    ) -> None:  # type: ignore [type-arg]
         """
         Updates the state of a location.
         """
@@ -240,7 +244,9 @@ class StateManager:
         del self._modules[module_name]
         self.mark_state_changed()
 
-    def update_module(self, module_name: str, func: Callable, *args: Any, **kwargs: Any) -> None:  # type: ignore [type-arg]
+    def update_module(
+        self, module_name: str, func: Callable, *args: Any, **kwargs: Any
+    ) -> None:  # type: ignore [type-arg]
         """
         Updates the state of a module.
         """

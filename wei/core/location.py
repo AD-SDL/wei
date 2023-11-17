@@ -86,7 +86,7 @@ def update_source_and_target(wf_run: WorkflowRun) -> None:
                 "Empty",
             )
         if "target" in steps[step_index - 1].locations:
-            if not ("trash" in steps[step_index - 1].locations["target"]):
+            if "trash" not in steps[step_index - 1].locations["target"]:
                 state_manager.update_location(
                     steps[step_index - 1].locations["target"],
                     update_location_state,

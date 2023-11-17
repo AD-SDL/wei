@@ -4,7 +4,7 @@ Router for the "runs" endpoints
 import json
 
 import yaml
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, UploadFile
 from fastapi.responses import JSONResponse
 
 from wei.core.data_classes import Workflow, WorkflowStatus
@@ -20,8 +20,8 @@ state_manager = StateManager()
 @router.post("/start")
 async def start_run(
     experiment_id: str,
-    workflow: UploadFile = File(...),
-    payload: UploadFile = File(...),
+    workflow: UploadFile,
+    payload: UploadFile,
     simulate: bool = False,
 ) -> JSONResponse:
     """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
@@ -64,7 +64,7 @@ async def start_run(
                 "status": str(wf_run.status),
             }
         )
-    except Exception as e:  # noqa
+    except Exception as e:
         print(e)
         return JSONResponse(
             status_code=500,

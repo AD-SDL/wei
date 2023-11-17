@@ -1,0 +1,167 @@
+[project]
+name = "wei"
+version = "0.5.0"
+description = "Workcell Execution Interface"
+authors = [
+    {name = "Tobias Ginsburg, Rafael Vescovi, Ryan D. Lewis, Kyle Hippe, Doga Ozgulbas, Casey Stone", email = "ravescovi@anl.gov"},
+]
+dependencies = [
+    'devtools>=0.12',
+    'fakeredis>=2.20.0, <2.21',
+    'fastapi>=0.103, <0.104',
+    'lupa>=2.0, <3.0',
+    'pottery>=3.0.0, <3.1',
+    'pydantic>=2.4, <2.5',
+    'python-multipart>=0.0.6, <0.0.7',
+    'PyYAML>=6.0, <6.1',
+    'pyzmq>=25.1.1, <26',
+    'redis>=4.2.2, <4.3',
+    'requests>=2.31.0, <2.32',
+    'ulid-py>=1.1.0, <1.2',
+    'uvicorn>=0.21, <0.22',
+]
+requires-python = ">=3.8.1"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+examples = [
+    "opencv-python-headless",
+]
+
+[project.urls]
+Homepage = "https://github.com/AD-SDL/wei"
+Downloads = "https://github.com/AD-SDL/wei/archive/refs/tags/0.5.0.tar.gz"
+
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "black[jupyter]",
+    "build",
+    # "flake8",
+    # "isort",
+    "mypy",
+    "pre-commit",
+    # "pydocstyle",
+    # "pylint",
+    "pytest",
+    "ruff",
+    "types-aiofiles",
+    "types-jwt",
+    "types-orjson",
+    "types-python-dateutil",
+    "types-PyYAML",
+    "types-redis",
+    "types-requests",
+    "types-ujson",
+]
+docs = [
+    "autodoc-pydantic",
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+
+[tool.ruff]
+# https://docs.astral.sh/ruff/configuration/
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "docs",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.8
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    # "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    # "SIM",
+    # isort
+    "I",
+    # Warning
+    "W",
+    # pydocstyle
+    "D100", "D101", "D102", "D103", "D104", "D105", "D106", "D107",
+    # ruff
+    # "RUF"
+]
+ignore = [
+    "E501" # Line too long
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+
+[tool.pytest.ini_options]
+# https://docs.pytest.org/en/stable/customize.html
+addopts = "-x"
+junit_family="xunit1"
+filterwarnings = "ignore::DeprecationWarning"
+
+[tool.mypy]
+# https://mypy.readthedocs.io/en/stable/config_file.html#using-a-pyproject-toml
+show_error_codes = true
+check_untyped_defs = true
+follow_imports = "normal"
+strict_optional = true
+plugins = ["pydantic.mypy"]
+strict = true
+disallow_untyped_defs = true
+implicit_reexport = true
