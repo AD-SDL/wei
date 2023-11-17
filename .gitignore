@@ -289,3 +289,7 @@ logs/
 
 # PDM
 .pdm-python
+.pdm-build/*
+
+# Ruff
+.ruff_cache/*
