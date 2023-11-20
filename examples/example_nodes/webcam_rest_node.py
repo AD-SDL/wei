@@ -22,16 +22,16 @@ state: ModuleStatus
 
 @asynccontextmanager  # type: ignore
 async def lifespan(app: FastAPI) -> None:
-    global state
     """Initial run function for the app, initializes state
-        Parameters
-        ----------
-        app : FastApi
-           The REST API app being initialized
+    Parameters
+    ----------
+    app : FastApi
+       The REST API app being initialized
 
-        Returns
-        -------
-        None"""
+    Returns
+    -------
+    None"""
+    global state
     try:
         state = ModuleStatus.IDLE
     except Exception as err:
@@ -52,18 +52,21 @@ app = FastAPI(
 
 @app.get("/state")
 def get_state() -> JSONResponse:
+    """Returns the current state of the module"""
     global state
     return JSONResponse(content={"State": state})
 
 
 @app.get("/about")
 async def about() -> JSONResponse:
+    """Returns a description of the actions and resources the module supports"""
     global state
     return JSONResponse(content={"State": state})
 
 
 @app.get("/resources")
 async def resources() -> JSONResponse:
+    """Returns the current resources available to the module"""
     global state
     return JSONResponse(content={"State": state})
 
@@ -73,6 +76,22 @@ def do_action(
     action_handle: str,
     action_vars: str,
 ) -> Union[StepResponse, StepFileResponse]:
+    """
+    Runs an action on the module
+
+    Parameters
+    ----------
+    action_handle : str
+       The name of the action to be performed
+    action_vars : str
+        Any arguments necessary to run that action.
+        This should be a JSON object encoded as a string.
+
+    Returns
+    -------
+    response: StepResponse
+       A response object containing the result of the action
+    """
     global state
     if state == ModuleStatus.BUSY:
         return StepResponse(

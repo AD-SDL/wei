@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Runs an example of a WEI workflow"""
 
 import json
 from pathlib import Path
@@ -9,6 +10,7 @@ SIMULATE = True
 
 
 def main() -> None:
+    """Runs an example WEI workflow"""
     # The path to the Workflow definition yaml file
     wf_path = Path(__file__).parent / "example_yaml/example_workflow.yaml"
     # This defines the Experiment object that will communicate with the WEI server

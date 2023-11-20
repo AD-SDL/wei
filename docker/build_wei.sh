@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export UID=`id -u`
-export GID=`id -g`
+export USER_ID=`id -u`
+export GROUP_ID=`id -g`
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 

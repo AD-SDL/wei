@@ -5,24 +5,27 @@ services:
     container_name: wei_server
     build:
       context: .
-      dockerfile: ./docker/Dockerfile-wei
+      dockerfile: ./docker/Dockerfile-wei-dev
     ports:
       - 8000:8000
     volumes:
       - ./wei:/wei/wei
       - ~/.wei:/root/.wei
-    command: python -m wei.server --workcell /wei/examples/example_yaml/example_workcell_docker.yaml --redis_host wei_redis --port 8000
+    command: pdm run server --workcell /wei/examples/example_yaml/example_workcell_docker.yaml --redis_host wei_redis --port 8000
     depends_on:
       - wei_redis
+      - wei_engine
   wei_engine:
     image: wei
     container_name: wei_engine
     volumes:
       - ./wei:/wei/wei
       - ~/.wei:/root/.wei
-    command: python -m wei.engine --workcell /wei/examples/example_yaml/example_workcell_docker.yaml --redis_host wei_redis --server wei_server
+    command: pdm run engine --workcell /wei/examples/example_yaml/example_workcell_docker.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
+      - sleeper_node
+      - webcam_node
   wei_redis:
     image: redis
     container_name: wei_redis
@@ -36,7 +39,7 @@ services:
     container_name: sleeper_node
     volumes:
       - ./wei:/wei/wei
-    command: python /wei/examples/example_nodes/sleep_rest_node.py
+    command: pdm run python /wei/examples/example_nodes/sleep_rest_node.py
     ports:
       - 2000:2000
   webcam_node:
@@ -48,7 +51,7 @@ services:
       - /dev/video0:/dev/video0
     ports:
       - 2001:2001
-    command: python /wei/examples/example_nodes/webcam_rest_node.py
+    command: pdm run python /wei/examples/example_nodes/webcam_rest_node.py
   wei_jupyter:
     image: wei_jupyter
     container_name: wei_jupyter
@@ -56,10 +59,10 @@ services:
     working_dir: "/home/${USER}"
     build:
       context: .
-      dockerfile: ./docker/Dockerfile-jupyter
+      dockerfile: ./docker/Dockerfile-jupyter-dev
       args:
-        UID: ${UID}
-        GID: ${GID}
+        USER_ID: ${USER_ID}
+        GROUP_ID: ${GROUP_ID}
         USER: ${USER}
     ports:
       - 8888:8888
@@ -71,5 +74,5 @@ services:
       JUPYTER_TOKEN: "wei"
       NB_USER: "${USER}"
       CHOWN_HOME: "yes"
-      NB_UID: "${UID}"
-      NB_GID: "${GID}"
+      NB_UID: "${USER_ID}"
+      NB_GID: "${GROUP_ID}"

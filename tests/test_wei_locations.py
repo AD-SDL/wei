@@ -1,3 +1,5 @@
+"""Tests WEI location management"""
+
 import asyncio
 import json
 
@@ -14,7 +16,10 @@ from wei.routers.runs import get_run_status, start_run
 
 
 class TestWEI_Locations(TestWEI_Base):
+    """Tests WEI location management"""
+
     def test_workflow_replace_locations(self):
+        """Test to see if wei properly replaces location values"""
         from pathlib import Path
 
         state_manager = StateManager()
@@ -44,6 +49,7 @@ class TestWEI_Locations(TestWEI_Base):
                 )
 
     def test_workflow_running(self):
+        """Test ???"""
         from pathlib import Path
 
         state_manager = StateManager()

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Manually runs an integration test of WEI"""
 
 from pathlib import Path
 
@@ -6,6 +7,7 @@ from wei import ExperimentClient
 
 
 def main():
+    """Manually runs an integration test of WEI"""
     # The path to the Workflow definition yaml file
     wf_path = Path("../manual_test/manual_test_workflow.yaml")
     # This defines the Experiment object that will communicate with the server for workflows

@@ -172,6 +172,7 @@ class ExperimentClient:
         return results
 
     def get_file(self, input_filepath: str, output_filepath: str) -> None:
+        """Returns a file from the WEI experiment directory"""
         url = f"{self.url}/experiments/{self.experiment_id}/file"
 
         response = requests.get(url, params={"filepath": input_filepath})

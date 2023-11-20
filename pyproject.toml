@@ -34,21 +34,20 @@ Homepage = "https://github.com/AD-SDL/wei"
 Downloads = "https://github.com/AD-SDL/wei/archive/refs/tags/0.5.0.tar.gz"
 
 
-
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pdm.scripts]
+engine = "python3 -m wei.engine"
+server = "python3 -m wei.server"
 
 [tool.pdm.dev-dependencies]
 dev = [
     "black[jupyter]",
     "build",
-    # "flake8",
-    # "isort",
     "mypy",
     "pre-commit",
-    # "pydocstyle",
-    # "pylint",
     "pytest",
     "ruff",
     "types-aiofiles",
@@ -65,6 +64,10 @@ docs = [
     "sphinx",
     "sphinx-rtd-theme",
 ]
+
+#####################
+# Development Tools #
+#####################
 
 [tool.ruff]
 # https://docs.astral.sh/ruff/configuration/
@@ -147,7 +150,6 @@ skip-magic-trailing-comma = false
 
 # Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
-
 
 [tool.pytest.ini_options]
 # https://docs.pytest.org/en/stable/customize.html

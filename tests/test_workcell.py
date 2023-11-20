@@ -1,3 +1,5 @@
+"""Tests for WEI Workcell functionality"""
+
 from pathlib import Path
 
 from devtools import debug
@@ -7,7 +9,10 @@ from test_base import TestWEI_Base
 
 
 class Test_Workcell_Base(TestWEI_Base):
+    """Tests for WEI Workcell functionality"""
+
     def test_workcell_property(self):
+        """Test that WEI properly loads a workcell"""
         from wei.core.workcell import WorkcellData
 
         workcell_config_path = Path("tests/test_workcell.yaml")
@@ -17,6 +22,7 @@ class Test_Workcell_Base(TestWEI_Base):
         assert workcell is not None
 
     def test_payload(self):
+        """Test that WEI properly replaces Workflow payloads"""
         # from wei.core.workcell import Workcell
         # from wei.core.workflow import WorkflowRunner
 

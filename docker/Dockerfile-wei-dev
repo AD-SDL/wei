@@ -1,0 +1,19 @@
+FROM python:3.11
+
+RUN mkdir /wei
+
+# Copy wei files
+COPY requirements /wei/requirements
+COPY wei /wei/wei
+COPY tests /wei/tests
+COPY setup.cfg /wei/setup.cfg
+COPY setup.py /wei/setup.py
+COPY examples /wei/examples
+COPY pyproject.toml /wei/pyproject.toml
+COPY README.md /wei/README.md
+
+
+# Install dependencies and wei
+RUN pip install pdm
+WORKDIR /wei
+RUN pdm install -G examples

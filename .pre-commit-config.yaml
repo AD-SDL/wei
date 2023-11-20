@@ -17,10 +17,14 @@ repos:
       - id: nbstripout
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.1.5
+    rev: v0.1.6
     hooks:
       # Run the linter.
-    #   - id: ruff
-    #     args: [--fix]
+      - id: ruff
+        args: [--fix]
       # Run the formatter.
       - id: ruff-format
+  - repo: https://github.com/pdm-project/pdm
+    rev: 2.10.3
+    hooks:
+      - id: pdm-lock-check
