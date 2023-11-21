@@ -39,7 +39,7 @@ def initialize_workcell_locations() -> None:
 def update_source_and_target(wf_run: WorkflowRun) -> None:
     """Update the source and target location and module of a workflow."""
     step_index = wf_run.step_index
-    steps = wf_run.steps
+    steps = wf_run.flowdef
 
     # Define some helper functions to update the "queue" properties of modules and locations
     def remove_element_from_queue(
