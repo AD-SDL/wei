@@ -4,7 +4,7 @@
 <!-- [![PyPI version](https://badge.fury.io/py/mdlearn.svg)](https://badge.fury.io/py/mdlearn) -->
 <!-- [![Documentation Status](https://readthedocs.org/projects/mdlearn/badge/?version=latest)](https://mdlearn.readthedocs.io/en/latest/?badge=latest) -->
 
-The Workcell Execution Interface (WEI) for Self Driving Laboratories (SDLs)
+The Workcell Execution Interface (WEI) for Autonomous Discovery/Self Driving Laboratories (AD/SDLs)
 
 For more details and specific examples of how to use wei, please see our [documentation](https://rpl-wei.readthedocs.io/en/latest/).
 
@@ -15,24 +15,32 @@ For more details and specific examples of how to use wei, please see our [docume
     - [Bare-Metal Install](#bare-metal-install)
     - [Docker Install](#docker-install)
   - [Usage](#usage)
-  - [Development](#usage)
+  - [Development](#development)
   - [Contributing](#contributing)
   - [Acknowledgments](#acknowledgments)
   - [License](#license)
 
 ## Installation
 
+There are 2 options for installing WEI:
+
+- A bare-metal install, which can be used in most contexts where python can run.
+- A containerized install using docker and docker-compose
+
 ### Bare-Metal Install
 
 1. Clone the repository.
-2. Install [Redis](https://redis.io/docs/getting-started/) and [TMUX](https://github.com/tmux/tmux/wiki/Installing)
-3. Within the cloned repository, run the following:
+2. If using WEI as a library (for instance, as a dependency for a specific module), skip to step 5.
+3. If you intend to run the WEI engine and server, install [Redis](https://redis.io/docs/getting-started/)
+4. If you intend to run the examples, you'll need to install [TMUX](https://github.com/tmux/tmux/wiki/Installing)
+5. Within the cloned repository, run the following:
 
 ```
 pip3 install --upgrade pip
-pip3 install -e '.[examples]'
-# Or, without examples:
+# For just WEI and its core dependencies
 pip3 install -e .
+# Or, with support for the examples:
+pip3 install -e '.[examples]'
 ```
 
 ### Docker Install
@@ -64,7 +72,8 @@ docker/build_wei.sh
 
 ## Development
 
-First, install [pdm](https://pdm-project.org/latest/#installation).
+1. First, install [pdm](https://pdm-project.org/latest/#installation).
+2. Next, run the following in the cloned repo's directory:
 
 ```
 pip install pre-commit ruff
@@ -75,11 +84,10 @@ pre-commit install
 ### Using Pre-commit
 
 - To run pre-commit checks before committing, run `pre-commit run --all-files`
-- To skip linting during commits, use `SKIP=ruff git commit ...`
-  - This should not be done regularly
-- To skip formatting during commits, use `SKIP=ruff-format git commit ...`
-  - This should not be done regularly
-- To skip all pre-commit hooks, use `git commit --no-verify ...`
+- NONE OF THE FOLLOWING SHOULD BE DONE REGULARLY, AND ALL CHECKS SHOULD BE PASSING BEFORE BRANCHES ARE MERGED
+    - To skip linting during commits, use `SKIP=ruff git commit ...`
+    - To skip formatting during commits, use `SKIP=ruff-format git commit ...`
+    - To skip all pre-commit hooks, use `git commit --no-verify ...`
 - See [pre-commit documentation](https://pre-commit.com) for more
 
 ### Using pdm
