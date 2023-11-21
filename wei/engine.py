@@ -35,7 +35,7 @@ class Engine:
         Continuously loop, updating module states every Config.update_interval seconds.
         If the state of the workcell has changed, update the active modules and run the scheduler.
         """
-        print("Starting Process")
+        update_active_modules()
         tick = time.time()
         while True:
             if time.time() - tick > Config.update_interval:

@@ -13,11 +13,8 @@ RUN mkdir -p ${WEI_DATA_PATH}/temp
 RUN chown -R ${USER_ID}:${GROUP_ID} ${WEI_DATA_PATH}
 
 # Copy wei files
-COPY requirements ${WEI_PATH}/requirements
 COPY wei ${WEI_PATH}/wei
 COPY tests ${WEI_PATH}/tests
-COPY setup.cfg ${WEI_PATH}/setup.cfg
-COPY setup.py ${WEI_PATH}/setup.py
 COPY examples ${WEI_PATH}/examples
 COPY pyproject.toml ${WEI_PATH}/pyproject.toml
 COPY README.md ${WEI_PATH}/README.md
@@ -27,4 +24,4 @@ COPY README.md ${WEI_PATH}/README.md
 RUN pip install pdm
 
 WORKDIR ${WEI_PATH}
-RUN pdm install -g examples
+RUN pdm install -G examples

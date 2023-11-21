@@ -19,7 +19,8 @@ class StateManager:
     optimistic check-and-set and locking.
     """
 
-    state_change_marker: Union[str, None] = "0"
+    state_change_marker = "0"
+    _redis_connection: Union[redis.Redis[str], None] = None
 
     def __init__(self) -> None:
         """
@@ -32,28 +33,34 @@ class StateManager:
         return f"wei:{Config.workcell_name}"
 
     @property
-    def _redis_server(self) -> Any:
+    def _redis_client(self) -> Any:
         if Config.test:
+            print("FAKE_REDIS")
             return Config.fake_redis
-        return redis.Redis(
-            host=Config.redis_host, port=Config.redis_port, decode_responses=True
-        )  # type: ignore
+        if self._redis_connection is None:
+            self._redis_connection = redis.Redis(
+                host=str(Config.redis_host),
+                port=int(Config.redis_port),
+                db=0,
+                decode_responses=True,
+            )
+        return self._redis_connection
 
     @property
     def _locations(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:locations", redis=self._redis_server)
+        return RedisDict(key=f"{self._prefix}:locations", redis=self._redis_client)
 
     @property
     def _modules(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:modules", redis=self._redis_server)
+        return RedisDict(key=f"{self._prefix}:modules", redis=self._redis_client)
 
     @property
     def _workcell(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:workcell", redis=self._redis_server)
+        return RedisDict(key=f"{self._prefix}:workcell", redis=self._redis_client)
 
     @property
     def _workflow_runs(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:workflow_runs", redis=self._redis_server)
+        return RedisDict(key=f"{self._prefix}:workflow_runs", redis=self._redis_client)
 
     # Locking Methods
     def state_lock(self) -> Redlock:
@@ -61,7 +68,7 @@ class StateManager:
         Gets a lock on the state. This should be called before any state updates are made,
         or where we don't want the state to be changing underneath us (i.e., in the engine).
         """
-        return Redlock(key=f"{self._prefix}:state", masters={self._redis_server})
+        return Redlock(key=f"{self._prefix}:state", masters={self._redis_client})
 
     # State Methods
     def get_state(self) -> Dict[str, Dict[Any, Any]]:
@@ -85,16 +92,16 @@ class StateManager:
         self._workflow_runs.clear()
         self._workcell.clear()
         self.state_change_marker = "0"
-        self._redis_server.set(f"{self._prefix}:state_changed", "0")
+        # self._redis_client.set(f"{self._prefix}:state_changed", "0")
         self.mark_state_changed()
 
     def mark_state_changed(self) -> int:
         """Marks the state as changed and returns the current state change counter"""
-        return int(self._redis_server.incr(f"{self._prefix}:state_changed"))
+        return int(self._redis_client.incr(f"{self._prefix}:state_changed"))
 
     def has_state_changed(self) -> bool:
         """Returns True if the state has changed since the last time this method was called"""
-        state_change_marker = self._redis_server.get(f"{self._prefix}:state_changed")
+        state_change_marker = self._redis_client.get(f"{self._prefix}:state_changed")
         if state_change_marker != self.state_change_marker:
             self.state_change_marker = state_change_marker
             return True
@@ -155,8 +162,8 @@ class StateManager:
         self.mark_state_changed()
 
     def update_workflow_run(
-        self, run_id: str, func: Callable, *args: Any, **kwargs: Any
-    ) -> None:  # type: ignore [type-arg]
+        self, run_id: str, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> None:
         """
         Updates the state of a workflow.
         """
@@ -199,8 +206,8 @@ class StateManager:
         self.mark_state_changed()
 
     def update_location(
-        self, location_name: str, func: Callable, *args: Any, **kwargs: Any
-    ) -> None:  # type: ignore [type-arg]
+        self, location_name: str, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> None:
         """
         Updates the state of a location.
         """
@@ -245,8 +252,8 @@ class StateManager:
         self.mark_state_changed()
 
     def update_module(
-        self, module_name: str, func: Callable, *args: Any, **kwargs: Any
-    ) -> None:  # type: ignore [type-arg]
+        self, module_name: str, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> None:
         """
         Updates the state of a module.
         """

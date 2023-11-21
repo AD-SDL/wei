@@ -14,7 +14,6 @@ services:
     command: pdm run server --workcell /wei/examples/example_yaml/example_workcell_docker.yaml --redis_host wei_redis --port 8000
     depends_on:
       - wei_redis
-      - wei_engine
   wei_engine:
     image: wei
     container_name: wei_engine
@@ -24,6 +23,7 @@ services:
     command: pdm run engine --workcell /wei/examples/example_yaml/example_workcell_docker.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
+      - wei_server
       - sleeper_node
       - webcam_node
   wei_redis:
