@@ -20,7 +20,7 @@ class StateManager:
     """
 
     state_change_marker = "0"
-    _redis_connection: Union[redis.Redis[str], None] = None
+    _redis_connection = None
 
     def __init__(self) -> None:
         """
@@ -34,6 +34,10 @@ class StateManager:
 
     @property
     def _redis_client(self) -> Any:
+        """
+        Returns a redis.Redis or fakeredis.Redis client, but only creates one connection.
+        MyPy can't handle Redis object return types for some reason, so no type-hinting.
+        """
         if Config.test:
             print("FAKE_REDIS")
             return Config.fake_redis
