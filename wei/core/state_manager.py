@@ -20,7 +20,7 @@ class StateManager:
     """
 
     state_change_marker = "0"
-    _redis_connection = None
+    _redis_connection: Any = None
 
     def __init__(self) -> None:
         """

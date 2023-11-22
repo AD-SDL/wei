@@ -1,5 +1,7 @@
 #!/bin/bash
 
+alias tmux="tmux -L wei"
+
 session="WEI"
 
 folder="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )/.."
