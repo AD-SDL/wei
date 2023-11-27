@@ -1,21 +1,9 @@
 FROM python:3.11
 
-RUN mkdir /wei
+RUN git clone https://github.com/AD-SDL/wei.git -b 0_5_cleanup /wei
 
-# Copy wei files
-COPY requirements /wei/requirements
-COPY wei /wei/wei
-COPY tests /wei/tests
-COPY setup.cfg /wei/setup.cfg
-COPY setup.py /wei/setup.py
-COPY examples /wei/examples
-
+RUN pip install pdm
 
 # Install dependencies
-RUN python -m pip install --upgrade pip wheel setuptools && \
-    pip install --no-cache-dir -r wei/requirements/requirements.txt && \
-    pip install --no-cache-dir -r wei/requirements/dev.txt && \
-    pip install --no-cache-dir -r wei/requirements/examples.txt
-
-# Install wei
-RUN pip install -e /wei
+WORKDIR /wei
+RUN pdm install --prod

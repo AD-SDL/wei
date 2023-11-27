@@ -1,0 +1,16 @@
+name: Pre-Commit Checks
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      name: Checkout code
+    - uses: actions/setup-python@v3
+      name: Setup Python
+    - uses: pre-commit/action@v3.0.0
+      name: Run Pre-Commit Checks

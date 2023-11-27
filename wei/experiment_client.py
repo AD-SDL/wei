@@ -66,7 +66,7 @@ class ExperimentClient:
     def start_run(
         self,
         workflow_file: Path,
-        payload: Dict[Any, Any] = {},
+        payload: Optional[Dict[Any, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
     ) -> Dict[Any, Any]:
@@ -77,7 +77,7 @@ class ExperimentClient:
         workflow_file : str
            The path to the workflow file to be executed
 
-        payload: bool
+        payload: Optional[Dict[Any, Any]]
             The input to the workflow
 
         simulate: bool
@@ -88,6 +88,8 @@ class ExperimentClient:
         Dict
            The JSON portion of the response from the server, including the ID of the job as job_id
         """
+        if payload is None:
+            payload = {}
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/runs/start"
         payload_path = Path("~/.wei/temp/payload.txt")
@@ -101,7 +103,7 @@ class ExperimentClient:
                 }
                 response = requests.post(
                     url,
-                    params=params,
+                    params=params,  # type: ignore
                     json=payload,
                     files={
                         "workflow": (
@@ -159,7 +161,7 @@ class ExperimentClient:
         results: Dict[str, Any] = {}
         while len(results.keys()) < len(run_list):
             for id in run_list:
-                if not (id in results):
+                if id not in results:
                     run_status = self.query_run(id)
                     if (
                         run_status["status"] == "completed"
@@ -169,7 +171,8 @@ class ExperimentClient:
             time.sleep(1)
         return results
 
-    def get_file(self, input_filepath: str, output_filepath: str):
+    def get_file(self, input_filepath: str, output_filepath: str) -> None:
+        """Returns a file from the WEI experiment directory"""
         url = f"{self.url}/experiments/{self.experiment_id}/file"
 
         response = requests.get(url, params={"filepath": input_filepath})

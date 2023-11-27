@@ -27,7 +27,7 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     if "target" in step.locations:
         location = state_manager.get_location(step.locations["target"])
         if not (location.state == "Empty") or not (
-            (len(location.queue) > 0 and location.queue[0] == str(run_id))
+            len(location.queue) > 0 and location.queue[0] == str(run_id)
         ):
             return False
 
@@ -36,8 +36,8 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
         if not (location.state == str(experiment_id)):
             return False
     module_data = state_manager.get_module(step.module)
-    if not ("BUSY" in module_data.state) and not (
-        (len(module_data.queue) > 0 and module_data.queue[0] == str(run_id))
+    if "BUSY" not in module_data.state and not (
+        len(module_data.queue) > 0 and module_data.queue[0] == str(run_id)
     ):
         return False
     return True

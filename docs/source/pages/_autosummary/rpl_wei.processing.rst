@@ -3,21 +3,21 @@ rpl\_wei.processing
 
 .. automodule:: wei.processing
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -28,4 +28,3 @@ rpl\_wei.processing
    :recursive:
 
    wei.processing.worker
-

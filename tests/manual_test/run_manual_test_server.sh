@@ -49,6 +49,3 @@ tmux send-keys -t $session:$window 'cd ' $folder C-m
 tmux send-keys -t $session:$window 'python3 dummy_rest_node.py --port=2002' C-m
 
 tmux attach-session -t $session
-
-
-

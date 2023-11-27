@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.post("/{experiment_id}/log")
-def log_experiment(experiment_id: str, log_value: str) -> None:
+def log_experiment(experiment_id: str, log_value: str) -> JSONResponse:
     """Logs a value to the log file for a given experiment"""
     logger = WEI_Logger.get_experiment_logger(experiment_id)
     logger.info(log_value)
@@ -34,7 +34,7 @@ async def log_return(experiment_id: str) -> str:
 
 
 @router.get("/{experiment_id}/file")
-async def get_file(filepath: str) -> str:
+async def get_file(filepath: str) -> FileResponse:
     """Returns the log for a given experiment"""
     return FileResponse(filepath)
 

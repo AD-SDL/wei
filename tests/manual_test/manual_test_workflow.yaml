@@ -53,5 +53,3 @@ flowdef:
       source: measure.pos
       target: wc.trash
       t: "2"
-  
-

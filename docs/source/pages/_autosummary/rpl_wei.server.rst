@@ -3,16 +3,16 @@ rpl\_wei.server
 
 .. automodule:: wei.server
 
-   
-   
-   
 
-   
-   
+
+
+
+
+
    .. rubric:: Functions
 
    .. autosummary::
-   
+
       get_job_status
       lifespan
       log_experiment
@@ -23,16 +23,3 @@ rpl\_wei.server
       queue_info
       start_exp
       submit_job
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

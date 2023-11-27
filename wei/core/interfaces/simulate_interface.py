@@ -1,7 +1,7 @@
 """Handling simulated execution for steps in the RPL-SDL efforts"""
 from typing import Any, Dict, Tuple
 
-from wei.core.data_classes import Interface, Module, Step, StepStatus
+from wei.core.data_classes import Interface, Module, ModuleStatus, Step, StepStatus
 
 
 def silent_callback(step: Step, **kwargs: Any) -> Tuple[str, str, str]:
@@ -34,3 +34,8 @@ class SimulateInterface(Interface):
     def send_action(step: Step, module: Module, **kwargs: Any) -> Tuple[str, str, str]:
         """Pretends to execute a single step from a workflow, really just prints the step"""
         return silent_callback(step, **kwargs)
+
+    @staticmethod
+    def get_state(module: Module, **kwargs: Any) -> Dict[str, Any]:
+        """Returns the current state of the module"""
+        return {"State": ModuleStatus.IDLE}

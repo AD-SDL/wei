@@ -39,7 +39,7 @@ def initialize_workcell_locations() -> None:
 def update_source_and_target(wf_run: WorkflowRun) -> None:
     """Update the source and target location and module of a workflow."""
     step_index = wf_run.step_index
-    steps = wf_run.steps
+    steps = wf_run.flowdef
 
     # Define some helper functions to update the "queue" properties of modules and locations
     def remove_element_from_queue(
@@ -86,7 +86,7 @@ def update_source_and_target(wf_run: WorkflowRun) -> None:
                 "Empty",
             )
         if "target" in steps[step_index - 1].locations:
-            if not ("trash" in steps[step_index - 1].locations["target"]):
+            if "trash" not in steps[step_index - 1].locations["target"]:
                 state_manager.update_location(
                     steps[step_index - 1].locations["target"],
                     update_location_state,

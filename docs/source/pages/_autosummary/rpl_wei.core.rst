@@ -3,21 +3,21 @@ rpl\_wei.core
 
 .. automodule:: wei.core
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -37,4 +37,3 @@ rpl\_wei.core
    wei.core.validators
    wei.core.workcell
    wei.core.workflow
-

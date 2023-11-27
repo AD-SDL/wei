@@ -43,7 +43,7 @@ def query_module_status(module: Module) -> ModuleStatus:
                 if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
                     print("Module Found: " + str(module_name))
                 state = ModuleStatus(working_state)
-        except Exception as e:  # noqa
+        except Exception as e:
             if module.state == ModuleStatus.INIT:
                 print(e)
                 print("Can't Find Module: " + str(module_name))

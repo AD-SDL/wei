@@ -99,6 +99,7 @@ class RestInterface(Interface):
         url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/state",
+            timeout=10,
         ).json()
         return rest_response
 

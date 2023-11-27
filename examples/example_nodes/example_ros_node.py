@@ -138,6 +138,7 @@ class Example_Client(Node):
 
 
 def main(args=None):
+    """Main function for the example ROS node"""
     rclpy.init(args=args)  # initialize Ros2 communication
 
     try:

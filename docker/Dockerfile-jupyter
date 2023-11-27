@@ -1,27 +1,19 @@
 FROM jupyter/minimal-notebook:python-3.11
-# USER root
+
 ARG USER=joyvan
-ARG UID=1000
-ARG GID=1000
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+ARG WEI_PATH=/home/${USER}/wei
+ARG WEI_DATA_PATH=/home/${USER}/.wei
+
 USER root
 
-RUN mkdir -p /home/${USER}/wei
-RUN mkdir -p /home/${USER}/.wei/temp
-RUN chown -R ${UID}:${GID} /home/${USER}/.wei
+RUN git clone https://github.com/AD-SDL/wei.git -b 0_5_cleanup ${WEI_PATH}
+RUN mkdir -p ${WEI_DATA_PATH}/temp
+RUN chown -R ${USER_ID}:${GROUP_ID} ${WEI_DATA_PATH}
 
-# Copy wei files
-COPY requirements /home/${USER}/wei/requirements
-COPY wei /home/${USER}/wei/wei
-COPY tests /home/${USER}/wei/tests
-COPY setup.cfg /home/${USER}/wei/setup.cfg
-COPY setup.py /home/${USER}/wei/setup.py
+# Install dependencies and wei
+RUN pip install pdm
 
-
-# Install dependencies
-RUN python -m pip install --upgrade pip wheel setuptools && \
-    pip install --no-cache-dir -r /home/${USER}/wei/requirements/requirements.txt && \
-    pip install --no-cache-dir -r /home/${USER}/wei/requirements/dev.txt && \
-    pip install --no-cache-dir -r /home/${USER}/wei/requirements/examples.txt
-
-# Install wei
-RUN pip install -e /home/${USER}/wei
+WORKDIR ${WEI_PATH}
+RUN pdm install --prod
