@@ -109,7 +109,7 @@ If you are looking to contribute, please see [`CONTRIBUTING.md`](https://github.
 
 ## Citing
 
-```Bibtex
+```bibtex
 @Article{D3DD00142C,
 author ="Vescovi, Rafael and Ginsburg, Tobias and Hippe, Kyle and Ozgulbas, Doga and Stone, Casey and Stroka, Abraham and Butler, Rory and Blaiszik, Ben and Brettin, Tom and Chard, Kyle and Hereld, Mark and Ramanathan, Arvind and Stevens, Rick and Vriza, Aikaterini and Xu, Jie and Zhang, Qingteng and Foster, Ian",
 title  ="Towards a modular architecture for science factories",
