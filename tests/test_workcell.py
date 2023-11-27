@@ -2,47 +2,60 @@
 
 from pathlib import Path
 
-from devtools import debug
-from test_base import TestWEI_Base
+from fastapi.testclient import TestClient
 
-# from wei.core.data_classes import WorkcellData
+from wei.core.data_classes import Location, Module, WorkcellData
+
+from .test_base import TestWEI_Base
 
 
 class Test_Workcell_Base(TestWEI_Base):
     """Tests for WEI Workcell functionality"""
 
-    def test_workcell_property(self):
+    def test_set_workcell(self):
         """Test that WEI properly loads a workcell"""
-        from wei.core.workcell import WorkcellData
+        with TestClient(self.app) as client:
+            response = client.post("/wc/state/clear")
+            assert response.status_code == 200
 
-        workcell_config_path = Path("tests/test_workcell.yaml")
-        workcell = WorkcellData.from_yaml(workcell_config_path)
+            workcell = WorkcellData.from_yaml(Path("tests/test_workcell.yaml"))
+            response = client.post("/wc/", json=workcell.model_dump(mode="json"))
 
-        debug(workcell)
-        assert workcell is not None
+            assert response.status_code == 200
+            assert WorkcellData.model_validate(response.json())
 
-    def test_payload(self):
-        """Test that WEI properly replaces Workflow payloads"""
-        # from wei.core.workcell import Workcell
-        # from wei.core.workflow import WorkflowRunner
+    def test_workcell_get_state(self):
+        """Test that we can get the workcell state"""
+        with TestClient(self.app) as client:
+            response = client.post("/wc/state/clear")
+            assert response.status_code == 200
 
-        # workcell_config_path = Path("tests/test_workcell.yaml")
-        # workcell_def = yaml.safe_load(workcell_config_path.read_text())
-        # workcell = Workcell(workcell_def)
-        # workflow_config_path = Path("tests/test_workflow.yaml")
-        # workflow_def = yaml.safe_load(workflow_config_path.read_text())
-        # runner = WorkflowRunner(
-        #     workflow_def=workflow_def,
-        #     workcell=WorkcellData.from_yaml("tests/test_workcell.yaml"),
-        #     payload={},
-        #     experiment_path="test_experiment",
-        #     run_id=0,
-        #     simulate=True,
-        #     workflow_name="Test Workflow",
-        # )
+            response = client.get("/wc/state")
 
-        payload = {}
+            assert response.status_code == 200
+            assert isinstance(response.json().get("workcell"), dict)
+            assert response.json().get("workcell") == {}
+            assert isinstance(response.json().get("locations"), dict)
+            assert response.json().get("locations") == {}
+            assert isinstance(response.json().get("modules"), dict)
+            assert response.json().get("modules") == {}
+            assert isinstance(response.json().get("workflows"), dict)
+            assert response.json().get("workflows") == {}
 
-        # run_info = runner.run_flow(workcell, payload=payload, simulate=True)
-        # TODO: Fix all testing to use run_step
-        assert payload == payload
+            workcell = WorkcellData.from_yaml(Path("tests/test_workcell.yaml"))
+            client.post("/wc/", json=workcell.model_dump(mode="json"))
+
+            response = client.get("/wc/state")
+
+            assert response.status_code == 200
+            assert isinstance(response.json().get("workcell"), dict)
+            assert WorkcellData.model_validate(response.json().get("workcell"))
+            assert isinstance(response.json().get("locations"), dict)
+            for location in response.json().get("locations").values():
+                assert Location.model_validate(location)
+            assert isinstance(response.json().get("modules"), dict)
+            for module in response.json().get("modules").values():
+                assert Module.model_validate(module)
+            assert isinstance(response.json().get("workflows"), dict)
+            for wf_run in response.json().get("workflows").values():
+                assert Module.model_validate(wf_run)

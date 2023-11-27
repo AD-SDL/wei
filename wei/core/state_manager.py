@@ -39,7 +39,6 @@ class StateManager:
         MyPy can't handle Redis object return types for some reason, so no type-hinting.
         """
         if Config.test:
-            print("FAKE_REDIS")
             return Config.fake_redis
         if self._redis_connection is None:
             self._redis_connection = redis.Redis(

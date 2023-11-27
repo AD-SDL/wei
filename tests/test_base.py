@@ -1,11 +1,16 @@
 """Provides base classes for WEI's pytest tests"""
 import unittest
 
+from fastapi.testclient import TestClient
+
+from wei.server import app
+
 
 class TestWEI_Base(unittest.TestCase):
     """Base class for WEI's pytest tests"""
 
-    pass
+    app = app
+    client = TestClient(app)
 
 
 class TestImports(TestWEI_Base):
