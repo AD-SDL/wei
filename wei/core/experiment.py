@@ -67,14 +67,6 @@ class Experiment:
         """Path to the result directory"""
         return self.experiment_dir / "runs"
 
-
-def get_experiment_event_server(experiment_id: str) -> Events:
-    """Returns the event server for a given experiment"""
-    return Events(
-        Config.server_host, str(Config.server_port), experiment_id, wei_internal=True
-    )
-
-
 def get_experiment_log_directory(
     experiment_id: str,
 ) -> Path:
@@ -84,7 +76,6 @@ def get_experiment_log_directory(
         / "experiment"
         / (str(Experiment(experiment_id).experiment_name) + "_id_" + experiment_id)
     )
-
 
 def create_experiment(
     experiment_name: str,
@@ -112,5 +103,6 @@ def create_experiment(
     experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
     experiment.run_dir.mkdir(parents=True, exist_ok=True)
 
-    get_experiment_event_server(experiment.experiment_id).start_experiment()
+    events = Events(server_addr=Config.server_host, server_port=Config.server_port, experiment_id=experiment.experiment_id)
+    events.start_experiment()
     return {"exp_dir": experiment.experiment_dir}

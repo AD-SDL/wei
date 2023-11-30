@@ -36,7 +36,11 @@ There are 2 options for installing WEI:
 5. Within the cloned repository, run the following:
 
 ```
+sudo apt install redis
+sudo apt install tmux
 pip3 install --upgrade pip
+git clone https://github.com/AD-SDL/wei/
+cd wei
 # For just WEI and its core dependencies
 pip3 install -e .
 # Or, with support for the examples:

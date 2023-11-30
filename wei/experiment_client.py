@@ -5,11 +5,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
-import ulid
 
 from wei.core.data_classes import WorkflowStatus
 from wei.core.events import Events
-
 
 class ExperimentClient:
     """Methods for the running and logging of a WEI Experiment including running WEI workflows and logging"""
@@ -18,7 +16,7 @@ class ExperimentClient:
         self,
         server_addr: str,
         server_port: str,
-        experiment_name: str,
+        experiment_name: Optional[str] = None,
         experiment_id: Optional[str] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
@@ -41,16 +39,12 @@ class ExperimentClient:
 
         self.server_addr = server_addr
         self.server_port = server_port
-        self.experiment_path = ""
-        if experiment_id is None:
-            self.experiment_id = ulid.new().str
-        else:
-            self.experiment_id = experiment_id
-        self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
+        
+        self.experiment_id, self.experiment_path, self.experiment_name = self.register_exp(experiment_id,experiment_name)
+
         self.loops: list[str] = []
-        if not self.experiment_id:
-            self.experiment_id = ulid.new().str
+
         self.events = Events(
             self.server_addr,
             self.server_port,
@@ -62,6 +56,30 @@ class ExperimentClient:
             return {"http_error": response.status_code}
 
         return dict(response.json())
+
+    def register_exp(self, experiment_id, experiment_name) -> Dict[Any, Any]:
+        """Initializes an Experiment, and creates its log files
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           The JSON portion of the response from the server"""
+        url = f"{self.url}/experiments/"
+        response = requests.post(
+            url,
+            params={
+                "experiment_id": experiment_id,
+                "experiment_name": experiment_name,
+            },
+        )
+        self.experiment_path = response.json()["exp_dir"]
+        self._return_response(response)
+        return exp_id, exp_name, exp_path
 
     def start_run(
         self,
@@ -179,28 +197,6 @@ class ExperimentClient:
         with open(output_filepath, "wb") as f:
             f.write(response.content)
 
-    def register_exp(self) -> Dict[Any, Any]:
-        """Initializes an Experiment, and creates its log files
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-
-        response: Dict
-           The JSON portion of the response from the server"""
-        url = f"{self.url}/experiments/"
-        response = requests.post(
-            url,
-            params={
-                "experiment_id": self.experiment_id,
-                "experiment_name": self.experiment_name,
-            },
-        )
-        self.experiment_path = response.json()["exp_dir"]
-        return self._return_response(response)
 
     def query_run(self, run_id: str) -> Dict[Any, Any]:
         """Checks on a workflow run using the id given

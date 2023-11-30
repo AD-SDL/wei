@@ -1,23 +1,12 @@
 """Contains the Events class for logging experiment steps"""
 
-# import time
 
-# from pathlib import Path
 from typing import Any, Dict, Optional
-
 import requests
-
-# from diaspora_logger import DiasporaLogger
-
-# def log_event_local():
-#     return str(event.name, event)
-
-# def log_event_kafka(event, producer):
-#     producer.send(event, channel=event.experiment_id b"some_message_bytes")
-
-
+class Event:
+    pass
 class Events:
-    """Registers Events during the Experiment execution both in a cloud log and eventually on Kafka"""
+    """Registers Events during the Experiment execution both in a cloud log and on Kafka"""
 
     def __init__(
         self,
@@ -25,6 +14,7 @@ class Events:
         server_port: str,
         experiment_id: str,
         wei_internal: bool = False,
+        use_kafka: bool = False,
     ) -> None:
         """Initializes an Event Logging object
 
@@ -44,6 +34,9 @@ class Events:
 
         experiment_path: Optional[str]
             Path for logging the experiment on the server
+
+        use_kafka: Optional[bool]
+            Use diaspora kafka backend
         """
         self.server_addr = server_addr
         self.server_port = server_port
@@ -51,20 +44,10 @@ class Events:
         self.url = f"http://{self.server_addr}:{self.server_port}"
         self.wei_internal = wei_internal
 
-        # switch to auth file at some point
-        # with open(Path("/home/rpl/kafka.txt").resolve(), "r") as f:
-        #     refresh_token = f.read()
-        # print(refresh_token)
-        # if not refresh_token:
-        #     raise ValueError("Environment variable DIASPORA_REFRESH not set")
-
-        # kafka_logger = DiasporaLogger(
-        #     bootstrap_servers=["52.200.217.146:9093", "54.210.46.108:9094"],
-        #     refresh_token=refresh_token,
-        # )
-
-        self.topic = "rpl_test"
-        self.kafka_producer = None  # kafka_logger
+        if use_kafka:
+            from diaspora_event_sdk import KafkaProducer
+            self.kafka_producer = KafkaProducer()
+            self.kafka_topic = "rpl_test"
 
         self.loops: list[str] = []
 
@@ -106,32 +89,25 @@ class Events:
             "event_name": event_name,
             "event_info": event_info,
         }
-        response = {}
-        if self.wei_internal:
-            from wei.core.loggers import WEI_Logger
 
-            logger = WEI_Logger.get_experiment_logger(str(self.experiment_id))
-            logger.info(log_value)
-        else:
-            response = self._return_response(
-                requests.post(
-                    url,
-                    params={
-                        "log_value": str(log_value),
-                    },
-                )
+        if self.kafka_producer:
+            try:
+                future = self.kafka_producer.send(
+                    self._kafka_topic, {'log_value': str(log_value)})
+                print(future.get(timeout=10))
+                pass
+            except Exception as e:
+                print(str(e))
+                print("Kafka Unavailable")
+        
+        response = self._return_response(
+            requests.post(
+                url,
+                params={
+                    "log_value": str(log_value),
+                },
             )
-        try:
-            # self.kafka_producer.send(
-            # self.topic,
-            # log_value,
-            # )
-            pass
-
-        except Exception as e:
-            print(str(e))
-            print("Kafka Unavailable")
-
+        )
         return response
 
     def start_experiment(self) -> Dict[Any, Any]:
