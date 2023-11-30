@@ -2,6 +2,7 @@
 import traceback
 from typing import Any, Dict, Optional
 
+from wei.config import Config
 from wei.core.data_classes import (
     Module,
     Step,
@@ -12,7 +13,7 @@ from wei.core.data_classes import (
     WorkflowRun,
     WorkflowStatus,
 )
-from wei.core.experiment import get_experiment_event_server
+from wei.core.events import Events
 from wei.core.interface import InterfaceMap
 from wei.core.location import update_source_and_target
 from wei.core.loggers import WEI_Logger
@@ -82,24 +83,24 @@ def run_step(
     wf_run.hist["run_dir"] = str(wf_run.run_dir)
     if step_response.action_response == StepStatus.FAILED:
         wf_run.status = WorkflowStatus.FAILED
-        get_experiment_event_server(wf_run.experiment_id).log_wf_failed(
-            wf_run.name, wf_run.run_id
-        )
+        Events(
+            Config.server_host, Config.server_port, wf_run.experiment_id
+        ).log_wf_failed(wf_run.name, wf_run.run_id)
     else:
         if wf_run.step_index + 1 == len(wf_run.steps):
             wf_run.status = WorkflowStatus.COMPLETED
-            get_experiment_event_server(wf_run.experiment_id).log_wf_end(
-                wf_run.name, wf_run.run_id
-            )
+            Events(
+                Config.server_host, Config.server_port, wf_run.experiment_id
+            ).log_wf_end(wf_run.name, wf_run.run_id)
         else:
             wf_run.status = WorkflowStatus.QUEUED
         wf_run.step_index += 1
     with state_manager.state_lock():
         update_source_and_target(wf_run)
         state_manager.set_workflow_run(wf_run)
-        get_experiment_event_server(wf_run.experiment_id).log_comment(
-            str(state_manager.get_workflow_run(wf_run.run_id).step_index)
-        )
+        Events(
+            Config.server_host, Config.server_port, wf_run.experiment_id
+        ).log_comment(str(state_manager.get_workflow_run(wf_run.run_id).step_index))
 
 
 def create_run(

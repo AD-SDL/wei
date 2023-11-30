@@ -21,7 +21,8 @@ COPY README.md ${WEI_PATH}/README.md
 
 
 # Install dependencies and wei
-RUN pip install pdm
+# RUN pip install pdm
 
 WORKDIR ${WEI_PATH}
-RUN pdm install -G examples
+RUN pip install -e '.[examples]'
+# RUN pdm install -G examples

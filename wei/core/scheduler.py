@@ -2,8 +2,9 @@
 
 import multiprocessing as mpr
 
+from wei.config import Config
 from wei.core.data_classes import WorkflowStatus
-from wei.core.experiment import get_experiment_event_server
+from wei.core.events import Events
 from wei.core.location import update_source_and_target
 from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
@@ -25,9 +26,9 @@ class Scheduler:
             # * Update all queued workflows
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():
                 if wf_run.status == WorkflowStatus.NEW:
-                    get_experiment_event_server(wf_run.experiment_id).log_wf_start(
-                        wf_run.name, run_id
-                    )
+                    Events(
+                        Config.server_host, Config.server_port, wf_run.experiment_id
+                    ).log_wf_start(wf_run.name, run_id)
                     update_source_and_target(wf_run)
                     wf_run.status = WorkflowStatus.QUEUED
                     print(

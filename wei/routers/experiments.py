@@ -39,8 +39,8 @@ async def get_file(filepath: str) -> FileResponse:
     return FileResponse(filepath)
 
 
-@router.post("/")
-def process_exp(
+@router.get("/")
+def get_experiment(
     experiment_name: str,
     experiment_id: Optional[str] = None,
 ) -> Dict[str, Path]:

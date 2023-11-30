@@ -3,11 +3,13 @@ import json
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from warnings import warn
 
 import requests
 
 from wei.core.data_classes import WorkflowStatus
 from wei.core.events import Events
+
 
 class ExperimentClient:
     """Methods for the running and logging of a WEI Experiment including running WEI workflows and logging"""
@@ -40,8 +42,8 @@ class ExperimentClient:
         self.server_addr = server_addr
         self.server_port = server_port
         self.url = f"http://{self.server_addr}:{self.server_port}"
-        
-        self.experiment_id, self.experiment_path, self.experiment_name = self.register_exp(experiment_id,experiment_name)
+
+        self.get_experiment(experiment_id, experiment_name)
 
         self.loops: list[str] = []
 
@@ -57,8 +59,37 @@ class ExperimentClient:
 
         return dict(response.json())
 
+    def get_experiment(self, experiment_id, experiment_name) -> None:
+        """Gets an existing experiment from the server,
+           or creates a new one if it doesn't exist
+
+        Parameters
+        ----------
+        experiment_id: str
+            Programmatically generated experiment id, can be reused to continue an existing experiment
+
+        experiment_name: str
+            Human chosen name for experiment
+
+        Returns
+        -------
+        None
+        """
+
+        url = f"{self.url}/experiments/"
+        response = requests.get(
+            url,
+            params={
+                "experiment_id": experiment_id,
+                "experiment_name": experiment_name,
+            },
+        )
+        self.experiment_id = response.json()["experiment_id"]
+        self.experiment_path = response.json()["experiment_path"]
+        self.experiment_name = response.json()["experiment_name"]
+
     def register_exp(self, experiment_id, experiment_name) -> Dict[Any, Any]:
-        """Initializes an Experiment, and creates its log files
+        """Deprecated method for registering an experiment with the server
 
         Parameters
         ----------
@@ -69,17 +100,12 @@ class ExperimentClient:
 
         response: Dict
            The JSON portion of the response from the server"""
-        url = f"{self.url}/experiments/"
-        response = requests.post(
-            url,
-            params={
-                "experiment_id": experiment_id,
-                "experiment_name": experiment_name,
-            },
+        warn(
+            "This method is deprecated. Experiment registration is now handled when initializing the ExperimentClient. You can safely remove this call.",
+            DeprecationWarning,
+            stacklevel=2,
         )
-        self.experiment_path = response.json()["exp_dir"]
-        self._return_response(response)
-        return exp_id, exp_name, exp_path
+        return {"exp_dir": self.experiment_path}
 
     def start_run(
         self,
@@ -196,7 +222,6 @@ class ExperimentClient:
         response = requests.get(url, params={"filepath": input_filepath})
         with open(output_filepath, "wb") as f:
             f.write(response.content)
-
 
     def query_run(self, run_id: str) -> Dict[Any, Any]:
         """Checks on a workflow run using the id given

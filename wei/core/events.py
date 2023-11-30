@@ -2,9 +2,16 @@
 
 
 from typing import Any, Dict, Optional
+
 import requests
+
+
 class Event:
+    """A single event in an experiment"""
+
     pass
+
+
 class Events:
     """Registers Events during the Experiment execution both in a cloud log and on Kafka"""
 
@@ -46,6 +53,7 @@ class Events:
 
         if use_kafka:
             from diaspora_event_sdk import KafkaProducer
+
             self.kafka_producer = KafkaProducer()
             self.kafka_topic = "rpl_test"
 
@@ -93,13 +101,14 @@ class Events:
         if self.kafka_producer:
             try:
                 future = self.kafka_producer.send(
-                    self._kafka_topic, {'log_value': str(log_value)})
+                    self._kafka_topic, {"log_value": str(log_value)}
+                )
                 print(future.get(timeout=10))
                 pass
             except Exception as e:
                 print(str(e))
                 print("Kafka Unavailable")
-        
+
         response = self._return_response(
             requests.post(
                 url,
