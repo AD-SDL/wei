@@ -43,7 +43,7 @@ class ExperimentClient:
         self.server_port = server_port
         self.url = f"http://{self.server_addr}:{self.server_port}"
 
-        self.get_experiment(experiment_id, experiment_name)
+        self.register_experiment(experiment_id, experiment_name)
 
         self.loops: list[str] = []
 
@@ -53,13 +53,15 @@ class ExperimentClient:
             self.experiment_id,
         )
 
+        self.events.start_experiment()
+
     def _return_response(self, response: requests.Response) -> Dict[Any, Any]:
         if response.status_code != 200:
             return {"http_error": response.status_code}
 
         return dict(response.json())
 
-    def get_experiment(self, experiment_id, experiment_name) -> None:
+    def register_experiment(self, experiment_id, experiment_name) -> None:
         """Gets an existing experiment from the server,
            or creates a new one if it doesn't exist
 
@@ -87,25 +89,6 @@ class ExperimentClient:
         self.experiment_id = response.json()["experiment_id"]
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
-
-    def register_exp(self) -> Dict[Any, Any]:
-        """Deprecated method for registering an experiment with the server
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-
-        response: Dict
-           The JSON portion of the response from the server"""
-        warn(
-            "This method is deprecated. Experiment registration is now handled when initializing the ExperimentClient. You can safely remove this call.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return {"exp_dir": self.experiment_path}
 
     def start_run(
         self,
@@ -139,10 +122,11 @@ class ExperimentClient:
 
         payload_path = Path("~/.wei/temp/payload.txt")
         payload_path.expanduser().parent.mkdir(parents=True, exist_ok=True)
+        with open(payload_path.expanduser(), "w+") as payload_file_handle:
+            json.dump(payload, payload_file_handle)
         
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
-            with open(payload_path.expanduser(), "w+") as payload_file_handle:
-                json.dump(payload, payload_file_handle)
+            with open(payload_path.expanduser(), "rb") as payload_file_handle:
                 params = {
                     "experiment_id": self.experiment_id,
                     "simulate": simulate,

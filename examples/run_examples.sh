@@ -20,7 +20,7 @@ fi
 window=1
 tmux new-window -t $session:$window -n 'server'
 tmux send-keys -t $session:$window 'cd ' $folder C-m
-tmux send-keys -t $session:$window 'python3 -m wei.server --workcell examples/example_yaml/example_workcell.yaml' C-m
+tmux send-keys -t $session:$window 'python3 -m wei.server --workcell examples/example_yaml/example_workcell.yaml --use_kafka True' C-m
 
 window=2
 tmux new-window -t $session:$window -n 'engine'

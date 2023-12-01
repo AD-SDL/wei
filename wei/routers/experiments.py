@@ -6,9 +6,7 @@ from typing import Dict, Optional
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
-from wei.config import Config
-from wei.core.data_classes import Event
-from wei.core.events import EventLogger, Events
+from wei.core.events import EventLogger, Event
 from wei.core.experiment import Experiment
 
 router = APIRouter()
@@ -40,7 +38,7 @@ async def get_file(filepath: str) -> FileResponse:
 
 
 @router.get("/")
-def get_experiment(
+def register_experiment(
     experiment_name: str,
     experiment_id: Optional[str] = None,
 ) -> Dict[str, str]:
@@ -65,12 +63,6 @@ def get_experiment(
     experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
     experiment.run_dir.mkdir(parents=True, exist_ok=True)
 
-    event_logger = Events(
-        server_addr=Config.server_host,
-        server_port=Config.server_port,
-        experiment_id=experiment.experiment_id,
-    )
-    event_logger.start_experiment()
     return {
         "experiment_id": experiment.experiment_id,
         "experiment_name": experiment.experiment_name,

@@ -408,11 +408,3 @@ class Location(BaseModel):
     queue: List[str] = []
     """Queue of workflows to be run at this location"""
 
-
-class Event(BaseModel):
-    """A single event in an experiment"""
-
-    experiment_id: str
-    event_type: str
-    event_name: str
-    event_info: Optional[Any] = None

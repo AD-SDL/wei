@@ -6,9 +6,17 @@ from typing import Any, Dict, Optional
 import requests
 
 from wei.config import Config
-from wei.core.data_classes import Event
+from wei.core.data_classes import BaseModel
 from wei.core.loggers import WEI_Logger
 
+
+class Event(BaseModel):
+    """A single event in an experiment"""
+
+    experiment_id: str
+    event_type: str
+    event_name: str
+    event_info: Optional[Any] = None
 
 class EventLogger:
     """Registers Events during the Experiment execution both in a logfile and on Kafka"""
@@ -134,7 +142,7 @@ class Events:
         response: Dict
            The JSON portion of the response from the server"""
 
-        url = f"{self.url}/exp/{self.experiment_id}/log"
+        url = f"{self.url}/events/"
         event = Event.model_validate(
             {
                 "experiment_id": self.experiment_id,
@@ -143,13 +151,11 @@ class Events:
                 "event_info": event_info,
             }
         )
-
+        print({'event': event.model_dump_json()})
         response = self._return_response(
             requests.post(
                 url,
-                params={
-                    "event": event.model_dump_json(),
-                },
+                json={"event": event.model_dump_json()},
             )
         )
         return response
