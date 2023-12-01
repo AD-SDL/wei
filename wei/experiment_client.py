@@ -88,7 +88,7 @@ class ExperimentClient:
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
 
-    def register_exp(self, experiment_id, experiment_name) -> Dict[Any, Any]:
+    def register_exp(self) -> Dict[Any, Any]:
         """Deprecated method for registering an experiment with the server
 
         Parameters

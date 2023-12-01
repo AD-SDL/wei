@@ -56,7 +56,7 @@ class EventLogger:
         None
         """
         logger = WEI_Logger.get_experiment_logger(self.experiment_id)
-        logger.info(log_value)
+        logger.info(log_value.model_dump_json())
 
         if self.kafka_producer:
             try:
@@ -135,7 +135,7 @@ class Events:
            The JSON portion of the response from the server"""
 
         url = f"{self.url}/exp/{self.experiment_id}/log"
-        event = Event.model_validate_json(
+        event = Event.model_validate(
             {
                 "experiment_id": self.experiment_id,
                 "event_type": event_type,
