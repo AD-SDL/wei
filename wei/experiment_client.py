@@ -139,11 +139,10 @@ class ExperimentClient:
 
         payload_path = Path("~/.wei/temp/payload.txt")
         payload_path.expanduser().parent.mkdir(parents=True, exist_ok=True)
-        with open(payload_path.expanduser(), "w+") as payload_file_handle:
-            json.dump(payload, payload_file_handle)
         
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
             with open(payload_path.expanduser(), "rb") as payload_file_handle:
+                json.dump(payload, payload_file_handle)
                 params = {
                     "experiment_id": self.experiment_id,
                     "simulate": simulate,
