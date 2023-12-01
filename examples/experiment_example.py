@@ -6,7 +6,7 @@ from pathlib import Path
 
 from wei import ExperimentClient
 
-SIMULATE = True
+SIMULATE = False
 
 
 def main() -> None:
