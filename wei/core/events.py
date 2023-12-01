@@ -31,13 +31,17 @@ class EventLogger:
         self.experiment_id = experiment_id
 
         if Config.use_kafka:
+            from diaspora_event_sdk import Client as GlobusClient
             from diaspora_event_sdk import KafkaProducer
 
             self.kafka_producer = KafkaProducer()
-            self.kafka_topic = "rpl_test"
+            self.kafka_topic = "wei_diaspora"
+
+            c = GlobusClient()
+            print("Creating Diaspora topic: %s", self.kafka_topic)
+            print(c.register_topic(self.kafka_topic))
         else:
             self.kafka_producer = None
-            self.kafka_topic = None
 
     def log_event(self, log_value: Event) -> Dict[Any, Any]:
         """logs an event in the proper place for the given experiment
@@ -54,10 +58,10 @@ class EventLogger:
         logger = WEI_Logger.get_experiment_logger(self.experiment_id)
         logger.info(log_value)
 
-        if self.kafka_producer is not None:
+        if self.kafka_producer:
             try:
                 future = self.kafka_producer.send(
-                    self._kafka_topic, {"log_value": str(log_value)}
+                    self.kafka_topic, {"log_value": str(log_value)}
                 )
                 print(future.get(timeout=10))
                 pass

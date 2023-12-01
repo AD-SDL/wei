@@ -35,7 +35,7 @@ async def log_return(experiment_id: str) -> str:
 
 @router.get("/{experiment_id}/file")
 async def get_file(filepath: str) -> FileResponse:
-    """Returns the log for a given experiment"""
+    """Returns a file inside an experiment folder."""
     return FileResponse(filepath)
 
 
