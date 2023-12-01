@@ -18,6 +18,7 @@ class Config:
     configured = False
     workcell_file = Path("tests/test_workcell.yaml")
     workcell_name = "test_workcell"
+    use_kafka = False
     kafka_server = ""
     reset_locations = True
     update_interval = 10.0
@@ -47,6 +48,10 @@ class Config:
         Config.configured = True
         Config.test = False
 
+        # Kafka Config
+        Config.use_kafka = args.use_kafka
+        Config.kafka_server = args.kafka_server
+
     @staticmethod
     def parse_args() -> Namespace:
         """Parse engine's command line arguments."""
@@ -65,9 +70,15 @@ class Config:
             default=6379,
         )
         parser.add_argument(
+            "--use_kafka",
+            type=bool,
+            help="Whether or not to log events to kafka",
+            default=False,
+        )
+        parser.add_argument(
             "--kafka_server",
             type=str,
-            help="url (no port) for Redis server",
+            help="url (including port, if necessary) for Kafka server",
             default="ec2-54-160-200-147.compute-1.amazonaws.com:9092",
         )
         parser.add_argument(

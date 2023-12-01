@@ -1,13 +1,14 @@
 """
 Router for the "experiments"/"exp" endpoints
 """
-from pathlib import Path
 from typing import Dict, Optional
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.experiment import Experiment, create_experiment
+from wei.config import Config
+from wei.core.events import Events
+from wei.core.experiment import Experiment
 from wei.core.loggers import WEI_Logger
 
 router = APIRouter()
@@ -43,7 +44,7 @@ async def get_file(filepath: str) -> FileResponse:
 def get_experiment(
     experiment_name: str,
     experiment_id: Optional[str] = None,
-) -> Dict[str, Path]:
+) -> Dict[str, str]:
     """Pulls an experiment and creates the files and logger for it
 
     Parameters
@@ -59,4 +60,20 @@ def get_experiment(
 
     """
 
-    return create_experiment(experiment_name, experiment_id)
+    experiment = Experiment(
+        experiment_name=experiment_name, experiment_id=experiment_id
+    )
+    experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
+    experiment.run_dir.mkdir(parents=True, exist_ok=True)
+
+    events = Events(
+        server_addr=Config.server_host,
+        server_port=Config.server_port,
+        experiment_id=experiment.experiment_id,
+    )
+    events.start_experiment()
+    return {
+        "experiment_id": experiment.experiment_id,
+        "experiment_name": experiment.experiment_name,
+        "experiment_path": str(experiment.experiment_dir),
+    }

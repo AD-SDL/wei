@@ -5,6 +5,8 @@ from typing import Any, Dict, Optional
 
 import requests
 
+from wei.config import Config
+
 
 class Event:
     """A single event in an experiment"""
@@ -20,8 +22,6 @@ class Events:
         server_addr: str,
         server_port: str,
         experiment_id: str,
-        wei_internal: bool = False,
-        use_kafka: bool = False,
     ) -> None:
         """Initializes an Event Logging object
 
@@ -42,16 +42,13 @@ class Events:
         experiment_path: Optional[str]
             Path for logging the experiment on the server
 
-        use_kafka: Optional[bool]
-            Use diaspora kafka backend
         """
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_id = experiment_id
         self.url = f"http://{self.server_addr}:{self.server_port}"
-        self.wei_internal = wei_internal
 
-        if use_kafka:
+        if Config.use_kafka:
             from diaspora_event_sdk import KafkaProducer
 
             self.kafka_producer = KafkaProducer()
