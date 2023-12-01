@@ -6,16 +6,68 @@ from typing import Any, Dict, Optional
 import requests
 
 from wei.config import Config
+from wei.core.data_classes import Event
+from wei.core.loggers import WEI_Logger
 
 
-class Event:
-    """A single event in an experiment"""
+class EventLogger:
+    """Registers Events during the Experiment execution both in a logfile and on Kafka"""
 
-    pass
+    def __init__(
+        self,
+        experiment_id: str,
+    ) -> None:
+        """Initializes an Event Logging object
+
+        Parameters
+        ----------
+        experiment_id: str
+            Programmatically generated experiment id, can be reused if needed
+
+        Returns
+        ----------
+        None
+        """
+        self.experiment_id = experiment_id
+
+        if Config.use_kafka:
+            from diaspora_event_sdk import KafkaProducer
+
+            self.kafka_producer = KafkaProducer()
+            self.kafka_topic = "rpl_test"
+        else:
+            self.kafka_producer = None
+            self.kafka_topic = None
+
+    def log_event(self, log_value: Event) -> Dict[Any, Any]:
+        """logs an event in the proper place for the given experiment
+
+        Parameters
+        ----------
+        log_value : str
+            the specifically formatted value to log
+
+        Returns
+        -------
+        None
+        """
+        logger = WEI_Logger.get_experiment_logger(self.experiment_id)
+        logger.info(log_value)
+
+        if self.kafka_producer is not None:
+            try:
+                future = self.kafka_producer.send(
+                    self._kafka_topic, {"log_value": str(log_value)}
+                )
+                print(future.get(timeout=10))
+                pass
+            except Exception as e:
+                print(str(e))
+                print("Kafka Unavailable")
 
 
 class Events:
-    """Registers Events during the Experiment execution both in a cloud log and on Kafka"""
+    """An interface for logging events"""
 
     def __init__(
         self,
@@ -38,21 +90,11 @@ class Events:
 
         experiment_id: Optional[str]
             # Programmatically generated experiment id, can be reused if needed
-
-        experiment_path: Optional[str]
-            Path for logging the experiment on the server
-
         """
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_id = experiment_id
         self.url = f"http://{self.server_addr}:{self.server_port}"
-
-        if Config.use_kafka:
-            from diaspora_event_sdk import KafkaProducer
-
-            self.kafka_producer = KafkaProducer()
-            self.kafka_topic = "rpl_test"
 
         self.loops: list[str] = []
 
@@ -87,30 +129,22 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        url = f"{self.url}/exp/{self.experiment_id}/log"
-        log_value = {
-            "experiment_id": self.experiment_id,
-            "event_type": event_type,
-            "event_name": event_name,
-            "event_info": event_info,
-        }
 
-        if self.kafka_producer:
-            try:
-                future = self.kafka_producer.send(
-                    self._kafka_topic, {"log_value": str(log_value)}
-                )
-                print(future.get(timeout=10))
-                pass
-            except Exception as e:
-                print(str(e))
-                print("Kafka Unavailable")
+        url = f"{self.url}/exp/{self.experiment_id}/log"
+        event = Event.model_validate_json(
+            {
+                "experiment_id": self.experiment_id,
+                "event_type": event_type,
+                "event_name": event_name,
+                "event_info": event_info,
+            }
+        )
 
         response = self._return_response(
             requests.post(
                 url,
                 params={
-                    "log_value": str(log_value),
+                    "event": event.model_dump_json(),
                 },
             )
         )

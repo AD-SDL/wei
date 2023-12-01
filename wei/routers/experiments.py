@@ -4,22 +4,21 @@ Router for the "experiments"/"exp" endpoints
 from typing import Dict, Optional
 
 from fastapi import APIRouter
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 
 from wei.config import Config
-from wei.core.events import Events
+from wei.core.data_classes import Event
+from wei.core.events import EventLogger, Events
 from wei.core.experiment import Experiment
-from wei.core.loggers import WEI_Logger
 
 router = APIRouter()
 
 
 @router.post("/{experiment_id}/log")
-def log_experiment(experiment_id: str, log_value: str) -> JSONResponse:
+def log_experiment(experiment_id: str, event: Event) -> Event:
     """Logs a value to the log file for a given experiment"""
-    logger = WEI_Logger.get_experiment_logger(experiment_id)
-    logger.info(log_value)
-    return JSONResponse(status_code=200, content={"logged": log_value})
+    EventLogger(experiment_id).log_event(event)
+    return event
 
 
 @router.get("/{experiment_id}/log")
@@ -66,12 +65,12 @@ def get_experiment(
     experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
     experiment.run_dir.mkdir(parents=True, exist_ok=True)
 
-    events = Events(
+    event_logger = Events(
         server_addr=Config.server_host,
         server_port=Config.server_port,
         experiment_id=experiment.experiment_id,
     )
-    events.start_experiment()
+    event_logger.start_experiment()
     return {
         "experiment_id": experiment.experiment_id,
         "experiment_name": experiment.experiment_name,
