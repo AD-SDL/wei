@@ -17,10 +17,6 @@ def main() -> None:
     # This defines the Experiment object that will communicate with the WEI server
     exp = ExperimentClient("127.0.0.1", "8000", "Example_Program")
 
-    # This initializes the connection to the server
-    # and the logs for this run of the program.
-    exp.register_exp()
-
     # This runs the workflow
     flow_info = exp.start_run(wf_path.resolve(), simulate=SIMULATE, blocking=True)
     print(json.dumps(flow_info, indent=2))
