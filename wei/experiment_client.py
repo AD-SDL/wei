@@ -136,9 +136,12 @@ class ExperimentClient:
             payload = {}
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/runs/start"
+
         payload_path = Path("~/.wei/temp/payload.txt")
-        with open(payload_path.expanduser(), "w") as payload_file_handle:
+        payload_path.expanduser().parent.mkdir(parents=True, exist_ok=True)
+        with open(payload_path.expanduser(), "w+") as payload_file_handle:
             json.dump(payload, payload_file_handle)
+        
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
             with open(payload_path.expanduser(), "rb") as payload_file_handle:
                 params = {
