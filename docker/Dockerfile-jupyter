@@ -8,7 +8,7 @@ ARG WEI_DATA_PATH=/home/${USER}/.wei
 
 USER root
 
-RUN git clone https://github.com/AD-SDL/wei.git -b 0_5_cleanup ${WEI_PATH}
+RUN git clone https://github.com/AD-SDL/wei.git -b main ${WEI_PATH}
 RUN mkdir -p ${WEI_DATA_PATH}/temp
 RUN chown -R ${USER_ID}:${GROUP_ID} ${WEI_DATA_PATH}
 

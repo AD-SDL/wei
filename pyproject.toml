@@ -1,9 +1,14 @@
 [project]
-name = "wei"
-version = "0.5.0"
+name = "ad_sdl.wei"
+version = "0.5.1.dev0"
 description = "The Rapid Prototyping Laboratory's Workcell Execution Interface."
 authors = [
-    {name = "Tobias Ginsburg, Rafael Vescovi, Ryan D. Lewis, Kyle Hippe, Doga Ozgulbas, Casey Stone", email = "ravescovi@anl.gov"},
+    {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
+    {name = "Tobias Ginsburg", email = "tginsburg@anl.gov"},
+    {name = "Ryan D. Lewis", email = "ryan.lewis@anl.gov"},
+    {name = "Casey Stone", email = "cstone@anl.gov"},
+    {name = "Doga Ozgulbas", email = "dozgulbas@anl.gov"},
+    {name = "Kyle Hippe", email = "khippe@anl.gov"},
 ]
 dependencies = [
     'devtools>=0.12',
@@ -32,7 +37,7 @@ examples = [
 
 [project.urls]
 Homepage = "https://github.com/AD-SDL/wei"
-Downloads = "https://github.com/AD-SDL/wei/archive/refs/tags/0.5.0.tar.gz"
+Downloads = "https://github.com/AD-SDL/wei/archive/refs/tags/0.5.1.tar.gz"
 
 ######################
 # Build Info + Tools #
