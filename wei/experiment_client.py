@@ -124,7 +124,7 @@ class ExperimentClient:
         payload_path.expanduser().parent.mkdir(parents=True, exist_ok=True)
         with open(payload_path.expanduser(), "w+") as payload_file_handle:
             json.dump(payload, payload_file_handle)
-        
+
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
             with open(payload_path.expanduser(), "rb") as payload_file_handle:
                 params = {
@@ -268,3 +268,26 @@ class ExperimentClient:
             return {"http_error": response.status_code}
 
         return self._return_response(response)
+
+    def register_exp(self) -> Dict[Any, Any]:
+        """Deprecated method for registering an experiment with the server
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+
+        response: Dict
+        The JSON portion of the response from the server"""
+        warn(
+            """
+                This method is deprecated.
+                Experiment registration is now handled when initializing the ExperimentClient.
+                You can safely remove any calls to this function.
+                """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return {"exp_dir": self.experiment_path}

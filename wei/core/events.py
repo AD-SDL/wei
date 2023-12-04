@@ -18,6 +18,7 @@ class Event(BaseModel):
     event_name: str
     event_info: Optional[Any] = None
 
+
 class EventLogger:
     """Registers Events during the Experiment execution both in a logfile and on Kafka"""
 
@@ -123,7 +124,8 @@ class Events:
         response: Dict
            The JSON portion of the request"""
         if response.status_code != 200:
-            return {"http_error": response.status_code}
+            print(response.status_code, response.content)
+            return {"http_error": response.status_code, "content": response.content}
 
         return dict(response.json())
 
@@ -151,11 +153,10 @@ class Events:
                 "event_info": event_info,
             }
         )
-        print({'event': event.model_dump_json()})
         response = self._return_response(
             requests.post(
                 url,
-                json={"event": event.model_dump_json()},
+                json=event.model_dump(mode="json"),
             )
         )
         return response

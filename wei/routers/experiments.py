@@ -6,17 +6,9 @@ from typing import Dict, Optional
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
-from wei.core.events import EventLogger, Event
 from wei.core.experiment import Experiment
 
 router = APIRouter()
-
-
-@router.post("/{experiment_id}/log")
-def log_experiment(experiment_id: str, event: Event) -> Event:
-    """Logs a value to the log file for a given experiment"""
-    EventLogger(experiment_id).log_event(event)
-    return event
 
 
 @router.get("/{experiment_id}/log")

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from wei.config import Config
-from wei.routers import experiments, locations, modules, runs, workcells, events
+from wei.routers import events, experiments, locations, modules, runs, workcells
 
 
 @asynccontextmanager  # type: ignore

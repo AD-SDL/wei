@@ -407,4 +407,3 @@ class Location(BaseModel):
     """State of the location"""
     queue: List[str] = []
     """Queue of workflows to be run at this location"""
-
