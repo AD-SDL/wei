@@ -109,8 +109,8 @@ class Module(BaseModel):
     """Robot id"""
     state: ModuleStatus = Field(default=ModuleStatus.INIT)
     """Current state of the module"""
-    queue: List[str] = []
-    """Queue of workflows to be run at this location"""
+    reserved: Optional[str] = None
+    """ID of WorkflowRun that will run next on this Module"""
 
     @property
     def location(self) -> Any:
@@ -405,5 +405,5 @@ class Location(BaseModel):
     """Coordinates of the location"""
     state: str = "Empty"
     """State of the location"""
-    queue: List[str] = []
-    """Queue of workflows to be run at this location"""
+    reserved: Optional[str] = None
+    """ID of WorkflowRun that will next occupy this Location"""

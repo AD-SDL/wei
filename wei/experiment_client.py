@@ -148,7 +148,6 @@ class ExperimentClient:
                         ),
                     },
                 )
-        print(json.dumps(response.json(), indent=2))
         response_dict = self._return_response(response)
         if blocking:
             prior_status = None
@@ -171,11 +170,12 @@ class ExperimentClient:
                 else:
                     print(".", end="", flush=True)
                 time.sleep(1)
-                if run_info["status"] in [
-                    WorkflowStatus.COMPLETED,
-                    WorkflowStatus.FAILED,
-                ]:
+                if run_info["status"] == WorkflowStatus.COMPLETED:
                     print()
+                    break
+                elif run_info["status"] == WorkflowStatus.FAILED:
+                    print()
+                    print(json.dumps(response.json(), indent=2))
                     break
                 prior_status = status
                 prior_index = step_index

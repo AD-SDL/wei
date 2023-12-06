@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional
 from wei.config import Config
 from wei.core.data_classes import (
     Module,
+    ModuleStatus,
     Step,
     StepResponse,
     StepStatus,
@@ -15,9 +16,9 @@ from wei.core.data_classes import (
 )
 from wei.core.events import Events
 from wei.core.interface import InterfaceMap
-from wei.core.location import update_source_and_target
+from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import WEI_Logger
-from wei.core.module import validate_module_names
+from wei.core.module import clear_module_reservation, validate_module_names
 from wei.core.state_manager import StateManager
 
 state_manager = StateManager()
@@ -27,19 +28,29 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     """Check if a step is valid."""
     if "target" in step.locations:
         location = state_manager.get_location(step.locations["target"])
-        if not (location.state == "Empty") or not (
-            len(location.queue) > 0 and location.queue[0] == str(run_id)
-        ):
+        if not (location.state == "Empty"):
+            print(f"Can't run {run_id}.{step.name}, target is not empty")
+            return False
+        if location.reserved:
+            print(f"Can't run {run_id}.{step.name}, target is reserved")
             return False
 
     if "source" in step.locations:
         location = state_manager.get_location(step.locations["source"])
         if not (location.state == str(experiment_id)):
+            print(
+                f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
+            )
+            return False
+        if location.reserved:
+            print(f"Can't run {run_id}.{step.name}, source is reserved")
             return False
     module_data = state_manager.get_module(step.module)
-    if "BUSY" not in module_data.state and not (
-        len(module_data.queue) > 0 and module_data.queue[0] == str(run_id)
-    ):
+    if module_data.state != ModuleStatus.IDLE:
+        print(f"Can't run {run_id}.{step.name}, module is not idle")
+        return False
+    if module_data.reserved:
+        print(f"Can't run {run_id}.{step.name}, module is reserved")
         return False
     return True
 
@@ -94,13 +105,15 @@ def run_step(
             ).log_wf_end(wf_run.name, wf_run.run_id)
         else:
             wf_run.status = WorkflowStatus.QUEUED
-        wf_run.step_index += 1
+            Events(
+                Config.server_host, Config.server_port, wf_run.experiment_id
+            ).log_comment(step.model_dump_json())
     with state_manager.state_lock():
         update_source_and_target(wf_run)
+        free_source_and_target(wf_run)
+        clear_module_reservation(module)
+        wf_run.step_index += 1
         state_manager.set_workflow_run(wf_run)
-        Events(
-            Config.server_host, Config.server_port, wf_run.experiment_id
-        ).log_comment(str(state_manager.get_workflow_run(wf_run.run_id).step_index))
 
 
 def create_run(
@@ -150,9 +163,9 @@ def create_run(
 
     steps = []
     for step in workflow.flowdef:
-        replace_positions(workcell, step)
         if payload:
             inject_payload(payload, step)
+        replace_positions(workcell, step)
         steps.append(step)
 
     wf_run.steps = steps
@@ -162,12 +175,16 @@ def create_run(
 
 def replace_positions(workcell: WorkcellData, step: Step) -> None:
     """Replaces the positions in the step with the actual positions from the workcell"""
-    if isinstance(step.args, dict) and len(step.args) > 0 and workcell.locations:
-        if step.module in workcell.locations.keys():
-            for key, value in step.args.items():
-                # if hasattr(value, "__contains__") and "positions" in value:
-                if str(value) in workcell.locations[step.module].keys():
-                    step.args[key] = workcell.locations[step.module][value]
+    # if isinstance(step.args, dict) and len(step.args) > 0 and workcell.locations:
+    #     if step.module in workcell.locations.keys():
+    for key, value in step.args.items():
+        # if hasattr(value, "__contains__") and "positions" in value:
+        try:
+            if str(value) in workcell.locations[step.module].keys():
+                step.args[key] = workcell.locations[step.module][value]
+                step.locations[key] = value
+        except Exception as _:
+            continue
 
 
 def inject_payload(payload: Dict[str, Any], step: Step) -> None:
