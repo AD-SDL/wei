@@ -20,6 +20,7 @@ services:
     volumes:
       - ./wei:/wei/wei
       - ~/.wei:/root/.wei
+      - ~/.globus_compute:~/.globus_compute
     command: pdm run engine --workcell /wei/examples/example_yaml/example_workcell_docker.yaml --redis_host wei_redis --server wei_server
     depends_on:
       - wei_redis
