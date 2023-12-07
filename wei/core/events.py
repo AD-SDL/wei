@@ -40,17 +40,22 @@ class EventLogger:
         self.experiment_id = experiment_id
 
         if Config.use_kafka:
-            from diaspora_event_sdk import Client as GlobusClient
             from diaspora_event_sdk import KafkaProducer
-
+            print("here")
             self.kafka_producer = KafkaProducer()
-            self.kafka_topic = "wei_diaspora"
-
-            c = GlobusClient()
-            print("Creating Diaspora topic: %s", self.kafka_topic)
-            print(c.register_topic(self.kafka_topic))
         else:
             self.kafka_producer = None
+
+        if self.kafka_producer:
+            from diaspora_event_sdk import Client as GlobusClient
+            c = GlobusClient()
+            self.kafka_topic = "wei_diaspora"
+            print("Creating Diaspora topic: %s", self.kafka_topic)
+            try:
+                c.register_topic(self.kafka_topic)
+            except:
+                print("could not register")
+            
 
     def log_event(self, log_value: Event) -> Dict[Any, Any]:
         """logs an event in the proper place for the given experiment
