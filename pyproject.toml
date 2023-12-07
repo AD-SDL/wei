@@ -32,11 +32,6 @@ requires-python = ">=3.8.1"
 readme = "README.md"
 license = {text = "MIT"}
 
-[project.optional-dependencies]
-examples = [
-    "opencv-python-headless",
-]
-
 [project.urls]
 Homepage = "https://github.com/AD-SDL/wei"
 Downloads = "https://github.com/AD-SDL/wei/archive/refs/tags/0.5.1.tar.gz"
@@ -50,7 +45,7 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm.scripts]
-engine = "python3 -m wei.engine"
+engine = "python3 -m -u wei.engine"
 server = "python3 -m wei.server"
 
 [tool.pdm.dev-dependencies]

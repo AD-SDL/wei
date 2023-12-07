@@ -175,10 +175,7 @@ def create_run(
 
 def replace_positions(workcell: WorkcellData, step: Step) -> None:
     """Replaces the positions in the step with the actual positions from the workcell"""
-    # if isinstance(step.args, dict) and len(step.args) > 0 and workcell.locations:
-    #     if step.module in workcell.locations.keys():
     for key, value in step.args.items():
-        # if hasattr(value, "__contains__") and "positions" in value:
         try:
             if str(value) in workcell.locations[step.module].keys():
                 step.args[key] = workcell.locations[step.module][value]
