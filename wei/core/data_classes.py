@@ -1,6 +1,7 @@
 """Dataclasses used for the workflows/cells"""
 
 import json
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar, Dict, List, Optional, Tuple, Type, TypeVar, Union
@@ -204,6 +205,15 @@ class Step(BaseModel):
     comment: Optional[str] = None
     """Notes about step"""
 
+    start_time: Optional[datetime] = None
+    """Time the step started running"""
+    end_time: Optional[datetime] = None
+    """Time the step finished running"""
+    duration: Optional[timedelta] = None
+    """Duration of the step's run"""
+    result: Optional["StepResponse"] = None
+    """Result of the step after being run"""
+
     # Load any yaml arguments
     @validator("args")
     def validate_args_dict(cls, v: Any, **kwargs: Any) -> Any:
@@ -295,6 +305,13 @@ class WorkflowRun(Workflow):
     """Index of the current step"""
     simulate: bool = False
     """Whether or not this workflow is being simulated"""
+
+    start_time: Optional[datetime] = None
+    """Time the workflow started running"""
+    end_time: Optional[datetime] = None
+    """Time the workflow finished running"""
+    duration: Optional[timedelta] = None
+    """Duration of the workflow's run"""
 
     @computed_field  # type: ignore
     @property

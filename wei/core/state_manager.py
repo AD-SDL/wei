@@ -151,7 +151,7 @@ class StateManager:
         Sets a workflow by ID
         """
         if isinstance(wf, WorkflowRun):
-            wf_dump = wf.model_dump()
+            wf_dump = wf.model_dump(mode="json")
         else:
             wf_dump = WorkflowRun.model_validate(wf).model_dump(mode="json")
         self._workflow_runs[str(wf_dump["run_id"])] = wf_dump

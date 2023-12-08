@@ -1,0 +1,35 @@
+version: "3.0"
+services:
+  wei_server:
+    image: ghcr.io/ad-sdl/wei:latest
+    container_name: wei_server
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - ./wei:/wei/wei
+      - ~/.wei:/root/.wei
+      - ~/.globus_compute:/root/.globus_compute
+    command: python3 -m wei.engine --workcell /path/to/workcell.yaml --redis_host wei_redis --port 8000 --use_kafka True
+    depends_on:
+      - wei_redis
+  wei_engine:
+    image: ghcr.io/ad-sdl/wei:latest
+    container_name: wei_engine
+    volumes:
+      - ./wei:/wei/wei
+      - ~/.wei:/root/.wei
+    command: python3 -m wei.engine --workcell /path/to/workcell.yaml --redis_host wei_redis --server wei_server
+    depends_on:
+      - wei_redis
+      - wei_server
+  wei_redis:
+    image: redis
+    container_name: wei_redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ./.wei/redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning

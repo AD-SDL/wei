@@ -5,12 +5,9 @@ RUN mkdir /wei
 # Copy wei files
 COPY wei /wei/wei
 COPY tests /wei/tests
-COPY examples /wei/examples
 COPY pyproject.toml /wei/pyproject.toml
 COPY README.md /wei/README.md
 
 
 # Install dependencies and wei
-RUN pip install pdm
-WORKDIR /wei
-RUN pdm install -G examples
+RUN pip install -e /wei

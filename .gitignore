@@ -293,3 +293,5 @@ logs/
 
 # Ruff
 .ruff_cache/*
+
+test_experiment/

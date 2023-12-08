@@ -1,6 +1,6 @@
 [project]
-name = "ad_sdl.wei"
-version = "0.5.1.dev0"
+name = "wei"
+version = "0.5.1.dev1"
 description = "The Rapid Prototyping Laboratory's Workcell Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -45,7 +45,7 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 [tool.pdm.scripts]
-engine = "python3 -m -u wei.engine"
+engine = "python3 -u -m wei.engine"
 server = "python3 -m wei.server"
 
 [tool.pdm.dev-dependencies]

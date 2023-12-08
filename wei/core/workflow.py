@@ -1,5 +1,6 @@
 """The module that initializes and runs the step by step WEI workflow"""
 import traceback
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 from wei.config import Config
@@ -69,6 +70,7 @@ def run_step(
     interface = "simulate_callback" if wf_run.simulate else module.interface
 
     try:
+        step.start_time = datetime.now()
         action_response, action_msg, action_log = InterfaceMap.interfaces[
             interface
         ].send_action(step=step, module=module, run_dir=wf_run.run_dir)
@@ -90,25 +92,33 @@ def run_step(
     else:
         logger.info(f"Finished running step with name: {step.name}")
 
+    step.end_time = datetime.now()
+    step.duration = step.end_time - step.start_time
+    step.result = step_response
+    Events(Config.server_host, Config.server_port, wf_run.experiment_id).log_wf_step(
+        wf_run=wf_run, step=step
+    )
     wf_run.hist[step.name] = step_response
-    wf_run.hist["run_dir"] = str(wf_run.run_dir)
     if step_response.action_response == StepStatus.FAILED:
+        logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
         wf_run.status = WorkflowStatus.FAILED
+        wf_run.end_time = datetime.now()
+        wf_run.duration = wf_run.end_time - wf_run.start_time
         Events(
             Config.server_host, Config.server_port, wf_run.experiment_id
         ).log_wf_failed(wf_run.name, wf_run.run_id)
     else:
         if wf_run.step_index + 1 == len(wf_run.steps):
             wf_run.status = WorkflowStatus.COMPLETED
+            wf_run.end_time = datetime.now()
+            wf_run.duration = wf_run.end_time - wf_run.start_time
             Events(
                 Config.server_host, Config.server_port, wf_run.experiment_id
             ).log_wf_end(wf_run.name, wf_run.run_id)
         else:
             wf_run.status = WorkflowStatus.QUEUED
-            Events(
-                Config.server_host, Config.server_port, wf_run.experiment_id
-            ).log_comment(step.model_dump_json())
     with state_manager.state_lock():
+        wf_run.steps[wf_run.step_index] = step
         update_source_and_target(wf_run)
         free_source_and_target(wf_run)
         clear_module_reservation(module)

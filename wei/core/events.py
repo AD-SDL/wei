@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 import requests
 
 from wei.config import Config
-from wei.core.data_classes import BaseModel
+from wei.core.data_classes import BaseModel, Step, WorkflowRun
 from wei.core.loggers import WEI_Logger
 
 
@@ -41,6 +41,7 @@ class EventLogger:
 
         if Config.use_kafka:
             from diaspora_event_sdk import KafkaProducer
+
             print("here")
             self.kafka_producer = KafkaProducer()
         else:
@@ -48,14 +49,14 @@ class EventLogger:
 
         if self.kafka_producer:
             from diaspora_event_sdk import Client as GlobusClient
+
             c = GlobusClient()
             self.kafka_topic = "wei_diaspora"
             print("Creating Diaspora topic: %s", self.kafka_topic)
             try:
                 c.register_topic(self.kafka_topic)
-            except:
+            except Exception as _:
                 print("could not register")
-            
 
     def log_event(self, log_value: Event) -> Dict[Any, Any]:
         """logs an event in the proper place for the given experiment
@@ -310,6 +311,27 @@ class Events:
             {"loop_name": loop_name, "condition": condition, "result": str(value)},
         )
 
+    def log_wf_queued(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
+        """Logs when a workflow is queued
+
+
+        Parameters
+        ----------
+        wf_name : str
+            The name of the workflow
+
+        run_id: str
+            The run_id of the workflow.
+
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+
+        return self._log_event(
+            "WEI", "WORKFLOW_QUEUED", {"wf_name": str(wf_name), "run_id": str(run_id)}
+        )
+
     def log_wf_start(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
         """Logs the start of a workflow
 
@@ -349,6 +371,21 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event(
             "WEI", "WORKFLOW_FAILED", {"wf_name": str(wf_name), "run_id": str(run_id)}
+        )
+
+    def log_wf_step(self, wf_run: WorkflowRun, step: Step) -> Dict[Any, Any]:
+        """Logs a step in a workflow"""
+        return self._log_event(
+            "WEI",
+            "WORKFLOW_STEP",
+            {
+                "wf_name": str(wf_run.name),
+                "run_id": str(wf_run.run_id),
+                "step_name": str(step.name),
+                "step_id": str(step.id),
+                "step_index": str(wf_run.step_index),
+                "result": str(step.result.model_dump_json()),
+            },
         )
 
     def log_wf_end(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
