@@ -52,9 +52,9 @@ def loc(
     ----------
     None
 
-     Returns
+    Returns
     -------
-     response: Dict
+    response: Dict
        the state of the workcell locations, with the id of the run that last filled the location
     """
     try:
@@ -77,15 +77,16 @@ async def update(
 ) -> JSONResponse:
     """
     Manually update the state of a location in the workcell.
+
     Parameters
     ----------
-    location: the name of the location to update
+    location_name: the name of the location to update
     experiment_id: the id of the experiment that is in the location
 
     Returns
     -------
-        response: Dict
-         the state of the workcell locations, with the id of the run that last filled the location
+    response: Dict
+    - the state of the workcell locations, with the id of the run that last filled the location
     """
 
     def update_location_state(location: Location, value: str) -> Location:

@@ -24,7 +24,7 @@ copyright = "2023, Argonne National Laboratory"
 author = "Rafael Vescovi, Kyle Hippe, Tobias Ginsburg"
 
 # The full version, including alpha/beta/rc tags
-release = "0.3.0"
+release = "0.5.1"
 
 
 # -- General configuration ---------------------------------------------------

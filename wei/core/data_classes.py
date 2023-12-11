@@ -174,6 +174,69 @@ class Interface(BaseModel):
         raise NotImplementedError()
 
 
+class StepStatus(str, Enum):
+    """Status for a step of a workflow"""
+
+    IDLE = "idle"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class StepResponse(BaseModel):
+    """
+    Standard Response returned by module interfaces
+    in response to action requests
+    """
+
+    action_response: StepStatus = StepStatus.SUCCEEDED
+    """Whether the action succeeded, failed, is running, or is idle"""
+    action_msg: str = ""
+    """Any result from the action. If the result is a file, this should be the file name"""
+    action_log: str = ""
+    """Error or log messages resulting from the action"""
+
+    def to_headers(self) -> Dict[str, str]:
+        """Converts the response to a dictionary of headers"""
+        return {
+            "x-wei-action_response": str(self.action_response),
+            "x-wei-action_msg": self.action_msg,
+            "x-wei-action_log": self.action_log,
+        }
+
+    @classmethod
+    def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
+        """Creates a StepResponse from the headers of a file response"""
+
+        return cls(
+            action_response=StepStatus(headers["x-wei-action_response"]),
+            action_msg=headers["x-wei-action_msg"],
+            action_log=headers["x-wei-action_log"],
+        )
+
+
+class StepFileResponse(FileResponse):
+    """
+    Convenience wrapper for FastAPI's FileResponse class
+    If not using FastAPI, return a response with:
+    - The file object as the response content
+    - The StepResponse parameters as custom headers, prefixed with "x-wei-"
+    """
+
+    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
+        """
+        Returns a FileResponse with the given path as the response content
+        """
+        return super().__init__(
+            path=path,
+            headers=StepResponse(
+                action_response=action_response,
+                action_msg=str(path),
+                action_log=action_log,
+            ).to_headers(),
+        )
+
+
 class Step(BaseModel):
     """Container for a single step"""
 
@@ -348,69 +411,6 @@ class WorkflowRun(Workflow):
     @field_serializer("run_log")
     def _serialize_run_log(self, run_log: Path) -> str:
         return str(run_log)
-
-
-class StepStatus(str, Enum):
-    """Status for a step of a workflow"""
-
-    IDLE = "idle"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-
-
-class StepResponse(BaseModel):
-    """
-    Standard Response returned by module interfaces
-    in response to action requests
-    """
-
-    action_response: StepStatus = StepStatus.SUCCEEDED
-    """Whether the action succeeded, failed, is running, or is idle"""
-    action_msg: str = ""
-    """Any result from the action. If the result is a file, this should be the file name"""
-    action_log: str = ""
-    """Error or log messages resulting from the action"""
-
-    def to_headers(self) -> Dict[str, str]:
-        """Converts the response to a dictionary of headers"""
-        return {
-            "x-wei-action_response": str(self.action_response),
-            "x-wei-action_msg": self.action_msg,
-            "x-wei-action_log": self.action_log,
-        }
-
-    @classmethod
-    def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
-        """Creates a StepResponse from the headers of a file response"""
-
-        return cls(
-            action_response=StepStatus(headers["x-wei-action_response"]),
-            action_msg=headers["x-wei-action_msg"],
-            action_log=headers["x-wei-action_log"],
-        )
-
-
-class StepFileResponse(FileResponse):
-    """
-    Convenience wrapper for FastAPI's FileResponse class
-    If not using FastAPI, return a response with
-        - The file object as the response content
-        - The StepResponse parameters as custom headers, prefixed with "x-wei-"
-    """
-
-    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
-        """
-        Returns a FileResponse with the given path as the response content
-        """
-        return super().__init__(
-            path=path,
-            headers=StepResponse(
-                action_response=action_response,
-                action_msg=str(path),
-                action_log=action_log,
-            ).to_headers(),
-        )
 
 
 class Location(BaseModel):

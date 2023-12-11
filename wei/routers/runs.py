@@ -24,22 +24,24 @@ async def start_run(
     payload: UploadFile,
     simulate: bool = False,
 ) -> JSONResponse:
-    """parses the payload and workflow files, and then pushes a workflow job onto the redis queue
+    """
+    parses the payload and workflow files, and then pushes a workflow job onto the redis queue
+
     Parameters
     ----------
     workflow: UploadFile
-        The workflow yaml file
+    - The workflow yaml file
     payload: UploadFile
-        The data input file to the workflow
+    - The data input file to the workflow
     experiment_path: str
-       The path to the data of the experiment for the workflow
+    - The path to the data of the experiment for the workflow
     simulate: bool
-        whether to use real robots or not
+    - whether to use real robots or not
 
     Returns
     -------
     response: Dict
-       a dictionary including whether queueing succeeded, the jobs ahead, and the id
+    - a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
     try:
         workflow_content = await workflow.read()

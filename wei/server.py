@@ -9,15 +9,17 @@ from wei.routers import events, experiments, locations, modules, runs, workcells
 
 @asynccontextmanager  # type: ignore
 async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
-    """Initial run function for the app, parses the workcell argument
-        Parameters
-        ----------
-        app : FastApi
-           The REST API app being initialized
-    , timeout_sec=10
-        Returns
-        -------
-        None"""
+    """
+    Initial run function for the app, parses the workcell argument
+
+    Parameters
+    ----------
+    app : FastApi
+        The REST API app being initialized
+    Returns
+    -------
+    None
+    """
 
     app.include_router(runs.router, prefix="/runs")
     app.include_router(experiments.router, prefix="/experiments")

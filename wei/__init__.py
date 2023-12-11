@@ -5,8 +5,8 @@ import importlib.metadata
 from pathlib import Path
 
 
-def extract_version() -> str:
-    """Returns either the version of installed package or the one
+def _extract_version() -> str:
+    """Returns either the version of the installed package or the one
     found in the project's pyproject.toml"""
     with suppress(FileNotFoundError, StopIteration):
         with open(
@@ -22,7 +22,7 @@ def extract_version() -> str:
     return importlib.metadata.version(__package__ or __name__.split(".", maxsplit=1)[0])
 
 
-__version__ = extract_version()
+__version__ = _extract_version()
 
 # Alias "ExperimentClient" -> "Experiment" for backwards compatibility
 from wei.experiment_client import ExperimentClient

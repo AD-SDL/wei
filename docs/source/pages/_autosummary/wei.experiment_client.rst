@@ -1,5 +1,5 @@
-rpl\_wei.exp\_app
-=================
+wei.experiment\_client
+======================
 
 .. automodule:: wei.experiment_client
 

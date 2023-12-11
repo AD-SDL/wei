@@ -1,5 +1,5 @@
-rpl\_wei.core.loggers
-=====================
+wei.core.loggers
+================
 
 .. automodule:: wei.core.loggers
 

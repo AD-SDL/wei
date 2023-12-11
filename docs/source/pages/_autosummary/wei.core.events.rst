@@ -1,5 +1,5 @@
-rpl\_wei.core.events
-====================
+wei.core.events
+===============
 
 .. automodule:: wei.core.events
 
@@ -17,4 +17,5 @@ rpl\_wei.core.events
 
    .. autosummary::
 
+      EventLogger
       Events

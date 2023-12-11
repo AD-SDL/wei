@@ -1,5 +1,5 @@
-rpl\_wei.core.interface
-=======================
+wei.core.interface
+==================
 
 .. automodule:: wei.core.interface
 
@@ -17,4 +17,4 @@ rpl\_wei.core.interface
 
    .. autosummary::
 
-      Interface
+      InterfaceMap

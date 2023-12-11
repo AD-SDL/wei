@@ -1,5 +1,5 @@
-rpl\_wei.core.interfaces
-========================
+wei.core.interfaces
+===================
 
 .. automodule:: wei.core.interfaces
 

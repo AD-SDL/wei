@@ -3,12 +3,11 @@ Introduction to WEI
 ===================
 
 WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular environment in which a variety of hardware and software components implement common interfaces.
-This tool leverages ROS (`Robot Operating System <https://www.ros.org>`_) for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a
+This tool leverages REST APIs for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a
 function-as-a-service platform, for distributed computation. It is particularly geared towards managing
 complex workflows in scientific research and laboratory environments.
 
-WEI allows you to define **workflows** in YAML format. Each workflow comprises a sequence of actions
-(commands), each performed by a specific module. A **module** represents an individual hardware or
+WEI allows you to define **workflows** in YAML format. Each workflow comprises a sequence of **steps**, each of which specifies an **action** to perform on a given **module**. A **module** represents an individual hardware or
 software component in the workcell. This modular approach provides the flexibility to design and
 implement diverse workflows across a variety of domains.
 
@@ -16,22 +15,24 @@ implement diverse workflows across a variety of domains.
 Overview and Terminology
 ========================
 
-We define conventional hardware and software configurations for robotic equipment and control software in order to simplify the assembly, modification, and scaling of experimental systems. The following figure shows our hardware conventions:
+We define conventional hardware and software configurations for robotic equipment and control software in order to simplify the assembly, modification, and scaling of experimental systems.
+The following figure shows our hardware conventions:
 
-* A **cart** is a cart with zero or more modules
-* A **module** is a hardware component with a name, type, position, etc. (e.g., Pealer, Sealer, OT2 liquid handling robot, plate handler, plate mover, camera)
-* A **workcell**, as shown in the photo on the left of the image below, is formed from multiple (eight in the photo) carts, each typically holding one or more modules (a total of 12 in the example, as described below).
+* A **station** is a location (such as a table, lab bench, or even cart) that can hold one or more **modules**
+* A **module** is a hardware component and corresponding software with a name, type, position, etc. (e.g., Peeler, Sealer, OT2 liquid handling robot, plate handler, plate mover, camera)
+* A **workcell**, as shown in the photo on the left of the image below, is formed from multiple (eight in the photo) stations, each typically holding one or more modules (a total of 12 in the example, as described below).
 * Multiple workcells and other components can be linked via mobile robots
 
 .. image:: ../assets/AD_Fig.jpg
 
-A **workcell definition** (a YAML file, see below) defines the modules that comprise a workcell, and associated static infrastructure that are to be used by the workflow.
+A **workcell definition** (a YAML file, see below) defines the modules that comprise a workcell, and associated static infrastructure that are to be used by workflows on the workcell.
 
 The software associated with a workflow is then defined by three types of files:
 
-* A **driver program**, in Python, sets up to call one or more workflows
-* A **workflow definition**, in YAML, define a set of **actions** to be executed, in order, on one or more of the modules in the workcell
-* A **protocol definition**, in YAML, defines a set of steps to be performed, in order, on a specified OpenTrons OT2
+* An **Experiment application**, written in Python, submits one or more **workflows** to WEI and performs any other logic required to manage/run the experiment
+* A **workflow definition**, in YAML, define a set of **steps** to be executed, in order, on one or more of the modules in the workcell
+* Certain modules require a **protocol definition** (or **protocol file**) to define a complex sequence of actions as part of a single **step**
+* As an example, our OT2 liquid handling module allows you to provide Protocol files in YAML format, which define a sequence of actions to be performed on the OT2 hardware
 
 The figure illustrates the three components for a simple "Color Picker" application that we use to illustrate the use of the technology.
 
@@ -62,7 +63,7 @@ The **modules** section lists the *modules* that are included in the workcell. I
 * a `Biometra thermal cycler <https://www.analytik-jena.com/products/life-science/pcr-qpcr-thermal-cycler/thermal-cycler-pcr/biometra-trio-series/>`_ (**biometra**)
 * another camera module, **camera_module**
 
-For example, this module specification included in `pcr_workcell.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/pcr_workcell.yaml>`_ described the Sealer module:
+For example, this module specification included in `pcr_workcell.yaml`_ described the Sealer module:
 
 .. code-block:: yaml
 
@@ -104,39 +105,39 @@ This is specified by a YAML file that defines the sequence of actions that will 
         module: pf400
         action: transfer
         args:
-        source: camera_module.positions.plate_station
-        target: ot2_cp_gamma.positions.deck2
-        source_plate_rotation: narrow
-        target_plate_rotation: wide
+            source: camera_module.positions.plate_station
+            target: ot2_cp_gamma.positions.deck2
+            source_plate_rotation: narrow
+            target_plate_rotation: wide
         comment: Place plate in ot2
 
     - name: Mix all colors
         module: ot2_cp_gamma
         action: run_protocol
         args:
-        config_path:  /home/rpl/workspace/rpl_workcell/color_picker/protocol_files/combined_protocol.yaml
-        red_volumes: payload.red_volumes
-        green_volumes: payload.green_volumes
-        blue_volumes: payload.blue_volumes
-        destination_wells: payload.destination_wells
-        use_existing_resources: payload.use_existing_resources
+            config_path:  /home/rpl/workspace/rpl_workcell/color_picker/protocol_files/combined_protocol.yaml
+            red_volumes: payload.red_volumes
+            green_volumes: payload.green_volumes
+            blue_volumes: payload.blue_volumes
+            destination_wells: payload.destination_wells
+            use_existing_resources: payload.use_existing_resources
         comment: Mix the red portions according to input data
 
     - name: Move to Picture
         module: pf400
         action: transfer
         args:
-        source: ot2_cp_gamma.positions.deck2
-        target: camera_module.positions.plate_station
-        source_plate_rotation: wide
-        target_plate_rotation: narrow
+            source: ot2_cp_gamma.positions.deck2
+            target: camera_module.positions.plate_station
+            source_plate_rotation: wide
+            target_plate_rotation: narrow
 
     - name: Take Picture
         module: camera_module
         action: take_picture
         args:
-        save_location: local_run_results
-        file_name: "final_image.jpg"
+            save_location: local_run_results
+            file_name: "final_image.jpg"
 
 
 
@@ -154,7 +155,7 @@ It comprises four steps:
 Protocol definition
 -------------------
 
-A protocol file gives the device-specific instructions to be executed on a specific piece of hardware to implement an intended action. For example, `ot2_pcr_config.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/pcr_workcell/protocol_files/ot2_pcr_config.yaml>`_ gives instructions for an OpenTrons OT2. A protocol file specifies a list of **equipment** within the hardware component; a sequence of **commands** to be executed on the equipment; and some describptive **metadata**. For example, the following shows the contents of `combined_protocol.yaml <https://github.com/AD-SDL/rpl_workcell/blob/main/color_picker/protocol_files/combined_protocol.yaml>`_, which comprise the equipment section, three commands, and the metadata section.
+A protocol file gives the device-specific instructions to be executed on a specific piece of hardware to implement an intended action. For example, `ot2_pcr_config.yaml`_, which comprise the equipment section, three commands, and the metadata section.
 
 Strings of the form *payload.VARIABLE* (e.g., `payload.destination_wells`) refer to arguments passed to the protocol.
 

@@ -1,5 +1,5 @@
-rpl\_wei.core.interfaces.simulate\_interface
-============================================
+wei.core.interfaces.simulate\_interface
+=======================================
 
 .. automodule:: wei.core.interfaces.simulate_interface
 

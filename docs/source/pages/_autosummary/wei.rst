@@ -1,5 +1,5 @@
-rpl\_wei
-========
+﻿wei
+===
 
 .. automodule:: wei
 
@@ -27,7 +27,9 @@ rpl\_wei
    :toctree:
    :recursive:
 
+   wei.config
    wei.core
+   wei.engine
    wei.experiment_client
-   wei.processing
+   wei.routers
    wei.server
