@@ -43,7 +43,7 @@ class ExperimentClient:
         self.server_port = server_port
         self.url = f"http://{self.server_addr}:{self.server_port}"
 
-        start_time = time()
+        start_time = time.time()
         while time.time() - start_time < 60:
             try:
                 self.register_experiment(experiment_id, experiment_name)

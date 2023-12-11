@@ -40,7 +40,11 @@ class EventLogger:
         self.experiment_id = experiment_id
 
         if Config.use_kafka:
+            from diaspora_event_sdk import Client as GlobusClient
             from diaspora_event_sdk import KafkaProducer, block_until_ready
+
+            c = GlobusClient()
+            print(c.list_topics())
 
             print("here")
             assert block_until_ready()
