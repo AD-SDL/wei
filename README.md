@@ -29,22 +29,11 @@ There are 2 options for installing WEI:
 
 ### Bare-Metal Install
 
-1. Clone the repository.
-2. If using WEI as a library (for instance, as a dependency for a specific module), skip to step 5.
-3. If you intend to run the WEI engine and server, install [Redis](https://redis.io/docs/getting-started/)
-4. If you intend to run the examples, you'll need to install [TMUX](https://github.com/tmux/tmux/wiki/Installing)
-5. Within the cloned repository, run the following:
-
 ```
-sudo apt install redis
-sudo apt install tmux
 pip3 install --upgrade pip
 git clone https://github.com/AD-SDL/wei/
 cd wei
-# For just WEI and its core dependencies
 pip3 install -e .
-# Or, with support for the examples:
-pip3 install -e '.[examples]'
 ```
 
 ### Docker Install
@@ -54,25 +43,12 @@ pip3 install -e '.[examples]'
 3. Within the cloned repository, run the following:
 
 ```
-docker/build_wei.sh
+scripts/docker/build.sh
 ```
 
-## Usage
+## Getting Started
 
-### Running the Examples (Bare-Metal Install)
-
-1. Run `examples/run_examples.sh`
-2. In the corresponding TMUX session, you should see a number of windows corresponding to each component of WEI. Check each tab to ensure the servers are up and operating properly
-3. In the last window, you should see a python command pre-populated. Press enter to run this example experiment script
-5. If you have an attached webcam, you can change the `SIMULATED` flag in `examples/experiment_example.py` to False to test taking an actual picture.
-
-### Running the Examples (Docker Install)
-
-1. Run `docker/start_wei.sh`
-2. In your browser, navigate to `localhost:8888`
-3. Enter `wei` as the token
-4. Navigate to `examples/experiment_example.ipynb` and run the cells in the Jupyter Notebook to run an example WEI Experiment
-5. If you have an attached webcam, you can change the `SIMULATED` flag to False to test taking an actual picture.
+See the [wei_template_workcell](https://github.com/AD-SDL/wei_template_workcell) for a simple example that can be used to try WEI or start your own workcell.
 
 ## Development
 

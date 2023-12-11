@@ -12,6 +12,7 @@ services:
       - ./wei:/wei/wei
       - ~/.wei:/root/.wei
       - ~/.globus_compute:/root/.globus_compute
+      - ~/.diaspora:/root/.diaspora
     command: python3 -m wei.engine --workcell /path/to/workcell.yaml --redis_host wei_redis --port 8000 --use_kafka True
     depends_on:
       - wei_redis

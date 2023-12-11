@@ -11,6 +11,7 @@ COPY wei /wei/wei
 COPY tests /wei/tests
 COPY pyproject.toml /wei/pyproject.toml
 COPY README.md /wei/README.md
+COPY scripts /wei/scripts
 
 
 # Install dependencies and wei
