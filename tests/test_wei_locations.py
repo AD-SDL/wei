@@ -12,7 +12,7 @@ from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
 
 # from wei.engine import Engine
-from wei.routers.runs import get_run_status, start_run
+from wei.routers.workflow_runs import get_run_status, start_run
 
 from .test_base import TestWEI_Base
 

@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:d3aff050828f5f3e628e1dc66e532bf771550f6f89d4734e176101f40d01ae2a"
+content_hash = "sha256:efbd5e1fefae850cd7bfb9fe0995c9c80997e6eae53683b4ea1b3d454cf1b46b"
 
 [[package]]
 name = "alabaster"
@@ -368,14 +368,14 @@ files = [
 
 [[package]]
 name = "diaspora-event-sdk"
-version = "0.0.17"
+version = "0.0.18"
 summary = "SDK of Diaspora Event Fabric: Resilience-enabling services for science from HPC to edge"
 dependencies = [
     "globus-sdk<4,>=3.20.1",
 ]
 files = [
-    {file = "diaspora-event-sdk-0.0.17.tar.gz", hash = "sha256:f713e09e2db91e4967f1b62ceebd7aa8f29032f56592c9335f2c0eeea4724969"},
-    {file = "diaspora_event_sdk-0.0.17-py3-none-any.whl", hash = "sha256:83cdeba1368215d58bdb98921b1ffcb39c5de50f3584871fb2649eb6b2460aae"},
+    {file = "diaspora-event-sdk-0.0.18.tar.gz", hash = "sha256:f912e05cc4a201aa2309e1fe6cbbd892b7c120d02ce79a28fbc14413509f8d2c"},
+    {file = "diaspora_event_sdk-0.0.18-py3-none-any.whl", hash = "sha256:1f77bb8e1ebc1895b7007c918944710052c2f92691950a0e1433bcd4e2aa05f9"},
 ]
 
 [[package]]

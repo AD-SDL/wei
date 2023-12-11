@@ -4,7 +4,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from wei.config import Config
-from wei.routers import events, experiments, locations, modules, runs, workcells
+from wei.routers import (
+    events,
+    experiments,
+    locations,
+    modules,
+    workcells,
+    workflow_runs,
+)
 
 
 @asynccontextmanager  # type: ignore
@@ -21,7 +28,7 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     None
     """
 
-    app.include_router(runs.router, prefix="/runs")
+    app.include_router(workflow_runs.router, prefix="/runs")
     app.include_router(experiments.router, prefix="/experiments")
     app.include_router(events.router, prefix="/events")
     app.include_router(locations.router, prefix="/locations")

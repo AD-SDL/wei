@@ -2,6 +2,7 @@
 Router for the "runs" endpoints
 """
 import json
+import traceback
 
 import yaml
 from fastapi import APIRouter, UploadFile
@@ -43,6 +44,8 @@ async def start_run(
     response: Dict
     - a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
+    wf = None
+    wf_run = None
     try:
         workflow_content = await workflow.read()
         workflow_content_str = workflow_content.decode("utf-8")
@@ -67,15 +70,33 @@ async def start_run(
             }
         )
     except Exception as e:
-        print(e)
-        return JSONResponse(
-            status_code=500,
-            content={
-                "wf": wf.model_dump(mode="json"),
-                "error": f"Error: {e}",
-                "status": str(WorkflowStatus.FAILED),
-            },
-        )
+        traceback.print_exc()
+        if wf_run:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "wf": wf_run.model_dump(mode="json"),
+                    "error": f"Error: {e}",
+                    "status": str(WorkflowStatus.FAILED),
+                },
+            )
+        elif wf:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "wf": wf.model_dump(mode="json"),
+                    "error": f"Error: {e}",
+                    "status": str(WorkflowStatus.FAILED),
+                },
+            )
+        else:
+            return JSONResponse(
+                status_code=500,
+                content={
+                    "error": f"Error: {e}",
+                    "status": str(WorkflowStatus.FAILED),
+                },
+            )
 
 
 @router.get("/{run_id}/state")

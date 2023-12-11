@@ -26,7 +26,7 @@ state_manager = StateManager()
 
 
 def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
-    """Check if a step is valid."""
+    """Check if a step is able to be run by the workcell."""
     if "target" in step.locations:
         location = state_manager.get_location(step.locations["target"])
         if not (location.state == "Empty"):
@@ -201,7 +201,7 @@ def inject_payload(payload: Dict[str, Any], step: Step) -> None:
         (arg_keys, arg_values) = zip(*step.args.items())
         for key, value in payload.items():
             # Covers naming issues when referring to namespace from yaml file
-            if "payload." not in key:
+            if not key.startswith("payload."):
                 key = f"payload.{key}"
             if key in arg_values:
                 idx = arg_values.index(key)

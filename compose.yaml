@@ -1,7 +1,7 @@
 version: "3.0"
 services:
   wei_server:
-    image: ghcr.io/ad-sdl/wei:latest
+    image: ghcr.io/ad-sdl/wei
     container_name: wei_server
     build:
       context: .
@@ -16,7 +16,7 @@ services:
     depends_on:
       - wei_redis
   wei_engine:
-    image: ghcr.io/ad-sdl/wei:latest
+    image: ghcr.io/ad-sdl/wei
     container_name: wei_engine
     volumes:
       - ./wei:/wei/wei

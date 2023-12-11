@@ -1,5 +1,9 @@
 FROM python:3.11
 
+LABEL org.opencontainers.image.source=https://github.com/AD-SDL/wei
+LABEL org.opencontainers.image.description="The Workcell Execution Interface (WEI)"
+LABEL org.opencontainers.image.licenses=MIT
+
 RUN mkdir /wei
 
 # Copy wei files

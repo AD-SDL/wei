@@ -40,9 +40,10 @@ class EventLogger:
         self.experiment_id = experiment_id
 
         if Config.use_kafka:
-            from diaspora_event_sdk import KafkaProducer
+            from diaspora_event_sdk import KafkaProducer, block_until_ready
 
             print("here")
+            assert block_until_ready()
             self.kafka_producer = KafkaProducer()
         else:
             self.kafka_producer = None

@@ -25,7 +25,7 @@ dependencies = [
     'ulid-py>=1.1.0, <1.2',
     'uvicorn>=0.21, <0.22',
     "httpx<0.26,>0.25",
-    "diaspora_event_sdk",
+    "diaspora_event_sdk>=0.0.18",
     "kafka-python"
 ]
 requires-python = ">=3.8.1"
