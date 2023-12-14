@@ -1,10 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-export USER_ID=`id -u`
-export GROUP_ID=`id -g`
-
-SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-
-cd $SCRIPTPATH/../..
+source "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"/script_helper.sh
+cd $project_path
 
 docker compose down

@@ -1,8 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+source "$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"/script_helper.sh
 
-version=`$SCRIPTPATH/version.sh`
-name=`$SCRIPTPATH/name.sh`
+$scripts_path/build.sh
 
-docker push ghcr.io/ad-sdl/${name}:${version}
+docker push ghcr.io/ad-sdl/${project_name}:${project_version}
