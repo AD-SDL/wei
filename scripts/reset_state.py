@@ -12,7 +12,8 @@ parser.add_argument("--port", type=str, help="Server port", default="8000")
 
 args = parser.parse_args()
 
-url = f"http://{args.server}:{args.port}/wc/state/clear"
+url = f"http://{args.server}:{args.port}/wc/state/reset"
+print(url)
 
 response = requests.post(url)
 

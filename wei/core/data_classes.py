@@ -1,6 +1,7 @@
 """Dataclasses used for the workflows/cells"""
 
 import json
+import logging
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -10,7 +11,7 @@ import ulid
 import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, computed_field, field_serializer, validator
+from pydantic import Field, computed_field, field_serializer, field_validator, validator
 
 from wei.core.experiment import Experiment
 
@@ -24,15 +25,10 @@ def ulid_factory() -> str:
     return ulid.new().str
 
 
-class BaseModel(_BaseModel):
+class BaseModel(_BaseModel, use_enum_values=True):
     """Allows any sub-class to inherit methods allowing for programmatic description of protocols
     Can load a yaml into a class and write a class into a yaml file.
     """
-
-    class Config:
-        """config for the BaseModel"""
-
-        use_enum_values = True  # Needed to serialize/deserialize enums
 
     def write_yaml(self, cfg_path: PathLike) -> None:
         """Allows programmatic creation of ot2util objects and saving them into yaml.
@@ -237,13 +233,8 @@ class StepFileResponse(FileResponse):
         )
 
 
-class Step(BaseModel):
+class Step(BaseModel, arbitrary_types_allowed=True):
     """Container for a single step"""
-
-    class Config:
-        """config for the step"""
-
-        arbitrary_types_allowed = True
 
     name: str
     """Name of step"""
@@ -286,11 +277,15 @@ class Step(BaseModel):
             try:
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
-                if arg_path.exists() and (
-                    arg_path.suffix == ".yaml" or arg_path.suffix == ".yml"
-                ):
-                    yaml.safe_load(arg_path.open("r"))
+                if not arg_path.exists():
+                    return v
+                else:
+                    print(arg_path)
+                    print(arg_path.suffix)
+                if arg_path.suffix == ".yaml" or arg_path.suffix == ".yml":
+                    print(f"Loading yaml from {arg_path}")
                     v[key] = yaml.safe_load(arg_path.open("r"))
+                    print(v[key])
             except TypeError:  # Is not a file
                 pass
 
@@ -308,12 +303,50 @@ class Metadata(BaseModel):
     """Version of interface used"""
 
 
+class WorkcellConfig(BaseModel, extra="allow"):
+    """Defines the format for a workcell config
+    Note: the extra='allow' parameter allows for
+    extra fields to be added to the config
+    """
+
+    use_diaspora: bool = Field(
+        default=False, description="Whether or not to use diaspora"
+    )
+    reset_locations: bool = Field(
+        default=True,
+        description="Whether or not to reset locations when the Engine (re)starts",
+    )
+    update_interval: float = Field(
+        default=1.0, description="How often to update the workcell state"
+    )
+    server_host: str = Field(
+        default="0.0.0.0", description="Hostname for the WEI server"
+    )
+    server_port: int = Field(default=8000, description="Port for the WEI server")
+    redis_host: str = Field(
+        default="localhost", description="Hostname for the Redis server"
+    )
+    redis_port: int = Field(default=6379, description="Port for the Redis server")
+    data_directory: PathLike = Field(
+        default=Path.home() / ".wei",
+        description="Directory to store data produced by WEI",
+    )
+    log_level: int = Field(default=logging.INFO, description="Logging level for WEI")
+
+    # Validators
+    @field_validator("data_directory")
+    @classmethod
+    def validate_data_directory(cls, v: PathLike) -> Path:
+        """Converts the data_directory to a Path object"""
+        return Path(v)
+
+
 class WorkcellData(BaseModel):
     """Container for information in a workcell"""
 
     name: str
     """Name of the workflow"""
-    config: Dict[str, Any] = {}
+    config: WorkcellConfig
     """Globus search index, needed for publishing"""
     modules: List[Module]
     """The modules available to a workcell"""

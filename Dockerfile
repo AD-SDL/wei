@@ -11,6 +11,8 @@ USER wei
 WORKDIR /home/wei
 
 RUN mkdir wei
+RUN mkdir .wei
+RUN mkdir .diaspora
 
 # Copy wei files
 COPY --chown=wei:wei wei wei/wei

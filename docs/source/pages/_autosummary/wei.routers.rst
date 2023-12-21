@@ -31,5 +31,5 @@ wei.routers
    wei.routers.experiments
    wei.routers.locations
    wei.routers.modules
-   wei.routers.runs
    wei.routers.workcells
+   wei.routers.workflow_runs

@@ -38,30 +38,25 @@ class EventLogger:
         None
         """
         self.experiment_id = experiment_id
+        self.kafka_topic = "wei_diaspora"
 
-        if Config.use_kafka:
-            from diaspora_event_sdk import Client as GlobusClient
-            from diaspora_event_sdk import KafkaProducer, block_until_ready
+        if Config.use_diaspora:
+            try:
+                from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
 
-            c = GlobusClient()
-            print(c.list_topics())
-
-            print("here")
-            assert block_until_ready()
-            self.kafka_producer = KafkaProducer()
+                assert block_until_ready()
+                self.kafka_producer = KafkaProducer()
+                print("Creating Diaspora topic: %s", self.kafka_topic)
+                c = Client()
+                c.register_topic(self.kafka_topic)
+            except Exception as e:
+                print(e)
+                print(
+                    "Failed to connect to Diaspora or create topic. Have you registered it already?"
+                )
         else:
             self.kafka_producer = None
-
-        if self.kafka_producer:
-            from diaspora_event_sdk import Client as GlobusClient
-
-            c = GlobusClient()
-            self.kafka_topic = "wei_diaspora"
-            print("Creating Diaspora topic: %s", self.kafka_topic)
-            try:
-                c.register_topic(self.kafka_topic)
-            except Exception as _:
-                print("could not register")
+            self.kafka_topic = None
 
     def log_event(self, log_value: Event) -> Dict[Any, Any]:
         """logs an event in the proper place for the given experiment
@@ -84,10 +79,8 @@ class EventLogger:
                     self.kafka_topic, {"log_value": str(log_value)}
                 )
                 print(future.get(timeout=10))
-                pass
             except Exception as e:
                 print(str(e))
-                print("Kafka Unavailable")
 
 
 class Events:

@@ -1,7 +1,7 @@
-wei.routers.runs
-================
+wei.routers.workflow\_runs
+==========================
 
-.. automodule:: wei.routers.runs
+.. automodule:: wei.routers.workflow_runs
 
 
 

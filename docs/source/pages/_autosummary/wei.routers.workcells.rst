@@ -14,6 +14,6 @@ wei.routers.workcells
    .. autosummary::
 
       clear_runs
-      clear_state
       get_state
+      reset_state
       set_workcell

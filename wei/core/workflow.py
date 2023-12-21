@@ -100,7 +100,7 @@ def run_step(
     )
     wf_run.hist[step.name] = step_response
     if step_response.action_response == StepStatus.FAILED:
-        logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
+        logger.info(f"Step {step.name} failed: {step_response.model_dump_json()}")
         wf_run.status = WorkflowStatus.FAILED
         wf_run.end_time = datetime.now()
         wf_run.duration = wf_run.end_time - wf_run.start_time

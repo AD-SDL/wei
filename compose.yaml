@@ -1,36 +1,44 @@
 version: "3.0"
 services:
+  #####################
+  # WEI Core Services #
+  #####################
   wei_server:
-    image: ghcr.io/ad-sdl/wei
+    image: ${IMAGE}
     container_name: wei_server
-    build:
-      context: .
-      dockerfile: ./Dockerfile
     ports:
       - 8000:8000
     volumes:
-      - ./wei:/wei/wei
-      - ~/.wei:/root/.wei
-      - ~/.globus_compute:/root/.globus_compute
-      - ~/.diaspora:/root/.diaspora
-    command: python3 -m wei.engine --workcell /path/to/workcell.yaml --redis_host wei_redis --port 8000 --use_kafka True
+      - ${WORKCELLS_DIR}:/workcell_defs
+      - ${WEI_DATA_DIR}:/home/wei/.wei
+      - diaspora_config:/home/wei/.diaspora
+      - ${PROJECT_DIR}:/home/wei/wei # for development only
+    command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
     depends_on:
       - wei_redis
   wei_engine:
-    image: ghcr.io/ad-sdl/wei
+    image: ${IMAGE}
     container_name: wei_engine
     volumes:
-      - ./wei:/wei/wei
-      - ~/.wei:/root/.wei
-    command: python3 -m wei.engine --workcell /path/to/workcell.yaml --redis_host wei_redis --server wei_server
+      - ${WORKCELLS_DIR}:/workcell_defs
+      - ${WEI_DATA_DIR}:/home/wei/.wei
+      - ${PROJECT_DIR}:/home/wei/wei # for development only
+    command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
     depends_on:
       - wei_redis
       - wei_server
   wei_redis:
     image: redis
-    container_name: wei_redis
+    container_name: redis
     ports:
       - 6379:6379
     volumes:
-      - ./.wei/redis_data:/data
+      - ${REDIS_DIR}:/data
     command: redis-server --save 60 1 --loglevel warning
+
+################
+# Data Storage #
+################
+volumes:
+  diaspora_config:
+    driver: local

@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from wei.core.data_classes import WorkcellData, WorkflowStatus
 from wei.core.state_manager import StateManager
+from wei.helpers import initialize_state
 
 router = APIRouter()
 
@@ -53,8 +54,8 @@ def get_state() -> JSONResponse:
         return JSONResponse(content=state_manager.get_state())
 
 
-@router.post("/state/clear", response_class=JSONResponse)
-def clear_state() -> JSONResponse:
+@router.post("/state/reset", response_class=JSONResponse)
+def reset_state() -> JSONResponse:
     """
 
     Clears the workcell's state
@@ -70,6 +71,7 @@ def clear_state() -> JSONResponse:
     """
     with state_manager.state_lock():
         state_manager.clear_state()
+        initialize_state()
         return JSONResponse(content=state_manager.get_state())
 
 

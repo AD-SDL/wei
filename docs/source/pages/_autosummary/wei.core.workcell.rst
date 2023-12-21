@@ -14,3 +14,4 @@ wei.core.workcell
    .. autosummary::
 
       find_step_module
+      load_workcell_file

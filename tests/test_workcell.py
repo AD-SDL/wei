@@ -18,7 +18,7 @@ class Test_Workcell_Base(TestWEI_Base):
             response = client.post("/wc/state/clear")
             assert response.status_code == 200
 
-            workcell = WorkcellData.from_yaml(Path("tests/test_workcell.yaml"))
+            workcell = WorkcellData.from_yaml(Path("workcell_defs/test_workcell.yaml"))
             response = client.post("/wc/", json=workcell.model_dump(mode="json"))
 
             assert response.status_code == 200
@@ -42,7 +42,7 @@ class Test_Workcell_Base(TestWEI_Base):
             assert isinstance(response.json().get("workflows"), dict)
             assert response.json().get("workflows") == {}
 
-            workcell = WorkcellData.from_yaml(Path("tests/test_workcell.yaml"))
+            workcell = WorkcellData.from_yaml(Path("workcell_defs/test_workcell.yaml"))
             client.post("/wc/", json=workcell.model_dump(mode="json"))
 
             response = client.get("/wc/state")

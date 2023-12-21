@@ -1,0 +1,146 @@
+################################################################################
+# AD-SDL WEI Makefile
+################################################################################
+# Common Makefile Configuration: You can probably leave as is
+MAKEFLAGS += --always-make
+MAKEFILE := $(lastword $(MAKEFILE_LIST))
+MAKEFILE_DIR := $(dir $(MAKEFILE))
+help: # Show help for each target
+	@grep -E '^[a-zA-Z0-9 -_]+:.*#'  $(MAKEFILE) | sort | while read -r l; do printf "\033[1;32m$$(echo $$l | cut -f 1 -d':')\033[00m:$$(echo $$l | cut -f 2- -d'#')\n"; done
+# Don't send variables above this line to the ENV_FILE
+FILTER_VARS := $(.VARIABLES)
+FILTER_VARS += TEMP
+################################################################################
+# WEI Configuration: Adjust these parameters to meet your needs
+# You can override these at run time by running `make <target> <VARIABLE>="..."`
+
+# Project Configuration
+PROJECT_DIR := $(abspath $(MAKEFILE_DIR))
+WORKCELLS_DIR := $(PROJECT_DIR)/workcell_defs
+WORKCELL_FILENAME := test_workcell.yaml
+
+# Python Configuration
+PYPROJECT_TOML := $(PROJECT_DIR)/pyproject.toml
+PROJECT_VERSION := $(shell grep -oP '(?<=version = ")[^"]+' $(PYPROJECT_TOML) | head -n 1)
+
+# Docker Configuration
+COMPOSE_FILE := $(PROJECT_DIR)/compose.yaml
+DOCKERFILE := $(PROJECT_DIR)/Dockerfile
+# Make sure this file is in .gitignore or equivalent
+ENV_FILE := $(PROJECT_DIR)/.env
+REGISTRY := ghcr.io
+ORGANIZATION := ad-sdl
+IMAGE_NAME := wei
+IMAGE := $(REGISTRY)/$(ORGANIZATION)/$(IMAGE_NAME)
+
+# This should match the name of your app's service in the compose file
+APP_NAME := wei
+# This should be the command to run your app in the container
+APP_COMMAND := python example_app/example_app.py
+# This is where the data from the workcell will be stored
+# If these directories don't exist, they will be created
+WEI_DATA_DIR := $(PROJECT_DIR)/.wei
+REDIS_DIR := $(WEI_DATA_DIR)/redis
+# Whether or not to send events to Diaspora (set to true to turn on)
+USE_DIASPORA := false
+# This is the default target to run when you run `make` with no arguments
+.DEFAULT_GOAL := default
+
+# Required commmands to use this project's Makefile
+REQUIRED_COMMANDS := docker pdm pre-commit
+
+################################################################################
+
+# Targets: Add anything you want to be able to run with `make <target>` as:
+# target: <prerequisite targets>
+# 	<command>
+
+default: checks build # Runs checks, builds wei and registers diaspora if necessary
+default: $(if $(findstring $(USE_DIASPORA),true), register_diaspora)
+
+checks: # Runs all the pre-commit checks
+	@pre-commit install
+	@pre-commit run --all-files \
+		&& echo  "All checks passed"  \
+		|| { echo "Some checks failed, try running again to see if automatic fixes worked" ; exit 1; }
+
+register_diaspora: build # Registers diaspora for logging events
+	docker compose -f $(COMPOSE_FILE) run "$(APP_NAME)" \
+		scripts/register_diaspora.py
+
+register_diaspora_local: init-python # Registers diaspora for logging events (local python, no container)
+	pdm run python scripts/register_diaspora.py
+
+build: init build-docker build-python docs # Builds the docker image, pypi package, and docs for wei
+
+docs: # Builds the docs for wei
+	cd $(PROJECT_DIR)/docs && pdm run make clean html
+
+build-docker: init # Builds the docker image for APP_NAME
+	docker build -f $(DOCKERFILE) \
+		-t ${IMAGE}:${PROJECT_VERSION} \
+		-t ${IMAGE}:latest \
+		-t ${IMAGE}:dev \
+		$(PROJECT_DIR)
+
+build-python: init init-python # Builds the pypi package for APP_NAME
+	pdm build
+
+publish: build publish-docker publish-python # Publishes the docker image and pypi package for wei
+
+publish-docker: build # Publishes the docker image for wei
+	docker login $(REGISTRY)
+	docker push ${IMAGE}:${PROJECT_VERSION}
+
+publish-python: build-python # Publishes the pypi package for wei
+	# Username: __token__
+	# Password: Create token with privileges here: https://pypi.org/manage/account/token/
+	pdm publish
+
+start: # Starts all the docker containers and detaches, allowing you to run other commands
+	docker compose -f $(COMPOSE_FILE) up -d $(args)
+
+up: # Starts all the docker containers and attaches, allowing you to see the logs
+	docker compose -f $(COMPOSE_FILE) up $(args)
+
+ps: # Shows the status of all the docker containers
+	docker compose -f $(COMPOSE_FILE) ps $(args)
+
+restart: # Restarts all the docker containers
+	docker compose -f $(COMPOSE_FILE) restart $(args)
+
+down: stop # Stops all the docker containers
+stop: # Stops all the docker containers
+	docker compose -f $(COMPOSE_FILE) down $(args)
+
+logs: # Shows the logs for all the docker containers
+	docker compose -f $(COMPOSE_FILE) logs -f $(args)
+
+remove: stop # Removes all the docker containers, but preserves volumes
+	docker compose -f $(COMPOSE_FILE) down --rmi all $(args)
+
+init-python: # Installs the python environment
+	@pdm install -d -p $(PROJECT_DIR)
+
+init: # Sets up the .env file based on the values we've configured
+	# Generating .env
+	@echo "# THIS FILE IS AUTOGENERATED, CHANGE THE VALUES IN THE MAKEFILE" > $(ENV_FILE)
+	@echo "USER_ID=$(shell id -u)" >> $(ENV_FILE)
+	@echo "GROUP_ID=$(shell id -g)" >> $(ENV_FILE)
+# The following adds every variable in the Makefile to the .env file,
+# except for everything in FILTER_VARS and FILTER_VARS itself
+	@$(foreach v,\
+		$(filter-out $(FILTER_VARS) FILTER_VARS,$(.VARIABLES)),\
+		echo "$(v)=$($(v))" >> $(ENV_FILE);)
+
+
+	# Creating paths for data dirs to avoid permission issues
+	mkdir -p $(WEI_DATA_DIR)
+	mkdir -p $(REDIS_DIR)
+
+################################################################################
+# Additional Boilerplate: You can probably leave as is
+
+# Makes sure all the required commands are installed/available
+TEMP := $(foreach command,$(REQUIRED_COMMANDS),\
+		$(if $(shell command -v $(command) 2> /dev/null),"",$(error "Couldn't find command '$(command)', is it installed?")))

@@ -38,15 +38,18 @@ class StateManager:
         Returns a redis.Redis or fakeredis.Redis client, but only creates one connection.
         MyPy can't handle Redis object return types for some reason, so no type-hinting.
         """
-        if Config.test:
-            return Config.fake_redis
         if self._redis_connection is None:
-            self._redis_connection = redis.Redis(
-                host=str(Config.redis_host),
-                port=int(Config.redis_port),
-                db=0,
-                decode_responses=True,
-            )
+            if Config.test:
+                import fakeredis
+
+                self._redis_connection = fakeredis.FakeStrictRedis(version=6)
+            else:
+                self._redis_connection = redis.Redis(
+                    host=str(Config.redis_host),
+                    port=int(Config.redis_port),
+                    db=0,
+                    decode_responses=True,
+                )
         return self._redis_connection
 
     @property
