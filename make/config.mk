@@ -39,11 +39,11 @@ USE_DIASPORA := false
 .DEFAULT_GOAL := default
 
 # Required commmands to use this project's Makefile
-REQUIRED_COMMANDS := docker pdm pre-commit
+# REQUIRED_COMMANDS := docker pdm pre-commit
 
 # Makes sure all $(REQUIRED_COMMANDS) are installed/available
-TEMP := $(foreach command,$(REQUIRED_COMMANDS),\
-		$(if $(shell command -v $(command) 2> /dev/null),"",$(error "Couldn't find command '$(command)', is it installed?")))
+# TEMP := $(foreach command,$(REQUIRED_COMMANDS),\
+# 		$(if $(shell command -v $(command) 2> /dev/null),"",$(error "Couldn't find command '$(command)', is it installed?")))
 
 ########################
 # Config-related Rules #
