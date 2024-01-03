@@ -18,6 +18,8 @@ jobs:
           python-version: 3.9
       - name: Build the Project
         run: make init build
+      - name: Start WEI
+        run: make start
       - name: Test with pytest
         run: make test
       - name: Cleanup
