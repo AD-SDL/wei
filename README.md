@@ -11,74 +11,49 @@ For more details and specific examples of how to use wei, please see our [docume
 ## Table of Contents
 - [wei](#wei)
   - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-    - [Bare-Metal Install](#bare-metal-install)
-    - [Docker Install](#docker-install)
   - [Usage](#usage)
   - [Development](#development)
   - [Contributing](#contributing)
   - [Acknowledgments](#acknowledgments)
   - [License](#license)
 
-## Installation
+## Usage
 
-There are 2 options for installing WEI:
+To get started with WEI, we recommend:
 
-- A bare-metal install, which can be used in most contexts where python can run.
-- A containerized install using docker and docker-compose
-
-### Bare-Metal Install
-
-```
-pip3 install --upgrade pip
-git clone https://github.com/AD-SDL/wei/
-cd wei
-pip3 install -e .
-```
-
-### Docker Install
-
-1. [Install Docker](https://docs.docker.com/engine/install/) for your platform of choice
-2. Clone the repository.
-3. Within the cloned repository, run the following:
-
-```
-scripts/docker/build.sh
-```
-
-## Getting Started
-
-See the [wei_template_workcell](https://github.com/AD-SDL/wei_template_workcell) for a simple example that can be used to try WEI or start your own workcell.
+- Using the [WEI Template Workcell](https://github.com/AD-SDL/wei_template_workcell) as a starting point to learn how to use WEI, and how to create your own Workcell.
+- Consulting the [Documentation](https://rpl-wei.readthedocs.io/en/latest/index.html)
 
 ## Development
 
-1. First, install [pdm](https://pdm-project.org/latest/#installation).
-2. Next, run the following in the cloned repo's directory:
+1. [Install Docker](https://docs.docker.com/engine/install/) for your platform of choice
+2. For managing the Python Package, [install PDM](https://pdm-project.org/latest/#installation)
+3. For automatic development checks/linting/formatting, [install pre-commit](https://pre-commit.com/)
+4. Clone the repository.
+5. Within the cloned repository, run the following:
 
-```
-pip install pre-commit ruff
-pdm install
-pre-commit install
-```
+We use `GNU make` to automate many common build tasks, such as initializing, building, starting, and publishing the repository, docker containers, and python packages.
+
+Common commands include `init`, `init-python`, `build`, `build-python`, `start`, `stop`, and `exec`.
+
+For a complete list of commands, run `make help`, or explore `Makefile` and the `make` directory.
+
+To change the configuration of the WEI project, edit `make/config.mk` or overwrite variables at runtime with `make <target> VARIABLE=<override>`.
+
+### Using PDM
+
+- [Managing Dependencies](https://pdm-project.org/latest/usage/dependency/)
+- [Build and Publish](https://pdm-project.org/latest/usage/publish/)
+- [Running Using PDM](https://pdm-project.org/latest/usage/scripts/)
 
 ### Using Pre-commit
 
-- To run pre-commit checks before committing, run `pre-commit run --all-files`
+- To run pre-commit checks before committing, run `pre-commit run --all-files` or `make checks`
 - NONE OF THE FOLLOWING SHOULD BE DONE REGULARLY, AND ALL CHECKS SHOULD BE PASSING BEFORE BRANCHES ARE MERGED
     - To skip linting during commits, use `SKIP=ruff git commit ...`
     - To skip formatting during commits, use `SKIP=ruff-format git commit ...`
     - To skip all pre-commit hooks, use `git commit --no-verify ...`
 - See [pre-commit documentation](https://pre-commit.com) for more
-
-### Using pdm
-
-- [Managing Dependencies](https://pdm-project.org/latest/usage/dependency/)
-- [Build and Publish](https://pdm-project.org/latest/usage/publish/)
-- [Running Using PDM](https://pdm-project.org/latest/usage/scripts/)
-  - `pdm run engine <args>` to start the WEI engine
-  - `pdm run server <args>` to start the WEI server
-  - `pdm run <arbitrary command>` to run an arbitrary command inside the python environment
-
 
 ## Contributing
 

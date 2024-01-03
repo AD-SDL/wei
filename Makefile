@@ -38,9 +38,12 @@ exec: # Opens a shell in the APP_NAME container
 test: # Run Pytests
 	docker compose -f $(COMPOSE_FILE) exec $(APP_NAME) /bin/bash -c "pytest wei"
 
-init: .env # Do the initial configuration of the project
-	# Creating paths for data dirs to avoid permission issues
+init: .env $(WEI_DATA_DIR) $(REDIS_DIR) # Do the initial configuration of the project
+
+$(WEI_DATA_DIR):
 	mkdir -p $(WEI_DATA_DIR)
+
+$(REDIS_DIR):
 	mkdir -p $(REDIS_DIR)
 
 ################################################################################
@@ -50,6 +53,3 @@ PHONY_RULES := $(filter-out $(NOT_PHONY), $(RULES))
 
 # Declare all targets as PHONY, except $(NOT_PHONY)
 .PHONY: $(PHONY_RULES)
-
-debug:
-	@echo "$(MAKEFILE_LIST)"
