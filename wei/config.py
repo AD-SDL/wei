@@ -6,8 +6,6 @@ Handles the configuration of the engine and server.
 # from argparse import ArgumentParser, Namespace
 # from pathlib import Path
 
-# import fakeredis
-
 # import yaml
 
 
@@ -28,7 +26,6 @@ class Config:
     # redis_host = "localhost"
     # redis_port = "6379"
     # data_directory = Path("./tests")
-    # fake_redis = fakeredis.FakeStrictRedis(version=6)  # type: ignore
 
     # @staticmethod
     # def load_config_from_cli(args: Namespace) -> None:

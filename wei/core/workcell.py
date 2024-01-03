@@ -44,6 +44,12 @@ def load_workcell_file(workcell_file: Path) -> WorkcellData:
     with open(workcell_file, "r") as f:
         workcell = WorkcellData(**yaml.safe_load(f))
     Config.workcell_file = workcell_file
+    set_config_from_workcell(workcell)
+    return workcell
+
+
+def set_config_from_workcell(workcell: WorkcellData) -> None:
+    """Sets the config from the workcell object"""
     Config.workcell_name = workcell.name
     for property in workcell.config.model_dump(mode="python"):
         setattr(Config, property, getattr(workcell.config, property))

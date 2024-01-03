@@ -1,5 +1,26 @@
 version: "3.0"
 services:
+  ###########
+  # Dev App #
+  ###########
+  test_app:
+    container_name: ${APP_NAME}
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE_TEST}
+      args:
+          USER_ID: ${USER_ID}
+          GROUP_ID: ${GROUP_ID}
+    volumes:
+      - ${WORKCELLS_DIR}:/workcell_defs
+      - ${WEI_DATA_DIR}:/home/wei/.wei
+      - diaspora_config:/home/wei/.diaspora
+      - ${PROJECT_DIR}:/home/wei/wei # for development only
+    depends_on:
+      - wei_server
+      - wei_engine
+      - wei_redis
+    tty: true
   #####################
   # WEI Core Services #
   #####################
@@ -29,7 +50,7 @@ services:
       - wei_server
   wei_redis:
     image: redis
-    container_name: redis
+    container_name: wei_redis
     ports:
       - 6379:6379
     volumes:

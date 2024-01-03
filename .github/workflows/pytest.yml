@@ -16,7 +16,9 @@ jobs:
         uses: pdm-project/setup-pdm@v3
         with:
           python-version: 3.9
-      - name: Install dependencies
-        run: pdm install
+      - name: Build the Project
+        run: make init build
       - name: Test with pytest
-        run: pdm run pytest -vs
+        run: make test
+      - name: Cleanup
+        run: make remove

@@ -10,6 +10,9 @@ authors = [
     {name = "Doga Ozgulbas", email = "dozgulbas@anl.gov"},
     {name = "Kyle Hippe", email = "khippe@anl.gov"},
 ]
+requires-python = ">=3.8.1"
+readme = "README.md"
+license = {text = "MIT"}
 dependencies = [
     'devtools>=0.12',
     'fakeredis>=2.20.0, <2.21',
@@ -28,32 +31,13 @@ dependencies = [
     "diaspora_event_sdk>=0.0.18",
     "kafka-python"
 ]
-requires-python = ">=3.8.1"
-readme = "README.md"
-license = {text = "MIT"}
 
-[project.urls]
-Homepage = "https://github.com/AD-SDL/wei"
-Downloads = "https://github.com/AD-SDL/wei/archive/refs/tags/0.5.1.tar.gz"
-
-######################
-# Build Info + Tools #
-######################
-
-[build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
-
-[tool.pdm.scripts]
-engine = "python3 -u -m wei.engine"
-server = "python3 -m wei.server"
-
-[tool.pdm.dev-dependencies]
+[project.optional-dependencies]
 dev = [
     "build",
     "mypy",
     "pre-commit",
-    "pytest",
+    "pytest>=7.4.4",
     "ruff",
     "types-aiofiles",
     "types-jwt",
@@ -69,6 +53,22 @@ docs = [
     "sphinx",
     "sphinx-rtd-theme",
 ]
+
+[project.urls]
+Homepage = "https://github.com/AD-SDL/wei"
+Downloads = "https://github.com/AD-SDL/wei/archive/refs/tags/0.5.1.tar.gz"
+
+######################
+# Build Info + Tools #
+######################
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools]
+packages = ["wei"]
 
 #####################
 # Development Tools #
