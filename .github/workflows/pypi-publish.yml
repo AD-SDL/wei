@@ -7,7 +7,7 @@ on:
     tags: [ '*' ]
 
 jobs:
-  build:
+  publish_pypi:
     runs-on: ubuntu-latest
     environment: production
     permissions:

@@ -16,6 +16,9 @@ ENV_FILTER += TEMP .SHELLSTATUS PHONY_RULES
 #####################
 
 help: # Show help for each target
+	@echo ""
+	@echo "Usage: make <rule>, where <rule> is one of:"
+	@echo ""
 	@for file in $(MAKEFILE_LIST); \
 		do grep -E '^[a-zA-Z0-9 -_]+:.*#' $$file | sort | \
 			while read -r l; \

@@ -13,9 +13,6 @@ include $(INCLUDE_DIR)/python.mk # Python-related rules
 ################################################################################
 # Rules: Add anything you want to be able to run with `make <target>` below
 
-default: checks build $(DOCS) # Runs checks, builds wei and registers diaspora if necessary
-default: $(if $(findstring $(USE_DIASPORA),true), register_diaspora)
-
 checks: # Runs all the pre-commit checks
 	@pre-commit install
 	@pre-commit run --all-files || { echo "Checking fixes\n" ; pre-commit run --all-files; }
@@ -32,24 +29,11 @@ $(DOCS): wei/* docs/source/*
 
 publish: build publish-docker publish-python # Publishes the docker image and pypi package for wei
 
-exec: # Opens a shell in the APP_NAME container
-	docker compose -f $(COMPOSE_FILE) exec $(APP_NAME) /bin/bash $(args)
-
 test: # Run Pytests
 	docker compose -f $(COMPOSE_FILE) exec $(APP_NAME) /bin/bash -c "pytest wei"
-
-init: .env $(WEI_DATA_DIR) $(REDIS_DIR) # Do the initial configuration of the project
-
-$(WEI_DATA_DIR):
-	mkdir -p $(WEI_DATA_DIR)
-
-$(REDIS_DIR):
-	mkdir -p $(REDIS_DIR)
 
 ################################################################################
 
 # Determine which rules don't correspond to actual files (add rules to NOT_PHONY to exclude)
 PHONY_RULES := $(filter-out $(NOT_PHONY), $(RULES))
-
-# Declare all targets as PHONY, except $(NOT_PHONY)
 .PHONY: $(PHONY_RULES)

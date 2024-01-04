@@ -36,7 +36,7 @@ REDIS_DIR := $(WEI_DATA_DIR)/redis
 # Whether or not to send events to Diaspora (set to true to turn on)
 USE_DIASPORA := false
 # This is the default target to run when you run `make` with no arguments
-.DEFAULT_GOAL := default
+.DEFAULT_GOAL := help
 
 ########################
 # Config-related Rules #
@@ -54,3 +54,11 @@ NOT_PHONY += .env
 	@$(foreach v,\
 		$(filter-out $(ENV_FILTER) ENV_FILTER,$(.VARIABLES)),\
 		echo "$(v)=$($(v))" >> $(ENV_FILE);)
+
+init: .env $(WEI_DATA_DIR) $(REDIS_DIR) # Do the initial configuration of the project
+
+$(WEI_DATA_DIR):
+	mkdir -p $(WEI_DATA_DIR)
+
+$(REDIS_DIR):
+	mkdir -p $(REDIS_DIR)
