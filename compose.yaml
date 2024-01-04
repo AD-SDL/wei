@@ -7,14 +7,13 @@ services:
     build:
       context: .
       dockerfile: ${DOCKERFILE_TEST}
-      args:
-          USER_ID: ${USER_ID}
-          GROUP_ID: ${GROUP_ID}
     volumes:
       - ${WORKCELLS_DIR}:/workcell_defs
-      - ${WEI_DATA_DIR}:/home/wei/.wei
-      - diaspora_config:/home/wei/.diaspora
-      - ${PROJECT_DIR}:/home/wei/wei # for development only
+      - ${WEI_DATA_DIR}:/home/app/.wei
+      - diaspora_config:/home/app/.diaspora
+      - ${PROJECT_DIR}:/home/app/wei # for development only
+    env_file:
+      - .env
     depends_on:
       - wei_server
       - wei_engine
@@ -30,9 +29,11 @@ services:
       - 8000:8000
     volumes:
       - ${WORKCELLS_DIR}:/workcell_defs
-      - ${WEI_DATA_DIR}:/home/wei/.wei
-      - diaspora_config:/home/wei/.diaspora
-      - ${PROJECT_DIR}:/home/wei/wei # for development only
+      - ${WEI_DATA_DIR}:/home/app/.wei
+      - diaspora_config:/home/app/.diaspora
+      - ${PROJECT_DIR}:/home/app/wei # for development only
+    env_file:
+      - .env
     command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
     depends_on:
       - wei_redis
@@ -41,8 +42,10 @@ services:
     container_name: wei_engine
     volumes:
       - ${WORKCELLS_DIR}:/workcell_defs
-      - ${WEI_DATA_DIR}:/home/wei/.wei
-      - ${PROJECT_DIR}:/home/wei/wei # for development only
+      - ${WEI_DATA_DIR}:/home/app/.wei
+      - ${PROJECT_DIR}:/home/app/wei # for development only
+    env_file:
+      - .env
     command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
     depends_on:
       - wei_redis

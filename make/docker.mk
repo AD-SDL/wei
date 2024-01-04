@@ -20,7 +20,7 @@ start: $(if $(findstring $(USE_DIASPORA),true), register_diaspora)
 	docker compose -f $(COMPOSE_FILE) up -d $(args)
 
 exec: # Opens a shell in the APP_NAME container
-	docker compose -f $(COMPOSE_FILE) exec $(APP_NAME) /bin/bash $(args)
+	docker compose -f $(COMPOSE_FILE) exec -u app $(APP_NAME) /bin/bash $(args)
 
 up: # Starts all the docker containers and attaches, allowing you to see the logs
 	docker compose -f $(COMPOSE_FILE) up $(args)

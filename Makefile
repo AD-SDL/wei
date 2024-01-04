@@ -17,7 +17,7 @@ checks: # Runs all the pre-commit checks
 	@pre-commit install
 	@pre-commit run --all-files || { echo "Checking fixes\n" ; pre-commit run --all-files; }
 
-register_diaspora: build # Registers diaspora for logging events
+register_diaspora: # Registers diaspora for logging events
 	docker compose -f $(COMPOSE_FILE) run "$(APP_NAME)" \
 		wei/scripts/register_diaspora.py
 
@@ -30,10 +30,9 @@ $(DOCS): wei/* docs/source/*
 publish: build publish-docker publish-python # Publishes the docker image and pypi package for wei
 
 test: # Run Pytests
-	docker compose -f $(COMPOSE_FILE) exec $(APP_NAME) /bin/bash -c "pytest wei"
+	docker compose -f $(COMPOSE_FILE) exec -u app $(APP_NAME) /bin/bash -c "pytest wei"
 
 ################################################################################
 
 # Determine which rules don't correspond to actual files (add rules to NOT_PHONY to exclude)
-PHONY_RULES := $(filter-out $(NOT_PHONY), $(RULES))
-.PHONY: $(PHONY_RULES)
+.PHONY: $(filter-out $(NOT_PHONY), $(RULES))
