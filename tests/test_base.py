@@ -1,6 +1,9 @@
 """Provides base classes for WEI's pytest tests"""
+import time
 import unittest
 from pathlib import Path
+
+import requests
 
 import wei
 from wei.core.data_classes import WorkcellData
@@ -20,6 +23,18 @@ class TestWEI_Base(unittest.TestCase):
         self.server_port = self.workcell.config.server_port
         self.url = f"http://{self.server_host}:{self.server_port}"
         self.redis_host = self.workcell.config.redis_host
+
+        # Check to see that server is up
+        start_time = time.time()
+        while True:
+            try:
+                if requests.get(self.url + "/wc/state").status_code == 200:
+                    break
+            except Exception:
+                pass
+            time.sleep(1)
+            if time.time() - start_time > 60:
+                raise TimeoutError("Server did not start in 60 seconds")
 
 
 class TestPackaging(TestWEI_Base):
