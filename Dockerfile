@@ -20,7 +20,7 @@ USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
 
 RUN mkdir -p wei/requirements
-RUN mkdir .wei
+RUN mkdir -p .wei/temp
 RUN mkdir .diaspora
 
 # Install Python Dependencies first, for caching purposes
