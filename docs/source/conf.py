@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 project = "Workflow Execution Interface"
 copyright = "2023, Argonne National Laboratory"
-author = "Rafael Vescovi, Kyle Hippe, Tobias Ginsburg"
+author = "Rafael Vescovi, Ryan Lewis, Kyle Hippe, Tobias Ginsburg"
 
 # The full version, including alpha/beta/rc tags
 release = "0.5.1"
