@@ -99,7 +99,7 @@ class ExperimentClient:
     def start_run(
         self,
         workflow_file: Path,
-        payload: Optional[Dict[Any, Any]] = None,
+        payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
     ) -> Dict[Any, Any]:
@@ -126,34 +126,24 @@ class ExperimentClient:
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/runs/start"
 
-        payload_path = Path("~/.wei/temp/payload_input.txt")
-        payload_path.expanduser().parent.mkdir(parents=True, exist_ok=True)
-        with open(payload_path.expanduser(), "w+") as payload_file_handle:
-            json.dump(payload, payload_file_handle)
-
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
-            with open(payload_path.expanduser(), "rb") as payload_file_handle:
-                params = {
-                    "experiment_id": self.experiment_id,
-                    "simulate": simulate,
-                }
-                response = requests.post(
-                    url,
-                    params=params,  # type: ignore
-                    json=payload,
-                    files={
-                        "workflow": (
-                            str(workflow_file),
-                            workflow_file_handle,
-                            "application/x-yaml",
-                        ),
-                        "payload": (
-                            str("payload_file.txt"),
-                            payload_file_handle,
-                            "text",
-                        ),
-                    },
-                )
+            params = {
+                "experiment_id": self.experiment_id,
+                "simulate": simulate,
+                "payload": payload,
+            }
+            response = requests.post(
+                url,
+                params=params,  # type: ignore
+                json=payload,
+                files={
+                    "workflow": (
+                        str(workflow_file),
+                        workflow_file_handle,
+                        "application/x-yaml",
+                    ),
+                },
+            )
         response_dict = self._return_response(response)
         if blocking:
             prior_status = None

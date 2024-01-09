@@ -1,8 +1,8 @@
 """
 Router for the "runs" endpoints
 """
-import json
 import traceback
+from typing import Any, Dict, Optional
 
 import yaml
 from fastapi import APIRouter, UploadFile
@@ -22,7 +22,7 @@ state_manager = StateManager()
 async def start_run(
     experiment_id: str,
     workflow: UploadFile,
-    payload: UploadFile,
+    payload: Optional[Dict[str, Any]] = None,
     simulate: bool = False,
 ) -> JSONResponse:
     """
@@ -32,10 +32,10 @@ async def start_run(
     ----------
     workflow: UploadFile
     - The workflow yaml file
-    payload: UploadFile
-    - The data input file to the workflow
-    experiment_path: str
-    - The path to the data of the experiment for the workflow
+    payload: Optional[Dict[str, Any]] = {}
+    - Dynamic values to insert into the workflow file
+    experiment_id: str
+    - The id of the experiment this workflow is associated with
     simulate: bool
     - whether to use real robots or not
 
@@ -44,21 +44,19 @@ async def start_run(
     response: Dict
     - a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
+    if payload is None:
+        payload = {}
     wf = None
     wf_run = None
     try:
         workflow_content = await workflow.read()
         workflow_content_str = workflow_content.decode("utf-8")
         wf = Workflow(**yaml.safe_load(workflow_content_str))
-        payload_bytes = await payload.read()
-        payload_dict = json.loads(payload_bytes)
-        if payload_dict is None:
-            payload_dict = {}
         logger = WEI_Logger.get_experiment_logger(experiment_id)
         logger.info(f"Received job run request: {wf.name}")
         workcell = state_manager.get_workcell()
 
-        wf_run = create_run(wf, workcell, experiment_id, payload_dict, simulate)
+        wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
 
         with state_manager.state_lock():
             state_manager.set_workflow_run(wf_run)
@@ -95,6 +93,55 @@ async def start_run(
                 content={
                     "error": f"Error: {e}",
                     "status": str(WorkflowStatus.FAILED),
+                },
+            )
+
+
+@router.post("/validate")
+async def validate_workflow(
+    experiment_id: str,
+    workflow: UploadFile,
+    payload: Dict[str, Any] = None,
+) -> JSONResponse:
+    """Validate a workflow file against the current workcell"""
+    if payload is None:
+        payload = {}
+    wf = None
+    wf_run = None
+    try:
+        workflow_content = await workflow.read()
+        workflow_content_str = workflow_content.decode("utf-8")
+        wf = Workflow(**yaml.safe_load(workflow_content_str))
+        logger = WEI_Logger.get_experiment_logger(experiment_id)
+        logger.info(f"Received job run request: {wf.name}")
+        workcell = state_manager.get_workcell()
+
+        wf_run = create_run(wf, workcell, experiment_id, payload)
+
+        return JSONResponse(
+            content={
+                "valid": True,
+                "wf": wf_run.model_dump(mode="json"),
+                "error": None,
+            }
+        )
+    except Exception as e:
+        if wf_run:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "valid": False,
+                    "wf": wf_run.model_dump(mode="json"),
+                    "error": f"Error: {e}",
+                },
+            )
+        else:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "valid": False,
+                    "wf": wf_run.model_dump(mode="json"),
+                    "error": f"Error: {e}",
                 },
             )
 
