@@ -13,15 +13,17 @@
 #
 import os
 import sys
+from importlib import metadata
 
 sys.path.insert(0, os.path.abspath("../.."))
 
 
 # -- Project information -----------------------------------------------------
 
+meta = metadata.metadata("ad_sdl.wei")
 project = "Workflow Execution Interface"
 copyright = "2023, Argonne National Laboratory"
-author = "Rafael Vescovi, Ryan Lewis, Kyle Hippe, Tobias Ginsburg"
+author = str(meta["Author-email"])
 
 # The full version, including alpha/beta/rc tags
 release = "0.5.1"
