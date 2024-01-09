@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """Gets the state of the workcell from the WEI server."""
 import json
 from argparse import ArgumentParser

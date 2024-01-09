@@ -3,9 +3,9 @@ import json
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from warnings import warn
 
 import requests
-import ulid
 
 from wei.core.data_classes import WorkflowStatus
 from wei.core.events import Events
@@ -18,7 +18,7 @@ class ExperimentClient:
         self,
         server_addr: str,
         server_port: str,
-        experiment_name: str,
+        experiment_name: Optional[str] = None,
         experiment_id: Optional[str] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
@@ -41,27 +41,60 @@ class ExperimentClient:
 
         self.server_addr = server_addr
         self.server_port = server_port
-        self.experiment_path = ""
-        if experiment_id is None:
-            self.experiment_id = ulid.new().str
-        else:
-            self.experiment_id = experiment_id
-        self.experiment_name = experiment_name
         self.url = f"http://{self.server_addr}:{self.server_port}"
+
+        start_time = time.time()
+        while time.time() - start_time < 60:
+            try:
+                self.register_experiment(experiment_id, experiment_name)
+                break
+            except requests.exceptions.ConnectionError:
+                time.sleep(1)
+
         self.loops: list[str] = []
-        if not self.experiment_id:
-            self.experiment_id = ulid.new().str
+
         self.events = Events(
             self.server_addr,
             self.server_port,
             self.experiment_id,
         )
 
+        self.events.start_experiment()
+
     def _return_response(self, response: requests.Response) -> Dict[Any, Any]:
         if response.status_code != 200:
             return {"http_error": response.status_code}
 
         return dict(response.json())
+
+    def register_experiment(self, experiment_id, experiment_name) -> None:
+        """Gets an existing experiment from the server,
+           or creates a new one if it doesn't exist
+
+        Parameters
+        ----------
+        experiment_id: str
+            Programmatically generated experiment id, can be reused to continue an existing experiment
+
+        experiment_name: str
+            Human chosen name for experiment
+
+        Returns
+        -------
+        None
+        """
+
+        url = f"{self.url}/experiments/"
+        response = requests.get(
+            url,
+            params={
+                "experiment_id": experiment_id,
+                "experiment_name": experiment_name,
+            },
+        )
+        self.experiment_id = response.json()["experiment_id"]
+        self.experiment_path = response.json()["experiment_path"]
+        self.experiment_name = response.json()["experiment_name"]
 
     def start_run(
         self,
@@ -92,9 +125,12 @@ class ExperimentClient:
             payload = {}
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         url = f"{self.url}/runs/start"
-        payload_path = Path("~/.wei/temp/payload.txt")
-        with open(payload_path.expanduser(), "w") as payload_file_handle:
+
+        payload_path = Path("~/.wei/temp/payload_input.txt")
+        payload_path.expanduser().parent.mkdir(parents=True, exist_ok=True)
+        with open(payload_path.expanduser(), "w+") as payload_file_handle:
             json.dump(payload, payload_file_handle)
+
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
             with open(payload_path.expanduser(), "rb") as payload_file_handle:
                 params = {
@@ -118,7 +154,6 @@ class ExperimentClient:
                         ),
                     },
                 )
-        print(json.dumps(response.json(), indent=2))
         response_dict = self._return_response(response)
         if blocking:
             prior_status = None
@@ -141,11 +176,12 @@ class ExperimentClient:
                 else:
                     print(".", end="", flush=True)
                 time.sleep(1)
-                if run_info["status"] in [
-                    WorkflowStatus.COMPLETED,
-                    WorkflowStatus.FAILED,
-                ]:
+                if run_info["status"] == WorkflowStatus.COMPLETED:
                     print()
+                    break
+                elif run_info["status"] == WorkflowStatus.FAILED:
+                    print()
+                    print(json.dumps(response.json(), indent=2))
                     break
                 prior_status = status
                 prior_index = step_index
@@ -176,31 +212,9 @@ class ExperimentClient:
         url = f"{self.url}/experiments/{self.experiment_id}/file"
 
         response = requests.get(url, params={"filepath": input_filepath})
+        Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
         with open(output_filepath, "wb") as f:
             f.write(response.content)
-
-    def register_exp(self) -> Dict[Any, Any]:
-        """Initializes an Experiment, and creates its log files
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-
-        response: Dict
-           The JSON portion of the response from the server"""
-        url = f"{self.url}/experiments/"
-        response = requests.post(
-            url,
-            params={
-                "experiment_id": self.experiment_id,
-                "experiment_name": self.experiment_name,
-            },
-        )
-        self.experiment_path = response.json()["exp_dir"]
-        return self._return_response(response)
 
     def query_run(self, run_id: str) -> Dict[Any, Any]:
         """Checks on a workflow run using the id given
@@ -261,3 +275,26 @@ class ExperimentClient:
             return {"http_error": response.status_code}
 
         return self._return_response(response)
+
+    def register_exp(self) -> Dict[Any, Any]:
+        """Deprecated method for registering an experiment with the server
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+
+        response: Dict
+        The JSON portion of the response from the server"""
+        warn(
+            """
+                This method is deprecated.
+                Experiment registration is now handled when initializing the ExperimentClient.
+                You can safely remove any calls to this function.
+                """,
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return {"exp_dir": self.experiment_path}

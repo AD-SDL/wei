@@ -36,26 +36,48 @@ def initialize_workcell_locations() -> None:
                 )
 
 
-def update_source_and_target(wf_run: WorkflowRun) -> None:
-    """Update the source and target location and module of a workflow."""
+def update_location_reserve(module: Module, run_id: Union[str, None]) -> Module:
+    """Updates a module's reservation"""
+    module.reserved = run_id
+    return module
+
+
+def reserve_location(location: Location, run_id: str) -> None:
+    """Reserve a location for a given run_id."""
+    state_manager.update_location(location, update_location_reserve, run_id)
+
+
+def clear_location_reservation(location: Location) -> None:
+    """Reserve a location for a given run_id."""
+    state_manager.update_location(location, update_location_reserve, None)
+
+
+def reserve_source_and_target(wf_run: WorkflowRun) -> None:
+    """Reserve the source and target location for a step."""
     step_index = wf_run.step_index
-    steps = wf_run.flowdef
+    step = wf_run.steps[step_index]
 
-    # Define some helper functions to update the "queue" properties of modules and locations
-    def remove_element_from_queue(
-        object: Union[Location, Module], element: str
-    ) -> Union[Location, Module]:
-        try:
-            object.queue.remove(element)
-        except ValueError:
-            pass
-        return object
+    if "source" in step.locations:
+        reserve_location(step.locations["source"], wf_run.run_id)
+    if "target" in step.locations:
+        reserve_location(step.locations["target"], wf_run.run_id)
 
-    def append_element_to_queue(
-        object: Union[Location, Module], element: str
-    ) -> Union[Location, Module]:
-        object.queue.append(element)
-        return object
+
+def free_source_and_target(wf_run: WorkflowRun) -> None:
+    """Unreserve the source and target location for a step."""
+    step_index = wf_run.step_index
+    step = wf_run.steps[step_index]
+
+    if "source" in step.locations:
+        clear_location_reservation(step.locations["source"])
+    if "target" in step.locations:
+        clear_location_reservation(step.locations["target"])
+
+
+def update_source_and_target(wf_run: WorkflowRun) -> None:
+    """Update the source and target location and module after a step."""
+    step_index = wf_run.step_index
+    step = wf_run.steps[step_index]
 
     def update_location_state(
         object: Union[Location, Module], element: str
@@ -63,37 +85,16 @@ def update_source_and_target(wf_run: WorkflowRun) -> None:
         object.state = element
         return object
 
-    if step_index < len(wf_run.steps):
-        if "target" in steps[step_index].locations:
-            state_manager.update_location(
-                steps[step_index].locations["target"],
-                append_element_to_queue,
-                wf_run.run_id,
-            )
-        state_manager.update_module(
-            steps[step_index].module, append_element_to_queue, wf_run.run_id
+    if "source" in step.locations:
+        state_manager.update_location(
+            step.locations["source"],
+            update_location_state,
+            "Empty",
         )
-    if step_index > 0:
-        state_manager.update_module(
-            steps[step_index - 1].module,
-            remove_element_from_queue,
-            wf_run.run_id,
-        )
-        if "source" in steps[step_index - 1].locations:
+    if "target" in step.locations:
+        if "trash" not in step.locations["target"]:
             state_manager.update_location(
-                steps[step_index - 1].locations["source"],
+                step.locations["target"],
                 update_location_state,
-                "Empty",
-            )
-        if "target" in steps[step_index - 1].locations:
-            if "trash" not in steps[step_index - 1].locations["target"]:
-                state_manager.update_location(
-                    steps[step_index - 1].locations["target"],
-                    update_location_state,
-                    wf_run.experiment_id,
-                )
-            state_manager.update_location(
-                steps[step_index - 1].locations["target"],
-                remove_element_from_queue,
-                wf_run.run_id,
+                wf_run.experiment_id,
             )

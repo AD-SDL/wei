@@ -23,10 +23,10 @@ def get_module(
     ----------
     module_name: the name of the module to get the state of
 
-     Returns
+    Returns
     -------
-     response: Dict
-       the state of the requested module
+    response: Dict
+      the state of the requested module
     """
     try:
         with state_manager.state_lock():

@@ -1,6 +1,8 @@
 """Dataclasses used for the workflows/cells"""
 
 import json
+import logging
+from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, ClassVar, Dict, List, Optional, Tuple, Type, TypeVar, Union
@@ -9,7 +11,7 @@ import ulid
 import yaml
 from fastapi.responses import FileResponse
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, computed_field, field_serializer, validator
+from pydantic import Field, computed_field, field_serializer, field_validator, validator
 
 from wei.core.experiment import Experiment
 
@@ -23,15 +25,10 @@ def ulid_factory() -> str:
     return ulid.new().str
 
 
-class BaseModel(_BaseModel):
+class BaseModel(_BaseModel, use_enum_values=True):
     """Allows any sub-class to inherit methods allowing for programmatic description of protocols
     Can load a yaml into a class and write a class into a yaml file.
     """
-
-    class Config:
-        """config for the BaseModel"""
-
-        use_enum_values = True  # Needed to serialize/deserialize enums
 
     def write_yaml(self, cfg_path: PathLike) -> None:
         """Allows programmatic creation of ot2util objects and saving them into yaml.
@@ -109,8 +106,8 @@ class Module(BaseModel):
     """Robot id"""
     state: ModuleStatus = Field(default=ModuleStatus.INIT)
     """Current state of the module"""
-    queue: List[str] = []
-    """Queue of workflows to be run at this location"""
+    reserved: Optional[str] = None
+    """ID of WorkflowRun that will run next on this Module"""
 
     @property
     def location(self) -> Any:
@@ -173,13 +170,71 @@ class Interface(BaseModel):
         raise NotImplementedError()
 
 
-class Step(BaseModel):
+class StepStatus(str, Enum):
+    """Status for a step of a workflow"""
+
+    IDLE = "idle"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class StepResponse(BaseModel):
+    """
+    Standard Response returned by module interfaces
+    in response to action requests
+    """
+
+    action_response: StepStatus = StepStatus.SUCCEEDED
+    """Whether the action succeeded, failed, is running, or is idle"""
+    action_msg: str = ""
+    """Any result from the action. If the result is a file, this should be the file name"""
+    action_log: str = ""
+    """Error or log messages resulting from the action"""
+
+    def to_headers(self) -> Dict[str, str]:
+        """Converts the response to a dictionary of headers"""
+        return {
+            "x-wei-action_response": str(self.action_response),
+            "x-wei-action_msg": self.action_msg,
+            "x-wei-action_log": self.action_log,
+        }
+
+    @classmethod
+    def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
+        """Creates a StepResponse from the headers of a file response"""
+
+        return cls(
+            action_response=StepStatus(headers["x-wei-action_response"]),
+            action_msg=headers["x-wei-action_msg"],
+            action_log=headers["x-wei-action_log"],
+        )
+
+
+class StepFileResponse(FileResponse):
+    """
+    Convenience wrapper for FastAPI's FileResponse class
+    If not using FastAPI, return a response with:
+    - The file object as the response content
+    - The StepResponse parameters as custom headers, prefixed with "x-wei-"
+    """
+
+    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
+        """
+        Returns a FileResponse with the given path as the response content
+        """
+        return super().__init__(
+            path=path,
+            headers=StepResponse(
+                action_response=action_response,
+                action_msg=str(path),
+                action_log=action_log,
+            ).to_headers(),
+        )
+
+
+class Step(BaseModel, arbitrary_types_allowed=True):
     """Container for a single step"""
-
-    class Config:
-        """config for the step"""
-
-        arbitrary_types_allowed = True
 
     name: str
     """Name of step"""
@@ -204,6 +259,15 @@ class Step(BaseModel):
     comment: Optional[str] = None
     """Notes about step"""
 
+    start_time: Optional[datetime] = None
+    """Time the step started running"""
+    end_time: Optional[datetime] = None
+    """Time the step finished running"""
+    duration: Optional[timedelta] = None
+    """Duration of the step's run"""
+    result: Optional["StepResponse"] = None
+    """Result of the step after being run"""
+
     # Load any yaml arguments
     @validator("args")
     def validate_args_dict(cls, v: Any, **kwargs: Any) -> Any:
@@ -213,11 +277,15 @@ class Step(BaseModel):
             try:
                 arg_path = Path(arg_data)
                 # Strings can be path objects, so check if exists before loading it
-                if arg_path.exists() and (
-                    arg_path.suffix == ".yaml" or arg_path.suffix == ".yml"
-                ):
-                    yaml.safe_load(arg_path.open("r"))
+                if not arg_path.exists():
+                    return v
+                else:
+                    print(arg_path)
+                    print(arg_path.suffix)
+                if arg_path.suffix == ".yaml" or arg_path.suffix == ".yml":
+                    print(f"Loading yaml from {arg_path}")
                     v[key] = yaml.safe_load(arg_path.open("r"))
+                    print(v[key])
             except TypeError:  # Is not a file
                 pass
 
@@ -235,12 +303,50 @@ class Metadata(BaseModel):
     """Version of interface used"""
 
 
+class WorkcellConfig(BaseModel, extra="allow"):
+    """Defines the format for a workcell config
+    Note: the extra='allow' parameter allows for
+    extra fields to be added to the config
+    """
+
+    use_diaspora: bool = Field(
+        default=False, description="Whether or not to use diaspora"
+    )
+    reset_locations: bool = Field(
+        default=True,
+        description="Whether or not to reset locations when the Engine (re)starts",
+    )
+    update_interval: float = Field(
+        default=1.0, description="How often to update the workcell state"
+    )
+    server_host: str = Field(
+        default="0.0.0.0", description="Hostname for the WEI server"
+    )
+    server_port: int = Field(default=8000, description="Port for the WEI server")
+    redis_host: str = Field(
+        default="localhost", description="Hostname for the Redis server"
+    )
+    redis_port: int = Field(default=6379, description="Port for the Redis server")
+    data_directory: PathLike = Field(
+        default=Path.home() / ".wei",
+        description="Directory to store data produced by WEI",
+    )
+    log_level: int = Field(default=logging.INFO, description="Logging level for WEI")
+
+    # Validators
+    @field_validator("data_directory")
+    @classmethod
+    def validate_data_directory(cls, v: PathLike) -> Path:
+        """Converts the data_directory to a Path object"""
+        return Path(v)
+
+
 class WorkcellData(BaseModel):
     """Container for information in a workcell"""
 
     name: str
     """Name of the workflow"""
-    config: Dict[str, Any] = {}
+    config: WorkcellConfig
     """Globus search index, needed for publishing"""
     modules: List[Module]
     """The modules available to a workcell"""
@@ -296,6 +402,13 @@ class WorkflowRun(Workflow):
     simulate: bool = False
     """Whether or not this workflow is being simulated"""
 
+    start_time: Optional[datetime] = None
+    """Time the workflow started running"""
+    end_time: Optional[datetime] = None
+    """Time the workflow finished running"""
+    duration: Optional[timedelta] = None
+    """Duration of the workflow's run"""
+
     @computed_field  # type: ignore
     @property
     def run_dir(self) -> Path:
@@ -333,69 +446,6 @@ class WorkflowRun(Workflow):
         return str(run_log)
 
 
-class StepStatus(str, Enum):
-    """Status for a step of a workflow"""
-
-    IDLE = "idle"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-
-
-class StepResponse(BaseModel):
-    """
-    Standard Response returned by module interfaces
-    in response to action requests
-    """
-
-    action_response: StepStatus = StepStatus.SUCCEEDED
-    """Whether the action succeeded, failed, is running, or is idle"""
-    action_msg: str = ""
-    """Any result from the action. If the result is a file, this should be the file name"""
-    action_log: str = ""
-    """Error or log messages resulting from the action"""
-
-    def to_headers(self) -> Dict[str, str]:
-        """Converts the response to a dictionary of headers"""
-        return {
-            "x-wei-action_response": str(self.action_response),
-            "x-wei-action_msg": self.action_msg,
-            "x-wei-action_log": self.action_log,
-        }
-
-    @classmethod
-    def from_headers(cls, headers: Dict[str, Any]) -> "StepResponse":
-        """Creates a StepResponse from the headers of a file response"""
-
-        return cls(
-            action_response=StepStatus(headers["x-wei-action_response"]),
-            action_msg=headers["x-wei-action_msg"],
-            action_log=headers["x-wei-action_log"],
-        )
-
-
-class StepFileResponse(FileResponse):
-    """
-    Convenience wrapper for FastAPI's FileResponse class
-    If not using FastAPI, return a response with
-        - The file object as the response content
-        - The StepResponse parameters as custom headers, prefixed with "x-wei-"
-    """
-
-    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
-        """
-        Returns a FileResponse with the given path as the response content
-        """
-        return super().__init__(
-            path=path,
-            headers=StepResponse(
-                action_response=action_response,
-                action_msg=str(path),
-                action_log=action_log,
-            ).to_headers(),
-        )
-
-
 class Location(BaseModel):
     """Container for a location"""
 
@@ -405,5 +455,5 @@ class Location(BaseModel):
     """Coordinates of the location"""
     state: str = "Empty"
     """State of the location"""
-    queue: List[str] = []
-    """Queue of workflows to be run at this location"""
+    reserved: Optional[str] = None
+    """ID of WorkflowRun that will next occupy this Location"""

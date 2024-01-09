@@ -3,12 +3,11 @@
 import fnmatch
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import ulid
 
 from wei.config import Config
-from wei.core.events import Events
 
 
 class Experiment:
@@ -44,11 +43,14 @@ class Experiment:
 
     def get_experiment_name(self) -> str:
         """Returns the name of the experiment using the experiment_id"""
-        return [
-            filename
-            for filename in os.listdir(str(self.experiments_dir))
-            if fnmatch.fnmatch(filename, f"*{self.experiment_id}*")
-        ][0].split("_id_")[0]
+        try:
+            return [
+                filename
+                for filename in os.listdir(str(self.experiments_dir))
+                if fnmatch.fnmatch(filename, f"*{self.experiment_id}*")
+            ][0].split("_id_")[0]
+        except IndexError:
+            return "Unnamed"
 
     @property
     def experiment_dir(self) -> Path:
@@ -66,51 +68,3 @@ class Experiment:
     def run_dir(self) -> Path:
         """Path to the result directory"""
         return self.experiment_dir / "runs"
-
-
-def get_experiment_event_server(experiment_id: str) -> Events:
-    """Returns the event server for a given experiment"""
-    return Events(
-        Config.server_host, str(Config.server_port), experiment_id, wei_internal=True
-    )
-
-
-def get_experiment_log_directory(
-    experiment_id: str,
-) -> Path:
-    """Returns the path to an experiment's log directory"""
-    return (
-        Config.data_directory
-        / "experiment"
-        / (str(Experiment(experiment_id).experiment_name) + "_id_" + experiment_id)
-    )
-
-
-def create_experiment(
-    experiment_name: str,
-    experiment_id: Optional[str] = None,
-) -> Dict[str, Path]:
-    """Create the files for logging and results of the system and log the start of the Experiment
-
-
-    Parameters
-    ----------
-    experiment_name : str
-        The user-created name of the experiment
-
-    value:  ulid, str
-        the auto-created ulid of the experiment
-
-    Returns
-    -------
-    Dict
-       A dictionary with the experiment log_dir value"""
-
-    experiment = Experiment(
-        experiment_name=experiment_name, experiment_id=experiment_id
-    )
-    experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
-    experiment.run_dir.mkdir(parents=True, exist_ok=True)
-
-    get_experiment_event_server(experiment.experiment_id).start_experiment()
-    return {"exp_dir": experiment.experiment_dir}

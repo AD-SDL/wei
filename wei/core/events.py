@@ -1,30 +1,96 @@
 """Contains the Events class for logging experiment steps"""
 
-# import time
 
-# from pathlib import Path
 from typing import Any, Dict, Optional
 
 import requests
 
-# from diaspora_logger import DiasporaLogger
+from wei.config import Config
+from wei.core.data_classes import BaseModel, Step, WorkflowRun
+from wei.core.loggers import WEI_Logger
 
-# def log_event_local():
-#     return str(event.name, event)
 
-# def log_event_kafka(event, producer):
-#     producer.send(event, channel=event.experiment_id b"some_message_bytes")
+class Event(BaseModel):
+    """A single event in an experiment"""
+
+    experiment_id: str
+    event_type: str
+    event_name: str
+    event_info: Optional[Any] = None
+
+
+class EventLogger:
+    """Registers Events during the Experiment execution both in a logfile and on Kafka"""
+
+    def __init__(
+        self,
+        experiment_id: str,
+    ) -> None:
+        """Initializes an Event Logging object
+
+        Parameters
+        ----------
+        experiment_id: str
+            Programmatically generated experiment id, can be reused if needed
+
+        Returns
+        ----------
+        None
+        """
+        self.experiment_id = experiment_id
+        self.kafka_topic = "wei_diaspora"
+
+        if Config.use_diaspora:
+            try:
+                from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
+
+                assert block_until_ready()
+                self.kafka_producer = KafkaProducer()
+                print("Creating Diaspora topic: %s", self.kafka_topic)
+                c = Client()
+                c.register_topic(self.kafka_topic)
+            except Exception as e:
+                print(e)
+                print(
+                    "Failed to connect to Diaspora or create topic. Have you registered it already?"
+                )
+        else:
+            self.kafka_producer = None
+            self.kafka_topic = None
+
+    def log_event(self, log_value: Event) -> Dict[Any, Any]:
+        """logs an event in the proper place for the given experiment
+
+        Parameters
+        ----------
+        log_value : str
+            the specifically formatted value to log
+
+        Returns
+        -------
+        None
+        """
+        logger = WEI_Logger.get_experiment_logger(self.experiment_id)
+        logger.info(log_value.model_dump_json())
+
+        if self.kafka_producer:
+            try:
+                future = self.kafka_producer.send(
+                    self.kafka_topic, {"log_value": str(log_value)}
+                )
+                print(future.get(timeout=10))
+            except Exception as e:
+                print(str(e))
 
 
 class Events:
-    """Registers Events during the Experiment execution both in a cloud log and eventually on Kafka"""
+    """An interface for logging events"""
 
     def __init__(
         self,
         server_addr: str,
         server_port: str,
         experiment_id: str,
-        wei_internal: bool = False,
     ) -> None:
         """Initializes an Event Logging object
 
@@ -41,30 +107,11 @@ class Events:
 
         experiment_id: Optional[str]
             # Programmatically generated experiment id, can be reused if needed
-
-        experiment_path: Optional[str]
-            Path for logging the experiment on the server
         """
         self.server_addr = server_addr
         self.server_port = server_port
         self.experiment_id = experiment_id
         self.url = f"http://{self.server_addr}:{self.server_port}"
-        self.wei_internal = wei_internal
-
-        # switch to auth file at some point
-        # with open(Path("/home/rpl/kafka.txt").resolve(), "r") as f:
-        #     refresh_token = f.read()
-        # print(refresh_token)
-        # if not refresh_token:
-        #     raise ValueError("Environment variable DIASPORA_REFRESH not set")
-
-        # kafka_logger = DiasporaLogger(
-        #     bootstrap_servers=["52.200.217.146:9093", "54.210.46.108:9094"],
-        #     refresh_token=refresh_token,
-        # )
-
-        self.topic = "rpl_test"
-        self.kafka_producer = None  # kafka_logger
 
         self.loops: list[str] = []
 
@@ -81,7 +128,8 @@ class Events:
         response: Dict
            The JSON portion of the request"""
         if response.status_code != 200:
-            return {"http_error": response.status_code}
+            print(response.status_code, response.content)
+            return {"http_error": response.status_code, "content": response.content}
 
         return dict(response.json())
 
@@ -99,39 +147,22 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        url = f"{self.url}/exp/{self.experiment_id}/log"
-        log_value = {
-            "experiment_id": self.experiment_id,
-            "event_type": event_type,
-            "event_name": event_name,
-            "event_info": event_info,
-        }
-        response = {}
-        if self.wei_internal:
-            from wei.core.loggers import WEI_Logger
 
-            logger = WEI_Logger.get_experiment_logger(str(self.experiment_id))
-            logger.info(log_value)
-        else:
-            response = self._return_response(
-                requests.post(
-                    url,
-                    params={
-                        "log_value": str(log_value),
-                    },
-                )
+        url = f"{self.url}/events/"
+        event = Event.model_validate(
+            {
+                "experiment_id": self.experiment_id,
+                "event_type": event_type,
+                "event_name": event_name,
+                "event_info": event_info,
+            }
+        )
+        response = self._return_response(
+            requests.post(
+                url,
+                json=event.model_dump(mode="json"),
             )
-        try:
-            # self.kafka_producer.send(
-            # self.topic,
-            # log_value,
-            # )
-            pass
-
-        except Exception as e:
-            print(str(e))
-            print("Kafka Unavailable")
-
+        )
         return response
 
     def start_experiment(self) -> Dict[Any, Any]:
@@ -278,6 +309,27 @@ class Events:
             {"loop_name": loop_name, "condition": condition, "result": str(value)},
         )
 
+    def log_wf_queued(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
+        """Logs when a workflow is queued
+
+
+        Parameters
+        ----------
+        wf_name : str
+            The name of the workflow
+
+        run_id: str
+            The run_id of the workflow.
+
+        Returns
+        -------
+        Any
+           The JSON portion of the response from the server"""
+
+        return self._log_event(
+            "WEI", "WORKFLOW_QUEUED", {"wf_name": str(wf_name), "run_id": str(run_id)}
+        )
+
     def log_wf_start(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
         """Logs the start of a workflow
 
@@ -317,6 +369,21 @@ class Events:
            The JSON portion of the response from the server"""
         return self._log_event(
             "WEI", "WORKFLOW_FAILED", {"wf_name": str(wf_name), "run_id": str(run_id)}
+        )
+
+    def log_wf_step(self, wf_run: WorkflowRun, step: Step) -> Dict[Any, Any]:
+        """Logs a step in a workflow"""
+        return self._log_event(
+            "WEI",
+            "WORKFLOW_STEP",
+            {
+                "wf_name": str(wf_run.name),
+                "run_id": str(wf_run.run_id),
+                "step_name": str(step.name),
+                "step_id": str(step.id),
+                "step_index": str(wf_run.step_index),
+                "result": str(step.result.model_dump_json()),
+            },
         )
 
     def log_wf_end(self, wf_name: str, run_id: str) -> Dict[Any, Any]:

@@ -281,6 +281,9 @@ $RECYCLE.BIN/
 # Ignore logs folder that is created if user does not specify
 logs/
 
+# Environment file for Docker Compose
+.env
+
 # ignore redis dump file
 *.rdb
 
@@ -293,3 +296,8 @@ logs/
 
 # Ruff
 .ruff_cache/*
+
+test_experiment/
+
+# Output data
+.wei/

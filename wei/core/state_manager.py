@@ -35,11 +35,9 @@ class StateManager:
     @property
     def _redis_client(self) -> Any:
         """
-        Returns a redis.Redis or fakeredis.Redis client, but only creates one connection.
+        Returns a redis.Redis client, but only creates one connection.
         MyPy can't handle Redis object return types for some reason, so no type-hinting.
         """
-        if Config.test:
-            return Config.fake_redis
         if self._redis_connection is None:
             self._redis_connection = redis.Redis(
                 host=str(Config.redis_host),
@@ -151,7 +149,7 @@ class StateManager:
         Sets a workflow by ID
         """
         if isinstance(wf, WorkflowRun):
-            wf_dump = wf.model_dump()
+            wf_dump = wf.model_dump(mode="json")
         else:
             wf_dump = WorkflowRun.model_validate(wf).model_dump(mode="json")
         self._workflow_runs[str(wf_dump["run_id"])] = wf_dump

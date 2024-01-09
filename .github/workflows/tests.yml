@@ -1,0 +1,26 @@
+name: Pytest Unit Tests
+
+on: [push]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout code
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: 3.9
+      - name: Build the Project
+        run: make init build
+      - name: Start WEI
+        run: make start
+      - name: Test with pytest
+        run: make test
+      - name: Cleanup
+        run: make remove

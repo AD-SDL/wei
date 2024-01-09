@@ -12,7 +12,7 @@ from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
 
 # from wei.engine import Engine
-from wei.routers.runs import get_run_status, start_run
+from wei.routers.workflow_runs import get_run_status, start_run
 
 from .test_base import TestWEI_Base
 
@@ -26,7 +26,9 @@ class TestWEI_Locations(TestWEI_Base):
         from pathlib import Path
 
         state_manager = StateManager()
-        state_manager.set_workcell(WorkcellData.from_yaml("tests/test_workcell.yaml"))
+        state_manager.set_workcell(
+            WorkcellData.from_yaml("workcell_defs/test_workcell.yaml")
+        )
         workflow_config_path = Path("tests/test_workflow.yaml")
         workflow_def = yaml.safe_load(workflow_config_path.read_text())
         arg_before_replace = workflow_def["flowdef"][1]["args"]
@@ -59,7 +61,9 @@ class TestWEI_Locations(TestWEI_Base):
         state_manager = StateManager()
         print(state_manager.state_lock())
         # engine = Engine()
-        state_manager.set_workcell(WorkcellData.from_yaml("tests/test_workcell.yaml"))
+        state_manager.set_workcell(
+            WorkcellData.from_yaml("workcell_defs/test_workcell.yaml")
+        )
         workflow_config_path = Path("tests/test_workflow.yaml")
         workflow_def = yaml.safe_load(workflow_config_path.read_text())
         # arg_before_replace = workflow_def["flowdef"][1]["args"]

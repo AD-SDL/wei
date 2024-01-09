@@ -62,6 +62,11 @@ class RestInterface(Interface):
             url,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
         )
+        try:
+            print(rest_response.status_code)
+            print(rest_response.json())
+        except Exception as _:
+            pass
         if "x-wei-action_response" in rest_response.headers:
             response = StepResponse.from_headers(dict(rest_response.headers))
             if "run_dir" in kwargs.keys():

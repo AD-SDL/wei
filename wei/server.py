@@ -4,24 +4,34 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from wei.config import Config
-from wei.routers import experiments, locations, modules, runs, workcells
+from wei.helpers import parse_args
+from wei.routers import (
+    events,
+    experiments,
+    locations,
+    modules,
+    workcells,
+    workflow_runs,
+)
 
 
 @asynccontextmanager  # type: ignore
 async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
-    """Initial run function for the app, parses the workcell argument
-        Parameters
-        ----------
-        app : FastApi
-           The REST API app being initialized
-    , timeout_sec=10
-        Returns
-        -------
-        None"""
+    """
+    Initial run function for the app, parses the workcell argument
 
-    app.include_router(runs.router, prefix="/runs")
+    Parameters
+    ----------
+    app : FastApi
+        The REST API app being initialized
+    Returns
+    -------
+    None
+    """
+
+    app.include_router(workflow_runs.router, prefix="/runs")
     app.include_router(experiments.router, prefix="/experiments")
-    app.include_router(experiments.router, prefix="/exp")
+    app.include_router(events.router, prefix="/events")
     app.include_router(locations.router, prefix="/locations")
     app.include_router(modules.router, prefix="/modules")
     app.include_router(workcells.router, prefix="/workcells")
@@ -42,8 +52,7 @@ app = FastAPI(
 if __name__ == "__main__":
     import uvicorn
 
-    args = Config.parse_args()
-    Config.load_config(args)
+    parse_args()
     uvicorn.run(
         "wei.server:app",
         host=Config.server_host,

@@ -11,94 +11,49 @@ For more details and specific examples of how to use wei, please see our [docume
 ## Table of Contents
 - [wei](#wei)
   - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-    - [Bare-Metal Install](#bare-metal-install)
-    - [Docker Install](#docker-install)
   - [Usage](#usage)
   - [Development](#development)
   - [Contributing](#contributing)
   - [Acknowledgments](#acknowledgments)
   - [License](#license)
 
-## Installation
-
-There are 2 options for installing WEI:
-
-- A bare-metal install, which can be used in most contexts where python can run.
-- A containerized install using docker and docker-compose
-
-### Bare-Metal Install
-
-1. Clone the repository.
-2. If using WEI as a library (for instance, as a dependency for a specific module), skip to step 5.
-3. If you intend to run the WEI engine and server, install [Redis](https://redis.io/docs/getting-started/)
-4. If you intend to run the examples, you'll need to install [TMUX](https://github.com/tmux/tmux/wiki/Installing)
-5. Within the cloned repository, run the following:
-
-```
-pip3 install --upgrade pip
-# For just WEI and its core dependencies
-pip3 install -e .
-# Or, with support for the examples:
-pip3 install -e '.[examples]'
-```
-
-### Docker Install
-
-1. [Install Docker](https://docs.docker.com/engine/install/) for your platform of choice
-2. Clone the repository.
-3. Within the cloned repository, run the following:
-
-```
-docker/build_wei.sh
-```
-
 ## Usage
 
-### Running the Examples (Bare-Metal Install)
+To get started with WEI, we recommend:
 
-1. Run `examples/run_examples.sh`
-2. In the corresponding TMUX session, you should see a number of windows corresponding to each component of WEI. Check each tab to ensure the servers are up and operating properly
-3. In the last window, you should see a python command pre-populated. Press enter to run this example experiment script
-5. If you have an attached webcam, you can change the `SIMULATED` flag in `examples/experiment_example.py` to False to test taking an actual picture.
-
-### Running the Examples (Docker Install)
-
-1. Run `docker/start_wei.sh`
-2. In your browser, navigate to `localhost:8888`
-3. Enter `wei` as the token
-4. Navigate to `examples/experiment_example.ipynb` and run the cells in the Jupyter Notebook to run an example WEI Experiment
-5. If you have an attached webcam, you can change the `SIMULATED` flag to False to test taking an actual picture.
+- Using the [WEI Template Workcell](https://github.com/AD-SDL/wei_template_workcell) as a starting point to learn how to use WEI, and how to create your own Workcell.
+- Consulting the [Documentation](https://rpl-wei.readthedocs.io/en/latest/index.html)
 
 ## Development
 
-1. First, install [pdm](https://pdm-project.org/latest/#installation).
-2. Next, run the following in the cloned repo's directory:
+1. [Install Docker](https://docs.docker.com/engine/install/) for your platform of choice
+2. For managing the Python Package, [install PDM](https://pdm-project.org/latest/#installation)
+3. For automatic development checks/linting/formatting, [install pre-commit](https://pre-commit.com/)
+4. Clone the repository.
+5. Within the cloned repository, run the following:
 
-```
-pip install pre-commit ruff
-pdm install
-pre-commit install
-```
+We use `GNU make` to automate many common build tasks, such as initializing, building, starting, and publishing the repository, docker containers, and python packages.
+
+Common commands include `init`, `init-python`, `build`, `build-python`, `start`, `stop`, and `exec`.
+
+For a complete list of commands, run `make help`, or explore `Makefile` and the `make` directory.
+
+To change the configuration of the WEI project, edit `make/config.mk` or overwrite variables at runtime with `make <target> VARIABLE=<override>`.
+
+### Using PDM
+
+- [Managing Dependencies](https://pdm-project.org/latest/usage/dependency/)
+- [Build and Publish](https://pdm-project.org/latest/usage/publish/)
+- [Running Using PDM](https://pdm-project.org/latest/usage/scripts/)
 
 ### Using Pre-commit
 
-- To run pre-commit checks before committing, run `pre-commit run --all-files`
+- To run pre-commit checks before committing, run `pre-commit run --all-files` or `make checks`
 - NONE OF THE FOLLOWING SHOULD BE DONE REGULARLY, AND ALL CHECKS SHOULD BE PASSING BEFORE BRANCHES ARE MERGED
     - To skip linting during commits, use `SKIP=ruff git commit ...`
     - To skip formatting during commits, use `SKIP=ruff-format git commit ...`
     - To skip all pre-commit hooks, use `git commit --no-verify ...`
 - See [pre-commit documentation](https://pre-commit.com) for more
-
-### Using pdm
-
-- [Managing Dependencies](https://pdm-project.org/latest/usage/dependency/)
-- [Build and Publish](https://pdm-project.org/latest/usage/publish/)
-- [Running Using PDM](https://pdm-project.org/latest/usage/scripts/)
-  - `pdm run engine <args>` to start the WEI engine
-  - `pdm run server <args>` to start the WEI server
-  - `pdm run <arbitrary command>` to run an arbitrary command inside the python environment
-
 
 ## Contributing
 

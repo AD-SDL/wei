@@ -1,0 +1,67 @@
+services:
+  ###########
+  # Dev App #
+  ###########
+  test_app:
+    container_name: ${APP_NAME}
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE_TEST}
+    volumes:
+      - ${WORKCELLS_DIR}:/workcell_defs
+      - ${WEI_DATA_DIR}:/home/app/.wei
+      - diaspora_config:/home/app/.diaspora
+      - ${PROJECT_DIR}:/home/app/wei # for development only
+    env_file:
+      - .env
+    depends_on:
+      - wei_server
+      - wei_engine
+      - wei_redis
+    tty: true
+  #####################
+  # WEI Core Services #
+  #####################
+  wei_server:
+    image: ${IMAGE}
+    container_name: wei_server
+    ports:
+      - 8000:8000
+    volumes:
+      - ${WORKCELLS_DIR}:/workcell_defs
+      - ${WEI_DATA_DIR}:/home/app/.wei
+      - diaspora_config:/home/app/.diaspora
+      - ${PROJECT_DIR}:/home/app/wei # for development only
+    env_file:
+      - .env
+    command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
+    depends_on:
+      - wei_redis
+  wei_engine:
+    image: ${IMAGE}
+    container_name: wei_engine
+    volumes:
+      - ${WORKCELLS_DIR}:/workcell_defs
+      - ${WEI_DATA_DIR}:/home/app/.wei
+      - ${PROJECT_DIR}:/home/app/wei # for development only
+    env_file:
+      - .env
+    command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
+    depends_on:
+      - wei_redis
+      - wei_server
+  wei_redis:
+    image: redis
+    container_name: wei_redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ${REDIS_DIR}:/data
+    command: redis-server --save 60 1 --loglevel warning
+
+################
+# Data Storage #
+################
+volumes:
+  diaspora_config:
+    driver: local

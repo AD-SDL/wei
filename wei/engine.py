@@ -5,11 +5,10 @@ Engine Class and associated helpers and data
 import time
 
 from wei.config import Config
-from wei.core.data_classes import WorkcellData
-from wei.core.location import initialize_workcell_locations
-from wei.core.module import initialize_workcell_modules, update_active_modules
+from wei.core.module import update_active_modules
 from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
+from wei.helpers import initialize_state, parse_args
 
 
 class Engine:
@@ -24,11 +23,7 @@ class Engine:
         self.state_manager.clear_state(reset_locations=Config.reset_locations)
         self.scheduler = Scheduler()
         with self.state_manager.state_lock():
-            self.state_manager.set_workcell(
-                WorkcellData.from_yaml(Config.workcell_file)
-            )
-            initialize_workcell_modules()
-            initialize_workcell_locations()
+            initialize_state()
 
     def spin(self) -> None:
         """
@@ -47,7 +42,6 @@ class Engine:
 
 
 if __name__ == "__main__":
-    args = Config.parse_args()
-    Config.load_config(args)
+    parse_args()
     engine = Engine()
     engine.spin()

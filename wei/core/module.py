@@ -1,6 +1,8 @@
 """Provides methods and classes to work with modules"""
 
 
+from typing import Union
+
 from wei.core.data_classes import Module, ModuleStatus, WorkcellData, Workflow
 from wei.core.interface import InterfaceMap
 from wei.core.state_manager import StateManager
@@ -67,3 +69,19 @@ def validate_module_names(workflow: Workflow, workcell: WorkcellData) -> None:
 
     # Validate that all the modules listed in the workflow are also in the workcell
     [find_step_module(workcell, module.name) for module in workflow.modules]
+
+
+def update_module_reserve(module: Module, run_id: Union[str, None]) -> Module:
+    """Updates a module's reservation"""
+    module.reserved = run_id
+    return module
+
+
+def reserve_module(module: Module, run_id: str) -> None:
+    """Reserves a module for a given run"""
+    state_manager.update_module(module.name, update_module_reserve, run_id)
+
+
+def clear_module_reservation(module: Module):
+    """Clears a module's reservation"""
+    state_manager.update_module(module.name, update_module_reserve, None)
