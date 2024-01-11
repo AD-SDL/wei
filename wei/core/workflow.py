@@ -47,23 +47,7 @@ def validate_step(step: Step) -> Tuple[bool, str]:
                             False,
                             f"Step '{step.name}': Module {step.module} action {step.action} missing arg {action_arg.name}",
                         )
-                    if isinstance(action_arg.type, str):
-                        if not isinstance(
-                            step.args[action_arg.name], eval(action_arg.type)
-                        ):
-                            return (
-                                False,
-                                f"Step '{step.name}': Module {step.module} action {step.action} arg {action_arg.name} is not of type {action_arg.type}",
-                            )
-                    else:
-                        if not any(
-                            isinstance(step.args[action_arg.name], eval(arg_type))
-                            for arg_type in action_arg.type
-                        ):
-                            return (
-                                False,
-                                f"Step '{step.name}': Module {step.module} action {step.action} arg {action_arg.name} is not of any type in {action_arg.type}",
-                            )
+                    # TODO: Action arg type validation goes here
                 return True, f"Step {step.name}: Validated successfully"
         return (
             False,
