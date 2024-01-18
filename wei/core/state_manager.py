@@ -69,7 +69,11 @@ class StateManager:
         Gets a lock on the state. This should be called before any state updates are made,
         or where we don't want the state to be changing underneath us (i.e., in the engine).
         """
-        return Redlock(key=f"{self._prefix}:state", masters={self._redis_client})
+        return Redlock(
+            key=f"{self._prefix}:state",
+            masters={self._redis_client},
+            auto_release_time=60,
+        )
 
     # State Methods
     def get_state(self) -> Dict[str, Dict[Any, Any]]:

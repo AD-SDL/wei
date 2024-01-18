@@ -162,7 +162,7 @@ class Module(BaseModel):
     """Current state of the module"""
     reserved: Optional[str] = None
     """ID of WorkflowRun that will run next on this Module"""
-    about: Optional[ModuleAbout] = None
+    about: Optional[Any] = None
     """About information for the module"""
 
     @validator("config")
