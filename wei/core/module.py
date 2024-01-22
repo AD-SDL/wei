@@ -92,13 +92,9 @@ def get_module_about(
             response = interface.get_about(module)
             try:
                 about = ModuleAbout(**interface.get_about(module))
-            except Exception as e:
+            except Exception:
                 if require_schema_compliance:
-                    raise (
-                        ValueError(
-                            "Module about information does not conform to schema"
-                        )
-                    ) from e
+                    return None
                 about = response
             return about
         except Exception as e:

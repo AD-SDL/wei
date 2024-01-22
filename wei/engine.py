@@ -24,6 +24,7 @@ class Engine:
         self.scheduler = Scheduler()
         with self.state_manager.state_lock():
             initialize_state()
+        print("Engine initialized, waiting for workflows...")
 
     def spin(self) -> None:
         """
