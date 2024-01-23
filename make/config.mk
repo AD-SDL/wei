@@ -12,7 +12,7 @@ WORKCELL_FILENAME := test_workcell.yaml
 
 # Python Configuration
 PYPROJECT_TOML := $(PROJECT_DIR)/pyproject.toml
-PROJECT_VERSION := $(shell grep -oP '(?<=version = ")[^"]+' $(PYPROJECT_TOML) | head -n 1)
+PROJECT_VERSION := $(shell sed -n 's/version = "\([^"]*\)"/\1/p' $(PYPROJECT_TOML) | head -n 1)
 
 # Docker Configuration
 COMPOSE_FILE := $(PROJECT_DIR)/compose.yaml

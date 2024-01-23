@@ -4,6 +4,7 @@ LABEL org.opencontainers.image.source=https://github.com/AD-SDL/wei
 LABEL org.opencontainers.image.description="The Workflow Execution Interface (WEI)"
 LABEL org.opencontainers.image.licenses=MIT
 
+# User configuration
 ARG USER_ID=9999
 ARG GROUP_ID=9999
 ARG CONTAINER_USER=app
@@ -15,6 +16,12 @@ RUN gunzip /sbin/matchhostfsowner.gz && \
 
 RUN groupadd -g ${GROUP_ID} ${CONTAINER_USER}
 RUN useradd --create-home -u ${USER_ID} --shell /bin/bash -g ${CONTAINER_USER} ${CONTAINER_USER}
+
+RUN mkdir -p /etc/matchhostfsowner/
+RUN echo "\nchown_home: false" >> /etc/matchhostfsowner/config.yml
+RUN chown -R root: /etc/matchhostfsowner && \
+    chmod 700 /etc/matchhostfsowner && \
+    chmod 600 /etc/matchhostfsowner/*
 
 USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
