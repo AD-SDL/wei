@@ -96,6 +96,38 @@ class ExperimentClient:
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
 
+    def validate_workflow(
+        self,
+        workflow_file: Path,
+        payload: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Submits a workflow file to the server to be validated
+        """
+        if payload is None:
+            payload = {}
+        assert workflow_file.exists(), f"{workflow_file} does not exist"
+        url = f"{self.url}/runs/validate"
+
+        with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
+            params = {
+                "experiment_id": self.experiment_id,
+                "payload": payload,
+            }
+            response = requests.post(
+                url,
+                params=params,  # type: ignore
+                json=payload,
+                files={
+                    "workflow": (
+                        str(workflow_file),
+                        workflow_file_handle,
+                        "application/x-yaml",
+                    ),
+                },
+            )
+        return response
+
     def start_run(
         self,
         workflow_file: Path,
