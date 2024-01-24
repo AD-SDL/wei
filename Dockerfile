@@ -17,11 +17,11 @@ RUN gunzip /sbin/matchhostfsowner.gz && \
 RUN groupadd -g ${GROUP_ID} ${CONTAINER_USER}
 RUN useradd --create-home -u ${USER_ID} --shell /bin/bash -g ${CONTAINER_USER} ${CONTAINER_USER}
 
-RUN mkdir -p /etc/matchhostfsowner/
-RUN echo "\nchown_home: false" >> /etc/matchhostfsowner/config.yml
-RUN chown -R root: /etc/matchhostfsowner && \
-    chmod 700 /etc/matchhostfsowner && \
-    chmod 600 /etc/matchhostfsowner/*
+#RUN mkdir -p /etc/matchhostfsowner/
+#RUN echo "\nchown_home: false" >> /etc/matchhostfsowner/config.yml
+#RUN chown -R root: /etc/matchhostfsowner && \
+#    chmod 700 /etc/matchhostfsowner && \
+#    chmod 600 /etc/matchhostfsowner/*
 
 USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}

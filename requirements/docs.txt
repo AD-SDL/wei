@@ -9,7 +9,7 @@ certifi==2023.11.17
 cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
-colorama==0.4.6; os_name == "nt" or sys_platform == "win32" or platform_system == "Windows"
+colorama==0.4.6; platform_system == "Windows"
 cryptography==41.0.7
 deprecated==1.2.14
 devtools==0.12.2
@@ -25,7 +25,7 @@ httpx==0.25.2
 idna==3.6
 kafka-python==2.0.2
 lupa==2.0
-mmh3==4.0.1
+mmh3==4.1.0
 packaging==23.2
 pottery==3.0.0
 pycparser==2.21
