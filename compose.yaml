@@ -44,6 +44,8 @@ services:
       - ${WORKCELLS_DIR}:/workcell_defs
       - ${WEI_DATA_DIR}:/home/app/.wei
       - ${PROJECT_DIR}:/home/app/wei # for development only
+    environment:
+     - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
     env_file:
       - .env
     command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}

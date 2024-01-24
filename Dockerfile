@@ -17,11 +17,11 @@ RUN gunzip /sbin/matchhostfsowner.gz && \
 RUN groupadd -g ${GROUP_ID} ${CONTAINER_USER}
 RUN useradd --create-home -u ${USER_ID} --shell /bin/bash -g ${CONTAINER_USER} ${CONTAINER_USER}
 
-RUN mkdir -p /etc/matchhostfsowner/
-RUN echo "\nchown_home: false" >> /etc/matchhostfsowner/config.yml
-RUN chown -R root: /etc/matchhostfsowner && \
-    chmod 700 /etc/matchhostfsowner && \
-    chmod 600 /etc/matchhostfsowner/*
+#RUN mkdir -p /etc/matchhostfsowner/
+#RUN echo "\nchown_home: false" >> /etc/matchhostfsowner/config.yml
+#RUN chown -R root: /etc/matchhostfsowner && \
+#    chmod 700 /etc/matchhostfsowner && \
+#    chmod 600 /etc/matchhostfsowner/*
 
 USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
@@ -37,7 +37,13 @@ RUN --mount=type=cache,target=/home/${CONTAINER_USER}/.cache,uid=${USER_ID},gid=
     pip install -r wei/requirements/requirements.txt
 
 # Copy wei files
-COPY --chown=${USER_ID}:${GROUP_ID} ./ wei
+COPY --chown=${USER_ID}:${GROUP_ID} wei wei/wei
+COPY --chown=${USER_ID}:${GROUP_ID} tests wei/tests
+COPY --chown=${USER_ID}:${GROUP_ID} pyproject.toml wei/pyproject.toml
+COPY --chown=${USER_ID}:${GROUP_ID} README.md wei/README.md
+COPY --chown=${USER_ID}:${GROUP_ID} scripts wei/scripts
+COPY --chown=${USER_ID}:${GROUP_ID} workcell_defs wei/workcell_defs
+
 
 # Install dependencies and wei
 RUN --mount=type=cache,target=/home/${CONTAINER_USER}/.cache,uid=${USER_ID},gid=${GROUP_ID} \
