@@ -7,7 +7,7 @@
 register_diaspora_local: init-python # Registers diaspora for logging events (local python, no container)
 	pdm run python scripts/register_diaspora.py
 
-init-python: init pdm.lock # Installs the python environment (requires PDM)
+init-python: init pdm.lock deps # Installs the python environment (requires PDM)
 
 build-python: init-python # Builds the pypi package for APP_NAME
 	pdm build
@@ -21,12 +21,15 @@ publish-python: init-python # Publishes the pypi package for wei
 # Python Dependency Managment #
 ###############################
 
+NOT_PHONY += pdm.lock
 pdm.lock: pyproject.toml # Generates the pdm.lock file
-	pdm install -p $(PROJECT_DIR)
+	pdm install -p $(PROJECT_DIR) --group :all
 
-requirements/*.txt: pyproject.toml
-	pdm export --prod -o requirements/requirements.txt --without-hashes
-	pdm export --group dev -o requirements/dev.txt --without-hashes
-	pdm export --group docs -o requirements/docs.txt --without-hashes
+NOT_PHONY += requirements/*.txt
+requirements/*.txt: pdm.lock
+	pdm export --without-hashes --prod -o requirements/requirements.txt
+	pdm export --without-hashes --group dev -o requirements/dev.txt
+	pdm export --without-hashes --group docs -o requirements/docs.txt
 
 deps: requirements/*.txt # Generates the requirements files for APP_NAME
+	pdm install -p $(PROJECT_DIR) --group :all

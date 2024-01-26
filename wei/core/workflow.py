@@ -85,7 +85,7 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     if module_data.state != ModuleStatus.IDLE:
         print(f"Can't run {run_id}.{step.name}, module is not idle")
         return False
-    if module_data.reserved:
+    if module_data.reserved and module_data.reserved != run_id:
         print(f"Can't run {run_id}.{step.name}, module is reserved")
         return False
     return True

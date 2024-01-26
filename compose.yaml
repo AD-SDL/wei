@@ -4,6 +4,7 @@ services:
   ###########
   test_app:
     container_name: ${APP_NAME}
+    image: ghcr.io/ad-sdl/wei-test
     build:
       context: .
       dockerfile: ${DOCKERFILE_TEST}
@@ -14,11 +15,13 @@ services:
       - ${PROJECT_DIR}:/home/app/wei # for development only
     env_file:
       - .env
+    profiles:
+      - test
+    command: pytest -p no:cacheprovider wei
     depends_on:
       - wei_server
       - wei_engine
       - wei_redis
-    tty: true
   #####################
   # WEI Core Services #
   #####################
