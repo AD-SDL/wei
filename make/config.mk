@@ -7,7 +7,7 @@
 
 # Project Configuration
 PROJECT_DIR := $(abspath $(MAKEFILE_DIR))
-WORKCELLS_DIR := $(PROJECT_DIR)/workcell_defs
+WORKCELLS_DIR := $(PROJECT_DIR)/tests/workcells
 WORKCELL_FILENAME := test_workcell.yaml
 
 # Python Configuration

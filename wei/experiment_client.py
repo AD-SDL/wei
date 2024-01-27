@@ -7,8 +7,9 @@ from warnings import warn
 
 import requests
 
-from wei.core.data_classes import WorkflowStatus
+from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.events import Events
+from wei.routers.workflow_runs import StartRunParams
 
 
 class ExperimentClient:
@@ -156,26 +157,18 @@ class ExperimentClient:
         if payload is None:
             payload = {}
         assert workflow_file.exists(), f"{workflow_file} does not exist"
+        workflow = Workflow.from_yaml(workflow_file)
         url = f"{self.url}/runs/start"
 
-        with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
-            params = {
-                "experiment_id": self.experiment_id,
-                "simulate": simulate,
-                "payload": payload,
-            }
-            response = requests.post(
-                url,
-                params=params,  # type: ignore
-                json=payload,
-                files={
-                    "workflow": (
-                        str(workflow_file),
-                        workflow_file_handle,
-                        "application/x-yaml",
-                    ),
-                },
-            )
+        response = requests.post(
+            url,
+            json=StartRunParams(
+                workflow=workflow,
+                experiment_id=self.experiment_id,
+                payload=payload,
+                simulate=simulate,
+            ).model_dump(mode="json"),
+        )
         response_dict = self._return_response(response)
         if blocking:
             prior_status = None

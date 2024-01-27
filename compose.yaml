@@ -22,6 +22,29 @@ services:
       - wei_server
       - wei_engine
       - wei_redis
+
+  ###########
+  # Modules #
+  ###########
+  sleep_node:
+    image: ghcr.io/ad-sdl/sleep_module
+    container_name: sleep_node
+    ports:
+      - 2000:2000
+    env_file:
+      - .env
+  webcam_node:
+    image: ghcr.io/ad-sdl/webcam_module
+    container_name: webcam_node
+    privileged: true # needed for hardware access
+    # devices:
+    #   - /dev/video0:/dev/video0
+    ports:
+      - 2001:2001
+    command: python webcam_module/src/webcam_rest_node.py --port 2001
+    env_file:
+      - .env
+
   #####################
   # WEI Core Services #
   #####################

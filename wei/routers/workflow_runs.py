@@ -1,14 +1,13 @@
 """
 Router for the "runs" endpoints
 """
-import traceback
 from typing import Any, Dict, Optional
 
 import yaml
 from fastapi import APIRouter, UploadFile
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import Workflow, WorkflowStatus
+from wei.core.data_classes import BaseModel, Workflow, WorkflowStatus
 from wei.core.loggers import WEI_Logger
 from wei.core.state_manager import StateManager
 from wei.core.workflow import create_run
@@ -18,13 +17,17 @@ router = APIRouter()
 state_manager = StateManager()
 
 
+class StartRunParams(BaseModel):
+    """JSON Body definition for the /runs/start endpoint"""
+
+    experiment_id: str
+    workflow: Workflow
+    payload: Optional[Dict[str, Any]] = {}
+    simulate: Optional[bool] = False
+
+
 @router.post("/start")
-async def start_run(
-    experiment_id: str,
-    workflow: UploadFile,
-    payload: Optional[Dict[str, Any]] = None,
-    simulate: bool = False,
-) -> JSONResponse:
+async def start_run(params: StartRunParams) -> JSONResponse:
     """
     parses the payload and workflow files, and then pushes a workflow job onto the redis queue
 
@@ -44,57 +47,24 @@ async def start_run(
     response: Dict
     - a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    if payload is None:
-        payload = {}
-    wf = None
-    wf_run = None
-    try:
-        workflow_content = await workflow.read()
-        workflow_content_str = workflow_content.decode("utf-8")
-        wf = Workflow(**yaml.safe_load(workflow_content_str))
-        logger = WEI_Logger.get_experiment_logger(experiment_id)
-        logger.info(f"Received job run request: {wf.name}")
-        workcell = state_manager.get_workcell()
+    wf = params.workflow
+    logger = WEI_Logger.get_experiment_logger(params.experiment_id)
+    logger.info(f"Received job run request: {wf.name}")
+    workcell = state_manager.get_workcell()
 
-        wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
+    wf_run = create_run(
+        wf, workcell, params.experiment_id, params.payload, params.simulate
+    )
 
-        with state_manager.state_lock():
-            state_manager.set_workflow_run(wf_run)
-        return JSONResponse(
-            content={
-                "wf": wf_run.model_dump(mode="json"),
-                "run_id": wf_run.run_id,
-                "status": str(wf_run.status),
-            }
-        )
-    except Exception as e:
-        traceback.print_exc()
-        if wf_run:
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "wf": wf_run.model_dump(mode="json"),
-                    "error": f"Error: {e}",
-                    "status": str(WorkflowStatus.FAILED),
-                },
-            )
-        elif wf:
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "wf": wf.model_dump(mode="json"),
-                    "error": f"Error: {e}",
-                    "status": str(WorkflowStatus.FAILED),
-                },
-            )
-        else:
-            return JSONResponse(
-                status_code=500,
-                content={
-                    "error": f"Error: {e}",
-                    "status": str(WorkflowStatus.FAILED),
-                },
-            )
+    with state_manager.state_lock():
+        state_manager.set_workflow_run(wf_run)
+    return JSONResponse(
+        content={
+            "wf": wf_run.model_dump(mode="json"),
+            "run_id": wf_run.run_id,
+            "status": str(wf_run.status),
+        }
+    )
 
 
 @router.post("/validate")

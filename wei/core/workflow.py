@@ -67,7 +67,7 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
         if not (location.state == "Empty"):
             print(f"Can't run {run_id}.{step.name}, target is not empty")
             return False
-        if location.reserved:
+        if location.reserved and location.reserved != run_id:
             print(f"Can't run {run_id}.{step.name}, target is reserved")
             return False
 
@@ -78,7 +78,7 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
                 f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
             )
             return False
-        if location.reserved:
+        if location.reserved and location.reserved != run_id:
             print(f"Can't run {run_id}.{step.name}, source is reserved")
             return False
     module_data = state_manager.get_module(step.module)
