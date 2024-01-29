@@ -18,7 +18,7 @@ class Test_Workcell_Base(TestWEI_Base):
         assert response.status_code == 200
 
         workcell = WorkcellData.from_yaml(
-            self.root_dir / Path("workcell_defs/test_workcell.yaml")
+            self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
         response = requests.post(
             f"{self.url}/wc/", json=workcell.model_dump(mode="json")
@@ -33,7 +33,7 @@ class Test_Workcell_Base(TestWEI_Base):
         assert response.status_code == 200
 
         workcell = WorkcellData.from_yaml(
-            self.root_dir / Path("workcell_defs/test_workcell.yaml")
+            self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
         requests.post(f"{self.url}/wc/", json=workcell.model_dump(mode="json"))
 

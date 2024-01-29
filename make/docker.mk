@@ -3,13 +3,7 @@
 ############################################
 
 build: init requirements/requirements.txt requirements/dev.txt # Builds the docker image for APP_NAME
-	docker build -f $(DOCKERFILE) \
-		-t ${IMAGE}:${PROJECT_VERSION} \
-		-t ${IMAGE}:latest \
-		-t ${IMAGE}:dev \
-		$(PROJECT_DIR)
 	docker compose -f $(COMPOSE_FILE) --profile test build $(args)
-
 
 publish-docker: build # Publishes the docker image
 	docker login $(REGISTRY)

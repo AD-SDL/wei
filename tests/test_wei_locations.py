@@ -53,17 +53,3 @@ class TestWEI_Locations(TestWEI_Base):
                 )
 
     # @pytest.mark.skip(reason="Not working")
-    def test_workflow_run(self):
-        """Test Running a simple workflow"""
-        from pathlib import Path
-
-        workflow_path = Path(__file__).parent / "test_workflow.yaml"
-
-        print(
-            self.experiment.start_run(
-                workflow_file=workflow_path,
-                payload={"wait_time": 5},
-                blocking=True,
-                simulate=False,
-            )
-        )

@@ -4,9 +4,9 @@ services:
   ###########
   test_app:
     container_name: ${APP_NAME}
-    image: ghcr.io/ad-sdl/wei-test
+    image: ${IMAGE_TEST}
     build:
-      context: .
+      context: tests/
       dockerfile: ${DOCKERFILE_TEST}
     volumes:
       - ${WORKCELLS_DIR}:/workcell_defs
@@ -19,6 +19,9 @@ services:
       - test
     command: pytest -p no:cacheprovider wei
     depends_on:
+      - synthesis
+      - transfer
+      - measure
       - wei_server
       - wei_engine
       - wei_redis
@@ -26,22 +29,34 @@ services:
   ###########
   # Modules #
   ###########
-  sleep_node:
-    image: ghcr.io/ad-sdl/sleep_module
-    container_name: sleep_node
+  synthesis:
+    image: ${IMAGE_TEST}
+    container_name: synthesis
     ports:
       - 2000:2000
+    command: 'python3 wei/tests/test_module/test_rest_node.py
+      --port 2000
+      --alias synthesis'
     env_file:
       - .env
-  webcam_node:
-    image: ghcr.io/ad-sdl/webcam_module
-    container_name: webcam_node
-    privileged: true # needed for hardware access
-    # devices:
-    #   - /dev/video0:/dev/video0
+  transfer:
+    image: ${IMAGE_TEST}
+    container_name: transfer
     ports:
       - 2001:2001
-    command: python webcam_module/src/webcam_rest_node.py --port 2001
+    command: 'python3 wei/tests/test_module/test_rest_node.py
+      --port 2001
+      --alias transfer'
+    env_file:
+      - .env
+  measure:
+    image: ${IMAGE_TEST}
+    container_name: measure
+    ports:
+      - 2002:2002
+    command: 'python3 wei/tests/test_module/test_rest_node.py
+      --port 2002
+      --alias measure'
     env_file:
       - .env
 
@@ -50,6 +65,13 @@ services:
   #####################
   wei_server:
     image: ${IMAGE}
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE}
+      tags:
+        - ${IMAGE}:latest
+        - ${IMAGE}:${PROJECT_VERSION}
+        - ${IMAGE}:dev
     container_name: wei_server
     ports:
       - 8000:8000

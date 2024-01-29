@@ -9,21 +9,28 @@ config:
 
 #List of all components accessible in this workcell
 modules:
-  - name: sleeper
-    model: sleeper_test_node
+  - name: synthesis
+    model: test_module
     interface: wei_rest_node
     config:
-      rest_node_address: "http://sleep_node:2000"
-      rest_node_auth: ""
+      rest_node_address: "http://synthesis:2000"
     workcell_coordinates: [0, 0, 0, 0, 0, 0]
-  - name: webcam
-    model: camera_test_node
+  - name: transfer
+    model: test_module
     interface: wei_rest_node
     config:
-      rest_node_address: "http://webcam_node:2001"
-      rest_node_auth: ""
+      rest_node_address: "http://transfer:2001"
+    workcell_coordinates: [15, 0, 0, 0, 0, 0]
+  - name: measure
+    model: test_module
+    interface: wei_rest_node
+    config:
+      rest_node_address: "http://measure:2002"
     workcell_coordinates: [15, 0, 0, 0, 0, 0]
 
 locations:
-  webcam:
-    webcam.pos: [0, 0, 0, 0, 0, 0]
+  transfer:
+    synthesis.pos: [0, 0, 0, 0, 0, 0]
+    transfer.pos: [0, 0, 0, 0, 0, 0]
+    measure.pos: [0, 0, 0, 0, 0, 0]
+    wc.trash: [0, 0, 0, 0, 0, 0]

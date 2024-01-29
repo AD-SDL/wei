@@ -35,7 +35,6 @@ COPY tests wei/tests
 COPY pyproject.toml wei/pyproject.toml
 COPY README.md wei/README.md
 COPY scripts wei/scripts
-COPY workcell_defs wei/workcell_defs
 
 
 # Install dependencies and wei

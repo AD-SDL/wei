@@ -368,7 +368,7 @@ class WorkcellConfig(BaseModel, extra="allow"):
         description="Whether or not to reset locations when the Engine (re)starts",
     )
     update_interval: float = Field(
-        default=1.0, description="How often to update the workcell state"
+        default=5.0, description="How often to update the workcell state"
     )
     server_host: str = Field(
         default="0.0.0.0", description="Hostname for the WEI server"

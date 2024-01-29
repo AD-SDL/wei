@@ -18,7 +18,7 @@ class TestWEI_Base(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.root_dir = Path(__file__).resolve().parent.parent
         self.workcell = WorkcellData.from_yaml(
-            self.root_dir / Path("workcell_defs/test_workcell.yaml")
+            self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
         self.server_host = self.workcell.config.server_host
         self.server_port = self.workcell.config.server_port
