@@ -24,7 +24,7 @@ REGISTRY := ghcr.io
 ORGANIZATION := ad-sdl
 IMAGE_NAME := wei
 IMAGE := $(REGISTRY)/$(ORGANIZATION)/$(IMAGE_NAME)
-IMAGE_TEST := $(IMAGE)-test
+IMAGE_TEST := $(IMAGE)_test
 
 # This should match the name of your app's service in the compose file
 APP_NAME := test_app

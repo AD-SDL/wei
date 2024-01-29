@@ -30,7 +30,7 @@ $(DOCS): wei/* docs/source/*
 publish: build publish-docker publish-python # Publishes the docker image and pypi package for wei
 
 test: # Run Pytests
-	docker compose -f $(COMPOSE_FILE) start
+	docker compose -f $(COMPOSE_FILE) up -d
 	docker compose -f $(COMPOSE_FILE) run test_app
 	docker compose -f $(COMPOSE_FILE) stop
 
