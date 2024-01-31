@@ -3,7 +3,7 @@ services:
   # Dev App #
   ###########
   test_app:
-    container_name: ${APP_NAME}
+    container_name: test_app
     image: ${IMAGE_TEST}
     build:
       context: tests/

@@ -45,11 +45,15 @@ class ExperimentClient:
         self.url = f"http://{self.server_addr}:{self.server_port}"
 
         start_time = time.time()
+        waiting = False
         while time.time() - start_time < 60:
             try:
                 self.register_experiment(experiment_id, experiment_name)
                 break
             except requests.exceptions.ConnectionError:
+                if not waiting:
+                    waiting = True
+                    print("Waiting to connect to server...")
                 time.sleep(1)
 
         self.loops: list[str] = []

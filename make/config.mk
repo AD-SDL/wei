@@ -28,8 +28,6 @@ IMAGE_TEST := $(IMAGE)_test
 
 # This should match the name of your app's service in the compose file
 APP_NAME := test_app
-# This should be the command to run your app in the container
-APP_COMMAND :=
 # This is where the data from the workcell will be stored
 # If these directories don't exist, they will be created
 WEI_DATA_DIR := $(PROJECT_DIR)/.wei
