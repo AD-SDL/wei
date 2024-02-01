@@ -13,6 +13,7 @@ wei.helpers
 
    .. autosummary::
 
+      extract_version
       initialize_state
       parse_args
       string_to_bool

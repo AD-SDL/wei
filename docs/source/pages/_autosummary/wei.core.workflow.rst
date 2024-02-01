@@ -18,3 +18,4 @@ wei.core.workflow
       inject_payload
       replace_positions
       run_step
+      validate_step
