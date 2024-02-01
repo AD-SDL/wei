@@ -6,13 +6,15 @@ anyio==3.7.1
 asttokens==2.4.1
 async-timeout==4.0.3
 certifi==2023.11.17
-cffi==1.16.0
+cffi==1.16.0; implementation_name == "pypy" or platform_python_implementation != "PyPy"
 charset-normalizer==3.3.2
 click==8.1.7
+colorama==0.4.6; platform_system == "Windows"
 cryptography==42.0.1
 deprecated==1.2.14
 devtools==0.12.2
 diaspora-event-sdk==0.1.2
+exceptiongroup==1.2.0; python_version < "3.11"
 executing==2.0.1
 fakeredis==2.20.1
 fastapi==0.103.2
@@ -26,7 +28,7 @@ lupa==2.0
 mmh3==4.1.0
 packaging==23.2
 pottery==3.0.0
-pycparser==2.21
+pycparser==2.21; implementation_name == "pypy" or platform_python_implementation != "PyPy"
 pydantic==2.4.2
 pydantic-core==2.10.1
 pygments==2.17.2
