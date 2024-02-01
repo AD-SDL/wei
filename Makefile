@@ -29,9 +29,6 @@ $(DOCS): wei/* docs/source/*
 
 publish: build publish-docker publish-python # Publishes the docker image and pypi package for wei
 
-test: # Run Pytests
-	docker compose -f $(COMPOSE_FILE) exec -u app $(APP_NAME) /bin/bash -c "pytest wei"
-
 ################################################################################
 
 # Determine which rules don't correspond to actual files (add rules to NOT_PHONY to exclude)

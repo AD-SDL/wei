@@ -1,7 +1,7 @@
 """The module that initializes and runs the step by step WEI workflow"""
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from wei.config import Config
 from wei.core.data_classes import (
@@ -19,10 +19,45 @@ from wei.core.events import Events
 from wei.core.interface import InterfaceMap
 from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import WEI_Logger
-from wei.core.module import clear_module_reservation, validate_module_names
+from wei.core.module import (
+    clear_module_reservation,
+    get_module_about,
+    validate_module_names,
+)
 from wei.core.state_manager import StateManager
 
 state_manager = StateManager()
+
+
+def validate_step(step: Step) -> Tuple[bool, str]:
+    """Check if a step is valid based on the module's about"""
+    if step.module in [module.name for module in state_manager.get_workcell().modules]:
+        module = state_manager.get_module(step.module)
+        about = get_module_about(module, require_schema_compliance=True)
+        if about is None:
+            return (
+                True,
+                f"Module {step.module} didn't return proper about information, skipping validation",
+            )
+        for action in about.actions:
+            if step.action in action.name:
+                for action_arg in action.args:
+                    if action_arg.name not in step.args and action_arg.required:
+                        return (
+                            False,
+                            f"Step '{step.name}': Module {step.module} action {step.action} missing arg {action_arg.name}",
+                        )
+                    # TODO: Action arg type validation goes here
+                return True, f"Step {step.name}: Validated successfully"
+        return (
+            False,
+            f"Step '{step.name}': Module {step.module} has no action {step.action}",
+        )
+    else:
+        return (
+            False,
+            f"Step '{step.name}': Module {step.module} is not defined in workcell",
+        )
 
 
 def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
@@ -32,7 +67,7 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
         if not (location.state == "Empty"):
             print(f"Can't run {run_id}.{step.name}, target is not empty")
             return False
-        if location.reserved:
+        if location.reserved and location.reserved != run_id:
             print(f"Can't run {run_id}.{step.name}, target is reserved")
             return False
 
@@ -43,14 +78,14 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
                 f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
             )
             return False
-        if location.reserved:
+        if location.reserved and location.reserved != run_id:
             print(f"Can't run {run_id}.{step.name}, source is reserved")
             return False
     module_data = state_manager.get_module(step.module)
     if module_data.state != ModuleStatus.IDLE:
         print(f"Can't run {run_id}.{step.name}, module is not idle")
         return False
-    if module_data.reserved:
+    if module_data.reserved and module_data.reserved != run_id:
         print(f"Can't run {run_id}.{step.name}, module is reserved")
         return False
     return True
@@ -176,6 +211,10 @@ def create_run(
         if payload:
             inject_payload(payload, step)
         replace_positions(workcell, step)
+        valid, validation_string = validate_step(step)
+        print(validation_string)
+        if not valid:
+            raise ValueError(validation_string)
         steps.append(step)
 
     wf_run.steps = steps

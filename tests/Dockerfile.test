@@ -1,19 +1,10 @@
 FROM ghcr.io/ad-sdl/wei
 
-ARG USER_ID=9999
-ARG GROUP_ID=9999
-ARG CONTAINER_USER=app
-USER ${CONTAINER_USER}
-
 ######################################
 # App specific changes go here       #
 ######################################
 
-# Add python packages to path
-ENV PATH="$PATH:/home/${CONTAINER_USER}/.local/bin"
-
-RUN --mount=type=cache,target=/home/${CONTAINER_USER}/.cache,uid=${USER_ID},gid=${GROUP_ID} \
-    pip install -r $HOME/wei/requirements/dev.txt
+RUN --mount=type=cache,target=/root/.cache \
+    pip install -r /home/app/wei/requirements/dev.txt
 
 ######################################
-USER root

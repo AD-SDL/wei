@@ -6,6 +6,7 @@ from pathlib import Path
 import requests
 
 import wei
+from wei import ExperimentClient
 from wei.core.data_classes import WorkcellData
 
 
@@ -17,10 +18,13 @@ class TestWEI_Base(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.root_dir = Path(__file__).resolve().parent.parent
         self.workcell = WorkcellData.from_yaml(
-            self.root_dir / Path("workcell_defs/test_workcell.yaml")
+            self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
         self.server_host = self.workcell.config.server_host
         self.server_port = self.workcell.config.server_port
+        self.experiment = ExperimentClient(
+            self.server_host, self.server_port, "Test Experiment"
+        )
         self.url = f"http://{self.server_host}:{self.server_port}"
         self.redis_host = self.workcell.config.redis_host
 

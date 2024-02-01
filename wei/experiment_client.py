@@ -7,8 +7,9 @@ from warnings import warn
 
 import requests
 
-from wei.core.data_classes import WorkflowStatus
+from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.events import Events
+from wei.routers.workflow_runs import StartRunParams
 
 
 class ExperimentClient:
@@ -44,11 +45,15 @@ class ExperimentClient:
         self.url = f"http://{self.server_addr}:{self.server_port}"
 
         start_time = time.time()
+        waiting = False
         while time.time() - start_time < 60:
             try:
                 self.register_experiment(experiment_id, experiment_name)
                 break
             except requests.exceptions.ConnectionError:
+                if not waiting:
+                    waiting = True
+                    print("Waiting to connect to server...")
                 time.sleep(1)
 
         self.loops: list[str] = []
@@ -96,10 +101,42 @@ class ExperimentClient:
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
 
+    def validate_workflow(
+        self,
+        workflow_file: Path,
+        payload: Optional[Dict[str, Any]] = None,
+    ):
+        """
+        Submits a workflow file to the server to be validated
+        """
+        if payload is None:
+            payload = {}
+        assert workflow_file.exists(), f"{workflow_file} does not exist"
+        url = f"{self.url}/runs/validate"
+
+        with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
+            params = {
+                "experiment_id": self.experiment_id,
+                "payload": payload,
+            }
+            response = requests.post(
+                url,
+                params=params,  # type: ignore
+                json=payload,
+                files={
+                    "workflow": (
+                        str(workflow_file),
+                        workflow_file_handle,
+                        "application/x-yaml",
+                    ),
+                },
+            )
+        return response
+
     def start_run(
         self,
         workflow_file: Path,
-        payload: Optional[Dict[Any, Any]] = None,
+        payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
     ) -> Dict[Any, Any]:
@@ -124,36 +161,18 @@ class ExperimentClient:
         if payload is None:
             payload = {}
         assert workflow_file.exists(), f"{workflow_file} does not exist"
+        workflow = Workflow.from_yaml(workflow_file)
         url = f"{self.url}/runs/start"
 
-        payload_path = Path("~/.wei/temp/payload_input.txt")
-        payload_path.expanduser().parent.mkdir(parents=True, exist_ok=True)
-        with open(payload_path.expanduser(), "w+") as payload_file_handle:
-            json.dump(payload, payload_file_handle)
-
-        with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
-            with open(payload_path.expanduser(), "rb") as payload_file_handle:
-                params = {
-                    "experiment_id": self.experiment_id,
-                    "simulate": simulate,
-                }
-                response = requests.post(
-                    url,
-                    params=params,  # type: ignore
-                    json=payload,
-                    files={
-                        "workflow": (
-                            str(workflow_file),
-                            workflow_file_handle,
-                            "application/x-yaml",
-                        ),
-                        "payload": (
-                            str("payload_file.txt"),
-                            payload_file_handle,
-                            "text",
-                        ),
-                    },
-                )
+        response = requests.post(
+            url,
+            json=StartRunParams(
+                workflow=workflow,
+                experiment_id=self.experiment_id,
+                payload=payload,
+                simulate=simulate,
+            ).model_dump(mode="json"),
+        )
         response_dict = self._return_response(response)
         if blocking:
             prior_status = None

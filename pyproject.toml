@@ -1,7 +1,7 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.5.1"
-description = "The Rapid Prototyping Laboratory's Workcell Execution Interface."
+version = "0.5.2"
+description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
     {name = "Tobias Ginsburg", email = "tginsburg@anl.gov"},
@@ -28,12 +28,13 @@ dependencies = [
     'ulid-py>=1.1.0, <1.2',
     'uvicorn>=0.21, <0.22',
     "httpx<0.26,>0.25",
-    "diaspora_event_sdk>=0.0.18",
+    "diaspora_event_sdk>=0.1.1",
     "kafka-python"
 ]
 
 [project.optional-dependencies]
 dev = [
+
     "build",
     "mypy",
     "pre-commit",
@@ -158,7 +159,7 @@ line-ending = "auto"
 
 [tool.pytest.ini_options]
 # https://docs.pytest.org/en/stable/customize.html
-addopts = "-x"
+addopts = "-x --ignore-glob=**/test_module/*"
 junit_family="xunit1"
 filterwarnings = [
     "ignore::DeprecationWarning",

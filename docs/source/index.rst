@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the Workcell Execution Interface (WEI) Documentation!
+Welcome to the Workflow Execution Interface (WEI) Documentation!
 ================================================================
 
 .. toctree::

@@ -3,7 +3,13 @@
 
 from typing import Union
 
-from wei.core.data_classes import Module, ModuleStatus, WorkcellData, Workflow
+from wei.core.data_classes import (
+    Module,
+    ModuleAbout,
+    ModuleStatus,
+    WorkcellData,
+    Workflow,
+)
 from wei.core.interface import InterfaceMap
 from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
@@ -19,12 +25,16 @@ def initialize_workcell_modules() -> None:
         state_manager.set_module(module.name, module)
 
 
-def update_active_modules(initial: bool = False) -> None:
+def update_active_modules() -> None:
     """Update all active modules in the workcell."""
     for module_name, module in state_manager.get_all_modules().items():
         if module.active:
             state = query_module_status(module)
             if state != module.state:
+                if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
+                    module.about = get_module_about(
+                        module, require_schema_compliance=False
+                    )
                 module.state = state
                 with state_manager.state_lock():
                     state_manager.set_module(module_name, module)
@@ -71,7 +81,31 @@ def validate_module_names(workflow: Workflow, workcell: WorkcellData) -> None:
     [find_step_module(workcell, module.name) for module in workflow.modules]
 
 
-def update_module_reserve(module: Module, run_id: Union[str, None]) -> Module:
+def get_module_about(
+    module: Module, require_schema_compliance: bool = True
+) -> Union[ModuleAbout, None]:
+    """Gets a module's about information"""
+    module_name = module.name
+    if module.interface in InterfaceMap.interfaces:
+        try:
+            interface = InterfaceMap.interfaces[module.interface]
+            response = interface.get_about(module)
+            try:
+                about = ModuleAbout(**interface.get_about(module))
+            except Exception:
+                if require_schema_compliance:
+                    return None
+                about = response
+            return about
+        except Exception as e:
+            print(e)
+            print("Unable to get about information for Module " + str(module_name))
+    else:
+        print("Module Interface not supported for Module ", str(module_name))
+    return None
+
+
+def update_module_reservation(module: Module, run_id: Union[str, None]) -> Module:
     """Updates a module's reservation"""
     module.reserved = run_id
     return module
@@ -79,9 +113,9 @@ def update_module_reserve(module: Module, run_id: Union[str, None]) -> Module:
 
 def reserve_module(module: Module, run_id: str) -> None:
     """Reserves a module for a given run"""
-    state_manager.update_module(module.name, update_module_reserve, run_id)
+    state_manager.update_module(module.name, update_module_reservation, run_id)
 
 
 def clear_module_reservation(module: Module):
     """Clears a module's reservation"""
-    state_manager.update_module(module.name, update_module_reserve, None)
+    state_manager.update_module(module.name, update_module_reservation, None)

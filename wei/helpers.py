@@ -3,6 +3,34 @@ Imports are intentionally kept to a minimum and tightly scoped
 to avoid circular dependencies."""
 
 from argparse import Namespace
+from pathlib import Path
+from typing import Optional, Union
+
+
+def extract_version(pyproject_path: Optional[Union[Path, str]]) -> str:
+    """Returns either the version of the installed package or the one
+    found in the project's pyproject.toml, if provided"""
+    import importlib.metadata
+    from contextlib import suppress
+
+    if pyproject_path is not None:
+        with suppress(FileNotFoundError, StopIteration):
+            with open(
+                pyproject_path,
+                encoding="utf-8",
+            ) as pyproject_toml:
+                version = (
+                    next(line for line in pyproject_toml if line.startswith("version"))
+                    .split("=")[1]
+                    .strip("'\"\n ")
+                )
+                return f"{version}"
+    try:
+        return importlib.metadata.version(
+            __package__ or __name__.split(".", maxsplit=1)[0]
+        )
+    except Exception:
+        return "unknown"
 
 
 def string_to_bool(string: str) -> bool:

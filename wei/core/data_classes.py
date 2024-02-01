@@ -10,8 +10,15 @@ from typing import Any, ClassVar, Dict, List, Optional, Tuple, Type, TypeVar, Un
 import ulid
 import yaml
 from fastapi.responses import FileResponse
+from pydantic import (
+    AliasChoices,
+    Field,
+    computed_field,
+    field_serializer,
+    field_validator,
+    validator,
+)
 from pydantic import BaseModel as _BaseModel
-from pydantic import Field, computed_field, field_serializer, field_validator, validator
 
 from wei.core.experiment import Experiment
 
@@ -75,6 +82,49 @@ class ModuleStatus(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class ModuleActionArg(BaseModel):
+    """Defines an argument for a module action"""
+
+    name: str
+    """Name of the argument"""
+    type: Union[str, List[str]]
+    """Supported Type(s) of the argument"""
+    default: Optional[Any] = None
+    """Default value of the argument"""
+    required: Optional[bool] = True
+    """Whether or not the argument is required"""
+
+
+class ModuleAction(BaseModel):
+    """Defines an action that a module can perform"""
+
+    name: str
+    """Name of the action"""
+    args: List[ModuleActionArg]
+    """Arguments for the action"""
+
+
+class ModuleAbout(BaseModel):
+    """Defines how modules should reply on the /about endpoint"""
+
+    name: str
+    """Name of the module"""
+    model: Optional[str] = None
+    """Model of the module"""
+    interface: Optional[str] = None
+    """Interface used by the module"""
+    version: Optional[str] = None
+    """Version of the module"""
+    description: Optional[str] = None
+    """Description of the module"""
+    actions: List[ModuleAction]
+    """List of actions supported by the module"""
+    resource_pools: Optional[List[Any]] = Field(
+        alias=AliasChoices("resources", "resource_pools"), alias_priority=2
+    )
+    """List of resource pools used by the module"""
+
+
 class Module(BaseModel):
     """Container for a module found in a workcell file (more info than in a workflow file)"""
 
@@ -96,7 +146,11 @@ class Module(BaseModel):
     """Optional, associates named locations with a module"""
     tag: Optional[Tag] = None
     """Vision tag"""
-    workcell_coordinates: Optional[Any] = None
+    workcell_coordinates: Optional[Any] = Field(
+        alias=AliasChoices("location", "workcell_coordinates"),
+        alias_priority=2,
+        default=None,
+    )
     """location in workcell"""
     active: Optional[bool] = True
     """Whether or not the robot is active"""
@@ -108,11 +162,8 @@ class Module(BaseModel):
     """Current state of the module"""
     reserved: Optional[str] = None
     """ID of WorkflowRun that will run next on this Module"""
-
-    @property
-    def location(self) -> Any:
-        """Alias for workcell_coordinates"""
-        return self.workcell_coordinates
+    about: Optional[Any] = None
+    """About information for the module"""
 
     @validator("config")
     def validate_config(cls, v: Any, values: Dict[str, Any], **kwargs: Any) -> Any:
@@ -317,7 +368,7 @@ class WorkcellConfig(BaseModel, extra="allow"):
         description="Whether or not to reset locations when the Engine (re)starts",
     )
     update_interval: float = Field(
-        default=1.0, description="How often to update the workcell state"
+        default=5.0, description="How often to update the workcell state"
     )
     server_host: str = Field(
         default="0.0.0.0", description="Hostname for the WEI server"
