@@ -1,6 +1,6 @@
-=======
-Module
-=======
+========
+Modules
+========
 
 A WEI Module is a combination of software and (typically) a physical hardware device, which is capable of performing actions as part of a Workflow.
 
