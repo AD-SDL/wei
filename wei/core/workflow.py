@@ -82,11 +82,11 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
             print(f"Can't run {run_id}.{step.name}, source is reserved")
             return False
     module_data = state_manager.get_module(step.module)
-    if module_data.state != ModuleStatus.IDLE:
-        print(f"Can't run {run_id}.{step.name}, module is not idle")
+    if module_data.state not in [ModuleStatus.IDLE, ModuleStatus.READY]:
+        print(f"Can't run {run_id}.{step.name}, module is not currently accepting jobs")
         return False
     if module_data.reserved and module_data.reserved != run_id:
-        print(f"Can't run {run_id}.{step.name}, module is reserved")
+        print(f"Can't run {run_id}.{step.name}, module is reserved by another workflow")
         return False
     return True
 

@@ -77,6 +77,7 @@ class ModuleStatus(str, Enum):
 
     INIT = "INIT"
     IDLE = "IDLE"
+    READY = "READY"
     BUSY = "BUSY"
     ERROR = "ERROR"
     UNKNOWN = "UNKNOWN"
@@ -238,9 +239,9 @@ class StepResponse(BaseModel):
 
     action_response: StepStatus = StepStatus.SUCCEEDED
     """Whether the action succeeded, failed, is running, or is idle"""
-    action_msg: str = ""
+    action_msg: Optional[str] = ""
     """Any result from the action. If the result is a file, this should be the file name"""
-    action_log: str = ""
+    action_log: Optional[str] = ""
     """Error or log messages resulting from the action"""
 
     def to_headers(self) -> Dict[str, str]:
@@ -270,7 +271,12 @@ class StepFileResponse(FileResponse):
     - The StepResponse parameters as custom headers, prefixed with "x-wei-"
     """
 
-    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
+    def __init__(
+        self,
+        action_response: StepStatus,
+        path: PathLike,
+        action_log: Optional[str] = "",
+    ):
         """
         Returns a FileResponse with the given path as the response content
         """
