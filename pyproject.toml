@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.5.2"
+version = "0.5.3"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -68,8 +68,10 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 
-[tool.setuptools]
-packages = ["wei"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wei*"]
+exclude = ["*tests*"]
 
 #####################
 # Development Tools #
