@@ -97,6 +97,10 @@ class ExperimentClient:
                 "experiment_name": experiment_name,
             },
         )
+        if response.status_code >= 400:
+            raise Exception(
+                f"Failed to register experiment with error {response.status_code}: {response.text}"
+            )
         self.experiment_id = response.json()["experiment_id"]
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
