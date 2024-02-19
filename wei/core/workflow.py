@@ -40,18 +40,24 @@ def validate_step(step: Step) -> Tuple[bool, str]:
                 f"Module {step.module} didn't return proper about information, skipping validation",
             )
         for action in about.actions:
-            if step.action in action.name:
+            if step.action == action.name:
                 for action_arg in action.args:
                     if action_arg.name not in step.args and action_arg.required:
                         return (
                             False,
-                            f"Step '{step.name}': Module {step.module} action {step.action} missing arg {action_arg.name}",
+                            f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing arg '{action_arg.name}'",
                         )
                     # TODO: Action arg type validation goes here
+                for action_file in action.files:
+                    if action_file.name not in step.files and action_file.required:
+                        return (
+                            False,
+                            f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing file '{action_file.name}'",
+                        )
                 return True, f"Step {step.name}: Validated successfully"
         return (
             False,
-            f"Step '{step.name}': Module {step.module} has no action {step.action}",
+            f"Step '{step.name}': Module {step.module} has no action '{step.action}'",
         )
     else:
         return (

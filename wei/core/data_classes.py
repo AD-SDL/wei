@@ -95,6 +95,15 @@ class ModuleActionArg(BaseModel):
     """Whether or not the argument is required"""
 
 
+class ModuleActionFile(BaseModel):
+    """Defines a file for a module action"""
+
+    name: str
+    """Name of the file"""
+    required: bool = True
+    """Whether or not the file is required"""
+
+
 class ModuleAction(BaseModel):
     """Defines an action that a module can perform"""
 
@@ -102,6 +111,8 @@ class ModuleAction(BaseModel):
     """Name of the action"""
     args: List[ModuleActionArg]
     """Arguments for the action"""
+    files: Optional[List[ModuleActionFile]] = []
+    """Files to be sent along with the action"""
 
 
 class ModuleAbout(BaseModel):
@@ -295,6 +306,8 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """The command type to get executed by the robot"""
     args: Dict[str, Any] = {}
     """Arguments for instruction"""
+    files: Dict[str, PathLike] = {}
+    """Files to be used in the step"""
     checks: Optional[str] = None
     """For future use"""
     locations: Dict[str, Any] = {}

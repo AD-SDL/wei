@@ -61,7 +61,9 @@ class RestInterface(Interface):
         rest_response = requests.post(
             url,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
-            files=step.files if step.files else None,
+            files={file.name: open(file.path, "rb") for file in step.files}
+            if step.files
+            else None,
         )
         try:
             print(rest_response.status_code)
