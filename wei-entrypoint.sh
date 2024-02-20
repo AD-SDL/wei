@@ -18,6 +18,7 @@ if [ "$USER_ID" -ne 0 ] && [ "$USER_ID" -ne 9999 ]; then
 fi
 
 
+chown $USER_ID:$GROUP_ID /home/app
 chown $USER_ID:$GROUP_ID /home/app/.wei
 chown $USER_ID:$GROUP_ID /home/app/.diaspora
 
