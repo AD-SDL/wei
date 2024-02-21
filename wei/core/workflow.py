@@ -1,7 +1,9 @@
 """The module that initializes and runs the step by step WEI workflow"""
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+from fastapi import UploadFile
 
 from wei.config import Config
 from wei.core.data_classes import (
@@ -252,3 +254,21 @@ def inject_payload(payload: Dict[str, Any], step: Step) -> None:
                 idx = arg_values.index(key)
                 step_arg_key = arg_keys[idx]
                 step.args[step_arg_key] = value
+
+
+def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> WorkflowRun:
+    """Saves the files to the workflow run directory,
+    and updates the step files to point to the new location"""
+    if files:
+        print("HERE")
+        for file in files:
+            print(file)
+            file_path = wf_run.run_dir / file.filename
+            with open(file_path, "wb") as f:
+                f.write(file.file.read())
+            for step in wf_run.steps:
+                for step_file in step.files:
+                    step.files[step_file] = str(file_path)
+                    print(file_path)
+    print("THERE")
+    return wf_run

@@ -115,24 +115,6 @@ class Events:
 
         self.loops: list[str] = []
 
-    def _return_response(self, response: requests.Response) -> Dict[Any, Any]:
-        """processes the response of a Post request
-
-        Parameters
-        ----------
-        response : requests.Response
-            A response from an http Post request
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the request"""
-        if response.status_code != 200:
-            print(response.status_code, response.content)
-            return {"http_error": response.status_code, "content": response.content}
-
-        return dict(response.json())
-
     def _log_event(
         self, event_type: str, event_name: str, event_info: Optional[Any] = ""
     ) -> Dict[Any, Any]:
@@ -157,13 +139,14 @@ class Events:
                 "event_info": event_info,
             }
         )
-        response = self._return_response(
-            requests.post(
-                url,
-                json=event.model_dump(mode="json"),
-            )
+        response = requests.post(
+            url,
+            json=event.model_dump(mode="json"),
         )
-        return response
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
 
     def start_experiment(self) -> Dict[Any, Any]:
         """logs the start of a given experiment
