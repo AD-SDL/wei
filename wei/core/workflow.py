@@ -260,7 +260,6 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
     """Saves the files to the workflow run directory,
     and updates the step files to point to the new location"""
     if files:
-        print("HERE")
         for file in files:
             print(file)
             file_path = wf_run.run_dir / file.filename
@@ -270,5 +269,4 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
                 for step_file in step.files:
                     step.files[step_file] = str(file_path)
                     print(file_path)
-    print("THERE")
     return wf_run
