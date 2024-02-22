@@ -93,6 +93,8 @@ class ModuleActionArg(BaseModel):
     """Default value of the argument"""
     required: Optional[bool] = True
     """Whether or not the argument is required"""
+    description: str = ""
+    """Description of the argument"""
 
 
 class ModuleActionFile(BaseModel):
@@ -102,6 +104,8 @@ class ModuleActionFile(BaseModel):
     """Name of the file"""
     required: bool = True
     """Whether or not the file is required"""
+    description: str = ""
+    """Description of the file"""
 
 
 class ModuleAction(BaseModel):

@@ -154,6 +154,8 @@ def do_action(action_handle: str, action_vars: str, files: List[UploadFile] = []
     action_vars : str
         Any arguments necessary to run that action.
         This should be a JSON object encoded as a string.
+    files: List[UploadFile] = []
+        Any files necessary to run the action defined by action_handle.
 
     Returns
     -------
