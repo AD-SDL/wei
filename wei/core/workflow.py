@@ -70,25 +70,25 @@ def validate_step(step: Step) -> Tuple[bool, str]:
 
 def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     """Check if a step is able to be run by the workcell."""
-    if "target" in step.locations:
-        location = state_manager.get_location(step.locations["target"])
-        if not (location.state == "Empty"):
-            print(f"Can't run {run_id}.{step.name}, target is not empty")
-            return False
-        if location.reserved and location.reserved != run_id:
-            print(f"Can't run {run_id}.{step.name}, target is reserved")
-            return False
-
-    if "source" in step.locations:
-        location = state_manager.get_location(step.locations["source"])
-        if not (location.state == str(experiment_id)):
-            print(
-                f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
-            )
-            return False
-        if location.reserved and location.reserved != run_id:
-            print(f"Can't run {run_id}.{step.name}, source is reserved")
-            return False
+    if Config.verify_locations_before_transfer:
+        if "target" in step.locations:
+            location = state_manager.get_location(step.locations["target"])
+            if not (location.state == "Empty"):
+                print(f"Can't run {run_id}.{step.name}, target is not empty")
+                return False
+            if location.reserved and location.reserved != run_id:
+                print(f"Can't run {run_id}.{step.name}, target is reserved")
+                return False
+        if "source" in step.locations:
+            location = state_manager.get_location(step.locations["source"])
+            if not (location.state == str(experiment_id)):
+                print(
+                    f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
+                )
+                return False
+            if location.reserved and location.reserved != run_id:
+                print(f"Can't run {run_id}.{step.name}, source is reserved")
+                return False
     module_data = state_manager.get_module(step.module)
     if module_data.state != ModuleStatus.IDLE:
         print(f"Can't run {run_id}.{step.name}, module is not idle")

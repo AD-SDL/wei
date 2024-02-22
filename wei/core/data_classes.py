@@ -370,11 +370,19 @@ class Metadata(BaseModel):
 class WorkcellConfig(BaseModel, extra="allow"):
     """Defines the format for a workcell config
     Note: the extra='allow' parameter allows for
-    extra fields to be added to the config
+    extra fields to be added to the config, beyond what's defined below
     """
 
     use_diaspora: bool = Field(
         default=False, description="Whether or not to use diaspora"
+    )
+    verify_locations_before_transfer: bool = Field(
+        default=False,
+        description="Whether or not to verify locations are empty before transfer",
+    )
+    sequential_scheduler: bool = Field(
+        default=True,
+        description="Whether or not to schedule workflows sequentially or concurrently",
     )
     reset_locations: bool = Field(
         default=True,
@@ -424,6 +432,8 @@ class WorkflowStatus(str, Enum):
     NEW = "new"
     QUEUED = "queued"
     RUNNING = "running"
+    WAITING = "waiting"
+    PAUSED = "paused"
     COMPLETED = "completed"
     FAILED = "failed"
     UNKNOWN = "unknown"

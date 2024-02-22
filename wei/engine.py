@@ -6,7 +6,7 @@ import time
 
 from wei.config import Config
 from wei.core.module import update_active_modules
-from wei.core.scheduler import Scheduler
+from wei.core.scheduler import Scheduler, SequentialScheduler
 from wei.core.state_manager import StateManager
 from wei.helpers import initialize_state, parse_args
 
@@ -21,7 +21,10 @@ class Engine:
         """Initialize the scheduler."""
         self.state_manager = StateManager()
         self.state_manager.clear_state(reset_locations=Config.reset_locations)
-        self.scheduler = Scheduler()
+        if Config.sequential_scheduler:
+            self.scheduler = SequentialScheduler()
+        else:
+            self.scheduler = Scheduler()
         with self.state_manager.state_lock():
             initialize_state()
         print("Engine initialized, waiting for workflows...")
