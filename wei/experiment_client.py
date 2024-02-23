@@ -64,8 +64,6 @@ class ExperimentClient:
                     print("Waiting to connect to server...")
                 time.sleep(1)
 
-        self.loops: list[str] = []
-
         self.events = Events(
             self.server_addr,
             self.server_port,
