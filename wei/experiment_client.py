@@ -2,14 +2,13 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from warnings import warn
 
 import requests
 
 from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.events import Events
-from wei.routers.workflow_runs import StartRunParams
 
 
 class ExperimentClient:
@@ -21,6 +20,7 @@ class ExperimentClient:
         server_port: str,
         experiment_name: Optional[str] = None,
         experiment_id: Optional[str] = None,
+        working_dir: Optional[Union[str, Path]] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
 
@@ -38,11 +38,19 @@ class ExperimentClient:
         experiment_id: Optional[str]
             Programmatically generated experiment id, can be reused if needed
 
+        working_dir: Optional[Union[str, Path]]
+            The directory to resolve relative paths from. Defaults to the current working directory.
+
         """
 
         self.server_addr = server_addr
         self.server_port = server_port
         self.url = f"http://{self.server_addr}:{self.server_port}"
+
+        if working_dir is None:
+            self.working_dir = Path.cwd()
+        else:
+            self.working_dir = Path(working_dir)
 
         start_time = time.time()
         waiting = False
@@ -56,8 +64,6 @@ class ExperimentClient:
                     print("Waiting to connect to server...")
                 time.sleep(1)
 
-        self.loops: list[str] = []
-
         self.events = Events(
             self.server_addr,
             self.server_port,
@@ -65,12 +71,6 @@ class ExperimentClient:
         )
 
         self.events.start_experiment()
-
-    def _return_response(self, response: requests.Response) -> Dict[Any, Any]:
-        if response.status_code != 200:
-            return {"http_error": response.status_code}
-
-        return dict(response.json())
 
     def register_experiment(self, experiment_id, experiment_name) -> None:
         """Gets an existing experiment from the server,
@@ -137,6 +137,33 @@ class ExperimentClient:
             )
         return response
 
+    def get_files_from_workflow(
+        self, workflow: Workflow, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Returns a dictionary of files from a workflow
+        """
+        files = {}
+        for step in workflow.flowdef:
+            if step.files:
+                for file, path in step.files.items():
+                    # * Try to get the file from the payload, if applicable
+                    if str(path).startswith("payload."):
+                        try:
+                            try:
+                                files[file] = payload[str(path).split(".")[1]]
+                            except KeyError:
+                                files[file] = payload[path]
+                        except KeyError as e:
+                            raise KeyError(
+                                f"File '{file}' looks like a payload entry, but payload does not contain {path}"
+                            ) from e
+                    else:
+                        files[file] = path
+                    if not Path(files[file]).is_absolute():
+                        files[file] = self.working_dir / files[file]
+        return files
+
     def start_run(
         self,
         workflow_file: Path,
@@ -167,22 +194,30 @@ class ExperimentClient:
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         workflow = Workflow.from_yaml(workflow_file)
         url = f"{self.url}/runs/start"
-
+        files = self.get_files_from_workflow(workflow, payload)
         response = requests.post(
             url,
-            json=StartRunParams(
-                workflow=workflow,
-                experiment_id=self.experiment_id,
-                payload=payload,
-                simulate=simulate,
-            ).model_dump(mode="json"),
+            data={
+                "workflow": workflow.model_dump_json(),
+                "experiment_id": self.experiment_id,
+                "payload": json.dumps(payload),
+                "simulate": simulate,
+            },
+            files={
+                ("files", (str(file), open(path, "rb"))) for file, path in files.items()
+            },
         )
-        response_dict = self._return_response(response)
+        if not response.ok:
+            print(f"{response.status_code}: {response.reason}")
+            print(response.text)
+            print(response.request)
+            response.raise_for_status()
+        response_json = response.json()
         if blocking:
             prior_status = None
             prior_index = None
             while True:
-                run_info = self.query_run(response_dict["run_id"])
+                run_info = self.query_run(response_json["run_id"])
                 status = run_info["status"]
                 step_index = run_info["step_index"]
                 if prior_status != status or prior_index != step_index:
@@ -210,7 +245,7 @@ class ExperimentClient:
                 prior_index = step_index
             return run_info
         else:
-            run_info = self.query_run(response_dict["run_id"])
+            run_info = self.query_run(response_json["run_id"])
             return run_info
 
     def await_runs(self, run_list: List[str]) -> Dict[Any, Any]:
@@ -257,7 +292,10 @@ class ExperimentClient:
         url = f"{self.url}/runs/{run_id}/state"
         response = requests.get(url)
 
-        return self._return_response(response)
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
 
     def get_run_log(self, run_id: str) -> Dict[Any, Any]:
         """Returns the log for this experiment as a string
@@ -276,7 +314,10 @@ class ExperimentClient:
         url = f"{self.url}/runs/" + run_id + "/log"
         response = requests.get(url)
 
-        return self._return_response(response)
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
 
     def query_queue(self) -> Dict[Any, Any]:
         """Returns the queue info for this experiment as a string
@@ -294,10 +335,10 @@ class ExperimentClient:
         url = f"{self.url}/queue/info"
         response = requests.get(url)
 
-        if response.status_code != 200:
-            return {"http_error": response.status_code}
-
-        return self._return_response(response)
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
 
     def register_exp(self) -> Dict[Any, Any]:
         """Deprecated method for registering an experiment with the server

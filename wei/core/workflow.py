@@ -1,7 +1,9 @@
 """The module that initializes and runs the step by step WEI workflow"""
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+from fastapi import UploadFile
 
 from wei.config import Config
 from wei.core.data_classes import (
@@ -40,18 +42,24 @@ def validate_step(step: Step) -> Tuple[bool, str]:
                 f"Module {step.module} didn't return proper about information, skipping validation",
             )
         for action in about.actions:
-            if step.action in action.name:
+            if step.action == action.name:
                 for action_arg in action.args:
                     if action_arg.name not in step.args and action_arg.required:
                         return (
                             False,
-                            f"Step '{step.name}': Module {step.module} action {step.action} missing arg {action_arg.name}",
+                            f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing arg '{action_arg.name}'",
                         )
                     # TODO: Action arg type validation goes here
+                for action_file in action.files:
+                    if action_file.name not in step.files and action_file.required:
+                        return (
+                            False,
+                            f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing file '{action_file.name}'",
+                        )
                 return True, f"Step {step.name}: Validated successfully"
         return (
             False,
-            f"Step '{step.name}': Module {step.module} has no action {step.action}",
+            f"Step '{step.name}': Module {step.module} has no action '{step.action}'",
         )
     else:
         return (
@@ -62,25 +70,25 @@ def validate_step(step: Step) -> Tuple[bool, str]:
 
 def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     """Check if a step is able to be run by the workcell."""
-    if "target" in step.locations:
-        location = state_manager.get_location(step.locations["target"])
-        if not (location.state == "Empty"):
-            print(f"Can't run {run_id}.{step.name}, target is not empty")
-            return False
-        if location.reserved and location.reserved != run_id:
-            print(f"Can't run {run_id}.{step.name}, target is reserved")
-            return False
-
-    if "source" in step.locations:
-        location = state_manager.get_location(step.locations["source"])
-        if not (location.state == str(experiment_id)):
-            print(
-                f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
-            )
-            return False
-        if location.reserved and location.reserved != run_id:
-            print(f"Can't run {run_id}.{step.name}, source is reserved")
-            return False
+    if Config.verify_locations_before_transfer:
+        if "target" in step.locations:
+            location = state_manager.get_location(step.locations["target"])
+            if not (location.state == "Empty"):
+                print(f"Can't run {run_id}.{step.name}, target is not empty")
+                return False
+            if location.reserved and location.reserved != run_id:
+                print(f"Can't run {run_id}.{step.name}, target is reserved")
+                return False
+        if "source" in step.locations:
+            location = state_manager.get_location(step.locations["source"])
+            if not (location.state == str(experiment_id)):
+                print(
+                    f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
+                )
+                return False
+            if location.reserved and location.reserved != run_id:
+                print(f"Can't run {run_id}.{step.name}, source is reserved")
+                return False
     module_data = state_manager.get_module(step.module)
     if module_data.state != ModuleStatus.IDLE:
         print(f"Can't run {run_id}.{step.name}, module is not idle")
@@ -246,3 +254,19 @@ def inject_payload(payload: Dict[str, Any], step: Step) -> None:
                 idx = arg_values.index(key)
                 step_arg_key = arg_keys[idx]
                 step.args[step_arg_key] = value
+
+
+def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> WorkflowRun:
+    """Saves the files to the workflow run directory,
+    and updates the step files to point to the new location"""
+    if files:
+        for file in files:
+            print(file)
+            file_path = wf_run.run_dir / file.filename
+            with open(file_path, "wb") as f:
+                f.write(file.file.read())
+            for step in wf_run.steps:
+                for step_file in step.files:
+                    step.files[step_file] = str(file_path)
+                    print(file_path)
+    return wf_run

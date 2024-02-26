@@ -30,7 +30,7 @@ IMAGE_TEST := $(IMAGE)_test
 APP_NAME := test_app
 # This is where the data from the workcell will be stored
 # If these directories don't exist, they will be created
-WEI_DATA_DIR := $(PROJECT_DIR)/.wei
+WEI_DATA_DIR := ~/.wei
 REDIS_DIR := $(WEI_DATA_DIR)/redis
 # Whether or not to send events to Diaspora (set to true to turn on)
 USE_DIASPORA := false

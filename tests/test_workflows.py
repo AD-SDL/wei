@@ -1,6 +1,8 @@
 """Tests WEI workflow functionality"""
 
 
+from wei.core.data_classes import WorkflowStatus
+
 from .test_base import TestWEI_Base
 
 
@@ -13,11 +15,11 @@ class TestWEI_Workflows(TestWEI_Base):
 
         workflow_path = Path(__file__).parent / "workflows" / "test_workflow.yaml"
 
-        print(
-            self.experiment.start_run(
-                workflow_file=workflow_path,
-                payload={"wait_time": 5},
-                blocking=True,
-                simulate=False,
-            )
+        run_info = self.experiment.start_run(
+            workflow_file=workflow_path,
+            payload={"wait_time": 5},
+            blocking=True,
+            simulate=False,
         )
+
+        assert run_info["status"] == WorkflowStatus.COMPLETED
