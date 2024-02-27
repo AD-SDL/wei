@@ -12,6 +12,7 @@ For more details and specific examples of how to use wei, please see our [docume
 - [wei](#wei)
   - [Table of Contents](#table-of-contents)
   - [Usage](#usage)
+  - [Installation](#installation)
   - [Development](#development)
   - [Contributing](#contributing)
   - [Acknowledgments](#acknowledgments)
@@ -24,21 +25,29 @@ To get started with WEI, we recommend:
 - Using the [WEI Template Workcell](https://github.com/AD-SDL/wei_template_workcell) as a starting point to learn how to use WEI, and how to create your own Workcell.
 - Consulting the [Documentation](https://rpl-wei.readthedocs.io/en/latest/index.html)
 
+## Installation
+
+To install the `ad_sdl.wei` python package, you can run `pip install ad_sdl.wei`
+
+To install from source, run
+
+```
+git clone https://github.com/ad-sdl/wei.git
+cd wei
+pip install -e .
+```
+
 ## Development
 
 1. [Install Docker](https://docs.docker.com/engine/install/) for your platform of choice
 2. For managing the Python Package, [install PDM](https://pdm-project.org/latest/#installation)
 3. For automatic development checks/linting/formatting, [install pre-commit](https://pre-commit.com/)
-4. Clone the repository.
-5. Within the cloned repository, run the following:
+4. Ensure you have `GNU make` installed (on apt-based systems like Debian and Ubuntu, `sudo apt install make`)
+5. Clone the repository.
+6. Within the cloned repository, run `make build` to build the python package and docker image locally.
 
-We use `GNU make` to automate many common build tasks, such as initializing, building, starting, and publishing the repository, docker containers, and python packages.
+For a complete list of make commands available, run `make help`.
 
-Common commands include `init`, `init-python`, `build`, `build-python`, `start`, `stop`, and `exec`.
-
-For a complete list of commands, run `make help`, or explore `Makefile` and the `make` directory.
-
-To change the configuration of the WEI project, edit `make/config.mk` or overwrite variables at runtime with `make <target> VARIABLE=<override>`.
 
 ### Using PDM
 

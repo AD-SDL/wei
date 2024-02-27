@@ -40,7 +40,9 @@ flowdef:
     args:
       foo: 2.0
       bar: 0.5
-    comment: Combines foo and bar to produce foobar
+    files:
+      protocol: ./protocols/foobar_protocol.py
+    comment: Combines foo and bar to produce foobar, using foobar_protocol.yaml
 
   - name: Transfer sample to measure
     module: transfer

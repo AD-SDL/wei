@@ -1,33 +1,32 @@
 """
 Router for the "runs" endpoints
 """
-from typing import Any, Dict, Optional
+import json
+from typing import Annotated, Any, Dict, Optional
 
 import yaml
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import BaseModel, Workflow, WorkflowStatus
+from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.loggers import WEI_Logger
 from wei.core.state_manager import StateManager
-from wei.core.workflow import create_run
+from wei.core.workflow import create_run, save_workflow_files
 
 router = APIRouter()
 
 state_manager = StateManager()
 
 
-class StartRunParams(BaseModel):
-    """JSON Body definition for the /runs/start endpoint"""
-
-    experiment_id: str
-    workflow: Workflow
-    payload: Optional[Dict[str, Any]] = {}
-    simulate: Optional[bool] = False
-
-
 @router.post("/start")
-async def start_run(params: StartRunParams) -> JSONResponse:
+async def start_run(
+    request: Request,
+    experiment_id: Annotated[str, Form()],
+    workflow: Annotated[str, Form()],
+    payload: Annotated[Optional[str], Form()] = None,
+    simulate: Annotated[Optional[bool], Form()] = False,
+    files: list[UploadFile] = [],  # noqa B006
+) -> JSONResponse:
     """
     parses the payload and workflow files, and then pushes a workflow job onto the redis queue
 
@@ -47,14 +46,24 @@ async def start_run(params: StartRunParams) -> JSONResponse:
     response: Dict
     - a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    wf = params.workflow
-    logger = WEI_Logger.get_experiment_logger(params.experiment_id)
+    wf = Workflow.model_validate_json(workflow)
+
+    if payload is None:
+        payload = {}
+    else:
+        payload = json.loads(payload)
+        if not isinstance(payload, dict) or not all(
+            isinstance(k, str) for k in payload.keys()
+        ):
+            raise HTTPException(
+                status_code=400, detail="Payload must be a dictionary with string keys"
+            )
+    logger = WEI_Logger.get_experiment_logger(experiment_id)
     logger.info(f"Received job run request: {wf.name}")
     workcell = state_manager.get_workcell()
 
-    wf_run = create_run(
-        wf, workcell, params.experiment_id, params.payload, params.simulate
-    )
+    wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
+    wf_run = save_workflow_files(wf_run, files)
 
     with state_manager.state_lock():
         state_manager.set_workflow_run(wf_run)

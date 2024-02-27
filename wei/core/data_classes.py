@@ -93,6 +93,19 @@ class ModuleActionArg(BaseModel):
     """Default value of the argument"""
     required: Optional[bool] = True
     """Whether or not the argument is required"""
+    description: str = ""
+    """Description of the argument"""
+
+
+class ModuleActionFile(BaseModel):
+    """Defines a file for a module action"""
+
+    name: str
+    """Name of the file"""
+    required: bool = True
+    """Whether or not the file is required"""
+    description: str = ""
+    """Description of the file"""
 
 
 class ModuleAction(BaseModel):
@@ -102,6 +115,8 @@ class ModuleAction(BaseModel):
     """Name of the action"""
     args: List[ModuleActionArg]
     """Arguments for the action"""
+    files: Optional[List[ModuleActionFile]] = []
+    """Files to be sent along with the action"""
 
 
 class ModuleAbout(BaseModel):
@@ -295,6 +310,8 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """The command type to get executed by the robot"""
     args: Dict[str, Any] = {}
     """Arguments for instruction"""
+    files: Dict[str, PathLike] = {}
+    """Files to be used in the step"""
     checks: Optional[str] = None
     """For future use"""
     locations: Dict[str, Any] = {}
@@ -357,11 +374,19 @@ class Metadata(BaseModel):
 class WorkcellConfig(BaseModel, extra="allow"):
     """Defines the format for a workcell config
     Note: the extra='allow' parameter allows for
-    extra fields to be added to the config
+    extra fields to be added to the config, beyond what's defined below
     """
 
     use_diaspora: bool = Field(
         default=False, description="Whether or not to use diaspora"
+    )
+    verify_locations_before_transfer: bool = Field(
+        default=False,
+        description="Whether or not to verify locations are empty before transfer",
+    )
+    sequential_scheduler: bool = Field(
+        default=True,
+        description="Whether or not to schedule workflows sequentially or concurrently",
     )
     reset_locations: bool = Field(
         default=True,
@@ -411,6 +436,8 @@ class WorkflowStatus(str, Enum):
     NEW = "new"
     QUEUED = "queued"
     RUNNING = "running"
+    WAITING = "waiting"
+    PAUSED = "paused"
     COMPLETED = "completed"
     FAILED = "failed"
     UNKNOWN = "unknown"

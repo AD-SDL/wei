@@ -3,10 +3,11 @@ Engine Class and associated helpers and data
 """
 
 import time
+import traceback
 
 from wei.config import Config
 from wei.core.module import update_active_modules
-from wei.core.scheduler import Scheduler
+from wei.core.scheduler import Scheduler, SequentialScheduler
 from wei.core.state_manager import StateManager
 from wei.helpers import initialize_state, parse_args
 
@@ -21,7 +22,10 @@ class Engine:
         """Initialize the scheduler."""
         self.state_manager = StateManager()
         self.state_manager.clear_state(reset_locations=Config.reset_locations)
-        self.scheduler = Scheduler()
+        if Config.sequential_scheduler:
+            self.scheduler = SequentialScheduler()
+        else:
+            self.scheduler = Scheduler()
         with self.state_manager.state_lock():
             initialize_state()
         print("Engine initialized, waiting for workflows...")
@@ -34,12 +38,19 @@ class Engine:
         update_active_modules()
         tick = time.time()
         while True:
-            if time.time() - tick > Config.update_interval:
-                update_active_modules()
-                tick = time.time()
-            if self.state_manager.has_state_changed():
-                self.scheduler.run_iteration()
-                update_active_modules()
+            try:
+                if time.time() - tick > Config.update_interval:
+                    update_active_modules()
+                    tick = time.time()
+                if self.state_manager.has_state_changed():
+                    self.scheduler.run_iteration()
+                    update_active_modules()
+            except Exception:
+                traceback.print_exc()
+                print(
+                    f"Error in engine loop, waiting {Config.update_interval} seconds before trying again."
+                )
+                time.sleep(Config.update_interval)
 
 
 if __name__ == "__main__":

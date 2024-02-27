@@ -113,26 +113,6 @@ class Events:
         self.experiment_id = experiment_id
         self.url = f"http://{self.server_addr}:{self.server_port}"
 
-        self.loops: list[str] = []
-
-    def _return_response(self, response: requests.Response) -> Dict[Any, Any]:
-        """processes the response of a Post request
-
-        Parameters
-        ----------
-        response : requests.Response
-            A response from an http Post request
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the request"""
-        if response.status_code != 200:
-            print(response.status_code, response.content)
-            return {"http_error": response.status_code, "content": response.content}
-
-        return dict(response.json())
-
     def _log_event(
         self, event_type: str, event_name: str, event_info: Optional[Any] = ""
     ) -> Dict[Any, Any]:
@@ -157,13 +137,14 @@ class Events:
                 "event_info": event_info,
             }
         )
-        response = self._return_response(
-            requests.post(
-                url,
-                json=event.model_dump(mode="json"),
-            )
+        response = requests.post(
+            url,
+            json=event.model_dump(mode="json"),
         )
-        return response
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
 
     def start_experiment(self) -> Dict[Any, Any]:
         """logs the start of a given experiment
@@ -272,10 +253,9 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        self.loops.append(loop_name)
         return self._log_event("LOOP", "START", {"loop_name": loop_name})
 
-    def log_loop_end(self) -> Dict[Any, Any]:
+    def log_loop_end(self, loop_name: str) -> Dict[Any, Any]:
         """Pops the most recent loop from the loop stack and logs its completion
 
 
@@ -283,10 +263,11 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        loop_name = self.loops.pop()
         return self._log_event("LOOP", "END", {"loop_name": loop_name})
 
-    def log_loop_check(self, condition: Any, value: Any) -> Dict[Any, Any]:
+    def log_loop_check(
+        self, condition: Any, value: Any, loop_name: str
+    ) -> Dict[Any, Any]:
         """Peeks the most recent loop from the loop stack and logs its completion
 
 
@@ -302,7 +283,6 @@ class Events:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        loop_name = self.loops[-1]
         return self._log_event(
             "LOOP",
             "CHECK CONDITION",
