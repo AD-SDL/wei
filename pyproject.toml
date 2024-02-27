@@ -28,8 +28,7 @@ dependencies = [
     'ulid-py>=1.1.0, <1.2',
     'uvicorn>=0.21, <0.22',
     "httpx<0.26,>0.25",
-    "diaspora_event_sdk>=0.1.1",
-    "kafka-python"
+    "diaspora_event_sdk[kafka-python]>=0.1.2"
 ]
 
 [project.optional-dependencies]
