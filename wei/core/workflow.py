@@ -131,7 +131,7 @@ def run_step(
             action_msg="Exception occurred while running step",
             action_log=str(e),
         )
-        print(traceback.format_exc())
+        traceback.print_exc()
     else:
         logger.info(f"Finished running step with name: {step.name}")
 
