@@ -21,6 +21,7 @@ class ExperimentClient:
         experiment_name: Optional[str] = None,
         experiment_id: Optional[str] = None,
         working_dir: Optional[Union[str, Path]] = None,
+        output_dir: Optional[Union[str, Path]] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
 
@@ -51,9 +52,10 @@ class ExperimentClient:
             self.working_dir = Path.cwd()
         else:
             self.working_dir = Path(working_dir)
-
+        
         start_time = time.time()
         waiting = False
+        self.output_dir = output_dir
         while time.time() - start_time < 60:
             try:
                 self.register_experiment(experiment_id, experiment_name)
@@ -63,13 +65,11 @@ class ExperimentClient:
                     waiting = True
                     print("Waiting to connect to server...")
                 time.sleep(1)
-
         self.events = Events(
             self.server_addr,
             self.server_port,
             self.experiment_id,
         )
-
         self.events.start_experiment()
 
     def register_experiment(self, experiment_id, experiment_name) -> None:
@@ -104,6 +104,8 @@ class ExperimentClient:
         self.experiment_id = response.json()["experiment_id"]
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
+        if self.output_dir is None:
+            self.output_dir = str(self.working_dir) +  "/experiment_results/" + str(self.experiment_name) + "_id_" + self.experiment_id
 
     def validate_workflow(
         self,
@@ -265,7 +267,9 @@ class ExperimentClient:
             time.sleep(1)
         return results
 
-    def get_file(self, input_filepath: str, output_filepath: str) -> None:
+    def get_file(self, input_filepath: str, 
+                 output_filepath: str = "./experiment_results/"
+                 ) -> None:
         """Returns a file from the WEI experiment directory"""
         url = f"{self.url}/experiments/{self.experiment_id}/file"
 
@@ -273,7 +277,27 @@ class ExperimentClient:
         Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
         with open(output_filepath, "wb") as f:
             f.write(response.content)
+    def get_step_result_file(self, 
+                run_info: Any,
+                step_name: str,         
+                 output_filepath: str = "",
+                 filename: str = ""
+                 ) -> None:
+        """Returns a file from the WEI experiment directory"""
+        url = f"{self.url}/experiments/{self.experiment_id}/file"
+        input_filepath = run_info["hist"][step_name]["action_msg"]
+        response = requests.get(url, params={"filepath": input_filepath})
+        if filename == "":
 
+            filename = Path(run_info["hist"][step_name]["action_msg"]).name
+        if output_filepath == "":
+            output_filepath = str(self.output_dir) + "/runs/" + str(run_info["name"]) + "/" + str(run_info["run_id"]) +"/" + str(filename)
+         
+        Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
+        with open(output_filepath, "wb") as f:
+            f.write(response.content)
+        return Path(output_filepath)
+    
     def query_run(self, run_id: str) -> Dict[Any, Any]:
         """Checks on a workflow run using the id given
 
