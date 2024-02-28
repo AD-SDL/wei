@@ -18,6 +18,19 @@ class Event(BaseModel):
     event_name: str
     event_info: Optional[Any] = None
 
+def initialize_diaspora(kafka_topic: str):
+    try:
+        from diaspora_event_sdk import Client, block_until_ready
+
+        assert block_until_ready()
+        print("Creating Diaspora topic: %s", kafka_topic)
+        c = Client()
+        c.register_topic(kafka_topic)
+    except Exception as e:
+        print(e)
+        print(
+            "Failed to connect to Diaspora or create topic. Have you registered it already?"
+        )
 
 class EventLogger:
     """Registers Events during the Experiment execution both in a logfile and on Kafka"""
@@ -42,13 +55,13 @@ class EventLogger:
 
         if Config.use_diaspora:
             try:
-                from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
+                from diaspora_event_sdk import KafkaProducer
 
-                assert block_until_ready()
-                self.kafka_producer = KafkaProducer()
-                print("Creating Diaspora topic: %s", self.kafka_topic)
-                c = Client()
-                c.register_topic(self.kafka_topic)
+                # assert block_until_ready()
+                self.kafka_producer = KafkaProducer(max_block_ms=10 * 1000)
+                # print("Creating Diaspora topic: %s", self.kafka_topic)
+                # c = Client()
+                # c.register_topic(self.kafka_topic)
             except Exception as e:
                 print(e)
                 print(
@@ -72,13 +85,16 @@ class EventLogger:
         """
         logger = WEI_Logger.get_experiment_logger(self.experiment_id)
         logger.info(log_value.model_dump_json())
-
+        print(self.kafka_producer)
         if self.kafka_producer:
             try:
+                print("Sending diaspora event")
                 future = self.kafka_producer.send(
                     self.kafka_topic, {"log_value": str(log_value)}
                 )
+                print("Sent diaspora event")
                 print(future.get(timeout=10))
+                print("future resolved")
             except Exception as e:
                 print(str(e))
 

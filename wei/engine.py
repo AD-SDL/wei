@@ -6,6 +6,7 @@ import time
 import traceback
 
 from wei.config import Config
+from wei.core.events import initialize_diaspora
 from wei.core.module import update_active_modules
 from wei.core.scheduler import Scheduler, SequentialScheduler
 from wei.core.state_manager import StateManager
@@ -55,5 +56,7 @@ class Engine:
 
 if __name__ == "__main__":
     parse_args()
+    if Config.use_diaspora:
+        initialize_diaspora("wei_diaspora")
     engine = Engine()
     engine.spin()
