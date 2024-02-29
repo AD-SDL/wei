@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e
 
-: "${USER_ID:?USER_ID is not set}" "${GROUP_ID:?GROUP_ID is not set}"
+if [ -z "${USER_ID}" ]; then
+    USER_ID=9999
+fi
+if [ -z "${GROUP_ID}" ]; then
+    GROUP_ID=9999
+fi
 
 if [ "$USER_ID" -ne 0 ] && [ "$USER_ID" -ne 9999 ]; then
     GROUP_LIST=$(groups app)
