@@ -53,15 +53,16 @@ def update_module(module_name: str, module: Module) -> None:
                 state_manager.set_module(module_name, module)
         if module.reserved:
             reserving_wf = state_manager.get_workflow_run(module.reserved)
-            if reserving_wf.steps[
-                reserving_wf.step_index
-            ].module != module.name or reserving_wf.status in [
+            if reserving_wf.status in [
                 WorkflowStatus.COMPLETED,
                 WorkflowStatus.FAILED,
-            ]:
+            ] or reserving_wf.steps[
+                reserving_wf.step_index
+            ].module != module.name:
                 # *The module is reserved by a workflow,
                 # *but that workflow isn't actually using the module,
                 # *so release the reservation, and allow the current workflow to proceed
+                print(f"Clearing reservation on module {module_name}")
                 with state_manager.state_lock():
                     clear_module_reservation(module)
     except Exception:

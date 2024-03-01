@@ -165,7 +165,8 @@ def run_step(
         update_source_and_target(wf_run)
         free_source_and_target(wf_run)
         clear_module_reservation(module)
-        wf_run.step_index += 1
+        if wf_run.step_index < len(wf_run.steps) - 1:
+            wf_run.step_index += 1
         state_manager.set_workflow_run(wf_run)
 
 
