@@ -39,12 +39,14 @@ class Engine:
         tick = time.time()
         while True:
             try:
-                if time.time() - tick > Config.update_interval:
+                if (
+                    time.time() - tick > Config.update_interval
+                    or self.state_manager.has_state_changed()
+                ):
                     update_active_modules()
-                    tick = time.time()
-                if self.state_manager.has_state_changed():
                     self.scheduler.run_iteration()
                     update_active_modules()
+                    tick = time.time()
             except Exception:
                 traceback.print_exc()
                 print(
