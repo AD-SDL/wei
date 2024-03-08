@@ -72,6 +72,20 @@ class Tag(BaseModel):
     """Id of the tag """
 
 
+class AdminCommands(str, Enum):
+    """Valid Admin Commands to send to a Module"""
+
+    ESTOP = "estop"
+    SAFETY_STOP = "safety_stop"
+    LOCK = "lock"
+    UNLOCK = "unlock"
+    RESET = "reset"
+    PAUSE = "pause"
+    RESUME = "resume"
+    CANCEL = "cancel"
+    SHUTDOWN = "shutdown"
+
+
 class ModuleStatus(str, Enum):
     """Status for the state of a Module"""
 
@@ -138,6 +152,8 @@ class ModuleAbout(BaseModel):
         alias=AliasChoices("resources", "resource_pools"), alias_priority=2
     )
     """List of resource pools used by the module"""
+    admin_commands: Optional[List[AdminCommands]]
+    """List of admin commands supported by the module"""
 
 
 class Module(BaseModel):
@@ -408,6 +424,9 @@ class WorkcellConfig(BaseModel, extra="allow"):
         description="Directory to store data produced by WEI",
     )
     log_level: int = Field(default=logging.INFO, description="Logging level for WEI")
+    cold_start_delay: int = Field(
+        default=2, description="Delay before starting the engine"
+    )
 
     # Validators
     @field_validator("data_directory")

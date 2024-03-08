@@ -1,4 +1,5 @@
 """A Class to represent a workcell object that contains the different WEI modules"""
+
 from pathlib import Path
 from typing import Optional
 

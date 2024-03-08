@@ -1,6 +1,7 @@
 """
 Router for the "workcells"/"wc" endpoints
 """
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
