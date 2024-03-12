@@ -78,7 +78,7 @@ services:
       - ${PROJECT_DIR}:/home/app/wei # for development only
     env_file:
       - .env
-    command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
+    command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
   wei_engine:
@@ -92,7 +92,7 @@ services:
      - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
     env_file:
       - .env
-    command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
+    command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
       - wei_server
