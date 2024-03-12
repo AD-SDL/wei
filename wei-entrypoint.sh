@@ -24,7 +24,7 @@ fi
 
 
 chown $USER_ID:$GROUP_ID /home/app
-chown $USER_ID:$GROUP_ID /home/app/.wei
+#chown $USER_ID:$GROUP_ID /home/app/.wei
 chown $USER_ID:$GROUP_ID /home/app/.diaspora
 
 if [ "$USER_ID" -eq 0 ] && [ "$GROUP_ID" -eq 0 ]; then

@@ -8,6 +8,9 @@ services:
     build:
       context: tests/
       dockerfile: ${DOCKERFILE_TEST}
+      tags:
+        - ${IMAGE_TEST}:latest
+        - ${IMAGE_TEST}:dev
     volumes:
       - ${WORKCELLS_DIR}:/workcell_defs
       - ${WEI_DATA_DIR}:/home/app/.wei
@@ -64,7 +67,6 @@ services:
       dockerfile: ${DOCKERFILE}
       tags:
         - ${IMAGE}:latest
-        - ${IMAGE}:${PROJECT_VERSION}
         - ${IMAGE}:dev
     container_name: wei_server
     ports:

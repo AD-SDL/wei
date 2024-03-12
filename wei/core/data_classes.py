@@ -152,7 +152,7 @@ class ModuleAbout(BaseModel):
         alias=AliasChoices("resources", "resource_pools"), alias_priority=2
     )
     """List of resource pools used by the module"""
-    admin_commands: Optional[List[AdminCommands]]
+    admin_commands: Optional[List[AdminCommands]] = []
     """List of admin commands supported by the module"""
 
 
