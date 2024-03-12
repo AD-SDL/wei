@@ -37,7 +37,7 @@ clean:
 	@rm .env
 
 build: build-python # Builds the project
-	@docker compose build
+	@docker compose --profile test build
 
 ################
 # Python Rules #
