@@ -297,6 +297,18 @@ class ExperimentClient:
         with open(output_filepath, "wb") as f:
             f.write(response.content)
         return Path(output_filepath)
+    def write_experiment_result(self, data: Any, filename: str, output_dir: str = ""):
+        if output_dir == "":
+            output_dir = self.output_dir
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output_filepath = output_dir + "/" + filename,
+        if isinstance(data, str):
+            with open(output_filepath, "w") as f:
+                f.write(data)
+        else:
+            with open(output_filepath, "wb") as f:
+                f.write(data)
+        return output_filepath
     
     def query_run(self, run_id: str) -> Dict[Any, Any]:
         """Checks on a workflow run using the id given
