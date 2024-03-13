@@ -51,7 +51,8 @@ class Scheduler:
                         print(
                             f"Starting step {wf_run.name}.{step.name} for run: {run_id}"
                         )
-                        wf_run.start_time = datetime.now()
+                        if wf_run.step_index == 0:
+                            wf_run.start_time = datetime.now()
                         wf_run.hist["run_dir"] = str(wf_run.run_dir)
                         state_manager.set_workflow_run(wf_run)
                         step_process = mpr.Process(
