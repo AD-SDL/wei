@@ -1,4 +1,4 @@
-WEI Core Concepts
+WEI How-To Guides
 =================
 
 .. toctree::

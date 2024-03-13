@@ -19,5 +19,6 @@ wei.core.module
       query_module_status
       reserve_module
       update_active_modules
+      update_module
       update_module_reservation
       validate_module_names

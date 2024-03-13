@@ -7,16 +7,16 @@ Welcome to the Workflow Execution Interface (WEI) Documentation!
 ================================================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents
 
    pages/introduction
-   pages/installation
-   pages/first_workflow
+   pages/quickstart
+   pages/deployment_guide
    pages/concepts/index
-   pages/api
-   pages/glossary
-
+   pages/how-to/index
+   pages/server_api
+   pages/python_module
 
 
 Indices and tables

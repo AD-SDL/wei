@@ -1,6 +1,7 @@
 """
 Router for the modules endpoints
 """
+
 from typing import Union
 
 from fastapi import APIRouter, HTTPException
