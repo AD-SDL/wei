@@ -2,6 +2,8 @@
 Experiments
 ===========
 
+TODO: Update
+
 An Experiment, in the context of WEI, is a set of related Workflow runs. Every time a Workflow is run, it is associated with an Experiment, and any data, files, or results that are generated are associated with that Experiment. This allows you to easily track and manage the results of your Workflow runs.
 
 The `wei` python package provides an ExperimentClient class to easily manage Experiments, submit Workflows to be run as part of an experiment, and get results from that experiment. While all this can be done using the `wei_server`'s REST API, the ExperimentClient provides a convenient wrapper.

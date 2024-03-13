@@ -1,5 +1,5 @@
-WEI How-To Guides
-=================
+How-To Guides
+=============
 
 .. toctree::
     :maxdepth: 1

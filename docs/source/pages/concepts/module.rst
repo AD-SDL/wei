@@ -2,6 +2,8 @@
 Modules
 ========
 
+TODO: Update
+
 A WEI Module is a combination of software and (typically) a physical hardware device, which is capable of performing actions as part of a Workflow.
 
 Modules are designed to be independent and composable, such that they can be combined to create Workcells. Modules are also designed to be reusable, such that they can be used in multiple different Workcells, and to control different instances of the same device in a single Workcell.

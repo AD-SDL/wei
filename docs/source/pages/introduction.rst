@@ -2,6 +2,8 @@
 Introduction to WEI
 ===================
 
+TODO: Update
+
 WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular environment in which a variety of hardware and software components implement common interfaces.
 This tool leverages REST APIs for inter-module communication and `Globus Compute <https://www.globus.org/compute>`_, a
 function-as-a-service platform, for distributed computation. It is particularly geared towards managing

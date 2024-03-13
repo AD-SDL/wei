@@ -2,6 +2,8 @@
 Workflows
 =========
 
+TODO: Update
+
 Workflows define a sequence of steps that can be executed in a Workcell to perform a specific task or set of tasks, typically as part of a larger experiment.
 
 Workflows consist of a list of Steps, each of which define a specific action to be performed, on a given Module, with a given set of arguments. When the workflow is submitted to WEI to be run on a specific Workcell, the steps are executed in sequence as determined by the Scheduler.

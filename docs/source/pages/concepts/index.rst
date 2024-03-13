@@ -1,5 +1,5 @@
-WEI Core Concepts
-=================
+Core Concepts
+=============
 
 .. toctree::
     :maxdepth: 1

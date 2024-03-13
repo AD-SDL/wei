@@ -12,11 +12,11 @@ Welcome to the Workflow Execution Interface (WEI) Documentation!
 
    pages/introduction
    pages/quickstart
-   pages/deployment_guide
    pages/concepts/index
    pages/how-to/index
+   pages/deployment_guide/index
    pages/server_api
-   pages/python_module
+   pages/python_package
 
 
 Indices and tables

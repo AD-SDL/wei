@@ -2,7 +2,7 @@
 Glossary
 ========
 
-TODO: Remove
+TODO: Remove, move into concepts
 
 Action
 ======
