@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.5.2"
+version = "0.5.4"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -28,8 +28,7 @@ dependencies = [
     'ulid-py>=1.1.0, <1.2',
     'uvicorn>=0.21, <0.22',
     "httpx<0.26,>0.25",
-    "diaspora_event_sdk>=0.1.1",
-    "kafka-python"
+    "diaspora_event_sdk[kafka-python]>=0.1.2"
 ]
 
 [project.optional-dependencies]
@@ -68,8 +67,10 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 
-[tool.setuptools]
-packages = ["wei"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wei*"]
+exclude = ["*tests*"]
 
 #####################
 # Development Tools #

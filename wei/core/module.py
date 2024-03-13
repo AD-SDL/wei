@@ -1,6 +1,8 @@
 """Provides methods and classes to work with modules"""
 
 
+import concurrent.futures
+import traceback
 from typing import Union
 
 from wei.core.data_classes import (
@@ -9,6 +11,7 @@ from wei.core.data_classes import (
     ModuleStatus,
     WorkcellData,
     Workflow,
+    WorkflowStatus,
 )
 from wei.core.interface import InterfaceMap
 from wei.core.state_manager import StateManager
@@ -27,17 +30,46 @@ def initialize_workcell_modules() -> None:
 
 def update_active_modules() -> None:
     """Update all active modules in the workcell."""
-    for module_name, module in state_manager.get_all_modules().items():
-        if module.active:
-            state = query_module_status(module)
-            if state != module.state:
-                if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
-                    module.about = get_module_about(
-                        module, require_schema_compliance=False
-                    )
-                module.state = state
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        module_futures = []
+        for module_name, module in state_manager.get_all_modules().items():
+            if module.active:
+                module_future = executor.submit(update_module, module_name, module)
+                module_futures.append(module_future)
+
+        # Wait for all module updates to complete
+        concurrent.futures.wait(module_futures)
+
+
+def update_module(module_name: str, module: Module) -> None:
+    """Update a single module's state and about information."""
+    try:
+        state = query_module_status(module)
+        if state != module.state:
+            if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
+                module.about = get_module_about(module, require_schema_compliance=False)
+            module.state = state
+            with state_manager.state_lock():
+                state_manager.set_module(module_name, module)
+        if module.reserved:
+            reserving_wf = state_manager.get_workflow_run(module.reserved)
+            if (
+                reserving_wf.status
+                in [
+                    WorkflowStatus.COMPLETED,
+                    WorkflowStatus.FAILED,
+                ]
+                or reserving_wf.steps[reserving_wf.step_index].module != module.name
+            ):
+                # *The module is reserved by a workflow,
+                # *but that workflow isn't actually using the module,
+                # *so release the reservation, and allow the current workflow to proceed
+                print(f"Clearing reservation on module {module_name}")
                 with state_manager.state_lock():
-                    state_manager.set_module(module_name, module)
+                    clear_module_reservation(module)
+    except Exception:
+        traceback.print_exc()
+        print(f"Unable to update module {module_name}")
 
 
 def query_module_status(module: Module) -> ModuleStatus:

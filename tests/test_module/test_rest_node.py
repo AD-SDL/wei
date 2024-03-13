@@ -2,18 +2,18 @@
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
 import json
-import random
-import time
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager
+from typing import List
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile
 from fastapi.responses import JSONResponse
 
 from wei.core.data_classes import (
     ModuleAbout,
     ModuleAction,
     ModuleActionArg,
+    ModuleActionFile,
     ModuleStatus,
     StepResponse,
     StepStatus,
@@ -99,6 +99,13 @@ async def about():
                         type="float",
                     ),
                 ],
+                files=[
+                    ModuleActionFile(
+                        name="protocol",
+                        required=True,
+                        description="Python Protocol File",
+                    )
+                ],
             ),
             ModuleAction(
                 name="measure",
@@ -136,10 +143,7 @@ async def resources():
 
 
 @app.post("/action")
-def do_action(
-    action_handle: str,
-    action_vars: str,
-):
+def do_action(action_handle: str, action_vars: str, files: List[UploadFile] = []):  # noqa: B006
     """
     Runs an action on the module
 
@@ -150,6 +154,8 @@ def do_action(
     action_vars : str
         Any arguments necessary to run that action.
         This should be a JSON object encoded as a string.
+    files: List[UploadFile] = []
+        Any files necessary to run the action defined by action_handle.
 
     Returns
     -------
@@ -169,10 +175,12 @@ def do_action(
             action_vars = json.loads(action_vars)
             foo = float(action_vars["foo"])
             bar = float(action_vars["bar"])
+            protocol = next(file for file in files if file.filename == "protocol")
+            protocol = protocol.file.read().decode("utf-8")
+            print(protocol)
 
             foobar = foo + bar
 
-            time.sleep(random.randint(1, 5))
             state = ModuleStatus.IDLE
             return StepResponse(
                 action_response=StepStatus.SUCCEEDED,
@@ -182,7 +190,6 @@ def do_action(
         elif action_handle == "measure":
             action_vars = json.loads(action_vars)
 
-            time.sleep(random.randint(1, 5))
             state = ModuleStatus.IDLE
             return StepResponse(
                 action_response=StepStatus.SUCCEEDED,
@@ -191,10 +198,8 @@ def do_action(
             )
         elif action_handle == "transfer":
             action_vars = json.loads(action_vars)
-            source = action_vars["source"]
+            source = action_vars.get("source", None)
             target = action_vars["target"]
-
-            time.sleep(random.randint(1, 5))
 
             state = ModuleStatus.IDLE
             return StepResponse(
