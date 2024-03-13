@@ -62,9 +62,9 @@ class RestInterface(Interface):
         rest_response = requests.post(
             url,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
-            files={
-                "files": (file, open(path, "rb")) for file, path in step.files.items()
-            },
+            files=[
+                ("files", (file, open(path, "rb"))) for file, path in step.files.items()
+            ],
         )
         try:
             print(rest_response.status_code)
