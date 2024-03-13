@@ -277,6 +277,24 @@ class ExperimentClient:
         Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
         with open(output_filepath, "wb") as f:
             f.write(response.content)
+    def get_wf_results_files(self, wf_id: str
+                 ) -> Any:
+        """Returns a file from the WEI experiment directory"""
+        url = f"{self.url}/runs/{wf_id}/results"
+
+        response = requests.get(url)
+        return response.json()["files"]
+    def get_wf_results_file(self, input_filepath: str, output_filepath: str, run_id: str
+                 ) -> Any:
+        """Returns a file from the WEI experiment directory"""
+        url = f"{self.url}/runs/{run_id}/file"
+
+        response = requests.get(url, params={"filepath": input_filepath})
+        
+        Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
+        with open(output_filepath, "wb") as f:
+            f.write(response.content)
+        return output_filepath
     def get_step_result_file(self, 
                 run_info: Any,
                 step_name: str,         
