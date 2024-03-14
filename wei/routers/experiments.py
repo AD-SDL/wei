@@ -1,17 +1,18 @@
 """
 Router for the "experiments"/"exp" endpoints
 """
-
 from typing import Dict, Optional
 
 from fastapi import APIRouter
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from wei.core.experiment import Experiment
+from wei.core.state_manager import StateManager
+import json
 
 router = APIRouter()
 
-
+state_manager = StateManager()
 @router.get("/{experiment_id}/log")
 async def log_return(experiment_id: str) -> str:
     """Returns the log for a given experiment"""
@@ -23,6 +24,14 @@ async def log_return(experiment_id: str) -> str:
     ) as f:
         return f.read()
 
+@router.get("/all")
+async def get_experiments() -> str:
+    """Returns the log for a given experiment"""
+    experiment_ids = set()
+    runs = state_manager.get_all_workflow_runs()
+    for wf in runs:
+        experiment_ids.add(runs[wf].experiment_id)
+    return JSONResponse(content={"experiment_ids": list(experiment_ids)})
 
 @router.get("/{experiment_id}/file")
 async def get_file(filepath: str) -> FileResponse:
