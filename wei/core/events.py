@@ -75,9 +75,7 @@ class EventLogger:
 
         if self.kafka_producer:
             try:
-                future = self.kafka_producer.send(
-                    self.kafka_topic, log_value.model_dump_json()
-                )
+                future = self.kafka_producer.send(self.kafka_topic, log_value)
                 print(future.get(timeout=10))
             except Exception as e:
                 print(str(e))
