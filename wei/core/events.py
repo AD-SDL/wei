@@ -48,7 +48,7 @@ class EventLogger:
                 self.kafka_producer = KafkaProducer()
                 print("Creating Diaspora topic: %s", self.kafka_topic)
                 c = Client()
-                c.register_topic(self.kafka_topic)
+                assert c.register_topic(self.kafka_topic)['status'] in ['success', 'no-op']
             except Exception as e:
                 print(e)
                 print(
