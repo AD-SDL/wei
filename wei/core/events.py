@@ -48,7 +48,10 @@ class EventLogger:
                 self.kafka_producer = KafkaProducer()
                 print("Creating Diaspora topic: %s", self.kafka_topic)
                 c = Client()
-                assert c.register_topic(self.kafka_topic)['status'] in ['success', 'no-op']
+                assert c.register_topic(self.kafka_topic)["status"] in [
+                    "success",
+                    "no-op",
+                ]
             except Exception as e:
                 print(e)
                 print(
@@ -75,7 +78,9 @@ class EventLogger:
 
         if self.kafka_producer:
             try:
-                future = self.kafka_producer.send(self.kafka_topic, log_value.model_dump(mode="json"))
+                future = self.kafka_producer.send(
+                    self.kafka_topic, log_value.model_dump(mode="json")
+                )
                 print(future.get(timeout=10))
             except Exception as e:
                 print(str(e))
