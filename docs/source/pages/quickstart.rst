@@ -2,7 +2,7 @@
 Quickstart Guide
 ================
 
-To get started using WEI in general, we recommend the following resources:
+To get started using WEI, we recommend the following resources:
 
 
 #. The `WEI Template Workcell <https://github.com/ad-sdl/wei_template_workcell>`_ provides a complete, working minimal example of a WEI workcell. It is designed to be easy to understand and modify. If you are new to WEI, we recommend starting here to understand how WEI works. This template workcell can also be used as a starting point for your own workcell.
@@ -25,6 +25,8 @@ To learn how to use an existing WEI-powered workcell, we recommend looking into:
 - The `WEI Template Workcell`_, for trying out these concepts using WEI on your own computer.
 - Any documentation specific to your target workcell, if available.
 
+.. _how-to-develop-workcell:
+
 How to develop a new WEI-powered Workcell
 -----------------------------------------
 
@@ -36,10 +38,10 @@ To learn how to develop a new WEI-powered workcell, we recommend looking into:
 - :doc:`deployment_guide/index`
 - The `WEI Template Workcell`_, for trying out these concepts using WEI on your own computer, and to use as a template to create your own workcell.
 
-How to develop a WEI-compatible module
---------------------------------------
+How to integrate a new Device/Instrument/Robot with WEI
+-------------------------------------------------------
 
-To learn how to develop a new WEI-compatible module, we recommend looking into:
+To learn how to develop a new WEI-compatible module to control a device, we recommend looking into:
 
 - :doc:`concepts/module` and :doc:`how-to/module` to understand how modules, the building blocks of a workcell, work, and how to write them.
 - :doc:`deployment_guide/index`

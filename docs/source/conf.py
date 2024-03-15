@@ -26,7 +26,7 @@ copyright = "2023, Argonne National Laboratory"
 author = str(meta["Author-email"])
 
 # The full version, including alpha/beta/rc tags
-release = "0.5.1"
+release = "0.5.4"
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,6 +39,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinxcontrib.autodoc_pydantic",
+    "sphinx.ext.graphviz",
 ]
 
 # Autosummary settings
