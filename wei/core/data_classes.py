@@ -417,7 +417,7 @@ class WorkcellConfig(BaseModel, extra="allow"):
         return Path(v)
 
 
-class WorkcellData(BaseModel):
+class Workcell(BaseModel):
     """Container for information in a workcell"""
 
     name: str

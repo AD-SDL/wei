@@ -4,7 +4,7 @@ from pathlib import Path
 
 import requests
 
-from wei.core.data_classes import Location, Module, WorkcellData
+from wei.core.data_classes import Location, Module, Workcell
 
 from .test_base import TestWEI_Base
 
@@ -17,7 +17,7 @@ class Test_Workcell_Base(TestWEI_Base):
         response = requests.post(f"{self.url}/wc/state/reset")
         assert response.status_code == 200
 
-        workcell = WorkcellData.from_yaml(
+        workcell = Workcell.from_yaml(
             self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
         response = requests.post(
@@ -25,14 +25,14 @@ class Test_Workcell_Base(TestWEI_Base):
         )
 
         assert response.status_code == 200
-        assert WorkcellData.model_validate(response.json())
+        assert Workcell.model_validate(response.json())
 
     def test_workcell_get_state(self):
         """Test that we can get the workcell state"""
         response = requests.post(f"{self.url}/wc/state/reset")
         assert response.status_code == 200
 
-        workcell = WorkcellData.from_yaml(
+        workcell = Workcell.from_yaml(
             self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
         requests.post(f"{self.url}/wc/", json=workcell.model_dump(mode="json"))
@@ -41,7 +41,7 @@ class Test_Workcell_Base(TestWEI_Base):
 
         assert response.status_code == 200
         assert isinstance(response.json().get("workcell"), dict)
-        assert WorkcellData.model_validate(response.json().get("workcell"))
+        assert Workcell.model_validate(response.json().get("workcell"))
         assert isinstance(response.json().get("locations"), dict)
         for location in response.json().get("locations").values():
             assert Location.model_validate(location)

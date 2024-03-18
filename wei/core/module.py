@@ -8,7 +8,7 @@ from wei.core.data_classes import (
     Module,
     ModuleAbout,
     ModuleStatus,
-    WorkcellData,
+    Workcell,
     Workflow,
     WorkflowStatus,
 )
@@ -96,7 +96,7 @@ def query_module_status(module: Module) -> ModuleStatus:
     return state
 
 
-def validate_module_names(workflow: Workflow, workcell: WorkcellData) -> None:
+def validate_module_names(workflow: Workflow, workcell: Workcell) -> None:
     """
     Validates that
         - the modules in the workflow.flowdef are also in the workflow.modules

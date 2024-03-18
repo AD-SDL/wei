@@ -9,7 +9,7 @@ import redis
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
 from wei.config import Config
-from wei.core.data_classes import Location, Module, WorkcellData, WorkflowRun
+from wei.core.data_classes import Location, Module, Workcell, WorkflowRun
 
 
 class StateManager:
@@ -113,13 +113,13 @@ class StateManager:
             return False
 
     # Workcell Methods
-    def get_workcell(self) -> WorkcellData:
+    def get_workcell(self) -> Workcell:
         """
         Returns the current workcell as a WorkcellData object
         """
-        return WorkcellData.model_validate(self._workcell.to_dict())
+        return Workcell.model_validate(self._workcell.to_dict())
 
-    def set_workcell(self, workcell: WorkcellData) -> None:
+    def set_workcell(self, workcell: Workcell) -> None:
         """
         Sets the active workcell
         """

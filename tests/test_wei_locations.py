@@ -7,7 +7,7 @@ import pytest
 import yaml
 from fastapi import UploadFile
 
-from wei.core.data_classes import WorkcellData
+from wei.core.data_classes import Workcell
 from wei.core.state_manager import StateManager
 
 # from wei.engine import Engine
@@ -26,7 +26,7 @@ class TestWEI_Locations(TestWEI_Base):
 
         state_manager = StateManager()
         state_manager.set_workcell(
-            WorkcellData.from_yaml("workcell_defs/test_workcell.yaml")
+            Workcell.from_yaml("workcell_defs/test_workcell.yaml")
         )
         workflow_config_path = Path("tests/test_workflow.yaml")
         workflow_def = yaml.safe_load(workflow_config_path.read_text())

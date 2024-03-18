@@ -1,4 +1,4 @@
-digraph sdl_architecture_example {
+strict digraph sdl_architecture_example {
     //Formatting
     fontname="Helvetica,Arial,sans-serif"
     node [fontname="Helvetica,Arial,sans-serif"]
@@ -16,6 +16,10 @@ digraph sdl_architecture_example {
 
     "Self Directed Lab" -> {WorkcellA WorkcellB "..."};
     WorkcellA -> {"Liquidhandling Module" "Robotic Arm Module" "...."};
+
+    "Liquidhandling Module" -> "Liquidhandling Robot"
+
+    "Robotic Arm Module" -> "Robotic Arm"
 
     label="Diagram of a Self Driving Lab with multiple workcells, each controlling a variety of modules";
     labelloc=bottom;

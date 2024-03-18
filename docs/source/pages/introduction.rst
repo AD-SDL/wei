@@ -30,6 +30,19 @@ Next Steps
 
 ----
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 TODO: Update
 
 WEI is a Python-based tool for automating and managing sequences of instrument and computation actions (**workflows**) in a modular environment in which a variety of hardware and software components implement common interfaces.
