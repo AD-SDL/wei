@@ -5,9 +5,9 @@ metadata:
   version: 0.2
 
 modules:
-  - name: transfer
-  - name: synthesis
-  - name: measure
+  - transfer
+  - synthesis
+  - measure
 
 flowdef:
   #This defines a step in the workflow. Each step represents an action on a single module

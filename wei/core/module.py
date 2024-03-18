@@ -105,11 +105,11 @@ def validate_module_names(workflow: Workflow, workcell: WorkcellData) -> None:
     """
     # Validate that each step's module is also in the Workflow at the top
     for step in workflow.flowdef:
-        if not any([step.module == module.name for module in workflow.modules]):
+        if not any([step.module == module_name for module_name in workflow.modules]):
             raise ValueError(f"Module {step.module} not in flow modules")
 
     # Validate that all the modules listed in the workflow are also in the workcell
-    [find_step_module(workcell, module.name) for module in workflow.modules]
+    [find_step_module(workcell, module_name) for module_name in workflow.modules]
 
 
 def get_module_about(

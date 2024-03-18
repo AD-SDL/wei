@@ -448,12 +448,20 @@ class Workflow(BaseModel):
 
     name: str
     """Name of the workflow"""
-    modules: List[SimpleModule]
+    modules: List[str | SimpleModule]
     """List of modules needed for the workflow"""
     flowdef: List[Step]
     """User Submitted Steps of the flow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
+
+    @field_validator("modules", mode="after")
+    def validate_modules(cls, v) -> str:
+        """Converts SimpleModule objects to strings"""
+        for i in range(len(v)):
+            if isinstance(v[i], SimpleModule):
+                v[i] = v[i].name
+        return v
 
 
 class WorkflowRun(Workflow):
