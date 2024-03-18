@@ -1,6 +1,5 @@
 """Provides methods and classes to work with modules"""
 
-
 import concurrent.futures
 import traceback
 from typing import Union

@@ -1,0 +1,23 @@
+digraph sdl_architecture_example {
+    //Formatting
+    fontname="Helvetica,Arial,sans-serif"
+    node [fontname="Helvetica,Arial,sans-serif"]
+    edge [fontname="Helvetica,Arial,sans-serif"]
+    graph [
+        rankdir = "LR"
+        pad = 0.1;
+    ];
+    node [
+        fontsize = "16"
+        shape = "box"
+    ];
+    edge [
+    ];
+
+    "Self Directed Lab" -> {WorkcellA WorkcellB "..."};
+    WorkcellA -> {"Liquidhandling Module" "Robotic Arm Module" "...."};
+
+    label="Diagram of a Self Driving Lab with multiple workcells, each controlling a variety of modules";
+    labelloc=bottom;
+    labeljust=center;
+}

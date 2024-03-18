@@ -1,4 +1,5 @@
 """The logging system that helps track events for the system"""
+
 import logging
 from pathlib import Path
 

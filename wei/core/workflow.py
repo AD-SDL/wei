@@ -1,4 +1,5 @@
 """The module that initializes and runs the step by step WEI workflow"""
+
 import traceback
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple

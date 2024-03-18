@@ -3,21 +3,21 @@
 
 .. automodule:: wei
 
+   
+   
+   
 
+   
+   
+   
 
+   
+   
+   
 
-
-
-
-
-
-
-
-
-
-
-
-
+   
+   
+   
 
 
 
@@ -34,3 +34,4 @@
    wei.helpers
    wei.routers
    wei.server
+

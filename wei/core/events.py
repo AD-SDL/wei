@@ -1,6 +1,5 @@
 """Contains the Events class for logging experiment steps"""
 
-
 from typing import Any, Dict, Optional
 
 import requests

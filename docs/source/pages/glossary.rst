@@ -2,6 +2,8 @@
 Glossary
 ========
 
+TODO: Remove, move into concepts
+
 Action
 ======
 
