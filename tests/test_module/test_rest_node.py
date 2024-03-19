@@ -1,6 +1,7 @@
 """
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
+
 import json
 from argparse import ArgumentParser
 from contextlib import asynccontextmanager

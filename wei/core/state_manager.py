@@ -2,7 +2,6 @@
 StateManager for WEI
 """
 
-
 import warnings
 from typing import Any, Callable, Dict, Union
 

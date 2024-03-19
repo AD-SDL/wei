@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+================================================================
 Welcome to the Workflow Execution Interface (WEI) Documentation!
 ================================================================
 
@@ -11,11 +12,12 @@ Welcome to the Workflow Execution Interface (WEI) Documentation!
    :caption: Contents
 
    pages/introduction
-   pages/installation
-   pages/first_workflow
-   pages/api
-   pages/glossary
-
+   pages/quickstart
+   pages/concepts/index
+   pages/how-to/index
+   pages/deployment_guide/index
+   pages/server_api
+   pages/python_package
 
 
 Indices and tables

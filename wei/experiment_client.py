@@ -1,4 +1,5 @@
 """Contains the Experiment class that manages WEI flows and helps annotate the experiment run"""
+
 import json
 import time
 from pathlib import Path
@@ -97,11 +98,12 @@ class ExperimentClient:
                 "experiment_name": experiment_name,
             },
         )
-        if response.status_code >= 400:
+        if not response.ok:
             raise Exception(
                 f"Failed to register experiment with error {response.status_code}: {response.text}"
             )
         self.experiment_id = response.json()["experiment_id"]
+        print(f"Experiment ID: {self.experiment_id}")
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
 
