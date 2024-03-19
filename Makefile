@@ -1,32 +1,75 @@
 ################################################################################
 # AD-SDL WEI Makefile
 ################################################################################
-MAKEFILE := $(lastword $(MAKEFILE_LIST))
-MAKEFILE_DIR := $(dir $(MAKEFILE))
-INCLUDE_DIR := $(MAKEFILE_DIR)/make
+.DEFAULT_GOAL := init
 
-include $(INCLUDE_DIR)/boilerplate.mk # Boilerplate, can probably leave as-is
-include $(INCLUDE_DIR)/config.mk # Project-specific configuration
-include $(INCLUDE_DIR)/docker.mk # Docker-related rules
-include $(INCLUDE_DIR)/python.mk # Python-related rules
+.PHONY += init paths checks test clean
 
-################################################################################
-# Rules: Add anything you want to be able to run with `make <target>` below
+init: # Do the initial configuration of the project
+	@test -e .env || cp example.env .env
+ifeq ($(shell uname),Darwin)
+	@sed -i '' 's/^PROJECT_DIR=.*/PROJECT_DIR=$(shell pwd | sed 's/\//\\\//g')/' .env
+	@sed -i '' 's/^USER_ID=.*/USER_ID=1000/' .env
+	@sed -i '' 's/^GROUP_ID=.*/GROUP_ID=1000/' .env
+else
+	@sed -i 's/^PROJECT_DIR=.*/PROJECT_DIR=$(shell pwd | sed 's/\//\\\//g')/' .env
+	@sed -i 's/^USER_ID=.*/USER_ID=$(shell id -u)/' .env
+	@sed -i 's/^GROUP_ID=.*/GROUP_ID=$(shell id -g)/' .env
+endif
+
+
+.env: init
+
+paths: .env # Create the necessary data directories
+	@mkdir -p $(shell grep -E '^WEI_DATA_DIR=' .env | cut -d '=' -f 2)
+	@mkdir -p $(shell grep -E '^REDIS_DIR=' .env | cut -d '=' -f 2)
 
 checks: # Runs all the pre-commit checks
 	@pre-commit install
 	@pre-commit run --all-files || { echo "Checking fixes\n" ; pre-commit run --all-files; }
 
-register_diaspora: # Registers diaspora for logging events
-	docker compose -f $(COMPOSE_FILE) run "$(APP_NAME)" \
-		wei/scripts/register_diaspora.py
+test: init .env paths # Runs all the tests
+	@docker compose up --build -d
+	@docker compose run test_app pytest -p no:cacheprovider wei
+	@docker compose down
+
+clean:
+	@rm .env
 
 docs: # Builds the docs for wei
 	cd $(PROJECT_DIR)/docs && pdm run make clean html
 
-publish: build publish-docker publish-python # Publishes the docker image and pypi package for wei
+build: build-python # Builds the project
+	@docker compose --profile test build
 
-################################################################################
+################
+# Python Rules #
+################
 
-# Determine which rules don't correspond to actual files (add rules to NOT_PHONY to exclude)
-.PHONY: $(filter-out $(NOT_PHONY), $(RULES))
+# (Make sure you've installed PDM)
+
+init-python: init pdm.lock deps # Installs the python environment (requires PDM)
+
+build-python: init-python # Builds the pypi package for APP_NAME
+	pdm build
+
+publish-python: init-python # Publishes the pypi package for wei
+	@echo "Username: __token__"
+	@echo "Password: Create token with privileges here: https://pypi.org/manage/account/token/"
+	pdm publish
+
+###############################
+# Python Dependency Managment #
+###############################
+
+pdm.lock: pyproject.toml # Generates the pdm.lock file
+	pdm install --group :all
+
+requirements/*.txt: pdm.lock
+	pdm export --without-hashes --group :all -o requirements/requirements.txt
+	pdm export --without-hashes --group dev -o requirements/dev.txt
+	pdm export --without-hashes --group docs -o requirements/docs.txt
+
+.PHONY += deps
+deps: requirements/*.txt # Generates the requirements files for APP_NAME
+	pdm install --group :all

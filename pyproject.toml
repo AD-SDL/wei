@@ -15,15 +15,15 @@ readme = "README.md"
 license = {text = "MIT"}
 dependencies = [
     'devtools>=0.12',
-    'fastapi>=0.103, <0.104',
-    'pottery>=3.0.0, <3.1',
-    'pydantic>=2.4, <2.5',
-    'python-multipart>=0.0.6, <0.0.7',
-    'PyYAML>=6.0, <6.1',
-    'redis>=4.2.2, <4.3',
-    'requests>=2.31.0, <2.32',
-    'ulid-py>=1.1.0, <1.2',
-    'uvicorn>=0.21, <0.22',
+    'fastapi>=0.103',
+    'pottery>=3.0.0',
+    'pydantic>=2.4',
+    'python-multipart>=0.0.6',
+    'PyYAML>=6.0',
+    'redis>=4.2.2',
+    'requests>=2.31.0',
+    'ulid-py>=1.1.0',
+    'uvicorn>=0.21',
 ]
 
 [project.optional-dependencies]
@@ -48,7 +48,7 @@ docs = [
     "sphinx-rtd-theme",
 ]
 zmq = [
-    'pyzmq>=25.1.1, <26',
+    'pyzmq>=25.1.1',
 ]
 diaspora = [
     "urllib3<2",

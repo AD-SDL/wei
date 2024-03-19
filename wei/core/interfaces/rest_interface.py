@@ -99,6 +99,7 @@ class RestInterface(Interface):
         url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/about",
+            timeout=10,
         ).json()
         return rest_response
 
@@ -118,5 +119,16 @@ class RestInterface(Interface):
         url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/resources",
+            timeout=10,
         ).json()
         return dict(rest_response)
+
+    @staticmethod
+    def send_admin_command(module: Module, command: str, **kwargs: Any) -> Any:
+        """Sends a command to the node"""
+        url = module.config["rest_node_address"]
+        rest_response = requests.post(
+            url + "/admin/" + command,
+            timeout=10,
+        ).json()
+        return rest_response

@@ -3,7 +3,6 @@
 import json
 from typing import Any, Dict, Tuple
 
-
 from wei.core.data_classes import Interface, Module, Step
 
 try:
