@@ -5,12 +5,12 @@ Router for the "experiments"/"exp" endpoints
 from typing import Dict, Optional
 
 from fastapi import APIRouter
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from wei.core.experiment import Experiment, list_experiments
+import json
 
 router = APIRouter()
-
 
 @router.get("/{experiment_id}/log")
 async def log_return(experiment_id: str) -> str:
@@ -21,8 +21,15 @@ async def log_return(experiment_id: str) -> str:
         experiment.experiment_log_file,
         "r",
     ) as f:
-        return f.read()
-
+        val = f.readlines()
+    logs = []
+    for entry in val:
+        try:
+          
+           logs.append(json.loads(entry.split("(INFO):")[1].strip()))
+        except Exception as e: 
+            print(e)
+    return JSONResponse(logs)
 
 @router.get("/all")
 async def get_all_experiments() -> Dict[str, str]:
