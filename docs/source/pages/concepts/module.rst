@@ -11,7 +11,9 @@ Modules are designed to be:
 - **Composable**: multiple modules can be easily combined to create Workcells.
 - **Portable and Reusable**: so they can be used in different workcells, or repeatedly in the same workcell to control multiple instances of a device.
 
-.. image:: /assets/module_logic.png
+.. figure:: /assets/module_logic.png
+
+    An illustration of the hierarchical structure of a WEI Module. The standard Methods, depicted at the top, provide a standardized way to interact with the Device controlled by the Module.
 
 The WEI Module Interface
 ========================

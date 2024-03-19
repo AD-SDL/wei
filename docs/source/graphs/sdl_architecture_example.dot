@@ -4,24 +4,83 @@ strict digraph sdl_architecture_example {
     node [fontname="Helvetica,Arial,sans-serif"]
     edge [fontname="Helvetica,Arial,sans-serif"]
     graph [
-        rankdir = "LR"
+        rankdir = "TD"
         pad = 0.1;
     ];
     node [
         fontsize = "16"
         shape = "box"
+        colorscheme = "dark28" //https://graphviz.org/doc/info/colors.html#brewer
+        style = "filled"
     ];
     edge [
+        style = "filled"
+        colorscheme = "dark28" //https://graphviz.org/doc/info/colors.html#brewer
     ];
 
-    "Self Directed Lab" -> {WorkcellA WorkcellB "..."};
-    WorkcellA -> {"Liquidhandling Module" "Robotic Arm Module" "...."};
+    //Nodes
+    SDL [
+        label = "Self Directed Lab"
+        fillcolor=1
+    ]
 
-    "Liquidhandling Module" -> "Liquidhandling Robot"
+    WA [
+        label = "Workcell A"
+        fillcolor=2
+    ]
+    WB [
+        label = "Workcell B"
+        fillcolor=2
+    ]
 
-    "Robotic Arm Module" -> "Robotic Arm"
+    M1 [
+        label = "Liquidhandling Module"
+        fillcolor=3
+    ]
+    M2 [
+        label = "Robotic Arm Module"
+        fillcolor=3
+    ]
+    M3 [
+        label = "Platereader Module"
+        fillcolor=3
+    ]
+    M4 [
+        label = "Robotic Arm Module"
+        fillcolor=3
+    ]
 
-    label="Diagram of a Self Driving Lab with multiple workcells, each controlling a variety of modules";
+    D1 [
+        label = "Liquidhandling Robot"
+        fillcolor = 4
+    ]
+    D2 [
+        label = "Robotic Arm 1"
+        fillcolor = 4
+    ]
+    D3 [
+        label = "Platereader"
+        fillcolor = 4
+    ]
+    D4 [
+        label = "Robotic Arm 2"
+        fillcolor = 4
+    ]
+
+    //Edges
+    SDL -> {WA WB} [dir=both color=1];
+
+    WA -> {M1 M2} [dir=both color=2];
+    WB -> {M3 M4} [dir=both color=2]
+
+    M1 -> D1 [dir=both color=3]
+    M2 -> D2 [dir=both color=3]
+    M3 -> D3 [dir=both color=3]
+    M4 -> D4 [dir=both color=3]
+
+
+    //Graph
+    label="Diagram of a Self Driving Lab with multiple workcells, each controlling \na variety of modules, which correspond 1:1 with devices";
     labelloc=bottom;
     labeljust=center;
 }

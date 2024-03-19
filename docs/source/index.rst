@@ -8,7 +8,7 @@ Welcome to the Workflow Execution Interface (WEI) Documentation!
 ================================================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents
 
    pages/introduction
