@@ -16,19 +16,14 @@ license = {text = "MIT"}
 dependencies = [
     'devtools>=0.12',
     'fastapi>=0.103',
-    'lupa>=2.0',
     'pottery>=3.0.0',
     'pydantic>=2.4',
     'python-multipart>=0.0.6',
     'PyYAML>=6.0',
-    'pyzmq>=25.1.1',
     'redis>=4.2.2',
     'requests>=2.31.0',
     'ulid-py>=1.1.0',
     'uvicorn>=0.21',
-    "httpx<0.26",
-    "urllib3<2",
-    "diaspora_event_sdk[kafka-python]>=0.1.2",
 ]
 
 [project.optional-dependencies]
@@ -51,6 +46,13 @@ docs = [
     "autodoc-pydantic",
     "sphinx",
     "sphinx-rtd-theme",
+]
+zmq = [
+    'pyzmq>=25.1.1',
+]
+diaspora = [
+    "urllib3<2",
+    "diaspora_event_sdk[kafka-python]>=0.1.2"
 ]
 
 [project.urls]

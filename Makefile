@@ -66,7 +66,7 @@ pdm.lock: pyproject.toml # Generates the pdm.lock file
 	pdm install --group :all
 
 requirements/*.txt: pdm.lock
-	pdm export --without-hashes --prod -o requirements/requirements.txt
+	pdm export --without-hashes --group :all -o requirements/requirements.txt
 	pdm export --without-hashes --group dev -o requirements/dev.txt
 	pdm export --without-hashes --group docs -o requirements/docs.txt
 
