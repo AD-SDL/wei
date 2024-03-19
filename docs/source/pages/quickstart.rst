@@ -12,10 +12,10 @@ To get started using WEI, we recommend the following resources:
 #. To learn more about how to write and develop your own experiment applications, workflows, workcells, or modules, consult the `How To Guides <how-to/index.html>`_
 
 I want to Learn...
-==================
+===================
 
 How to use an existing WEI-powered Workcell
---------------------------------------------
+============================================
 
 To learn how to use an existing WEI-powered workcell, we recommend looking into:
 
@@ -28,7 +28,7 @@ To learn how to use an existing WEI-powered workcell, we recommend looking into:
 .. _how-to-develop-workcell:
 
 How to develop a new WEI-powered Workcell
------------------------------------------
+=========================================
 
 To learn how to develop a new WEI-powered workcell, we recommend looking into:
 
@@ -39,7 +39,7 @@ To learn how to develop a new WEI-powered workcell, we recommend looking into:
 - The `WEI Template Workcell`_, for trying out these concepts using WEI on your own computer, and to use as a template to create your own workcell.
 
 How to integrate a new Device/Instrument/Robot with WEI
--------------------------------------------------------
+=======================================================
 
 To learn how to develop a new WEI-compatible module to control a device, we recommend looking into:
 

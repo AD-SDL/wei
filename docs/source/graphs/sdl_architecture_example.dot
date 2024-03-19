@@ -20,7 +20,7 @@ strict digraph sdl_architecture_example {
 
     //Nodes
     SDL [
-        label = "Self Directed Lab"
+        label = "Self Driving Lab"
         fillcolor=1
     ]
 
