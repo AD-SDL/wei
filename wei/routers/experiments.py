@@ -7,7 +7,7 @@ from typing import Dict, Optional
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
-from wei.core.experiment import Experiment
+from wei.core.experiment import Experiment, list_experiments
 
 router = APIRouter()
 
@@ -22,6 +22,12 @@ async def log_return(experiment_id: str) -> str:
         "r",
     ) as f:
         return f.read()
+
+
+@router.get("/all")
+async def get_all_experiments() -> Dict[str, str]:
+    """Returns all experiments inside DataFolder"""
+    return list_experiments
 
 
 @router.get("/{experiment_id}/file")

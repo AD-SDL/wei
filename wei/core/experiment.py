@@ -2,6 +2,7 @@
 
 import fnmatch
 import os
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -68,3 +69,20 @@ class Experiment:
     def run_dir(self) -> Path:
         """Path to the result directory"""
         return self.experiment_dir / "runs"
+
+
+def list_experiments():
+    """_summary_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    experiments_dir = Config.data_directory / "experiments"
+    all_exps_raw = os.listdir(experiments_dir)
+    pat1 = r"(.+)_id_(.+)"
+    for exp in all_exps_raw:
+        test = re.match(pat1, exp)
+        print(test)
+    return all_exps_raw
