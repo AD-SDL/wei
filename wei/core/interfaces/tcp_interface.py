@@ -10,6 +10,7 @@ try:
 except ImportError:
     print("Socket not found. Cannot use TCPInterface")
 
+
 class TcpInterface(Interface):
     """Basic Interface for interacting with WEI modules using TCP"""
 
