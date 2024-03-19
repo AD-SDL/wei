@@ -5,6 +5,10 @@ from typing import Any, Dict, Tuple
 
 from wei.core.data_classes import Interface, Module, Step
 
+try:
+    import socket  # type: ignore
+except ImportError:
+    print("Socket not found. Cannot use TCPInterface")
 
 class TcpInterface(Interface):
     """Basic Interface for interacting with WEI modules using TCP"""
@@ -51,7 +55,6 @@ class TcpInterface(Interface):
             A record of the execution of the step
 
         """
-        import socket
 
         sock = socket.socket()
         sock.connect(

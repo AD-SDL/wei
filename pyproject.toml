@@ -15,25 +15,19 @@ readme = "README.md"
 license = {text = "MIT"}
 dependencies = [
     'devtools>=0.12',
-    'fakeredis>=2.20.0, <2.21',
     'fastapi>=0.103, <0.104',
-    'lupa>=2.0, <3.0',
     'pottery>=3.0.0, <3.1',
     'pydantic>=2.4, <2.5',
     'python-multipart>=0.0.6, <0.0.7',
     'PyYAML>=6.0, <6.1',
-    'pyzmq>=25.1.1, <26',
     'redis>=4.2.2, <4.3',
     'requests>=2.31.0, <2.32',
     'ulid-py>=1.1.0, <1.2',
     'uvicorn>=0.21, <0.22',
-    "httpx<0.26,>0.25",
-    "diaspora_event_sdk[kafka-python]>=0.1.2"
 ]
 
 [project.optional-dependencies]
 dev = [
-
     "build",
     "mypy",
     "pre-commit",
@@ -52,6 +46,13 @@ docs = [
     "autodoc-pydantic",
     "sphinx",
     "sphinx-rtd-theme",
+]
+zmq = [
+    'pyzmq>=25.1.1, <26',
+]
+diaspora = [
+    "urllib3<2",
+    "diaspora_event_sdk[kafka-python]>=0.1.2"
 ]
 
 [project.urls]
