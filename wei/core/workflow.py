@@ -13,7 +13,7 @@ from wei.core.data_classes import (
     Step,
     StepResponse,
     StepStatus,
-    WorkcellData,
+    Workcell,
     Workflow,
     WorkflowRun,
     WorkflowStatus,
@@ -173,7 +173,7 @@ def run_step(
 
 def create_run(
     workflow: Workflow,
-    workcell: WorkcellData,
+    workcell: Workcell,
     experiment_id: str,
     payload: Optional[Dict[str, Any]] = None,
     simulate: bool = False,
@@ -232,7 +232,7 @@ def create_run(
     return wf_run
 
 
-def replace_positions(workcell: WorkcellData, step: Step) -> None:
+def replace_positions(workcell: Workcell, step: Step) -> None:
     """Replaces the positions in the step with the actual positions from the workcell"""
     for key, value in step.args.items():
         try:

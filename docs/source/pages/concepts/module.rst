@@ -2,17 +2,23 @@
 Modules
 ========
 
-TODO: Update
+A WEI Module is a combination of software and a (typically) physical device (e.g. an instrument, robot, etc.), which is capable of performing actions as part of :doc:`/pages/concepts/workflow`.
 
-A WEI Module is a combination of software and (typically) a physical hardware device, which is capable of performing actions as part of a Workflow.
+Modules are designed to be:
 
-Modules are designed to be independent and composable, such that they can be combined to create Workcells. Modules are also designed to be reusable, such that they can be used in multiple different Workcells, and to control different instances of the same device in a single Workcell.
+- **Independent**: each module can act without relying on any other module.
+- **Self-contained**: everything needed to integrate a single device is contained within that module
+- **Composable**: multiple modules can be easily combined to create Workcells.
+- **Portable and Reusable**: so they can be used in different workcells, or repeatedly in the same workcell to control multiple instances of a device.
 
+.. figure:: /assets/module_logic.png
+
+    An illustration of the hierarchical structure of a WEI Module. The standard Methods, depicted at the top, provide a standardized way to interact with the Device controlled by the Module.
 
 The WEI Module Interface
 ========================
 
-All Modules must implement the WEI Module Interface, which is a set of methods that allow the Module to be communicated with and controlled by WEI. The interface is protocol agnostic, with current support for implementations in REST, ROS 2, TCP, and ZeroMQ.
+All Modules must implement the WEI Module Interface, which is a set of methods that allow the Module to be communicated with and controlled by WEI. The interface is protocol agnostic, with current support for implementations in REST (preferred), ROS 2, TCP, and ZeroMQ.
 
 A Module must implement the following methods:
 
@@ -21,24 +27,28 @@ Action
 
 The Action method is called by WEI to trigger a specified Action on the device or instrument controlled by the Module.
 
-The Action argument should accept the following parameters:
+The Action method should accept the following parameters:
 
-- `action_handle`: The name of the action to be performed.
-- `action_vars`: A dictionary of variables specific to the action in question. The keys of the dictionary are the names of the variables, and the values are the values of the variables.
+- `action_handle`: The name of the specific action to be performed.
+- `action_vars`: A json-serializable dictionary of variables specific to the action in question. The keys and values of the dictionary correspond to the names and values of the variables, respectively.
 
 State
 -----
 
 The State method is called by WEI to query the current state of the device or instrument controlled by the Module. It should return a dictionary of the current state of the device or instrument.
 
-The status returned by this endpoint should conform to the to the ModuleStatus enum, which is defined in the `wei` package.
+The status returned by this method should conform to the :class:`wei.core.data_classes.ModuleStatus` enum.
 
 About
 -----
 
-The About method is called by WEI to query the Module for information about itself. It should return a dictionary of information about the Module, which should comply with the ModuleAbout specification defined in the `wei` package.
+The ``about`` method is called by WEI to query the Module for information about itself. It should return a dictionary of information about the Module, which should conform to the :class:`wei.core.data_classes.ModuleAbout` specification.
+
+This ``about`` method is both a very useful affordance for WEI users, allowing them to more easily parse how to use a particular module, and a valuable piece of functionality for the WEI Engine. Among other things, it allows the WEI Engine to pre-validate workflows, reducing runtime errors and failed workflow runs.
 
 Resources
 ---------
 
-The Resources method is called by WEI to query the Module for information about the resources it controls. This method is not yet standardized, and is currently under development.
+The Resources method is called by WEI to query the Module for information about the resources it controls. This method is not yet standardized, and is currently under active development.
+
+To learn how to develop your own Modules, consult the :doc:`/pages/how-to/module` guide.

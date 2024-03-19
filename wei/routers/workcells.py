@@ -5,7 +5,7 @@ Router for the "workcells"/"wc" endpoints
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import WorkcellData, WorkflowStatus
+from wei.core.data_classes import Workcell, WorkflowStatus
 from wei.core.state_manager import StateManager
 from wei.core.workcell import set_config_from_workcell
 from wei.helpers import initialize_state
@@ -16,7 +16,7 @@ state_manager = StateManager()
 
 
 @router.post("/", response_class=JSONResponse)
-def set_workcell(workcell: WorkcellData) -> JSONResponse:
+def set_workcell(workcell: Workcell) -> JSONResponse:
     """
 
     Sets the workcell's state
