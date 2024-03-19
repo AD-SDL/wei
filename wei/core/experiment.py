@@ -72,17 +72,17 @@ class Experiment:
 
 
 def list_experiments():
-    """_summary_
+    """Return a list of all experiments in the Config folger
 
     Returns
     -------
-    _type_
-        _description_
+    all_exps Dict
     """
     experiments_dir = Config.data_directory / "experiments"
     all_exps_raw = os.listdir(experiments_dir)
     pat1 = r"(.+)_id_(.+)"
+    all_exps={}
     for exp in all_exps_raw:
         test = re.match(pat1, exp)
-        print(test)
-    return all_exps_raw
+        all_exps[test[2]]=test[1]
+    return all_exps 
