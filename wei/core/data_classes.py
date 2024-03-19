@@ -360,7 +360,7 @@ class Step(BaseModel, arbitrary_types_allowed=True):
         return v
 
 
-class Metadata(BaseModel):
+class Metadata(BaseModel, extra="allow"):
     """Metadata container"""
 
     author: Optional[str] = None

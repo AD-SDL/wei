@@ -10,14 +10,25 @@ A given Workcell is represented declaratively in a YAML file. This file specifie
 Name
 ----
 
+The name of the Workcell is specified at the top of the file. This is used by the system to distinguish between different Workcells.
+
+Example Workcell Name
+^^^^^^^^^^^^^^^^^^^^^^
+
 .. code-block:: yaml
 
     name: RPL_Modular_Workcell
 
-The name of the Workcell is specified at the top of the file. This is used by the system to distinguish between different Workcells.
 
 Configuration
 -------------
+
+The configuration section specifies various properties of the Workcell, and determines how the WEI instance that loads the Workcell will behave. All of the values set here can be overridden by the user at runtime using command line parameters for both the WEI Engine and Server.
+
+For a complete breakdown of configuration options, see :class:`wei.core.data_classes.WorkcellConfig`.
+
+Example Config Section
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: yaml
 
@@ -25,12 +36,16 @@ Configuration
         redis_host: "rpl_redis"
         server_host: "rpl_modular_wc_server"
 
-The configuration section specifies various properties of the Workcell, and determines how the WEI instance that loads the Workcell will behave. All of the values set here can be overridden by the user at runtime using command line parameters for both the WEI Engine and Server.
-
-For a complete breakdown of configuration options, see :class:`wei.core.data_classes.WorkcellConfig`.
 
 Modules
 -------
+
+The ``modules`` section is a list of all the modules that make up the Workcell. Each module is represented by a dictionary with keys for the module's name, model, interface, and configuration. The ``active`` flag is optional and can be used to mark a module as currently unused. The configuration section will vary depending on the specific interface used to communicate with the module.
+
+Each module should conform to the :class:`wei.core.data_classes.Module` schema.
+
+Example Modules Section
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: yaml
 
@@ -115,10 +130,14 @@ Modules
             config:
                 ros_node_address: '/ur5_client/UR5_Client_Node'
 
-The ``modules`` section is a list of all the modules that make up the Workcell. Each module is represented by a dictionary with keys for the module's name, model, interface, and configuration. The ``active`` flag is optional and can be used to mark a module as currently unused. The configuration section will vary depending on the specific interface used to communicate with the module.
 
 Locations
 ---------
+
+The ``locations`` section is a dictionary of all the locations in the Workcell. Locations are defined relative to each individual module, since different modules will represent the same location in different ways. Each location is represented by a key-value pair of the location's name and the joint angles or other module-specific representation for that location.
+
+Example Locations Section
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: yaml
 
@@ -136,7 +155,6 @@ Locations
         sciclops: #Joint angles for the Sciclops Plate Crane
             sciclops.exchange: [0,0,0,0]
 
-The ``locations`` section is a dictionary of all the locations in the Workcell. Locations are defined relative to each individual module, since different modules will represent the same location in different ways. Each location is represented by a key-value pair of the location's name and the joint angles or other module-specific representation for that location.
 
 Complete Example
 ----------------
