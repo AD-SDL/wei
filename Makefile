@@ -36,6 +36,9 @@ test: init .env paths # Runs all the tests
 clean:
 	@rm .env
 
+docs: # Builds the docs for wei
+	cd $(PROJECT_DIR)/docs && pdm run make clean html
+
 build: build-python # Builds the project
 	@docker compose --profile test build
 

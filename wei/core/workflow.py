@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
-from wei.core.data_classes import Step, WorkcellData, Workflow, WorkflowRun
+from wei.core.data_classes import Step, Workcell, Workflow, WorkflowRun
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 from wei.core.step import validate_step
@@ -14,7 +14,7 @@ state_manager = StateManager()
 
 def create_run(
     workflow: Workflow,
-    workcell: WorkcellData,
+    workcell: Workcell,
     experiment_id: str,
     payload: Optional[Dict[str, Any]] = None,
     simulate: bool = False,
@@ -73,7 +73,7 @@ def create_run(
     return wf_run
 
 
-def replace_positions(workcell: WorkcellData, step: Step) -> None:
+def replace_positions(workcell: Workcell, step: Step) -> None:
     """Replaces the positions in the step with the actual positions from the workcell"""
     for key, value in step.args.items():
         try:

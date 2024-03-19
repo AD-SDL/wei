@@ -1,5 +1,8 @@
+=================
 Quickstart Guide
 =================
+
+TODO: Fold into Quickstart Guide/how-to's
 
 Setting Up
 ----------
