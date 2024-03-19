@@ -81,8 +81,8 @@ def list_experiments():
     experiments_dir = Config.data_directory / "experiments"
     all_exps_raw = os.listdir(experiments_dir)
     pat1 = r"(.+)_id_(.+)"
-    all_exps={}
+    all_exps = {}
     for exp in all_exps_raw:
         test = re.match(pat1, exp)
-        all_exps[test[2]]=test[1]
-    return all_exps 
+        all_exps[test[2]] = test[1]
+    return all_exps
