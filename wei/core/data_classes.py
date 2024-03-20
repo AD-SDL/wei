@@ -76,9 +76,6 @@ class AdminCommands(str, Enum):
     """Valid Admin Commands to send to a Module"""
 
     ESTOP = "estop"
-    SAFETY_STOP = "safety_stop"
-    LOCK = "lock"
-    UNLOCK = "unlock"
     RESET = "reset"
     PAUSE = "pause"
     RESUME = "resume"

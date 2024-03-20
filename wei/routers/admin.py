@@ -8,13 +8,10 @@ from fastapi import APIRouter
 from wei.core.admin import (
     send_cancel,
     send_estop,
-    send_lock,
     send_pause,
     send_reset,
     send_resume,
-    send_safety_stop,
     send_shutdown,
-    send_unlock,
 )
 from wei.core.state_manager import StateManager
 
@@ -34,47 +31,6 @@ def estop_workcell() -> None:
 def estop_module(module_name: str) -> None:
     """E-stops a module"""
     send_estop(state_manager.get_module(module_name))
-
-
-@router.api_route("/safety_stop", methods=["POST", "GET"])
-def safety_stop_workcell() -> None:
-    """Performs a safety stop on the workcell"""
-    for module in state_manager.get_all_modules().values():
-        send_safety_stop(module)
-
-
-@router.api_route("/safety_stop/{module_name}", methods=["POST", "GET"])
-def safety_stop_module(module_name: str) -> None:
-    """Performs a safety stop on a module"""
-    send_safety_stop(state_manager.get_module(module_name))
-
-
-@router.api_route("/lock", methods=["POST", "GET"])
-def lock_workcell() -> None:
-    """Locks the workcell"""
-    for module in state_manager.get_all_modules().values():
-        send_lock(module)
-    # TODO: workcell.lock()
-
-
-@router.api_route("/lock/{module_name}", methods=["POST", "GET"])
-def lock_module(module_name: str) -> None:
-    """Locks a module"""
-    send_lock(state_manager.get_module(module_name))
-
-
-@router.api_route("/unlock", methods=["POST", "GET"])
-def unlock_workcell() -> None:
-    """Unlocks the workcell"""
-    for module in state_manager.get_all_modules().values():
-        send_unlock(module)
-    # TODO: workcell.unlock()
-
-
-@router.api_route("/unlock/{module_name}", methods=["POST", "GET"])
-def unlock_module(module_name: str) -> None:
-    """Unlocks a module"""
-    send_unlock(state_manager.get_module(module_name))
 
 
 @router.api_route("/reset", methods=["POST", "GET"])

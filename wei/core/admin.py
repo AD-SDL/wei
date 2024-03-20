@@ -13,20 +13,7 @@ def send_estop(module: Module) -> None:
         print(f"Module {module.name} has been e-stopped.")
     else:
         print(f"Module {module.name} does not support e-stop.")
-        send_safety_stop(module)
-
-
-def send_safety_stop(module: Module) -> None:
-    """Safety stops a module"""
-    if AdminCommands.SAFETY_STOP in module.about.admin_commands:
-        InterfaceMap.interfaces[module.interface].send_admin_command(
-            module, AdminCommands.SAFETY_STOP
-        )
-        print(f"Module {module.name} has been safety stopped.")
-    else:
-        print(f"Module {module.name} does not support safety stop.")
         send_pause(module)
-        send_lock(module)
 
 
 def send_reset(module: Module) -> None:
@@ -72,28 +59,6 @@ def send_cancel(module: Module) -> None:
         print(f"Module {module.name} action has been canceled.")
     else:
         print(f"Module {module.name} does not support canceling.")
-
-
-def send_lock(module: Module) -> None:
-    """Locks a module, preventing it from being used until unlocked."""
-    if AdminCommands.LOCK in module.about.admin_commands:
-        InterfaceMap.interfaces[module.interface].send_admin_command(
-            module, AdminCommands.LOCK
-        )
-        print(f"Module {module.name} has been locked.")
-    else:
-        print(f"Module {module.name} does not support locking.")
-
-
-def send_unlock(module: Module) -> None:
-    """Unlocks a module, allowing it to be used."""
-    if AdminCommands.UNLOCK in module.about.admin_commands:
-        InterfaceMap.interfaces[module.interface].send_admin_command(
-            module, AdminCommands.UNLOCK
-        )
-        print(f"Module {module.name} has been unlocked.")
-    else:
-        print(f"Module {module.name} does not support unlocking.")
 
 
 def send_shutdown(module: Module) -> None:
