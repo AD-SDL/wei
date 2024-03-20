@@ -5,7 +5,13 @@ from datetime import datetime
 from typing import Tuple
 
 from wei.config import Config
-from wei.core.data_classes import (
+from wei.core.events import Events
+from wei.core.interface import InterfaceMap
+from wei.core.location import free_source_and_target, update_source_and_target
+from wei.core.loggers import WEI_Logger
+from wei.core.module import clear_module_reservation, get_module_about
+from wei.core.state_manager import StateManager
+from wei.types import (
     Module,
     ModuleStatus,
     Step,
@@ -14,12 +20,6 @@ from wei.core.data_classes import (
     WorkflowRun,
     WorkflowStatus,
 )
-from wei.core.events import Events
-from wei.core.interface import InterfaceMap
-from wei.core.location import free_source_and_target, update_source_and_target
-from wei.core.loggers import WEI_Logger
-from wei.core.module import clear_module_reservation, get_module_about
-from wei.core.state_manager import StateManager
 
 state_manager = StateManager()
 

@@ -5,10 +5,10 @@ Router for the "workcells"/"wc" endpoints
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import Workcell, WorkflowStatus
 from wei.core.state_manager import StateManager
 from wei.core.workcell import set_config_from_workcell
 from wei.helpers import initialize_state
+from wei.types import Workcell, WorkflowStatus
 
 router = APIRouter()
 

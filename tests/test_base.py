@@ -8,7 +8,7 @@ import requests
 
 import wei
 from wei import ExperimentClient
-from wei.core.data_classes import Workcell
+from wei.types import Workcell
 
 
 class TestWEI_Base(unittest.TestCase):

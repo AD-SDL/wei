@@ -7,8 +7,8 @@ from typing import Union
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import Location
 from wei.core.state_manager import StateManager
+from wei.types import Location
 
 router = APIRouter()
 

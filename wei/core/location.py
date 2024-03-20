@@ -2,8 +2,8 @@
 
 from typing import Any, Union
 
-from wei.core.data_classes import Location, Module, WorkflowRun
 from wei.core.state_manager import StateManager
+from wei.types import Location, Module, WorkflowRun
 
 state_manager = StateManager()
 

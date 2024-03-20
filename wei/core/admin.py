@@ -1,7 +1,7 @@
 """Handles admin commands and related logic."""
 
-from wei.core.data_classes import AdminCommands, Module
 from wei.core.interface import InterfaceMap
+from wei.types.module_types import AdminCommands, Module
 
 
 def send_estop(module: Module) -> None:

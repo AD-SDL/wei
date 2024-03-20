@@ -11,10 +11,10 @@ import yaml
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.loggers import WEI_Logger
 from wei.core.state_manager import StateManager
 from wei.core.workflow import create_run, save_workflow_files
+from wei.types import Workflow, WorkflowStatus
 
 router = APIRouter()
 

@@ -9,7 +9,8 @@ import redis
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
 from wei.config import Config
-from wei.core.data_classes import Location, Module, Workcell, WorkflowRun
+from wei.types import Location, Module, Workcell, WorkflowRun
+from wei.types.base_types import ulid_factory
 
 
 class StateManager:
@@ -130,6 +131,16 @@ class StateManager:
         Empty the workcell definition
         """
         self._workcell.clear()
+
+    def get_workcell_id(self) -> str:
+        """
+        Returns the workcell ID
+        """
+        wc_id = self._redis_client.get(f"{self._prefix}:workcell_id")
+        if wc_id is None:
+            self._redis_client.set(f"{self._prefix}:workcell_id", ulid_factory())
+            wc_id = self._redis_client.get(f"{self._prefix}:workcell_id")
+        return wc_id
 
     # Workflow Methods
     def get_workflow_run(self, run_id: Union[str, str]) -> WorkflowRun:

@@ -5,17 +5,9 @@ from typing import Any, Dict, Optional
 import requests
 
 from wei.config import Config
-from wei.core.data_classes import BaseModel, Step, WorkflowRun
 from wei.core.loggers import WEI_Logger
-
-
-class Event(BaseModel):
-    """A single event in an experiment"""
-
-    experiment_id: str
-    event_type: str
-    event_name: str
-    event_info: Optional[Any] = None
+from wei.core.state_manager import StateManager
+from wei.types import Event, Step, WorkflowRun
 
 
 class EventLogger:
@@ -38,6 +30,7 @@ class EventLogger:
         """
         self.experiment_id = experiment_id
         self.kafka_topic = "wei_diaspora"
+        self.state_manager = StateManager()
 
         if Config.use_diaspora:
             try:
@@ -72,6 +65,8 @@ class EventLogger:
         -------
         None
         """
+
+        log_value.workcell_id = self.state_manager.get_workcell_id()
         logger = WEI_Logger.get_experiment_logger(self.experiment_id)
         logger.info(log_value.model_dump_json())
 

@@ -4,13 +4,13 @@ import multiprocessing as mpr
 from datetime import datetime
 
 from wei.config import Config
-from wei.core.data_classes import WorkflowStatus
 from wei.core.events import Events
 from wei.core.location import reserve_source_and_target
 from wei.core.module import reserve_module
 from wei.core.state_manager import StateManager
 from wei.core.step import check_step, run_step
 from wei.core.workcell import find_step_module
+from wei.types import WorkflowStatus
 
 state_manager = StateManager()
 

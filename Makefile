@@ -28,8 +28,8 @@ checks: # Runs all the pre-commit checks
 	@pre-commit install
 	@pre-commit run --all-files || { echo "Checking fixes\n" ; pre-commit run --all-files; }
 
-test: init .env paths # Runs all the tests
-	@docker compose up --build -d
+test: init .env paths build # Runs all the tests
+	@docker compose up -d
 	@docker compose run test_app pytest -p no:cacheprovider wei
 	@docker compose down
 

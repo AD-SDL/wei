@@ -50,10 +50,10 @@ def initialize_state() -> None:
     Initializes the state of the workcell from the workcell definition.
     """
     from wei.config import Config
-    from wei.core.data_classes import Workcell
     from wei.core.location import initialize_workcell_locations
     from wei.core.module import initialize_workcell_modules
     from wei.core.state_manager import StateManager
+    from wei.types import Workcell
 
     state_manager = StateManager()
     state_manager.set_workcell(Workcell.from_yaml(Config.workcell_file))
@@ -68,8 +68,8 @@ def parse_args() -> Namespace:
     from typing import get_type_hints
 
     from wei.config import Config
-    from wei.core.data_classes import PathLike, WorkcellConfig
     from wei.core.workcell import load_workcell_file
+    from wei.types import PathLike, WorkcellConfig
 
     parser = ArgumentParser()
     parser.add_argument(

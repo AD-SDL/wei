@@ -6,7 +6,7 @@ from typing import Any, Dict, Tuple
 
 import requests
 
-from wei.core.data_classes import Interface, Module, Step, StepResponse, StepStatus
+from wei.types import Interface, Module, Step, StepResponse, StepStatus
 
 
 class RestInterface(Interface):

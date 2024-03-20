@@ -4,7 +4,10 @@ import concurrent.futures
 import traceback
 from typing import Union
 
-from wei.core.data_classes import (
+from wei.core.interface import InterfaceMap
+from wei.core.state_manager import StateManager
+from wei.core.workcell import find_step_module
+from wei.types import (
     Module,
     ModuleAbout,
     ModuleStatus,
@@ -12,9 +15,6 @@ from wei.core.data_classes import (
     Workflow,
     WorkflowStatus,
 )
-from wei.core.interface import InterfaceMap
-from wei.core.state_manager import StateManager
-from wei.core.workcell import find_step_module
 
 state_manager = StateManager()
 

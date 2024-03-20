@@ -98,7 +98,7 @@ workflow file. This script is defined in wei/examples/run_example.py, and runs t
 
   from pathlib import Path
   from wei import Experiment
-  from wei.core.data_classes import WorkflowStatus
+  from wei.types import WorkflowStatus
 
   def main():
       #The path to the Workflow definition yaml file

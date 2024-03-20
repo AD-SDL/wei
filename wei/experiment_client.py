@@ -8,8 +8,8 @@ from warnings import warn
 
 import requests
 
-from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.events import Events
+from wei.types import Workflow, WorkflowStatus
 
 
 class ExperimentClient:

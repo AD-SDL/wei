@@ -4,10 +4,10 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
-from wei.core.data_classes import Step, Workcell, Workflow, WorkflowRun
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 from wei.core.step import validate_step
+from wei.types import Step, Workcell, Workflow, WorkflowRun
 
 state_manager = StateManager()
 

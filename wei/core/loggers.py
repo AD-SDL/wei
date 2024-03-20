@@ -4,8 +4,8 @@ import logging
 from pathlib import Path
 
 from wei.config import Config
-from wei.core.data_classes import PathLike, WorkflowRun
 from wei.core.experiment import Experiment
+from wei.types import PathLike, WorkflowRun
 
 
 class WEI_Logger:

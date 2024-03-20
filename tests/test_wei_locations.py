@@ -7,11 +7,11 @@ import pytest
 import yaml
 from fastapi import UploadFile
 
-from wei.core.data_classes import Workcell
 from wei.core.state_manager import StateManager
 
 # from wei.engine import Engine
 from wei.routers.workflow_runs import start_run
+from wei.types import Workcell
 
 from .test_base import TestWEI_Base
 

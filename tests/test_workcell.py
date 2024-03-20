@@ -4,7 +4,7 @@ from pathlib import Path
 
 import requests
 
-from wei.core.data_classes import Location, Module, Workcell
+from wei.types import Location, Module, Workcell
 
 from .test_base import TestWEI_Base
 

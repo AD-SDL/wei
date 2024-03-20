@@ -3,21 +3,21 @@ wei.core
 
 .. automodule:: wei.core
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -27,7 +27,7 @@ wei.core
    :toctree:
    :recursive:
 
-   wei.core.data_classes
+   wei.types
    wei.core.events
    wei.core.experiment
    wei.core.interface

@@ -3,7 +3,7 @@
 from typing import Any, Dict, Tuple
 
 from wei.config import Config
-from wei.core.data_classes import Interface, Module, Step
+from wei.types import Interface, Module, Step
 
 try:
     import rclpy  # type: ignore

@@ -6,7 +6,8 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from wei.core.events import Event, EventLogger
+from wei.core.events import EventLogger
+from wei.types import Event
 
 router = APIRouter()
 

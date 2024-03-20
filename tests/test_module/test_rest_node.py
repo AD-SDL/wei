@@ -10,7 +10,7 @@ from typing import List
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import (
+from wei.types import (
     ModuleAbout,
     ModuleAction,
     ModuleActionArg,
