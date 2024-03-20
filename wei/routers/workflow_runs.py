@@ -3,11 +3,13 @@ Router for the "runs" endpoints
 """
 
 import json
+import os
+from pathlib import Path
 from typing import Annotated, Any, Dict, Optional
 
 import yaml
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 
 from wei.core.data_classes import Workflow, WorkflowStatus
 from wei.core.loggers import WEI_Logger
@@ -171,3 +173,18 @@ async def log_run_return(run_id: str) -> str:
     wf_run = state_manager.get_workflow_run(run_id)
     with open(wf_run.run_log) as f:
         return f.read()
+
+
+@router.get("/{run_id}/results")
+async def get_wf_files(run_id: str) -> Dict:
+    """Returns the list of files in a given workflow run's result directory."""
+    wf_run = state_manager.get_workflow_run(run_id)
+
+    return {"files": os.listdir(wf_run.result_dir)}
+
+
+@router.get("/{run_id}/file")
+async def get_wf_file(run_id: str, filename: str) -> FileResponse:
+    """Returns a specific file from a workflow run's result directory."""
+    wf_run = state_manager.get_workflow_run(run_id)
+    return FileResponse(Path(wf_run.result_dir) / filename)

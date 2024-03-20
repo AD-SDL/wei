@@ -6,7 +6,7 @@ import json
 from typing import Dict, Optional
 
 from fastapi import APIRouter
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 
 from wei.core.experiment import Experiment, list_experiments
 from wei.core.state_manager import StateManager
@@ -36,25 +36,9 @@ async def log_return(experiment_id: str) -> str:
 
 
 @router.get("/all")
-async def get_experiments() -> str:
-    """Returns the log for a given experiment"""
-    experiment_ids = set()
-    runs = state_manager.get_all_workflow_runs()
-    for wf in runs:
-        experiment_ids.add(runs[wf].experiment_id)
-    return JSONResponse(content={"experiment_ids": list(experiment_ids)})
-
-
-@router.get("/all")
 async def get_all_experiments() -> Dict[str, str]:
     """Returns all experiments inside DataFolder"""
     return list_experiments()
-
-
-@router.get("/{experiment_id}/file")
-async def get_file(filepath: str) -> FileResponse:
-    """Returns a file inside an experiment folder."""
-    return FileResponse(filepath)
 
 
 @router.get("/")
