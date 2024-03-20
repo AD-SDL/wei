@@ -184,7 +184,7 @@ async def get_wf_files(run_id: str) -> Dict:
 
 
 @router.get("/{run_id}/file")
-async def get_wf_file(run_id: str, filepath: str) -> FileResponse:
+async def get_wf_file(run_id: str, filename: str) -> FileResponse:
     """Returns a specific file from a workflow run's result directory."""
     wf_run = state_manager.get_workflow_run(run_id)
-    return FileResponse(Path(wf_run.result_dir) / filepath)
+    return FileResponse(Path(wf_run.result_dir) / filename)
