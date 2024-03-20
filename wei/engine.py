@@ -3,6 +3,7 @@ Engine Class and associated helpers and data
 """
 
 import time
+import traceback
 
 from wei.config import Config
 from wei.core.module import update_active_modules
@@ -27,6 +28,7 @@ class Engine:
             self.scheduler = Scheduler()
         with self.state_manager.state_lock():
             initialize_state()
+        time.sleep(Config.cold_start_delay)
         print("Engine initialized, waiting for workflows...")
 
     def spin(self) -> None:
@@ -37,12 +39,21 @@ class Engine:
         update_active_modules()
         tick = time.time()
         while True:
-            if time.time() - tick > Config.update_interval:
-                update_active_modules()
-                tick = time.time()
-            if self.state_manager.has_state_changed():
-                self.scheduler.run_iteration()
-                update_active_modules()
+            try:
+                if (
+                    time.time() - tick > Config.update_interval
+                    or self.state_manager.has_state_changed()
+                ):
+                    update_active_modules()
+                    self.scheduler.run_iteration()
+                    update_active_modules()
+                    tick = time.time()
+            except Exception:
+                traceback.print_exc()
+                print(
+                    f"Error in engine loop, waiting {Config.update_interval} seconds before trying again."
+                )
+                time.sleep(Config.update_interval)
 
 
 if __name__ == "__main__":

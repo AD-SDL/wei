@@ -1,8 +1,14 @@
 """Handling execution for steps in the RPL-SDL efforts"""
+
 import json
 from typing import Any, Dict, Tuple
 
 from wei.core.data_classes import Interface, Module, Step
+
+try:
+    import socket  # type: ignore
+except ImportError:
+    print("Socket not found. Cannot use TCPInterface")
 
 
 class TcpInterface(Interface):
@@ -50,7 +56,6 @@ class TcpInterface(Interface):
             A record of the execution of the step
 
         """
-        import socket
 
         sock = socket.socket()
         sock.connect(

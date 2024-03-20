@@ -1,4 +1,5 @@
 """Provides base classes for WEI's pytest tests"""
+
 import time
 import unittest
 from pathlib import Path
@@ -7,7 +8,7 @@ import requests
 
 import wei
 from wei import ExperimentClient
-from wei.core.data_classes import WorkcellData
+from wei.core.data_classes import Workcell
 
 
 class TestWEI_Base(unittest.TestCase):
@@ -17,7 +18,7 @@ class TestWEI_Base(unittest.TestCase):
         """Basic setup for WEI's pytest tests"""
         super().__init__(*args, **kwargs)
         self.root_dir = Path(__file__).resolve().parent.parent
-        self.workcell = WorkcellData.from_yaml(
+        self.workcell = Workcell.from_yaml(
             self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
         self.server_host = self.workcell.config.server_host

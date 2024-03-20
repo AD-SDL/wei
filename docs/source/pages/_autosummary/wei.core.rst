@@ -3,21 +3,21 @@ wei.core
 
 .. automodule:: wei.core
 
+   
+   
+   
 
+   
+   
+   
 
+   
+   
+   
 
-
-
-
-
-
-
-
-
-
-
-
-
+   
+   
+   
 
 
 
@@ -39,3 +39,4 @@ wei.core
    wei.core.state_manager
    wei.core.workcell
    wei.core.workflow
+

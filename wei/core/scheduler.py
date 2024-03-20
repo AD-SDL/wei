@@ -9,8 +9,8 @@ from wei.core.events import Events
 from wei.core.location import reserve_source_and_target
 from wei.core.module import reserve_module
 from wei.core.state_manager import StateManager
+from wei.core.step import check_step, run_step
 from wei.core.workcell import find_step_module
-from wei.core.workflow import check_step, run_step
 
 state_manager = StateManager()
 
@@ -51,7 +51,8 @@ class Scheduler:
                         print(
                             f"Starting step {wf_run.name}.{step.name} for run: {run_id}"
                         )
-                        wf_run.start_time = datetime.now()
+                        if wf_run.step_index == 0:
+                            wf_run.start_time = datetime.now()
                         wf_run.hist["run_dir"] = str(wf_run.run_dir)
                         state_manager.set_workflow_run(wf_run)
                         step_process = mpr.Process(

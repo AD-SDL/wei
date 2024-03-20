@@ -1,11 +1,14 @@
 """The server that takes incoming WEI flow requests from the experiment application"""
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from wei.config import Config
 from wei.helpers import parse_args
 from wei.routers import (
+    admin,
     events,
     experiments,
     locations,
@@ -29,6 +32,7 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     None
     """
 
+    app.include_router(admin.router, prefix="/admin")
     app.include_router(workflow_runs.router, prefix="/runs")
     app.include_router(experiments.router, prefix="/experiments")
     app.include_router(events.router, prefix="/events")
@@ -46,6 +50,15 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
 
 app = FastAPI(
     lifespan=lifespan,
+)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

@@ -22,8 +22,8 @@ For more details and specific examples of how to use wei, please see our [docume
 
 To get started with WEI, we recommend:
 
-- Using the [WEI Template Workcell](https://github.com/AD-SDL/wei_template_workcell) as a starting point to learn how to use WEI, and how to create your own Workcell.
 - Consulting the [Documentation](https://rpl-wei.readthedocs.io/en/latest/index.html)
+- Using the [WEI Template Workcell](https://github.com/AD-SDL/wei_template_workcell) as a starting point to learn how to use WEI, and how to create your own Workcell.
 
 ## Installation
 
@@ -63,6 +63,12 @@ For a complete list of make commands available, run `make help`.
     - To skip formatting during commits, use `SKIP=ruff-format git commit ...`
     - To skip all pre-commit hooks, use `git commit --no-verify ...`
 - See [pre-commit documentation](https://pre-commit.com) for more
+
+### Building Documentation
+
+- You can install the documentation python dependencies with `pip install -e '.[docs]'` or `pdm install -G docs`
+- You must install [Graphviz](https://graphviz.org/download/)
+- You can build the docs with `make docs`
 
 ## Contributing
 

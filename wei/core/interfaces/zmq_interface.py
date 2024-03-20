@@ -1,10 +1,14 @@
 """Handling ZMQ execution for steps in the RPL-SDL efforts"""
+
 import json
 from typing import Any, Dict, Tuple
 
-import zmq
-
 from wei.core.data_classes import Interface, Module, Step
+
+try:
+    import zmq  # type: ignore
+except ImportError:
+    print("Socket not found. Cannot use ZMQInterface")
 
 
 class ZmqInterface(Interface):

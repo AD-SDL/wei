@@ -20,5 +20,3 @@ jobs:
         run: make init build
       - name: Test with pytest
         run: make test
-      - name: Cleanup
-        run: make remove

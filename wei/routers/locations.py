@@ -1,6 +1,7 @@
 """
 Router for the "locations" endpoints
 """
+
 from typing import Union
 
 from fastapi import APIRouter, HTTPException

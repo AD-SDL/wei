@@ -1,4 +1,5 @@
 """Contains the Experiment class that manages WEI flows and helps annotate the experiment run"""
+
 import json
 import time
 from pathlib import Path
@@ -52,7 +53,7 @@ class ExperimentClient:
             self.working_dir = Path.cwd()
         else:
             self.working_dir = Path(working_dir)
-        
+
         start_time = time.time()
         waiting = False
         self.output_dir = output_dir
@@ -97,15 +98,22 @@ class ExperimentClient:
                 "experiment_name": experiment_name,
             },
         )
-        if response.status_code >= 400:
+        if not response.ok:
             raise Exception(
                 f"Failed to register experiment with error {response.status_code}: {response.text}"
             )
         self.experiment_id = response.json()["experiment_id"]
+        print(f"Experiment ID: {self.experiment_id}")
         self.experiment_path = response.json()["experiment_path"]
         self.experiment_name = response.json()["experiment_name"]
         if self.output_dir is None:
-            self.output_dir = str(self.working_dir) +  "/experiment_results/" + str(self.experiment_name) + "_id_" + self.experiment_id
+            self.output_dir = (
+                str(self.working_dir)
+                + "/experiment_results/"
+                + str(self.experiment_name)
+                + "_id_"
+                + self.experiment_id
+            )
 
     def validate_workflow(
         self,
@@ -267,67 +275,26 @@ class ExperimentClient:
             time.sleep(1)
         return results
 
-    def get_file(self, input_filepath: str, 
-                 output_filepath: str = "./experiment_results/"
-                 ) -> None:
-        """Returns a file from the WEI experiment directory"""
-        url = f"{self.url}/experiments/{self.experiment_id}/file"
-
-        response = requests.get(url, params={"filepath": input_filepath})
-        Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_filepath, "wb") as f:
-            f.write(response.content)
-    def get_wf_results_files(self, wf_id: str
-                 ) -> Any:
-        """Returns a file from the WEI experiment directory"""
+    def list_wf_result_files(self, wf_id: str) -> Any:
+        """Returns a list of files from the WEI experiment result directory"""
         url = f"{self.url}/runs/{wf_id}/results"
 
         response = requests.get(url)
         return response.json()["files"]
-    def get_wf_results_file(self, input_filepath: str, output_filepath: str, run_id: str
-                 ) -> Any:
-        """Returns a file from the WEI experiment directory"""
+
+    def get_wf_result_file(
+        self, filename: str, output_filepath: str, run_id: str
+    ) -> Any:
+        """Returns a file from the WEI experiment result directory"""
         url = f"{self.url}/runs/{run_id}/file"
 
-        response = requests.get(url, params={"filepath": input_filepath})
-        
-        Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_filepath, "wb") as f:
-            f.write(response.content)
-        return output_filepath
-    def get_step_result_file(self, 
-                run_info: Any,
-                step_name: str,         
-                 output_filepath: str = "",
-                 filename: str = ""
-                 ) -> None:
-        """Returns a file from the WEI experiment directory"""
-        url = f"{self.url}/experiments/{self.experiment_id}/file"
-        input_filepath = run_info["hist"][step_name]["action_msg"]
-        response = requests.get(url, params={"filepath": input_filepath})
-        if filename == "":
+        response = requests.get(url, params={"filename": filename})
 
-            filename = Path(run_info["hist"][step_name]["action_msg"]).name
-        if output_filepath == "":
-            output_filepath = str(self.output_dir) + "/runs/" + str(run_info["name"]) + "/" + str(run_info["run_id"]) +"/" + str(filename)
-         
         Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
         with open(output_filepath, "wb") as f:
             f.write(response.content)
-        return Path(output_filepath)
-    def write_experiment_result(self, data: Any, filename: str, output_dir: str = ""):
-        if output_dir == "":
-            output_dir = self.output_dir
-        Path(output_dir).mkdir(parents=True, exist_ok=True)
-        output_filepath = output_dir + "/" + filename,
-        if isinstance(data, str):
-            with open(output_filepath, "w") as f:
-                f.write(data)
-        else:
-            with open(output_filepath, "wb") as f:
-                f.write(data)
         return output_filepath
-    
+
     def query_run(self, run_id: str) -> Dict[Any, Any]:
         """Checks on a workflow run using the id given
 

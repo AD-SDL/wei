@@ -50,13 +50,13 @@ def initialize_state() -> None:
     Initializes the state of the workcell from the workcell definition.
     """
     from wei.config import Config
-    from wei.core.data_classes import WorkcellData
+    from wei.core.data_classes import Workcell
     from wei.core.location import initialize_workcell_locations
     from wei.core.module import initialize_workcell_modules
     from wei.core.state_manager import StateManager
 
     state_manager = StateManager()
-    state_manager.set_workcell(WorkcellData.from_yaml(Config.workcell_file))
+    state_manager.set_workcell(Workcell.from_yaml(Config.workcell_file))
     initialize_workcell_modules()
     initialize_workcell_locations()
 

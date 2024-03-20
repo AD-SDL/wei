@@ -3,21 +3,21 @@ wei.routers
 
 .. automodule:: wei.routers
 
+   
+   
+   
 
+   
+   
+   
 
+   
+   
+   
 
-
-
-
-
-
-
-
-
-
-
-
-
+   
+   
+   
 
 
 
@@ -33,3 +33,4 @@ wei.routers
    wei.routers.modules
    wei.routers.workcells
    wei.routers.workflow_runs
+

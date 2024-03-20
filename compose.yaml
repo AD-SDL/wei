@@ -8,6 +8,9 @@ services:
     build:
       context: tests/
       dockerfile: ${DOCKERFILE_TEST}
+      tags:
+        - ${IMAGE_TEST}:latest
+        - ${IMAGE_TEST}:dev
     volumes:
       - ${WORKCELLS_DIR}:/workcell_defs
       - ${WEI_DATA_DIR}:/home/app/.wei
@@ -37,8 +40,6 @@ services:
     command: 'python3 wei/tests/test_module/test_rest_node.py
       --port 2000
       --alias synthesis'
-    env_file:
-      - .env
   transfer:
     image: ${IMAGE_TEST}
     container_name: transfer
@@ -47,8 +48,6 @@ services:
     command: 'python3 wei/tests/test_module/test_rest_node.py
       --port 2001
       --alias transfer'
-    env_file:
-      - .env
   measure:
     image: ${IMAGE_TEST}
     container_name: measure
@@ -57,8 +56,6 @@ services:
     command: 'python3 wei/tests/test_module/test_rest_node.py
       --port 2002
       --alias measure'
-    env_file:
-      - .env
 
   #####################
   # WEI Core Services #
@@ -70,7 +67,6 @@ services:
       dockerfile: ${DOCKERFILE}
       tags:
         - ${IMAGE}:latest
-        - ${IMAGE}:${PROJECT_VERSION}
         - ${IMAGE}:dev
     container_name: wei_server
     ports:
@@ -82,7 +78,7 @@ services:
       - ${PROJECT_DIR}:/home/app/wei # for development only
     env_file:
       - .env
-    command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
+    command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
   wei_engine:
@@ -96,7 +92,7 @@ services:
      - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
     env_file:
       - .env
-    command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME} --use_diaspora ${USE_DIASPORA}
+    command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
       - wei_server

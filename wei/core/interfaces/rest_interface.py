@@ -1,4 +1,5 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
+
 import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
@@ -61,9 +62,9 @@ class RestInterface(Interface):
         rest_response = requests.post(
             url,
             params={"action_handle": step.action, "action_vars": json.dumps(step.args)},
-            files={
-                "files": (file, open(path, "rb")) for file, path in step.files.items()
-            },
+            files=[
+                ("files", (file, open(path, "rb"))) for file, path in step.files.items()
+            ],
         )
         try:
             print(rest_response.status_code)
@@ -98,6 +99,7 @@ class RestInterface(Interface):
         url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/about",
+            timeout=10,
         ).json()
         return rest_response
 
@@ -117,5 +119,16 @@ class RestInterface(Interface):
         url = module.config["rest_node_address"]
         rest_response = requests.get(
             url + "/resources",
+            timeout=10,
         ).json()
         return dict(rest_response)
+
+    @staticmethod
+    def send_admin_command(module: Module, command: str, **kwargs: Any) -> Any:
+        """Sends a command to the node"""
+        url = module.config["rest_node_address"]
+        rest_response = requests.post(
+            url + "/admin/" + command,
+            timeout=10,
+        ).json()
+        return rest_response
