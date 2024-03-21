@@ -8,7 +8,8 @@ from wei.config import Config
 from wei.core.events import Events
 from wei.core.interface import InterfaceMap
 from wei.core.location import free_source_and_target, update_source_and_target
-from wei.core.loggers import WEI_Logger
+from wei.core.logs.loggers import Logger
+from wei.core.logs.workflow_helpers import get_workflow_run_dir
 from wei.core.module import clear_module_reservation, get_module_about
 from wei.core.state_manager import StateManager
 from wei.types import (
@@ -97,7 +98,7 @@ def run_step(
     module: Module,
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
-    logger = WEI_Logger.get_workflow_run_logger(wf_run)
+    logger = Logger.get_workflow_run_logger(wf_run)
     step: Step = wf_run.steps[wf_run.step_index]
 
     logger.info(f"Started running step with name: {step.name}")
@@ -109,7 +110,7 @@ def run_step(
         step.start_time = datetime.now()
         action_response, action_msg, action_log = InterfaceMap.interfaces[
             interface
-        ].send_action(step=step, module=module, run_dir=wf_run.run_dir)
+        ].send_action(step=step, module=module, run_dir=get_workflow_run_dir(wf_run))
         step_response = StepResponse(
             action_response=action_response,
             action_msg=action_msg,

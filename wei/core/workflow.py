@@ -4,6 +4,10 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
+from wei.core.logs.workflow_helpers import (
+    get_workflow_run_dir,
+    get_workflow_run_result_dir,
+)
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 from wei.core.step import validate_step
@@ -55,8 +59,8 @@ def create_run(
         }
     )
     wf_run = WorkflowRun(**wf_dict)
-    wf_run.run_dir.mkdir(parents=True, exist_ok=True)
-    wf_run.result_dir.mkdir(parents=True, exist_ok=True)
+    get_workflow_run_dir(wf_run).mkdir(parents=True, exist_ok=True)
+    get_workflow_run_result_dir(wf_run).mkdir(parents=True, exist_ok=True)
 
     steps = []
     for step in workflow.flowdef:
@@ -106,7 +110,7 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
     if files:
         for file in files:
             print(file)
-            file_path = wf_run.run_dir / file.filename
+            file_path = get_workflow_run_dir(wf_run) / file.filename
             with open(file_path, "wb") as f:
                 f.write(file.file.read())
             for step in wf_run.steps:

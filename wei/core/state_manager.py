@@ -194,7 +194,7 @@ class StateManager:
         """
         Returns an experiment by ID
         """
-        return ExperimentInfo(self._experiments[experiment_id])
+        return ExperimentInfo.model_validate(self._experiments[experiment_id])
 
     def get_all_experiments(self) -> Dict[str, ExperimentInfo]:
         """

@@ -5,6 +5,7 @@ from pathlib import Path
 import requests
 
 from wei.types import Location, Module, Workcell
+from wei.types.workflow_types import WorkflowRun
 
 from .test_base import TestWEI_Base
 
@@ -50,4 +51,4 @@ class Test_Workcell_Base(TestWEI_Base):
             assert Module.model_validate(module)
         assert isinstance(response.json().get("workflows"), dict)
         for wf_run in response.json().get("workflows").values():
-            assert Module.model_validate(wf_run)
+            assert WorkflowRun.model_validate(wf_run)

@@ -12,6 +12,7 @@ from wei.core.scheduler import Scheduler, SequentialScheduler
 from wei.core.state_manager import StateManager
 from wei.core.workflow import cancel_workflow_run
 from wei.helpers import initialize_state, parse_args
+from wei.types.workflow_types import WorkflowStatus
 
 
 class Engine:
@@ -28,8 +29,13 @@ class Engine:
             reset_locations=Config.reset_locations,
             clear_workflow_runs=Config.clear_workflow_runs,
         )
-        for wf_run in self.state_manager.get_workflows():
-            cancel_workflow_run(wf_run)
+        for wf_run in self.state_manager.get_all_workflow_runs().values():
+            if wf_run.status in [
+                WorkflowStatus.RUNNING,
+                WorkflowStatus.QUEUED,
+                WorkflowStatus.WAITING,
+            ]:
+                cancel_workflow_run(wf_run)
         if Config.sequential_scheduler:
             self.scheduler = SequentialScheduler()
         else:

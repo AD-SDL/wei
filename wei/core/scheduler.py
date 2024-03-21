@@ -6,6 +6,7 @@ from datetime import datetime
 from wei.config import Config
 from wei.core.events import Events
 from wei.core.location import reserve_source_and_target
+from wei.core.logs.workflow_helpers import get_workflow_run_dir
 from wei.core.module import reserve_module
 from wei.core.state_manager import StateManager
 from wei.core.step import check_step, run_step
@@ -36,7 +37,7 @@ class Scheduler:
                         Config.server_host, Config.server_port, wf_run.experiment_id
                     ).log_wf_queued(wf_run.name, run_id)
                     state_manager.set_workflow_run(wf_run)
-                elif wf_run.status == WorkflowStatus.QUEUED:
+                elif wf_run.status in [WorkflowStatus.QUEUED, WorkflowStatus.WAITING]:
                     step = wf_run.steps[wf_run.step_index]
                     if check_step(wf_run.experiment_id, run_id, step):
                         module = find_step_module(
@@ -53,7 +54,7 @@ class Scheduler:
                         )
                         if wf_run.step_index == 0:
                             wf_run.start_time = datetime.now()
-                        wf_run.hist["run_dir"] = str(wf_run.run_dir)
+                        wf_run.hist["run_dir"] = str(get_workflow_run_dir(wf_run))
                         state_manager.set_workflow_run(wf_run)
                         step_process = mpr.Process(
                             target=run_step,
@@ -95,7 +96,7 @@ class SequentialScheduler:
                         Config.server_host, Config.server_port, wf_run.experiment_id
                     ).log_wf_queued(wf_run.name, run_id)
                     state_manager.set_workflow_run(wf_run)
-                elif wf_run.status == WorkflowStatus.QUEUED:
+                elif wf_run.status in [WorkflowStatus.QUEUED, WorkflowStatus.WAITING]:
                     step = wf_run.steps[wf_run.step_index]
                     if check_step(wf_run.experiment_id, run_id, step) and (
                         self.current_wf_run_id is None
@@ -115,7 +116,7 @@ class SequentialScheduler:
                             f"Starting step {wf_run.name}.{step.name} for run: {run_id}"
                         )
                         wf_run.start_time = datetime.now()
-                        wf_run.hist["run_dir"] = str(wf_run.run_dir)
+                        wf_run.hist["run_dir"] = str(get_workflow_run_dir(wf_run))
                         state_manager.set_workflow_run(wf_run)
                         step_process = mpr.Process(
                             target=run_step,

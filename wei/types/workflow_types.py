@@ -2,17 +2,13 @@
 
 from datetime import datetime, timedelta
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from pydantic import (
     Field,
-    computed_field,
-    field_serializer,
     field_validator,
 )
 
-from wei.core.experiment import get_experiment_runs_dir
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.module_types import SimpleModule
 from wei.types.step_types import Step
@@ -40,6 +36,7 @@ class WorkflowStatus(str, Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     UNKNOWN = "unknown"
+    CANCELLED = "cancelled"
 
 
 class Workflow(BaseModel):
@@ -93,41 +90,6 @@ class WorkflowRun(Workflow):
     """Time the workflow finished running"""
     duration: Optional[timedelta] = None
     """Duration of the workflow's run"""
-
-    @computed_field  # type: ignore
-    @property
-    def run_dir(self) -> Path:
-        """Path to the run directory"""
-        return Path(
-            get_experiment_runs_dir(self.experiment_id) / f"{self.name}_{self.run_id}"
-        )
-
-    @computed_field  # type: ignore
-    @property
-    def run_log(self) -> Path:
-        """Path to the run directory"""
-        return Path(
-            self.run_dir,
-            self.run_id + "_run_log.log",
-        )
-
-    @computed_field  # type: ignore
-    @property
-    def result_dir(self) -> Path:
-        """Path to the result directory"""
-        return Path(self.run_dir, "results")
-
-    @field_serializer("run_dir")
-    def _serialize_run_dir(self, run_dir: Path) -> str:
-        return str(run_dir)
-
-    @field_serializer("result_dir")
-    def _serialize_result_dir(self, result_dir: Path) -> str:
-        return str(result_dir)
-
-    @field_serializer("run_log")
-    def _serialize_run_log(self, run_log: Path) -> str:
-        return str(run_log)
 
 
 class Location(BaseModel):

@@ -11,9 +11,16 @@ import yaml
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.loggers import WEI_Logger
+from wei.core.logs.loggers import Logger
+from wei.core.logs.workflow_helpers import (
+    get_workflow_run_log_path,
+    get_workflow_run_result_dir,
+)
 from wei.core.state_manager import StateManager
-from wei.core.workflow import create_run, save_workflow_files
+from wei.core.workflow import (
+    create_run,
+    save_workflow_files,
+)
 from wei.types import Workflow, WorkflowStatus
 
 router = APIRouter()
@@ -61,7 +68,7 @@ async def start_run(
             raise HTTPException(
                 status_code=400, detail="Payload must be a dictionary with string keys"
             )
-    logger = WEI_Logger.get_experiment_logger(experiment_id)
+    logger = Logger.get_experiment_logger(experiment_id)
     logger.info(f"Received job run request: {wf.name}")
     workcell = state_manager.get_workcell()
 
@@ -94,7 +101,7 @@ async def validate_workflow(
         workflow_content = await workflow.read()
         workflow_content_str = workflow_content.decode("utf-8")
         wf = Workflow(**yaml.safe_load(workflow_content_str))
-        logger = WEI_Logger.get_experiment_logger(experiment_id)
+        logger = Logger.get_experiment_logger(experiment_id)
         logger.info(f"Received job run request: {wf.name}")
         workcell = state_manager.get_workcell()
 
@@ -171,7 +178,7 @@ async def log_run_return(run_id: str) -> str:
        a string with the log data for the run requested"""
 
     wf_run = state_manager.get_workflow_run(run_id)
-    with open(wf_run.run_log) as f:
+    with open(get_workflow_run_log_path(wf_run)) as f:
         return f.read()
 
 
@@ -180,11 +187,11 @@ async def get_wf_files(run_id: str) -> Dict:
     """Returns the list of files in a given workflow run's result directory."""
     wf_run = state_manager.get_workflow_run(run_id)
 
-    return {"files": os.listdir(wf_run.result_dir)}
+    return {"files": os.listdir(get_workflow_run_result_dir(wf_run))}
 
 
 @router.get("/{run_id}/file")
 async def get_wf_file(run_id: str, filename: str) -> FileResponse:
     """Returns a specific file from a workflow run's result directory."""
     wf_run = state_manager.get_workflow_run(run_id)
-    return FileResponse(Path(wf_run.result_dir) / filename)
+    return FileResponse(Path(get_workflow_run_result_dir(wf_run)) / filename)

@@ -269,7 +269,10 @@ class ExperimentClient:
                 if run_info["status"] == WorkflowStatus.COMPLETED:
                     print()
                     break
-                elif run_info["status"] == WorkflowStatus.FAILED:
+                elif run_info["status"] in [
+                    WorkflowStatus.FAILED,
+                    WorkflowStatus.CANCELLED,
+                ]:
                     print()
                     print(json.dumps(response.json(), indent=2))
                     break
