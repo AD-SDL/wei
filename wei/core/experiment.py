@@ -17,6 +17,7 @@ def register_new_experiment(experiment_design: ExperimentDesign) -> ExperimentIn
     new_experiment = ExperimentInfo.model_validate(
         experiment_design, from_attributes=True
     )
+    print(new_experiment.model_dump_json())
     get_experiment_dir(
         new_experiment.experiment_id, new_experiment.experiment_name
     ).mkdir(parents=True, exist_ok=True)

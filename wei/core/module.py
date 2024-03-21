@@ -57,6 +57,7 @@ def update_module(module_name: str, module: Module) -> None:
                 in [
                     WorkflowStatus.COMPLETED,
                     WorkflowStatus.FAILED,
+                    WorkflowStatus.CANCELLED,
                 ]
                 or reserving_wf.steps[reserving_wf.step_index].module != module.name
             ):

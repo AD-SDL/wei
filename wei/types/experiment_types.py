@@ -1,8 +1,9 @@
 """Types related to experiments"""
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import (
+    AliasChoices,
     Field,
 )
 
@@ -27,17 +28,23 @@ class ExperimentDataField(BaseModel):
     """Type of the field"""
     description: Optional[str] = None
     """Description of the field"""
+    example: Optional[Any] = None
+    """An example value for the field"""
 
 
 class ExperimentDesign(BaseModel):
     """Definition for an experiment"""
 
-    experiment_name: Optional[str] = None
+    experiment_name: Optional[str] = Field(
+        default=None, alias=AliasChoices("name", "experiment_name")
+    )
     """Name of the experiment"""
     campaign_id: Optional[str] = None
     """ID of the campaign this experiment should be associated with (note: this campaign must already exist)"""
-    inputs: Optional[Dict[str, ExperimentDataField]] = None
-    """Inputs to a single iteration of the experiment's loop"""
+    description: Optional[str] = None
+    """Description of the experiment"""
+    parameters: Optional[Dict[str, ExperimentDataField]] = None
+    """Parameters for the experiment"""
     outputs: Optional[Dict[str, ExperimentDataField]] = None
     """Outputs from a single iteration of the experiment's loop"""
 
