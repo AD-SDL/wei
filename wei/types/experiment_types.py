@@ -1,27 +1,12 @@
 """Types related to experiments"""
 
-from typing import Any, List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import (
     Field,
 )
 
 from wei.types.base_types import BaseModel, ulid_factory
-
-
-class DataPoint(BaseModel):
-    """Generic experiment data point type"""
-
-    experiment_id: str
-    """ID of the experiment this data point belongs to"""
-    campaign_id: Optional[str] = None
-    """ID of the campaign this data point belongs to"""
-    data_point_id: str = Field(default_factory=ulid_factory)
-    """ID of the data point"""
-    input: Any
-    """Input data for the data point"""
-    output: Any
-    """Output data for the data point"""
 
 
 class Campaign(BaseModel):
@@ -31,18 +16,34 @@ class Campaign(BaseModel):
     """Name of the campaign"""
     campaign_id: str = Field(default_factory=ulid_factory)
     """ID of the campaign"""
-    experiments: List[str] = []
+    experiment_ids: List[str] = []
     """Experiments associated with the campaign"""
 
 
-class ExperimentDataClass(BaseModel):
+class ExperimentDataField(BaseModel):
+    """Defines a single field in the data"""
+
+    type: str
+    """Type of the field"""
+    description: Optional[str] = None
+    """Description of the field"""
+
+
+class ExperimentDesign(BaseModel):
     """Definition for an experiment"""
 
-    experiment_id: Optional[str] = Field(default_factory=ulid_factory)
-    """ID of the experiment"""
-    experiment_name: Optional[str]  # = Field(default_factory=get_experiment_name)
+    experiment_name: Optional[str] = None
     """Name of the experiment"""
     campaign_id: Optional[str] = None
-    """ID of the campaign this experiment is associated with"""
-    data_points: List[DataPoint] = []
-    """Data points associated with the experiment"""
+    """ID of the campaign this experiment should be associated with (note: this campaign must already exist)"""
+    inputs: Optional[Dict[str, ExperimentDataField]] = None
+    """Inputs to a single iteration of the experiment's loop"""
+    outputs: Optional[Dict[str, ExperimentDataField]] = None
+    """Outputs from a single iteration of the experiment's loop"""
+
+
+class ExperimentInfo(ExperimentDesign):
+    """Definition and metadata for an experiment"""
+
+    experiment_id: str = Field(default_factory=ulid_factory)
+    """ID of the experiment"""

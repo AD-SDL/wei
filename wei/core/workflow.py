@@ -8,6 +8,7 @@ from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 from wei.core.step import validate_step
 from wei.types import Step, Workcell, Workflow, WorkflowRun
+from wei.types.workflow_types import WorkflowStatus
 
 state_manager = StateManager()
 
@@ -112,4 +113,12 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
                 for step_file in step.files:
                     step.files[step_file] = str(file_path)
                     print(file_path)
+    return wf_run
+
+
+def cancel_workflow_run(wf_run: WorkflowRun) -> None:
+    """Cancels the workflow run"""
+    wf_run.status = WorkflowStatus.CANCELLED
+    with state_manager.state_lock():
+        state_manager.set_workflow_run(wf_run)
     return wf_run

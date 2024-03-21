@@ -3,13 +3,15 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from warnings import warn
 
 import requests
 
 from wei.core.events import Events
 from wei.types import Workflow, WorkflowStatus
+from wei.types.base_types import PathLike
+from wei.types.experiment_types import ExperimentDesign, ExperimentInfo
 
 
 class ExperimentClient:
@@ -17,36 +19,48 @@ class ExperimentClient:
 
     def __init__(
         self,
-        server_addr: str,
+        server_host: str,
         server_port: str,
-        experiment_name: Optional[str] = None,
+        experiment_design: Optional[PathLike | ExperimentDesign] = None,
         experiment_id: Optional[str] = None,
-        working_dir: Optional[Union[str, Path]] = None,
+        working_dir: Optional[PathLike] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
 
         Parameters
         ----------
-        server_addr: str
+        server_host: str
             address for WEI server
 
         server_port: str
             port for WEI server
 
         experiment_name: str
-            Human chosen name for experiment
+            Human readable name for the experiment
 
         experiment_id: Optional[str]
-            Programmatically generated experiment id, can be reused if needed
+            Programmatically generated experiment id, can be reused to continue an in-progress experiment
 
         working_dir: Optional[Union[str, Path]]
             The directory to resolve relative paths from. Defaults to the current working directory.
 
         """
 
-        self.server_addr = server_addr
+        self.server_host = server_host
         self.server_port = server_port
-        self.url = f"http://{self.server_addr}:{self.server_port}"
+        self.url = f"http://{self.server_host}:{self.server_port}"
+
+        if isinstance(experiment_design, PathLike):
+            self.experiment_design = ExperimentDesign.from_yaml(experiment_design)
+        elif experiment_design:
+            assert ExperimentDesign.model_validate(
+                experiment_design
+            ), "experiment_design is invalid"
+            self.experiment_design = experiment_design
+        else:
+            assert (
+                experiment_id is not None
+            ), "ExperimentDesign is required unless continuing an existing experiment"
 
         if working_dir is None:
             self.working_dir = Path.cwd()
@@ -57,7 +71,10 @@ class ExperimentClient:
         waiting = False
         while time.time() - start_time < 60:
             try:
-                self.register_experiment(experiment_id, experiment_name)
+                if experiment_id is None:
+                    self._register_experiment()
+                else:
+                    self._continue_experiment(experiment_id)
                 break
             except requests.exceptions.ConnectionError:
                 if not waiting:
@@ -65,17 +82,10 @@ class ExperimentClient:
                     print("Waiting to connect to server...")
                 time.sleep(1)
 
-        self.events = Events(
-            self.server_addr,
-            self.server_port,
-            self.experiment_id,
-        )
-
         self.events.start_experiment()
 
-    def register_experiment(self, experiment_id, experiment_name) -> None:
-        """Gets an existing experiment from the server,
-           or creates a new one if it doesn't exist
+    def _register_experiment(self) -> None:
+        """Registers a new experiment with the server
 
         Parameters
         ----------
@@ -91,21 +101,43 @@ class ExperimentClient:
         """
 
         url = f"{self.url}/experiments/"
-        response = requests.get(
+        response = requests.post(
             url,
-            params={
-                "experiment_id": experiment_id,
-                "experiment_name": experiment_name,
-            },
+            json=self.experiment_design.model_dump(mode="json"),
         )
         if not response.ok:
-            raise Exception(
-                f"Failed to register experiment with error {response.status_code}: {response.text}"
-            )
-        self.experiment_id = response.json()["experiment_id"]
-        print(f"Experiment ID: {self.experiment_id}")
-        self.experiment_path = response.json()["experiment_path"]
-        self.experiment_name = response.json()["experiment_name"]
+            response.raise_for_status()
+        self.experiment_info = ExperimentInfo.model_validate(response.json())
+        print(f"Experiment ID: {self.experiment_info.experiment_id}")
+
+        self.events = Events(
+            self.server_host,
+            self.server_port,
+            self.experiment_info.experiment_id,
+        )
+
+        self.events.start_experiment()
+
+    def _continue_experiment(self, experiment_id) -> None:
+        """Resumes an existing experiment with the server
+
+        Parameters
+        ----------
+        experiment_id: str
+            Programmatically generated experiment id, can be reused to continue an existing experiment
+
+        Returns
+        -------
+        None
+        """
+
+        url = f"{self.url}/experiments/{experiment_id}"
+        response = requests.get(url)
+        if not response.ok:
+            response.raise_for_status()
+        self.experiment_info = ExperimentInfo.model_validate(response.json())
+
+        self.events.continue_experiment()
 
     def validate_workflow(
         self,
@@ -122,7 +154,7 @@ class ExperimentClient:
 
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
             params = {
-                "experiment_id": self.experiment_id,
+                "experiment_id": self.experiment_info.experiment_id,
                 "payload": payload,
             }
             response = requests.post(
@@ -137,9 +169,11 @@ class ExperimentClient:
                     ),
                 },
             )
+            if not response.ok:
+                response.raise_for_status()
         return response
 
-    def get_files_from_workflow(
+    def _get_files_from_workflow(
         self, workflow: Workflow, payload: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -196,12 +230,12 @@ class ExperimentClient:
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         workflow = Workflow.from_yaml(workflow_file)
         url = f"{self.url}/runs/start"
-        files = self.get_files_from_workflow(workflow, payload)
+        files = self._get_files_from_workflow(workflow, payload)
         response = requests.post(
             url,
             data={
                 "workflow": workflow.model_dump_json(),
-                "experiment_id": self.experiment_id,
+                "experiment_id": self.experiment_info.experiment_id,
                 "payload": json.dumps(payload),
                 "simulate": simulate,
             },
@@ -210,9 +244,6 @@ class ExperimentClient:
             },
         )
         if not response.ok:
-            print(f"{response.status_code}: {response.reason}")
-            print(response.text)
-            print(response.request)
             response.raise_for_status()
         response_json = response.json()
         if blocking:
@@ -321,28 +352,7 @@ class ExperimentClient:
         else:
             response.raise_for_status()
 
-    def query_queue(self) -> Dict[Any, Any]:
-        """Returns the queue info for this experiment as a string
-
-        Parameters
-        ----------
-
-        None
-
-        Returns
-        -------
-
-        response: Dict
-           The JSON portion of the response from the server with the queue info"""
-        url = f"{self.url}/queue/info"
-        response = requests.get(url)
-
-        if response.ok:
-            return response.json()
-        else:
-            response.raise_for_status()
-
-    def register_exp(self) -> Dict[Any, Any]:
+    def register_exp(self) -> None:
         """Deprecated method for registering an experiment with the server
 
         Parameters
@@ -363,4 +373,3 @@ class ExperimentClient:
             DeprecationWarning,
             stacklevel=2,
         )
-        return {"exp_dir": self.experiment_path}

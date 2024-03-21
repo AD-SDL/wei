@@ -2,7 +2,7 @@
 
 from .base_types import BaseModel, PathLike, ulid_factory
 from .event_types import Event
-from .experiment_types import Campaign, DataPoint, ExperimentDataClass
+from .experiment_types import Campaign, DataPointDefinition, ExperimentInfo
 from .module_types import (
     AdminCommands,
     Interface,
@@ -41,8 +41,8 @@ __all__ = [
     "Workcell",
     "WorkcellConfig",
     "Campaign",
-    "DataPoint",
-    "ExperimentDataClass",
+    "DataPointDefinition",
+    "ExperimentInfo",
     "Event",
     "Interface",
 ]

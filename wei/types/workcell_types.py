@@ -19,8 +19,16 @@ class WorkcellConfig(BaseModel, extra="allow"):
     extra fields to be added to the config, beyond what's defined below
     """
 
+    lab_name: str = Field(
+        default="wei",
+        description="Name of the lab to associate the workcell and all associated data with",
+    )
     use_diaspora: bool = Field(
         default=False, description="Whether or not to use diaspora"
+    )
+    kafka_topic: str = Field(
+        default="wei_diaspora",
+        description="The Kafka topic to publish to if using diaspora",
     )
     verify_locations_before_transfer: bool = Field(
         default=False,
@@ -33,6 +41,10 @@ class WorkcellConfig(BaseModel, extra="allow"):
     reset_locations: bool = Field(
         default=True,
         description="Whether or not to reset locations when the Engine (re)starts",
+    )
+    clear_workflow_runs: bool = Field(
+        default=False,
+        description="Whether or not to clear workflow runs when the Engine (re)starts",
     )
     update_interval: float = Field(
         default=5.0, description="How often to update the workcell state"

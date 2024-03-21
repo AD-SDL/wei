@@ -12,7 +12,7 @@ from pydantic import (
     field_validator,
 )
 
-from wei.core.experiment import Experiment
+from wei.core.experiment import get_experiment_runs_dir
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.module_types import SimpleModule
 from wei.types.step_types import Step
@@ -99,8 +99,7 @@ class WorkflowRun(Workflow):
     def run_dir(self) -> Path:
         """Path to the run directory"""
         return Path(
-            Experiment(experiment_id=self.experiment_id).run_dir,
-            f"{self.name}_{self.run_id}",
+            get_experiment_runs_dir(self.experiment_id) / f"{self.name}_{self.run_id}"
         )
 
     @computed_field  # type: ignore

@@ -29,29 +29,31 @@ class EventLogger:
         None
         """
         self.experiment_id = experiment_id
-        self.kafka_topic = "wei_diaspora"
         self.state_manager = StateManager()
 
+    @classmethod
+    def initialize_diaspora(cls) -> None:
+        """Initializes the Kafka producer and creates the topic if it doesn't exist already"""
         if Config.use_diaspora:
             try:
                 from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
 
                 assert block_until_ready()
-                self.kafka_producer = KafkaProducer()
-                print("Creating Diaspora topic: %s", self.kafka_topic)
+                cls.kafka_producer = KafkaProducer()
+                print("Creating Diaspora topic: %s", Config.kafka_topic)
                 c = Client()
-                assert c.register_topic(self.kafka_topic)["status"] in [
+                assert c.register_topic(cls.kafka_topic)["status"] in [
                     "success",
                     "no-op",
                 ]
             except Exception as e:
                 print(e)
-                print(
-                    "Failed to connect to Diaspora or create topic. Have you registered it already?"
-                )
+                print("Failed to connect to Diaspora or create topic.")
+                cls.kafka_producer = None
+                cls.kafka_topic = None
         else:
-            self.kafka_producer = None
-            self.kafka_topic = None
+            cls.kafka_producer = None
+            cls.kafka_topic = None
 
     def log_event(self, log_value: Event) -> Dict[Any, Any]:
         """logs an event in the proper place for the given experiment
@@ -152,6 +154,16 @@ class Events:
            The JSON portion of the response from the server"""
 
         return self._log_event("EXPERIMENT", "START")
+
+    def continue_experiment(self) -> Dict[Any, Any]:
+        """logs the continuation of a given experiment
+
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+
+        return self._log_event("EXPERIMENT", "CONTINUE")
 
     def end_experiment(self) -> Dict[Any, Any]:
         """logs the end of an experiment

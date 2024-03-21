@@ -3,13 +3,18 @@ Router for the "experiments"/"exp" endpoints
 """
 
 import json
-from typing import Dict, Optional
+from typing import Dict
 
 from fastapi import APIRouter
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 
-from wei.core.experiment import Experiment, list_experiments
+from wei.core.experiment import (
+    get_experiment,
+    get_experiment_log_file,
+    register_new_experiment,
+)
 from wei.core.state_manager import StateManager
+from wei.types.experiment_types import Campaign, ExperimentDesign, ExperimentInfo
 
 router = APIRouter()
 
@@ -19,10 +24,8 @@ state_manager = StateManager()
 @router.get("/{experiment_id}/log")
 async def log_return(experiment_id: str) -> str:
     """Returns the log for a given experiment"""
-    experiment = Experiment(experiment_id=experiment_id)
-
     with open(
-        experiment.experiment_log_file,
+        get_experiment_log_file(experiment_id),
         "r",
     ) as f:
         val = f.readlines()
@@ -36,55 +39,44 @@ async def log_return(experiment_id: str) -> str:
 
 
 @router.get("/all")
-async def get_experiments() -> str:
-    """Returns the log for a given experiment"""
-    experiment_ids = set()
-    runs = state_manager.get_all_workflow_runs()
-    for wf in runs:
-        experiment_ids.add(runs[wf].experiment_id)
-    return JSONResponse(content={"experiment_ids": list(experiment_ids)})
-
-
-@router.get("/all")
 async def get_all_experiments() -> Dict[str, str]:
     """Returns all experiments inside DataFolder"""
-    return list_experiments()
+    return state_manager.get_all_experiments()
 
 
-@router.get("/{experiment_id}/file")
-async def get_file(filepath: str) -> FileResponse:
-    """Returns a file inside an experiment folder."""
-    return FileResponse(filepath)
+@router.get("/{experiment_id}")
+def get_experiment_endpoint(experiment_id: str) -> ExperimentInfo:
+    """Returns the details for a specific experiment given the id"""
+    return get_experiment(experiment_id)
 
 
-@router.get("/")
+@router.post("/")
 def register_experiment(
-    experiment_name: str,
-    experiment_id: Optional[str] = None,
-) -> Dict[str, str]:
-    """Pulls an experiment and creates the files and logger for it
+    experiment_design: ExperimentDesign,
+) -> ExperimentInfo:
+    """Creates a new experiment, optionally associating it with a campaign"""
+    return register_new_experiment(experiment_design)
+
+
+@router.post("/campaign")
+def register_campaign(campaign_name: str) -> Campaign:
+    """Creates a new campaign
 
     Parameters
     ----------
-    experiment_name: str
-        The human created name of the experiment
-    experiment_id : str
-       The programmatically generated id of the experiment for the workflow
+    campaign_name: str
+        The human readable name of the campaign
     Returns
     -------
-     response: Dict
-       a dictionary including the successfulness of the queueing, the jobs ahead and the id
-
+    response: Campaign
     """
 
-    experiment = Experiment(
-        experiment_name=experiment_name, experiment_id=experiment_id
-    )
-    experiment.experiment_dir.mkdir(parents=True, exist_ok=True)
-    experiment.run_dir.mkdir(parents=True, exist_ok=True)
+    campaign = Campaign(campaign_name=campaign_name)
+    state_manager.set_campaign(campaign)
+    return campaign
 
-    return {
-        "experiment_id": experiment.experiment_id,
-        "experiment_name": experiment.experiment_name,
-        "experiment_path": str(experiment.experiment_dir),
-    }
+
+@router.get("/{campaign_id}")
+def get_campaign(campaign_id: str) -> Campaign:
+    """Returns the details of a campaign"""
+    return state_manager.get_campaign(campaign_id)

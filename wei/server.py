@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from wei.config import Config
+from wei.core.events import EventLogger
 from wei.helpers import parse_args
 from wei.routers import (
     admin,
@@ -40,6 +41,8 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     app.include_router(modules.router, prefix="/modules")
     app.include_router(workcells.router, prefix="/workcells")
     app.include_router(workcells.router, prefix="/wc")
+
+    EventLogger.initialize_diaspora()
 
     # Yield control to the application
     yield

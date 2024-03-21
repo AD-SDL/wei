@@ -1,0 +1,13 @@
+experiment_name: WEITestExperiment
+campaign_id: null
+inputs:
+  foo:
+    type: float
+    description: The amount of foo to use
+  bar:
+    type: float
+    description: The amount of bar to use
+outputs:
+  foobar:
+    type: float
+    description: The amount of foobar synthesized

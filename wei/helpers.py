@@ -2,6 +2,7 @@
 Imports are intentionally kept to a minimum and tightly scoped
 to avoid circular dependencies."""
 
+import csv
 from argparse import Namespace
 from pathlib import Path
 from typing import Optional, Union
@@ -94,3 +95,25 @@ def parse_args() -> Namespace:
         if value is not None:
             setattr(Config, argument, value)
     Config.configured = True
+
+
+def flatten_json(json_data, parent_key="", sep="_"):
+    """Converts nested json data to a flat dictionary"""
+    items = []
+    for key, value in json_data.items():
+        new_key = parent_key + sep + key if parent_key else key
+        if isinstance(value, dict):
+            items.extend(flatten_json(value, new_key, sep=sep).items())
+        else:
+            items.append((new_key, value))
+    return dict(items)
+
+
+def json_to_csv(json_data, csv_file_path):
+    """Converts json data to a csv file"""
+    flattened_data = [flatten_json(record) for record in json_data]
+    fieldnames = flattened_data[0].keys()
+    with open(csv_file_path, "w", newline="") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(flattened_data)

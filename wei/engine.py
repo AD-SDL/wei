@@ -6,9 +6,11 @@ import time
 import traceback
 
 from wei.config import Config
+from wei.core.experiment import parse_experiments_from_disk
 from wei.core.module import update_active_modules
 from wei.core.scheduler import Scheduler, SequentialScheduler
 from wei.core.state_manager import StateManager
+from wei.core.workflow import cancel_workflow_run
 from wei.helpers import initialize_state, parse_args
 
 
@@ -21,7 +23,13 @@ class Engine:
     def __init__(self) -> None:
         """Initialize the scheduler."""
         self.state_manager = StateManager()
-        self.state_manager.clear_state(reset_locations=Config.reset_locations)
+        parse_experiments_from_disk()
+        self.state_manager.clear_state(
+            reset_locations=Config.reset_locations,
+            clear_workflow_runs=Config.clear_workflow_runs,
+        )
+        for wf_run in self.state_manager.get_workflows():
+            cancel_workflow_run(wf_run)
         if Config.sequential_scheduler:
             self.scheduler = SequentialScheduler()
         else:
