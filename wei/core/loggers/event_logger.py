@@ -7,9 +7,14 @@ from wei.core.loggers.loggers import Logger
 from wei.core.state_manager import StateManager
 from wei.types import Event
 
+state_manager = StateManager()
+
 
 class EventLogger:
     """Registers Events during the Experiment execution both in a logfile and on Kafka"""
+
+    kafka_producer = None
+    kafka_topic = None
 
     def __init__(
         self,
@@ -27,7 +32,6 @@ class EventLogger:
         None
         """
         self.experiment_id = experiment_id
-        self.state_manager = StateManager()
 
     @classmethod
     def initialize_diaspora(cls) -> None:
@@ -38,7 +42,8 @@ class EventLogger:
 
                 assert block_until_ready()
                 cls.kafka_producer = KafkaProducer()
-                print("Creating Diaspora topic: %s", Config.kafka_topic)
+                cls.kafka_topic = Config.kafka_topic
+                print(f"Creating Diaspora topic: {cls.kafka_topic}")
                 c = Client()
                 assert c.register_topic(cls.kafka_topic)["status"] in [
                     "success",
@@ -66,15 +71,22 @@ class EventLogger:
         None
         """
 
-        log_value.workcell_id = self.state_manager.get_workcell_id()
+        log_value.workcell_id = state_manager.get_workcell_id()
         logger = Logger.get_experiment_logger(self.experiment_id)
         logger.info(log_value.model_dump_json())
+        if Config.use_diaspora:
+            self.log_event_diaspora(log_value)
 
-        if self.kafka_producer:
+    def log_event_diaspora(self, log_value: Event) -> None:
+        """Logs an event to diaspora"""
+
+        if self.kafka_producer and self.kafka_topic:
             try:
                 future = self.kafka_producer.send(
                     self.kafka_topic, log_value.model_dump(mode="json")
                 )
                 print(future.get(timeout=10))
             except Exception as e:
-                print(str(e))
+                print(f"Failed to log event to diaspora: {str(e)}")
+        else:
+            print("Diaspora not initialized.")

@@ -118,6 +118,9 @@ def parse_experiments_from_disk():
     experiment_dir_pattern = r"(.+)_id_(.+)"
     for experiment_dir in subdirs:
         regex_match = re.match(experiment_dir_pattern, experiment_dir)
+        if regex_match is None:
+            # Name doesn't match the pattern, so skip it
+            continue
         experiment_id = regex_match[2]
         try:
             experiment = state_manager.get_experiment(experiment_id)
