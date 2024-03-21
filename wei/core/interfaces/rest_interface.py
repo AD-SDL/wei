@@ -84,7 +84,7 @@ class RestInterface(Interface):
                 path = Path(step.id + "_" + Path(response.action_msg).name)
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
-            response.action_msg = str(path)
+            response.action_msg = path.name
         else:
             response = StepResponse.model_validate(rest_response.json())
         action_response = response.action_response

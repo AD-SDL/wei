@@ -81,7 +81,6 @@ class ExperimentClient:
                     waiting = True
                     print("Waiting to connect to server...")
                 time.sleep(1)
-
         self.events.start_experiment()
 
     def _register_experiment(self) -> None:
@@ -298,14 +297,28 @@ class ExperimentClient:
             time.sleep(1)
         return results
 
-    def get_file(self, input_filepath: str, output_filepath: str) -> None:
-        """Returns a file from the WEI experiment directory"""
-        url = f"{self.url}/experiments/{self.experiment_id}/file"
+    def list_wf_result_files(self, run_id: str) -> Any:
+        """Returns a list of files from the WEI experiment result directory"""
+        url = f"{self.url}/runs/{run_id}/results"
 
-        response = requests.get(url, params={"filepath": input_filepath})
+        response = requests.get(url)
+        return response.json()["files"]
+
+    def get_wf_result_file(
+        self,
+        run_id: str,
+        filename: str,
+        output_filepath: str,
+    ) -> Any:
+        """Returns a file from the WEI experiment result directory"""
+        url = f"{self.url}/runs/{run_id}/file"
+
+        response = requests.get(url, params={"filename": filename})
+
         Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
         with open(output_filepath, "wb") as f:
             f.write(response.content)
+        return output_filepath
 
     def query_run(self, run_id: str) -> Dict[Any, Any]:
         """Checks on a workflow run using the id given
