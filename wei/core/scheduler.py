@@ -6,7 +6,7 @@ from datetime import datetime
 from wei.config import Config
 from wei.core.events import Events
 from wei.core.location import reserve_source_and_target
-from wei.core.logs.workflow_helpers import get_workflow_run_dir
+from wei.core.loggers.workflow_helpers import get_workflow_run_dir
 from wei.core.module import reserve_module
 from wei.core.state_manager import StateManager
 from wei.core.step import check_step, run_step

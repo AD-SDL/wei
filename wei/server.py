@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from wei.config import Config
-from wei.core.logs.event_logger import EventLogger
+from wei.core.loggers.event_logger import EventLogger
 from wei.helpers import parse_args
 from wei.routers import (
     admin,

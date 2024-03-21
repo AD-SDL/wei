@@ -11,8 +11,8 @@ import yaml
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.logs.loggers import Logger
-from wei.core.logs.workflow_helpers import (
+from wei.core.loggers.loggers import Logger
+from wei.core.loggers.workflow_helpers import (
     get_workflow_run_log_path,
     get_workflow_run_result_dir,
 )

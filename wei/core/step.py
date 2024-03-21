@@ -8,8 +8,8 @@ from wei.config import Config
 from wei.core.events import Events
 from wei.core.interface import InterfaceMap
 from wei.core.location import free_source_and_target, update_source_and_target
-from wei.core.logs.loggers import Logger
-from wei.core.logs.workflow_helpers import get_workflow_run_dir
+from wei.core.loggers.loggers import Logger
+from wei.core.loggers.workflow_helpers import get_workflow_run_dir
 from wei.core.module import clear_module_reservation, get_module_about
 from wei.core.state_manager import StateManager
 from wei.types import (
