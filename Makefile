@@ -37,7 +37,7 @@ clean:
 	@rm .env
 
 .PHONY += docs
-docs: wei/ docs/source# Builds the docs for wei
+docs: wei docs/source # Builds the docs for wei
 	cd docs && pdm run make clean html
 
 build: build-python # Builds the project
