@@ -9,6 +9,12 @@ wei.core.experiment
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      list_experiments
+   
    
 
    

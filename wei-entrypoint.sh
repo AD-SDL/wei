@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 if [ -z "${USER_ID}" ]; then
     USER_ID=9999
@@ -23,9 +24,11 @@ if [ "$USER_ID" -ne 0 ] && [ "$USER_ID" -ne 9999 ]; then
 fi
 
 
-chown $USER_ID:$GROUP_ID /home/app
-#chown $USER_ID:$GROUP_ID /home/app/.wei
-chown $USER_ID:$GROUP_ID /home/app/.diaspora
+# Best-effort attempt to align permissions
+chown $USER_ID:$GROUP_ID /home/app || true
+chown $USER_ID:$GROUP_ID /home/app/.wei || true
+chown $USER_ID:$GROUP_ID /home/app/.wei/experiments || true
+chown $USER_ID:$GROUP_ID /home/app/.diaspora || true
 
 if [ "$USER_ID" -eq 0 ] && [ "$GROUP_ID" -eq 0 ]; then
     shopt -s dotglob

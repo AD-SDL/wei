@@ -1,4 +1,4 @@
-wei.core
+﻿wei.core
 ========
 
 .. automodule:: wei.core
@@ -27,6 +27,7 @@ wei.core
    :toctree:
    :recursive:
 
+   wei.core.admin
    wei.core.data_classes
    wei.core.events
    wei.core.experiment
@@ -37,6 +38,7 @@ wei.core
    wei.core.module
    wei.core.scheduler
    wei.core.state_manager
+   wei.core.step
    wei.core.workcell
    wei.core.workflow
 
