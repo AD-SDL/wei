@@ -17,7 +17,6 @@ wei.core.events
 
    .. autosummary::
    
-      EventLogger
       Events
    
    

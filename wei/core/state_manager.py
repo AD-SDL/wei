@@ -230,7 +230,7 @@ class StateManager:
     # Workcell Methods
     def get_workcell(self) -> Workcell:
         """
-        Returns the current workcell as a WorkcellData object
+        Returns the current workcell as a Workcell object
         """
         return Workcell.model_validate(self._workcell.to_dict())
 

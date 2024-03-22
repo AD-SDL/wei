@@ -27,6 +27,7 @@ wei.routers
    :toctree:
    :recursive:
 
+   wei.routers.admin
    wei.routers.events
    wei.routers.experiments
    wei.routers.locations

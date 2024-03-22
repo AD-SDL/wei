@@ -35,7 +35,7 @@ def find_step_module(workcell: Workcell, step_module: str) -> Optional[Module]:
 
 
 def load_workcell_file(workcell_file: Path) -> Workcell:
-    """Loads a workcell file and returns a WorkcellData object
+    """Loads a workcell file and returns a Workcell object
 
     Parameters
     ----------
@@ -44,7 +44,7 @@ def load_workcell_file(workcell_file: Path) -> Workcell:
 
     Returns
     -------
-    workcell: WorkcellData
+    workcell: Workcell
         The workcell object
     """
     with open(workcell_file, "r") as f:
