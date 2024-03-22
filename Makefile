@@ -3,7 +3,7 @@
 ################################################################################
 .DEFAULT_GOAL := init
 
-.PHONY += init paths checks test clean
+.PHONY: init paths checks test clean
 
 init: # Do the initial configuration of the project
 	@test -e .env || cp example.env .env
@@ -36,8 +36,9 @@ test: init .env paths # Runs all the tests
 clean:
 	@rm .env
 
-docs: # Builds the docs for wei
-	cd $(PROJECT_DIR)/docs && pdm run make clean html
+.PHONY += docs
+docs: wei/ docs/source# Builds the docs for wei
+	cd docs && pdm run make clean html
 
 build: build-python # Builds the project
 	@docker compose --profile test build

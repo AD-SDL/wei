@@ -13,7 +13,7 @@ wei.routers.experiments
 
    .. autosummary::
    
-      get_file
+      get_all_experiments
       log_return
       register_experiment
    

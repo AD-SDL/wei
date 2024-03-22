@@ -23,6 +23,7 @@ wei.core.data\_classes
 
    .. autosummary::
    
+      AdminCommands
       ModuleStatus
       StepFileResponse
       StepStatus
