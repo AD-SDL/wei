@@ -1,6 +1,6 @@
 experiment_name: WEITestExperiment
 campaign_id: null
-inputs:
+parameters:
   foo:
     type: float
     description: The amount of foo to use

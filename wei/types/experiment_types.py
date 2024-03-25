@@ -2,10 +2,7 @@
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import (
-    AliasChoices,
-    Field,
-)
+from pydantic import AliasChoices, Field
 
 from wei.types.base_types import BaseModel, ulid_factory
 

@@ -4,13 +4,12 @@ import json
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from warnings import warn
 
 import requests
 
-from wei.core.events import Events
 from wei.types import Workflow, WorkflowStatus
 from wei.types.base_types import PathLike
+from wei.types.event_types import Event, ExperimentContinueEvent, ExperimentStartEvent
 from wei.types.experiment_types import ExperimentDesign, ExperimentInfo
 
 
@@ -69,7 +68,7 @@ class ExperimentClient:
 
         start_time = time.time()
         waiting = False
-        while time.time() - start_time < 60:
+        while time.time() - start_time < 10:
             try:
                 if experiment_id is None:
                     self._register_experiment()
@@ -81,7 +80,6 @@ class ExperimentClient:
                     waiting = True
                     print("Waiting to connect to server...")
                 time.sleep(1)
-        self.events.start_experiment()
 
     def _register_experiment(self) -> None:
         """Registers a new experiment with the server
@@ -109,13 +107,7 @@ class ExperimentClient:
         self.experiment_info = ExperimentInfo.model_validate(response.json())
         print(f"Experiment ID: {self.experiment_info.experiment_id}")
 
-        self.events = Events(
-            self.server_host,
-            self.server_port,
-            self.experiment_info.experiment_id,
-        )
-
-        self.events.start_experiment()
+        self.log_event(ExperimentStartEvent())
 
     def _continue_experiment(self, experiment_id) -> None:
         """Resumes an existing experiment with the server
@@ -136,7 +128,7 @@ class ExperimentClient:
             response.raise_for_status()
         self.experiment_info = ExperimentInfo.model_validate(response.json())
 
-        self.events.continue_experiment()
+        self.log_event(ExperimentContinueEvent())
 
     def validate_workflow(
         self,
@@ -198,6 +190,33 @@ class ExperimentClient:
                     if not Path(files[file]).is_absolute():
                         files[file] = self.working_dir / files[file]
         return files
+
+    def log_event(
+        self,
+        event: Event,
+    ) -> Event:
+        """Logs an event to the WEI event log
+
+        Parameters
+        ----------
+        event : Event
+            The event to log
+
+        Returns
+        -------
+        Event
+            The event that was logged
+        """
+        event.experiment_id = self.experiment_info.experiment_id
+        url = f"{self.url}/events/"
+        response = requests.post(
+            url,
+            json=event.model_dump(mode="json"),
+        )
+        if response.ok:
+            return Event.model_validate(response.json())
+        else:
+            response.raise_for_status()
 
     def start_run(
         self,
@@ -367,25 +386,3 @@ class ExperimentClient:
             return response.json()
         else:
             response.raise_for_status()
-
-    def register_exp(self) -> None:
-        """Deprecated method for registering an experiment with the server
-
-        Parameters
-        ----------
-        None
-
-        Returns
-        -------
-
-        response: Dict
-        The JSON portion of the response from the server"""
-        warn(
-            """
-                This method is deprecated.
-                Experiment registration is now handled when initializing the ExperimentClient.
-                You can safely remove any calls to this function.
-                """,
-            DeprecationWarning,
-            stacklevel=2,
-        )

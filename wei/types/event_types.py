@@ -1,6 +1,6 @@
 """Types related to Events"""
 
-from typing import Any, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from wei.types.base_types import BaseModel
 
@@ -8,7 +8,7 @@ from wei.types.base_types import BaseModel
 class Event(BaseModel):
     """A single event in an experiment"""
 
-    experiment_id: str
+    experiment_id: Optional[str] = None
     campaign_id: Optional[str] = None
     workcell_id: Optional[str] = None
     event_type: str
@@ -16,249 +16,273 @@ class Event(BaseModel):
     event_info: Optional[Any] = None
 
 
-# class EventCategory(str, Enum):
-#     """Categories for events"""
+class CreateCampaignEvent(Event):
+    """Event for creating a campaign"""
 
-#     CAMPAIGN = "CAMPAIGN"
-#     EXPERIMENT = "EXPERIMENT"
-#     WORKCELL = "WORKCELL"
-#     WORKFLOW = "WORKFLOW"
-#     STEP = "STEP"
+    event_type: Literal["CAMPAIGN"] = "CAMPAIGN"
+    event_name: Literal["CREATE"] = "CREATE"
 
 
-# class Event(BaseModel):
-#     """A single event in an experiment"""
+class ExperimentStartEvent(Event):
+    """Event for starting an experiment"""
 
-#     experiment_id: str
-#     campaign_id: Optional[str] = None
-#     workcell_id: Optional[str] = None
-#     event_category: str
-#     event_name: str
-#     event_info: Optional[Any] = None
-
-#     @classmethod
-#     def create_event(
-#         cls: "Event",
-#         experiment_id: str,
-#         event_category: EventCategory,
-#         event_name: str,
-#         campaign_id: Optional[str] = None,
-#         event_info: Optional[Any] = None,
-#     ) -> "Event":
-#         """Create a new event."""
-#         return cls(
-#             experiment_id=experiment_id,
-#             campaign_id=campaign_id,
-#             event_category=event_category,
-#             event_name=event_name,
-#             event_info=event_info,
-#         )
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["START"] = "CONTINUE"
 
 
-# ################################################################################
+class ExperimentContinueEvent(Event):
+    """Event for continuing an experiment"""
+
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["CONTINUE"] = "CONTINUE"
 
 
-# class CampaignEventNames(str, Enum):
-#     """Names for campaign events"""
+class ExperimentEndEvent(Event):
+    """Event for ending an experiment"""
 
-#     CREATE = "CREATE"
-
-
-# class CampaignEvent(Event):
-#     """A campaign level event."""
-
-#     event_category: Literal[EventCategory.CAMPAIGN]
-#     event_name: CampaignEventNames
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["END"] = "END"
 
 
-# class CreateCampaignEvent(CampaignEvent):
-#     """A campaign was started."""
+class DecisionEvent(Event):
+    """Event for a decision"""
 
-#     event_name: Literal[CampaignEventNames.CREATE] = CampaignEventNames.CREATE
-#     event_info: None
+    class DecisionEventInfo(BaseModel):
+        """Information about the decision event"""
 
-#     @classmethod
-#     def create_event(
-#         cls: "CreateCampaignEvent",
-#         experiment_id: str,
-#         campaign_id: str,
-#     ) -> Event:
-#         """Create a new create campaign event."""
-#         return super.create_event(
-#             experiment_id=experiment_id,
-#             campaign_id=campaign_id,
-#             event_category=EventCategory.CAMPAIGN,
-#             event_name=cls.event_name,
-#             event_info=None,
-#         )
+        decision_name: str
+        """The decision made"""
+
+        decision_value: Optional[str] = None
+        """The reason for the decision"""
+
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["DECISION"] = "DECISION"
+    event_info: DecisionEventInfo
 
 
-# ################################################################################
+class CommentEvent(Event):
+    """Event for a comment"""
+
+    class CommentEventInfo(BaseModel):
+        """Information about the comment event"""
+
+        comment: str
+        """The comment"""
+
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["COMMENT"] = "COMMENT"
+    event_info: CommentEventInfo
 
 
-# class ExperimentEventNames(str, Enum):
-#     """Names for experiment events"""
+class LocalComputeEvent(Event):
+    """Event for a local computation"""
 
-#     START = "START"
-#     RESUME = "RESUME"
-#     END = "END"
-#     DECISION = "DECISION"
-#     DATA_POINT = "DATA_POINT"
-#     COMMENT = "COMMENT"
-#     COMPUTE = "COMPUTE"
-#     LOOP_START = "LOOP_START"
-#     LOOP_END = "LOOP_END"
-#     LOOP_CHECK = "LOOP_CHECK"
-#     LOCAL_COMPUTE = "LOCAL_COMPUTE"
-#     GLOBUS_COMPUTE = "GLOBUS_COMPUTE"
-#     GLOBUS_TRANSFER = "GLOBUS_TRANSFER"
+    class LocalComputeEventInfo(BaseModel):
+        """Information about the local computation event"""
 
+        function_name: str
+        """The name of the function called"""
+        args: Optional[List[Any]] = None
+        """The positional args passed to the function"""
+        kwargs: Optional[Dict[str, Any]] = None
+        """The keyword args passed to the function"""
+        result: Optional[Any] = None
+        """The result of the computation"""
 
-# class ExperimentEvent(Event):
-#     """An experiment level event."""
-
-#     event_category: Literal[EventCategory.EXPERIMENT]
-#     event_name: ExperimentEventNames
-
-#     @classmethod
-#     def create_event(
-#         cls: "ExperimentEvent",
-#         experiment_id: str,
-#         event_name: str,
-#         campaign_id: Optional[str] = None,
-#         event_info: Optional[Any] = None,
-#     ) -> "ExperimentEvent":
-#         """Create a new start experiment event."""
-#         return super.create_event(
-#             experiment_id=experiment_id,
-#             campaign_id=campaign_id,
-#             event_category=EventCategory.EXPERIMENT,
-#             event_name=event_name,
-#             event_info=event_info,
-#         )
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["LOCAL_COMPUTE"] = "LOCAL_COMPUTE"
+    event_info: LocalComputeEventInfo
 
 
-# class StartExperimentEvent(ExperimentEvent):
-#     """An experiment was started."""
+class GlobusComputeEvent(Event):
+    """Event for a globus computation"""
 
-#     event_name: Literal[ExperimentEventNames.START] = ExperimentEventNames.START
-#     event_info: None
+    class LocalComputeEventInfo(BaseModel):
+        """Information about the local computation event"""
 
-#     @classmethod
-#     def create_event(
-#         cls: "StartExperimentEvent",
-#         experiment_id: str,
-#         campaign_id: Optional[str] = None,
-#     ) -> Event:
-#         """Create a new start experiment event."""
-#         return super.create_event(
-#             experiment_id=experiment_id,
-#             campaign_id=campaign_id,
-#             event_category=EventCategory.EXPERIMENT,
-#             event_name=cls.event_name,
-#             event_info=None,
-#         )
+        function_name: str
+        """The name of the function called"""
+        args: Optional[List[Any]] = None
+        """The positional args passed to the function"""
+        kwargs: Optional[Dict[str, Any]] = None
+        """The keyword args passed to the function"""
+        result: Optional[Any] = None
+        """The result of the computation"""
+
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["GLOBUS_COMPUTE"] = "GLOBUS_COMPUTE"
+    event_info: LocalComputeEventInfo
 
 
-# class ResumeExperimentEvent(ExperimentEvent):
-#     """An experiment was resumed."""
+class GladierFlowEvent(Event):
+    """Event for a Gladier Flow"""
 
-#     event_name: Literal[ExperimentEventNames.RESUME]
-#     event_info: None
+    class GladierFlowEventInfo(BaseModel):
+        """Information about the Gladier Flow event"""
 
-#     @classmethod
-#     def create_event(
-#         cls: "ResumeExperimentEvent",
-#         experiment_id: str,
-#         campaign_id: Optional[str] = None,
-#     ) -> Event:
-#         """Create a new start experiment event."""
-#         return super.create_event(
-#             experiment_id=experiment_id,
-#             campaign_id=campaign_id,
-#             event_category=EventCategory.EXPERIMENT,
-#             event_name=cls.event_name,
-#             event_info=None,
-#         )
+        flow_name: str
+        """The name of the flow"""
+        flow_id: str
+        """The ID of the flow"""
+
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["GLADIER_FLOW"] = "GLADIER_FLOW"
+    event_info: GladierFlowEventInfo
 
 
-# class EndExperimentEvent(ExperimentEvent):
-#     """An experiment ended."""
+class LoopStartEvent(Event):
+    """Event for the start of a loop"""
 
-#     event_name: Literal[ExperimentEventNames.START]
-#     event_info: None
+    class LoopStartEventInfo(BaseModel):
+        """Information about the loop start event"""
 
-#     @classmethod
-#     def create_event(
-#         cls: "StartExperimentEvent",
-#         experiment_id: str,
-#         campaign_id: Optional[str] = None,
-#     ) -> "StartExperimentEvent":
-#         """Create a new start experiment event."""
-#         return super.create_event(
-#             experiment_id=experiment_id,
-#             campaign_id=campaign_id,
-#             event_category=EventCategory.EXPERIMENT,
-#             event_name=cls.event_name,
-#             event_info=None,
-#         )
+        loop_name: str
+        """The name of the loop"""
+
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["LOOP_START"] = "LOOP_START"
+    event_info: LoopStartEventInfo
 
 
-# ################################################################################
+class LoopEndEvent(Event):
+    """Event for the end of a loop"""
+
+    class LoopEndEventInfo(BaseModel):
+        """Information about the loop end event"""
+
+        loop_name: str
+        """The name of the loop"""
+
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["LOOP_END"] = "LOOP_END"
+    event_info: LoopEndEventInfo
 
 
-# class WorkcellEvent(Event):
-#     """A workcell level event."""
+class LoopCheckEvent(Event):
+    """Event for the conditional check of a loop"""
 
-#     class WorkcellEventNames(str, Enum):
-#         """Names for workcell events"""
+    class LoopCheckEventInfo(BaseModel):
+        """Information about the loop end event"""
 
-#         START = "START"
-#         ESTOP = "ESTOP"
-#         PAUSE = "PAUSE"
-#         RESUME = "RESUME"
-#         SHUTDOWN = "SHUTDOWN"
+        loop_name: str
+        """The name of the loop"""
+        conditional: str
+        """The conditional that was checked"""
+        result: bool
 
-#     event_category: Literal[EventCategory.WORKCELL]
-#     event_name: WorkcellEventNames
-
-
-# ################################################################################
+    event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
+    event_name: Literal["LOOP_CHECK"] = "LOOP_CHECK"
+    event_info: LoopCheckEventInfo
 
 
-# class WorkflowEvent(Event):
-#     """A workflow level event."""
+class WorkflowQueuedEvent(Event):
+    """Event for a workflow being queued"""
 
-#     class WorkflowEventNames(str, Enum):
-#         """Names for workflow events"""
+    class WorkflowQueuedEventInfo(BaseModel):
+        """Information about the workflow being queued"""
 
-#         QUEUED = "QUEUED"
-#         START = "START"
-#         END = "END"
-#         PAUSE = "PAUSE"
-#         RESUME = "RESUME"
-#         CANCEL = "CANCEL"
-#         FAILED = "FAILED"
-#         ESTOP = "ESTOP"
+        run_id: str
+        """The ID of the workflow"""
+        workflow_name: str
+        """The name of the workflow"""
 
-#     event_category: Literal[EventCategory.WORKFLOW]
-#     event_name: WorkflowEventNames
+    event_type: Literal["WORKFLOW"] = "WORKFLOW"
+    event_name: Literal["QUEUED"] = "QUEUED"
+    event_info: WorkflowQueuedEventInfo
 
 
-# ################################################################################
-# class StepEvent(Event):
-#     """A step level event."""
+class WorkflowStartEvent(Event):
+    """Event for a workflow starting"""
 
-#     class StepEventNames(str, Enum):
-#         """Names for step events"""
+    class WorkflowStartEventInfo(BaseModel):
+        """Information about the workflow starting"""
 
-#         START = "START"
-#         SUCCEEDED = "SUCCEEDED"
-#         FAILED = "FAILED"
-#         PAUSE = "PAUSE"
-#         RESUME = "RESUME"
-#         CANCEL = "CANCEL"
-#         ESTOP = "ESTOP"
+        run_id: str
+        """The ID of the workflow"""
+        workflow_name: str
+        """The name of the workflow"""
 
-#     event_category: Literal[EventCategory.STEP]
-#     event_name: StepEventNames
+    event_type: Literal["WORKFLOW"] = "WORKFLOW"
+    event_name: Literal["START"] = "START"
+    event_info: WorkflowStartEventInfo
+
+
+class WorkflowFailedEvent(Event):
+    """Event for a workflow failing"""
+
+    class WorkflowFailedEventInfo(BaseModel):
+        """Information about the workflow failing"""
+
+        run_id: str
+        """The ID of the workflow"""
+        workflow_name: str
+        """The name of the workflow"""
+
+    event_type: Literal["WORKFLOW"] = "WORKFLOW"
+    event_name: Literal["FAILED"] = "FAILED"
+    event_info: WorkflowFailedEventInfo
+
+
+class WorkflowCompleted(Event):
+    """Event for a workflow completing"""
+
+    class WorkflowCompletedEventInfo(BaseModel):
+        """Information about the workflow completing"""
+
+        run_id: str
+        """The ID of the workflow"""
+        workflow_name: str
+        """The name of the workflow"""
+
+    event_type: Literal["WORKFLOW"] = "WORKFLOW"
+    event_name: Literal["COMPLETED"] = "COMPLETED"
+    event_info: WorkflowCompletedEventInfo
+
+
+class WorkflowCancelled(Event):
+    """Event for a workflow being cancelled"""
+
+    class WorkflowCancelledEventInfo(BaseModel):
+        """Information about the workflow being cancelled"""
+
+        run_id: str
+        """The ID of the workflow"""
+        workflow_name: str
+        """The name of the workflow"""
+
+    event_type: Literal["WORKFLOW"] = "WORKFLOW"
+    event_name: Literal["CANCELLED"] = "CANCELLED"
+    event_info: WorkflowCancelledEventInfo
+
+
+class WorkflowPausedEvent(Event):
+    """Event for a workflow being paused"""
+
+    class WorkflowPausedEventInfo(BaseModel):
+        """Information about the workflow being paused"""
+
+        run_id: str
+        """The ID of the workflow"""
+        workflow_name: str
+        """The name of the workflow"""
+
+    event_type: Literal["WORKFLOW"] = "WORKFLOW"
+    event_name: Literal["PAUSED"] = "PAUSED"
+    event_info: WorkflowPausedEventInfo
+
+
+class WorkflowResumedEvent(Event):
+    """Event for a workflow being resumed"""
+
+    class WorkflowResumedEventInfo(BaseModel):
+        """Information about the workflow being resumed"""
+
+        run_id: str
+        """The ID of the workflow"""
+        workflow_name: str
+        """The name of the workflow"""
+
+    event_type: Literal["WORKFLOW"] = "WORKFLOW"
+    event_name: Literal["RESUMED"] = "RESUMED"
+    event_info: WorkflowResumedEventInfo
