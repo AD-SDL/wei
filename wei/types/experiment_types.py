@@ -18,6 +18,17 @@ class Campaign(BaseModel):
     """Experiments associated with the campaign"""
 
 
+class ExperimentDataPoint(BaseModel):
+    """A single data point from an experiment"""
+
+    experiment_id: str
+    """The ID of the experiment"""
+    params: Dict[str, Any] = {}
+    """Parameters for the experiment that generated the data point"""
+    outputs: Dict[str, Any] = {}
+    """Experimental Outputs"""
+
+
 class ExperimentDataField(BaseModel):
     """Defines a single field in the data"""
 

@@ -5,8 +5,7 @@ from datetime import datetime
 from typing import Tuple
 
 from wei.config import Config
-from wei.core.events import Events
-from wei.core.interface import InterfaceMap
+from wei.core.events import log_event
 from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers.loggers import Logger
 from wei.core.loggers.workflow_helpers import get_workflow_run_dir
@@ -21,6 +20,12 @@ from wei.types import (
     WorkflowRun,
     WorkflowStatus,
 )
+from wei.types.event_types import (
+    WorkflowCompletedEvent,
+    WorkflowFailedEvent,
+    WorkflowStepEvent,
+)
+from wei.types.interface_types import InterfaceMap
 
 state_manager = StateManager()
 
@@ -132,26 +137,24 @@ def run_step(
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
     step.result = step_response
-    Events(Config.server_host, Config.server_port, wf_run.experiment_id).log_wf_step(
-        wf_run=wf_run, step=step
-    )
+    log_event(WorkflowStepEvent.new_event(wf_run=wf_run, step=step))
     wf_run.hist[step.name] = step_response
     if step_response.action_response == StepStatus.FAILED:
         logger.info(f"Step {step.name} failed: {step_response.model_dump_json()}")
         wf_run.status = WorkflowStatus.FAILED
         wf_run.end_time = datetime.now()
         wf_run.duration = wf_run.end_time - wf_run.start_time
-        Events(
-            Config.server_host, Config.server_port, wf_run.experiment_id
-        ).log_wf_failed(wf_run.name, wf_run.run_id)
+        log_event(
+            WorkflowFailedEvent.new_event(
+                wf_run=wf_run,
+            )
+        )
     else:
         if wf_run.step_index + 1 == len(wf_run.steps):
             wf_run.status = WorkflowStatus.COMPLETED
             wf_run.end_time = datetime.now()
             wf_run.duration = wf_run.end_time - wf_run.start_time
-            Events(
-                Config.server_host, Config.server_port, wf_run.experiment_id
-            ).log_wf_end(wf_run.name, wf_run.run_id)
+            log_event(WorkflowCompletedEvent.new_event(wf_run=wf_run))
         else:
             wf_run.status = WorkflowStatus.QUEUED
     with state_manager.state_lock():

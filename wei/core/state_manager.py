@@ -201,7 +201,9 @@ class StateManager:
         Returns all experiments
         """
         return {
-            str(experiment_id): ExperimentInfo.model_validate(experiment)
+            str(experiment_id): ExperimentInfo.model_validate(
+                experiment, from_attributes=True
+            )
             for experiment_id, experiment in self._experiments.to_dict().items()
         }
 

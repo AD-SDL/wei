@@ -9,7 +9,7 @@ import traceback
 from wei.config import Config
 from wei.core.experiment import parse_experiments_from_disk
 from wei.core.module import update_active_modules
-from wei.core.scheduler import Scheduler, SequentialScheduler
+from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
 from wei.core.workflow import cancel_workflow_run
 from wei.helpers import initialize_state, parse_args
@@ -38,10 +38,7 @@ class Engine:
                 WorkflowStatus.WAITING,
             ]:
                 cancel_workflow_run(wf_run)
-        if Config.sequential_scheduler:
-            self.scheduler = SequentialScheduler()
-        else:
-            self.scheduler = Scheduler()
+        self.scheduler = Scheduler(sequential=Config.sequential_scheduler)
         with self.state_manager.state_lock():
             initialize_state()
         time.sleep(Config.cold_start_delay)

@@ -108,8 +108,8 @@ class Module(BaseModel):
     """name of the module, should be opentrons api compatible"""
     model: Optional[str] = None
     """type of the robot (e.g OT2, pf400, etc.) """
-    interface: str
-    """Type of client (e.g ros_wei_client)"""
+    interface: str = "wei_rest_interface"
+    """Type of client (e.g wei_ros_interface, wei_rest_interface, etc.)"""
     config: Dict[str, Any] = {}
     """the necessary configuration for the robot, arbitrary dict"""
     locations: List[str] = []
@@ -136,7 +136,7 @@ class Module(BaseModel):
     @validator("config")
     def validate_config(cls, v: Any, values: Dict[str, Any], **kwargs: Any) -> Any:
         """Validate the config field of the workcell config with special rules for each module interface"""
-        from wei.core.interface import InterfaceMap
+        from wei.types.interface_types import InterfaceMap
 
         interface_type = str(values.get("interface", "")).lower()
 

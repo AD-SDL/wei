@@ -9,7 +9,17 @@ import requests
 
 from wei.types import Workflow, WorkflowStatus
 from wei.types.base_types import PathLike
-from wei.types.event_types import Event, ExperimentContinueEvent, ExperimentStartEvent
+from wei.types.event_types import (
+    CommentEvent,
+    DecisionEvent,
+    Event,
+    ExperimentContinueEvent,
+    ExperimentStartEvent,
+    GladierFlowEvent,
+    GlobusComputeEvent,
+    LocalComputeEvent,
+    LoopStartEvent,
+)
 from wei.types.experiment_types import ExperimentDesign, ExperimentInfo
 
 
@@ -107,7 +117,7 @@ class ExperimentClient:
         self.experiment_info = ExperimentInfo.model_validate(response.json())
         print(f"Experiment ID: {self.experiment_info.experiment_id}")
 
-        self.log_event(ExperimentStartEvent())
+        self._log_event(ExperimentStartEvent(event_info=self.experiment_info))
 
     def _continue_experiment(self, experiment_id) -> None:
         """Resumes an existing experiment with the server
@@ -128,7 +138,7 @@ class ExperimentClient:
             response.raise_for_status()
         self.experiment_info = ExperimentInfo.model_validate(response.json())
 
-        self.log_event(ExperimentContinueEvent())
+        self._log_event(ExperimentContinueEvent(event_info=self.experiment_info))
 
     def validate_workflow(
         self,
@@ -191,7 +201,7 @@ class ExperimentClient:
                         files[file] = self.working_dir / files[file]
         return files
 
-    def log_event(
+    def _log_event(
         self,
         event: Event,
     ) -> Event:
@@ -386,3 +396,97 @@ class ExperimentClient:
             return response.json()
         else:
             response.raise_for_status()
+
+    def log_decision(self, decision_name: str, decision_value: bool) -> Event:
+        """Logs a decision in the experiment log
+
+        Parameters
+        ----------
+        decision_name : str
+            The name of the decision
+
+        decision_value : bool
+            The value of the decision
+
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        decision = DecisionEvent.new_event(
+            decision_name=decision_name, decision_value=decision_value
+        )
+        return self._log_event(decision)
+
+    def log_comment(self, comment: str) -> Event:
+        """Logs a comment in the experiment log
+
+        Parameters
+        ----------
+        comment : str
+            The comment to log
+
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        comment = CommentEvent.new_event(comment=comment)
+        return self._log_event(comment)
+
+    def log_local_compute(
+        self,
+        function_name: str,
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
+        result: Optional[Any] = None,
+    ) -> Event:
+        """Logs a local computation in the experiment log
+
+        Parameters
+        ----------
+        function_name : str
+            The name of the function called
+
+        args : List[Any]
+            The positional arguments passed to the function
+
+        kwargs : Dict[str, Any]
+            The keyword arguments passed to the function
+
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        local_compute = LocalComputeEvent.new_event(
+            function_name=function_name, args=args, kwargs=kwargs, result=result
+        )
+        return self._log_event(local_compute)
+
+    def log_globus_compute(
+        self,
+        function_name: str,
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
+        result: Optional[Any] = None,
+    ) -> Event:
+        """Logs a Globus computation in the experiment log"""
+
+        globus_compute = GlobusComputeEvent.new_event(
+            function_name=function_name, args=args, kwargs=kwargs, result=result
+        )
+        return self._log_event(globus_compute)
+
+    def log_gladier_flow(
+        self,
+        flow_name: str,
+        flow_id: Any,
+    ) -> Event:
+        """Logs a Gladier flow in the experiment log"""
+
+        gladier_flow = GladierFlowEvent.new_event(flow_name=flow_name, flow_id=flow_id)
+        return self._log_event(gladier_flow)
+
+    def log_loop_start(self, loop_name: str) -> Event:
+        """Logs the start of a loop in the experiment log"""
+
+        loop_start = LoopStartEvent.new_event(loop_name=loop_name)
+        return self._log_event(loop_start)

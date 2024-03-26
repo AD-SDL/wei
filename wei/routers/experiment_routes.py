@@ -38,8 +38,8 @@ async def log_return(experiment_id: str) -> str:
     return JSONResponse(logs)
 
 
-@router.get("/all")
-async def get_all_experiments() -> Dict[str, str]:
+@router.get("/")
+async def get_all_experiments() -> Dict[str, ExperimentInfo]:
     """Returns all experiments inside DataFolder"""
     return state_manager.get_all_experiments()
 
@@ -76,7 +76,7 @@ def register_campaign(campaign_name: str) -> Campaign:
     return campaign
 
 
-@router.get("/{campaign_id}")
+@router.get("/campaign/{campaign_id}")
 def get_campaign(campaign_id: str) -> Campaign:
     """Returns the details of a campaign"""
     return state_manager.get_campaign(campaign_id)
