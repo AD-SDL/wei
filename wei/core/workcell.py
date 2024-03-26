@@ -9,9 +9,9 @@ from wei.config import Config
 from wei.types import Module, Workcell
 
 
-def get_workcell_dir(workcell: Workcell) -> Path:
+def get_workcell_dir(workcell_id: str) -> Path:
     """Returns the directory where the workcell is stored"""
-    return Config.data_directory / "workcells" / workcell.name
+    return Config.data_directory / "workcells" / workcell_id
 
 
 def find_step_module(workcell: Workcell, step_module: str) -> Optional[Module]:

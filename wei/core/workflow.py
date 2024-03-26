@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
-from wei.core.loggers.workflow_helpers import (
+from wei.core.loggers import (
     get_workflow_run_dir,
     get_workflow_run_result_dir,
 )

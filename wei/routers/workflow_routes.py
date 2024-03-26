@@ -11,8 +11,8 @@ import yaml
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.loggers.loggers import Logger
-from wei.core.loggers.workflow_helpers import (
+from wei.core.loggers import (
+    Logger,
     get_workflow_run_log_path,
     get_workflow_run_result_dir,
 )
@@ -69,7 +69,7 @@ async def start_run(
                 status_code=400, detail="Payload must be a dictionary with string keys"
             )
     logger = Logger.get_experiment_logger(experiment_id)
-    logger.info(f"Received job run request: {wf.name}")
+    logger.debug(f"Received job run request: {wf.name}")
     workcell = state_manager.get_workcell()
 
     wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
@@ -102,7 +102,7 @@ async def validate_workflow(
         workflow_content_str = workflow_content.decode("utf-8")
         wf = Workflow(**yaml.safe_load(workflow_content_str))
         logger = Logger.get_experiment_logger(experiment_id)
-        logger.info(f"Received job run request: {wf.name}")
+        logger.debug(f"Received job run request: {wf.name}")
         workcell = state_manager.get_workcell()
 
         wf_run = create_run(wf, workcell, experiment_id, payload)

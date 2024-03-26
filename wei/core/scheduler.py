@@ -3,9 +3,9 @@
 import multiprocessing as mpr
 from datetime import datetime
 
-from wei.core.events import log_event
+from wei.core.events import send_event
 from wei.core.location import reserve_source_and_target
-from wei.core.loggers.workflow_helpers import get_workflow_run_dir
+from wei.core.loggers import get_workflow_run_dir
 from wei.core.module import reserve_module
 from wei.core.state_manager import StateManager
 from wei.core.step import check_step, run_step
@@ -37,7 +37,7 @@ class Scheduler:
                     print(
                         f"Processed new workflow: {wf_run.name} with run_id: {run_id}"
                     )
-                    log_event(WorkflowQueuedEvent.new_event(wf_run=wf_run))
+                    send_event(WorkflowQueuedEvent.new_event(wf_run=wf_run))
                     state_manager.set_workflow_run(wf_run)
                 elif wf_run.status in [WorkflowStatus.QUEUED, WorkflowStatus.WAITING]:
                     step = wf_run.steps[wf_run.step_index]
@@ -47,7 +47,7 @@ class Scheduler:
                         )
                         reserve_module(module, wf_run.run_id)
                         reserve_source_and_target(wf_run)
-                        log_event(WorkflowStartEvent.new_event(wf_run=wf_run))
+                        send_event(WorkflowStartEvent.new_event(wf_run=wf_run))
                         wf_run.status = WorkflowStatus.RUNNING
                         print(
                             f"Starting step {wf_run.name}.{step.name} for run: {run_id}"

@@ -5,10 +5,9 @@ from datetime import datetime
 from typing import Tuple
 
 from wei.config import Config
-from wei.core.events import log_event
+from wei.core.events import send_event
 from wei.core.location import free_source_and_target, update_source_and_target
-from wei.core.loggers.loggers import Logger
-from wei.core.loggers.workflow_helpers import get_workflow_run_dir
+from wei.core.loggers import Logger, get_workflow_run_dir
 from wei.core.module import clear_module_reservation, get_module_about
 from wei.core.state_manager import StateManager
 from wei.types import (
@@ -106,7 +105,7 @@ def run_step(
     logger = Logger.get_workflow_run_logger(wf_run)
     step: Step = wf_run.steps[wf_run.step_index]
 
-    logger.info(f"Started running step with name: {step.name}")
+    logger.debug(f"Started running step with name: {step.name}")
     logger.debug(step)
 
     interface = "simulate_callback" if wf_run.simulate else module.interface
@@ -122,7 +121,7 @@ def run_step(
             action_log=action_log,
         )
     except Exception as e:
-        logger.info(f"Exception occurred while running step with name: {step.name}")
+        logger.debug(f"Exception occurred while running step with name: {step.name}")
         logger.debug(str(e))
         logger.debug(traceback.format_exc())
         step_response = StepResponse(
@@ -132,19 +131,19 @@ def run_step(
         )
         traceback.print_exc()
     else:
-        logger.info(f"Finished running step with name: {step.name}")
+        logger.debug(f"Finished running step with name: {step.name}")
 
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
     step.result = step_response
-    log_event(WorkflowStepEvent.new_event(wf_run=wf_run, step=step))
+    send_event(WorkflowStepEvent.new_event(wf_run=wf_run, step=step))
     wf_run.hist[step.name] = step_response
     if step_response.action_response == StepStatus.FAILED:
-        logger.info(f"Step {step.name} failed: {step_response.model_dump_json()}")
+        logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
         wf_run.status = WorkflowStatus.FAILED
         wf_run.end_time = datetime.now()
         wf_run.duration = wf_run.end_time - wf_run.start_time
-        log_event(
+        send_event(
             WorkflowFailedEvent.new_event(
                 wf_run=wf_run,
             )
@@ -154,7 +153,7 @@ def run_step(
             wf_run.status = WorkflowStatus.COMPLETED
             wf_run.end_time = datetime.now()
             wf_run.duration = wf_run.end_time - wf_run.start_time
-            log_event(WorkflowCompletedEvent.new_event(wf_run=wf_run))
+            send_event(WorkflowCompletedEvent.new_event(wf_run=wf_run))
         else:
             wf_run.status = WorkflowStatus.QUEUED
     with state_manager.state_lock():
