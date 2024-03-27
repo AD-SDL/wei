@@ -6,13 +6,17 @@ import threading
 import time
 import traceback
 
+import requests
+
 from wei.config import Config
+from wei.core.events import send_event
 from wei.core.experiment import parse_experiments_from_disk
 from wei.core.module import update_active_modules
-from wei.core.scheduler import Scheduler, SequentialScheduler
+from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
 from wei.core.workflow import cancel_workflow_run
 from wei.helpers import initialize_state, parse_args
+from wei.types.event_types import WorkcellStartEvent
 from wei.types.workflow_types import WorkflowStatus
 
 
@@ -38,14 +42,33 @@ class Engine:
                 WorkflowStatus.WAITING,
             ]:
                 cancel_workflow_run(wf_run)
-        if Config.sequential_scheduler:
-            self.scheduler = SequentialScheduler()
-        else:
-            self.scheduler = Scheduler()
+        self.scheduler = Scheduler(sequential=Config.sequential_scheduler)
         with self.state_manager.state_lock():
             initialize_state()
         time.sleep(Config.cold_start_delay)
+        self.wait_for_server()
+
         print("Engine initialized, waiting for workflows...")
+        send_event(WorkcellStartEvent(workcell=self.state_manager.get_workcell()))
+
+    def wait_for_server(self):
+        """Checks that the server is up before starting the engine."""
+        start_wait = time.time()
+        server_alive = False
+        while time.time() - start_wait < 60:
+            try:
+                response = requests.get(
+                    f"http://{Config.server_host}:{Config.server_port}/up"
+                )
+                if response.ok:
+                    server_alive = True
+                    break
+                else:
+                    response.raise_for_status()
+            except Exception:
+                time.sleep(1)
+        if not server_alive:
+            raise Exception("Server did not respond after 60 seconds")
 
     def spin(self) -> None:
         """

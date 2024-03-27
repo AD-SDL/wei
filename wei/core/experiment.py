@@ -7,16 +7,14 @@ from typing import Optional
 
 from wei.config import Config
 from wei.core.state_manager import StateManager
-from wei.types.experiment_types import Campaign, ExperimentDesign, ExperimentInfo
+from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
 
 state_manager = StateManager()
 
 
-def register_new_experiment(experiment_design: ExperimentDesign) -> ExperimentInfo:
+def register_new_experiment(experiment_design: ExperimentDesign) -> Experiment:
     """Creates a new experiment, optionally associating it with a campaign"""
-    new_experiment = ExperimentInfo.model_validate(
-        experiment_design, from_attributes=True
-    )
+    new_experiment = Experiment.model_validate(experiment_design, from_attributes=True)
     print(new_experiment.model_dump_json())
     get_experiment_dir(
         new_experiment.experiment_id, new_experiment.experiment_name
@@ -48,7 +46,7 @@ def register_new_experiment(experiment_design: ExperimentDesign) -> ExperimentIn
     return new_experiment
 
 
-def get_experiment(experiment_id: str) -> ExperimentInfo:
+def get_experiment(experiment_id: str) -> Experiment:
     """Returns the experiment details"""
     try:
         experiment = state_manager.get_experiment(experiment_id)
@@ -57,9 +55,9 @@ def get_experiment(experiment_id: str) -> ExperimentInfo:
     return experiment
 
 
-def get_experiment_from_disk(experiment_id: str) -> ExperimentInfo:
+def get_experiment_from_disk(experiment_id: str) -> Experiment:
     """Returns the experiment details from the disk"""
-    experiment_data = ExperimentInfo(
+    experiment_data = Experiment(
         experiment_id=experiment_id,
         experiment_name=get_experiment_name_from_disk(experiment_id),
     )
@@ -129,7 +127,7 @@ def parse_experiments_from_disk():
         except KeyError:
             experiment_name = regex_match[1]
             # TODO: Try to extract campaign_id and data_point_definition
-            experiment = ExperimentInfo(
+            experiment = Experiment(
                 experiment_id=experiment_id,
                 experiment_name=experiment_name,
             )

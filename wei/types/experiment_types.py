@@ -18,6 +18,17 @@ class Campaign(BaseModel):
     """Experiments associated with the campaign"""
 
 
+class ExperimentDataPoint(BaseModel):
+    """A single data point from an experiment"""
+
+    experiment_id: str
+    """The ID of the experiment"""
+    params: Dict[str, Any] = {}
+    """Parameters for the experiment that generated the data point"""
+    outputs: Dict[str, Any] = {}
+    """Experimental Outputs"""
+
+
 class ExperimentDataField(BaseModel):
     """Defines a single field in the data"""
 
@@ -46,7 +57,7 @@ class ExperimentDesign(BaseModel):
     """Outputs from a single iteration of the experiment's loop"""
 
 
-class ExperimentInfo(ExperimentDesign):
+class Experiment(ExperimentDesign):
     """Definition and metadata for an experiment"""
 
     experiment_id: str = Field(default_factory=ulid_factory)

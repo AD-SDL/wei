@@ -14,7 +14,7 @@ from wei.core.experiment import (
     register_new_experiment,
 )
 from wei.core.state_manager import StateManager
-from wei.types.experiment_types import Campaign, ExperimentDesign, ExperimentInfo
+from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
 
 router = APIRouter()
 
@@ -38,14 +38,14 @@ async def log_return(experiment_id: str) -> str:
     return JSONResponse(logs)
 
 
-@router.get("/all")
-async def get_all_experiments() -> JSONResponse:
+@router.get("/")
+async def get_all_experiments() -> Dict[str, Experiment]:
     """Returns all experiments inside DataFolder"""
     return JSONResponse(state_manager.get_all_experiments())
 
 
 @router.get("/{experiment_id}")
-def get_experiment_endpoint(experiment_id: str) -> ExperimentInfo:
+def get_experiment_endpoint(experiment_id: str) -> Experiment:
     """Returns the details for a specific experiment given the id"""
     return get_experiment(experiment_id)
 
@@ -53,7 +53,7 @@ def get_experiment_endpoint(experiment_id: str) -> ExperimentInfo:
 @router.post("/")
 def register_experiment(
     experiment_design: ExperimentDesign,
-) -> ExperimentInfo:
+) -> Experiment:
     """Creates a new experiment, optionally associating it with a campaign"""
     return register_new_experiment(experiment_design)
 
@@ -76,7 +76,7 @@ def register_campaign(campaign_name: str) -> Campaign:
     return campaign
 
 
-@router.get("/{campaign_id}")
+@router.get("/campaign/{campaign_id}")
 def get_campaign(campaign_id: str) -> Campaign:
     """Returns the details of a campaign"""
     return state_manager.get_campaign(campaign_id)

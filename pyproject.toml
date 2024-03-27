@@ -103,6 +103,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
+    ".venv",
     "docs",
 ]
 

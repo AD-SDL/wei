@@ -1,45 +1,70 @@
 """Contains the Events class for logging experiment steps"""
 
-from typing import Any, Dict, Optional
+import traceback
+from typing import Any
 
 import requests
 
-from wei.types import Event, Step, WorkflowRun
+from wei.config import Config
+from wei.core.loggers import Logger
+from wei.core.state_manager import StateManager
+from wei.types import Event
+
+state_manager = StateManager()
 
 
-class Events:
-    """An interface for logging events"""
+def send_event(event: Event) -> Any:
+    """Sends an event to the server to be logged"""
 
-    def __init__(
-        self,
-        server_addr: str,
-        server_port: str,
-        experiment_id: str,
-    ) -> None:
-        """Initializes an Event Logging object
+    event.workcell_id = getattr(Config, "workcell_id", None)
+    url = f"http://{Config.server_host}:{Config.server_port}/events/"
+    response = requests.post(
+        url,
+        json=event.model_dump(mode="json"),
+    )
+    if response.ok:
+        return response.json()
+    else:
+        response.raise_for_status()
 
-        Parameters
-        ----------
-        server_addr: str
-            address for WEI server
 
-        server_port: str
-            port for WEI server
+class EventHandler:
+    """Registers Events during the Experiment execution both in a logfile and on Kafka"""
 
-        experiment_name: str
-            Human chosen name for experiment
+    kafka_producer = None
+    kafka_topic = None
 
-        experiment_id: Optional[str]
-            # Programmatically generated experiment id, can be reused if needed
-        """
-        self.server_addr = server_addr
-        self.server_port = server_port
-        self.experiment_id = experiment_id
-        self.url = f"http://{self.server_addr}:{self.server_port}"
+    @classmethod
+    def initialize_diaspora(cls) -> None:
+        """Initializes the Kafka producer and creates the topic if it doesn't exist already"""
+        if Config.use_diaspora:
+            try:
+                from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
 
-    def _log_event(
-        self, event_type: str, event_name: str, event_info: Optional[Any] = ""
-    ) -> Dict[Any, Any]:
+                assert block_until_ready()
+
+                def str_to_bytes(s):
+                    return bytes(s, "utf-8")
+
+                cls.kafka_producer = KafkaProducer(key_serializer=str_to_bytes)
+                cls.kafka_topic = Config.kafka_topic
+                print(f"Creating Diaspora topic: {cls.kafka_topic}")
+                c = Client()
+                assert c.register_topic(cls.kafka_topic)["status"] in [
+                    "success",
+                    "no-op",
+                ]
+            except Exception as e:
+                print(e)
+                print("Failed to connect to Diaspora or create topic.")
+                cls.kafka_producer = None
+                cls.kafka_topic = None
+        else:
+            cls.kafka_producer = None
+            cls.kafka_topic = None
+
+    @classmethod
+    def log_event(cls, event: Event) -> None:
         """logs an event in the proper place for the given experiment
 
         Parameters
@@ -49,273 +74,36 @@ class Events:
 
         Returns
         -------
-        response: Dict
-           The JSON portion of the response from the server"""
+        None
+        """
 
-        url = f"{self.url}/events/"
-        event = Event.model_validate(
-            {
-                "experiment_id": self.experiment_id,
-                "event_type": event_type,
-                "event_name": event_name,
-                "event_info": event_info,
-            }
-        )
-        response = requests.post(
-            url,
-            json=event.model_dump(mode="json"),
-        )
-        if response.ok:
-            return response.json()
+        if event.workcell_id is None:
+            event.workcell_id = state_manager.get_workcell_id()
+        if event.experiment_id is not None:
+            Logger.get_experiment_logger(event.experiment_id).info(
+                event.model_dump_json()
+            )
+        Logger.get_workcell_logger(event.workcell_id).info(event.model_dump_json())
+
+        if Config.use_diaspora:
+            cls.log_event_diaspora(event=event)
+
+    @classmethod
+    def log_event_diaspora(cls, event: Event, retry_count=3) -> None:
+        """Logs an event to diaspora"""
+
+        if cls.kafka_producer and cls.kafka_topic:
+            try:
+                future = cls.kafka_producer.send(
+                    topic=cls.kafka_topic,
+                    key=event.event_id,
+                    value=event.model_dump(mode="json"),
+                )
+                print(future.get(timeout=10))
+            except Exception as e:
+                traceback.print_exc()
+                print(f"Failed to log event to diaspora: {str(e)}")
+                cls.log_event_diaspora(event, retry_count=retry_count - 1)
         else:
-            response.raise_for_status()
-
-    def start_experiment(self) -> Dict[Any, Any]:
-        """logs the start of a given experiment
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-
-        return self._log_event("EXPERIMENT", "START")
-
-    def continue_experiment(self) -> Dict[Any, Any]:
-        """logs the continuation of a given experiment
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-
-        return self._log_event("EXPERIMENT", "CONTINUE")
-
-    def end_experiment(self) -> Dict[Any, Any]:
-        """logs the end of an experiment
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event("EXPERIMENT", "END")
-
-    def log_decision(self, dec_name: str, dec_value: bool) -> Dict[Any, Any]:
-        """logs an decision in the proper place for the given experiment
-
-        Parameters
-        ----------
-        dec_name : str
-            a description of the decision being made
-        dec_value: bool
-            the boolean value of that decision.
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event(
-            "CHECK", dec_name.capitalize(), {"dec_value": str(dec_value)}
-        )
-
-    def log_comment(self, comment: str) -> Dict[Any, Any]:
-        """logs a comment on the run
-        Parameters
-        ----------
-        comment: str
-            the comment to be logged
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event("COMMENT", comment)
-
-    def log_local_compute(self, func_name: str) -> Dict[Any, Any]:
-        """Logs a local function running on the system.
-        Parameters
-        ----------
-        func_name : str
-            the name of the function run
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-
-        return self._log_event("LOCAL", "COMPUTE", {"function_name": func_name})
-
-    def log_globus_compute(self, func_name: str) -> Dict[Any, Any]:
-        """logs a function running using Globus Compute
-
-        Parameters
-        ----------
-        func_name : str
-            the name of the function run
-
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event("GLOBUS", "COMPUTE", {"function_name": func_name})
-
-    def log_globus_flow(self, flow_name: str, flow_id: Any) -> Dict[Any, Any]:
-        """logs a function running using Globus Gladier
-
-        Parameters
-        ----------
-        flow_name : str
-            the name of the flow run
-        flow_id : str
-            the id generated by Gladier for the flow
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event(
-            "GLOBUS",
-            "GLADIER_RUNFLOW",
-            {"flow_name": flow_name, "flow_id": str(flow_id)},
-        )
-
-    def log_loop_start(self, loop_name: str) -> Dict[Any, Any]:
-        """logs the start of a loop during an Experiment
-
-        Parameters
-        ----------
-        loop_name : str
-            A name describing the loop run
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event("LOOP", "START", {"loop_name": loop_name})
-
-    def log_loop_end(self, loop_name: str) -> Dict[Any, Any]:
-        """Pops the most recent loop from the loop stack and logs its completion
-
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event("LOOP", "END", {"loop_name": loop_name})
-
-    def log_loop_check(
-        self, condition: Any, value: Any, loop_name: str
-    ) -> Dict[Any, Any]:
-        """Peeks the most recent loop from the loop stack and logs its completion
-
-
-        Parameters
-        ----------
-        condition : str
-            A value describing the condition being checked to see if the loop will continue.
-
-        value: bool
-            Whether or not the condition was met.
-
-        Returns
-        -------
-        response: Dict
-           The JSON portion of the response from the server"""
-        return self._log_event(
-            "LOOP",
-            "CHECK CONDITION",
-            {"loop_name": loop_name, "condition": condition, "result": str(value)},
-        )
-
-    def log_wf_queued(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
-        """Logs when a workflow is queued
-
-
-        Parameters
-        ----------
-        wf_name : str
-            The name of the workflow
-
-        run_id: str
-            The run_id of the workflow.
-
-        Returns
-        -------
-        Any
-           The JSON portion of the response from the server"""
-
-        return self._log_event(
-            "WEI", "WORKFLOW_QUEUED", {"wf_name": str(wf_name), "run_id": str(run_id)}
-        )
-
-    def log_wf_start(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
-        """Logs the start of a workflow
-
-
-        Parameters
-        ----------
-        wf_name : str
-            The name of the workflow
-
-        run_id: str
-            The run_id of the workflow.
-
-        Returns
-        -------
-        Any
-           The JSON portion of the response from the server"""
-
-        return self._log_event(
-            "WEI", "WORKFLOW_START", {"wf_name": str(wf_name), "run_id": str(run_id)}
-        )
-
-    def log_wf_failed(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
-        """Logs a failed workflow
-
-
-        Parameters
-        ----------
-        wf_name : str
-            The name of the workflow
-
-        run_id: str
-            The run_id of the workflow.
-
-        Returns
-        -------
-        Any
-           The JSON portion of the response from the server"""
-        return self._log_event(
-            "WEI", "WORKFLOW_FAILED", {"wf_name": str(wf_name), "run_id": str(run_id)}
-        )
-
-    def log_wf_step(self, wf_run: WorkflowRun, step: Step) -> Dict[Any, Any]:
-        """Logs a step in a workflow"""
-        return self._log_event(
-            "WEI",
-            "WORKFLOW_STEP",
-            {
-                "wf_name": str(wf_run.name),
-                "run_id": str(wf_run.run_id),
-                "step_name": str(step.name),
-                "step_id": str(step.id),
-                "step_index": str(wf_run.step_index),
-                "result": step.result.model_dump(mode="json"),
-            },
-        )
-
-    def log_wf_end(self, wf_name: str, run_id: str) -> Dict[Any, Any]:
-        """Logs the end of a workflow
-
-
-        Parameters
-        ----------
-        wf_name : str
-            The name of the workflow
-
-        run_id: str
-            The run_id of the workflow.
-
-        Returns
-        -------
-        Any
-           The JSON portion of the response from the server"""
-        return self._log_event(
-            "WEI", "WORKFLOW_END", {"wf_name": str(wf_name), "run_id": str(run_id)}
-        )
+            cls.initialize_diaspora()
+            cls.log_event_diaspora(event, retry_count=retry_count - 1)
