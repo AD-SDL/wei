@@ -1,6 +1,7 @@
 """The server that takes incoming WEI flow requests from the experiment application"""
 
 from contextlib import asynccontextmanager
+from typing import Dict
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -54,6 +55,14 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
 app = FastAPI(
     lifespan=lifespan,
 )
+
+
+@app.get("/up")
+def is_server_up() -> Dict[str, bool]:
+    """
+    Check if the server is up
+    """
+    return {"up": True}
 
 
 app.add_middleware(

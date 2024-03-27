@@ -136,7 +136,7 @@ def run_step(
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
     step.result = step_response
-    send_event(WorkflowStepEvent.new_event(wf_run=wf_run, step=step))
+    send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
     wf_run.hist[step.name] = step_response
     if step_response.action_response == StepStatus.FAILED:
         logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
@@ -144,7 +144,7 @@ def run_step(
         wf_run.end_time = datetime.now()
         wf_run.duration = wf_run.end_time - wf_run.start_time
         send_event(
-            WorkflowFailedEvent.new_event(
+            WorkflowFailedEvent.from_wf_run(
                 wf_run=wf_run,
             )
         )
@@ -153,7 +153,7 @@ def run_step(
             wf_run.status = WorkflowStatus.COMPLETED
             wf_run.end_time = datetime.now()
             wf_run.duration = wf_run.end_time - wf_run.start_time
-            send_event(WorkflowCompletedEvent.new_event(wf_run=wf_run))
+            send_event(WorkflowCompletedEvent.from_wf_run(wf_run=wf_run))
         else:
             wf_run.status = WorkflowStatus.QUEUED
     with state_manager.state_lock():

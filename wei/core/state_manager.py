@@ -11,7 +11,7 @@ from pottery import InefficientAccessWarning, RedisDict, Redlock
 from wei.config import Config
 from wei.types import Location, Module, Workcell, WorkflowRun
 from wei.types.base_types import ulid_factory
-from wei.types.experiment_types import Campaign, ExperimentInfo
+from wei.types.experiment_types import Campaign, Experiment
 
 
 class StateManager:
@@ -190,24 +190,24 @@ class StateManager:
         self.set_campaign(func(self.get_campaign(campaign_id), *args, **kwargs))
 
     # Experiment Methods
-    def get_experiment(self, experiment_id: str) -> ExperimentInfo:
+    def get_experiment(self, experiment_id: str) -> Experiment:
         """
         Returns an experiment by ID
         """
-        return ExperimentInfo.model_validate(self._experiments[experiment_id])
+        return Experiment.model_validate(self._experiments[experiment_id])
 
-    def get_all_experiments(self) -> Dict[str, ExperimentInfo]:
+    def get_all_experiments(self) -> Dict[str, Experiment]:
         """
         Returns all experiments
         """
         return {
-            str(experiment_id): ExperimentInfo.model_validate(
+            str(experiment_id): Experiment.model_validate(
                 experiment, from_attributes=True
             )
             for experiment_id, experiment in self._experiments.to_dict().items()
         }
 
-    def set_experiment(self, experiment: ExperimentInfo) -> None:
+    def set_experiment(self, experiment: Experiment) -> None:
         """
         Sets an experiment by ID
         """

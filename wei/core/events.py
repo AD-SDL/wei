@@ -1,5 +1,6 @@
 """Contains the Events class for logging experiment steps"""
 
+import traceback
 from typing import Any
 
 import requests
@@ -41,7 +42,11 @@ class EventHandler:
                 from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
 
                 assert block_until_ready()
-                cls.kafka_producer = KafkaProducer()
+
+                def str_to_bytes(s):
+                    return bytes(s, "utf-8")
+
+                cls.kafka_producer = KafkaProducer(key_serializer=str_to_bytes)
                 cls.kafka_topic = Config.kafka_topic
                 print(f"Creating Diaspora topic: {cls.kafka_topic}")
                 c = Client()
@@ -81,18 +86,24 @@ class EventHandler:
         Logger.get_workcell_logger(event.workcell_id).info(event.model_dump_json())
 
         if Config.use_diaspora:
-            cls.log_event_diaspora(event)
+            cls.log_event_diaspora(event=event)
 
-    def log_event_diaspora(self, log_value: Event) -> None:
+    @classmethod
+    def log_event_diaspora(cls, event: Event, retry_count=3) -> None:
         """Logs an event to diaspora"""
 
-        if self.kafka_producer and self.kafka_topic:
+        if cls.kafka_producer and cls.kafka_topic:
             try:
-                future = self.kafka_producer.send(
-                    self.kafka_topic, log_value.model_dump(mode="json")
+                future = cls.kafka_producer.send(
+                    topic=cls.kafka_topic,
+                    key=event.event_id,
+                    value=event.model_dump(mode="json"),
                 )
                 print(future.get(timeout=10))
             except Exception as e:
+                traceback.print_exc()
                 print(f"Failed to log event to diaspora: {str(e)}")
+                cls.log_event_diaspora(event, retry_count=retry_count - 1)
         else:
-            print("Diaspora not initialized.")
+            cls.initialize_diaspora()
+            cls.log_event_diaspora(event, retry_count=retry_count - 1)

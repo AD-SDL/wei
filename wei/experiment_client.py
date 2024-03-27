@@ -14,13 +14,14 @@ from wei.types.event_types import (
     DecisionEvent,
     Event,
     ExperimentContinueEvent,
+    ExperimentEndEvent,
     ExperimentStartEvent,
     GladierFlowEvent,
     GlobusComputeEvent,
     LocalComputeEvent,
     LoopStartEvent,
 )
-from wei.types.experiment_types import ExperimentDesign, ExperimentInfo
+from wei.types.experiment_types import Experiment, ExperimentDesign
 
 
 class ExperimentClient:
@@ -114,10 +115,10 @@ class ExperimentClient:
         )
         if not response.ok:
             response.raise_for_status()
-        self.experiment_info = ExperimentInfo.model_validate(response.json())
+        self.experiment_info = Experiment.model_validate(response.json())
         print(f"Experiment ID: {self.experiment_info.experiment_id}")
 
-        self._log_event(ExperimentStartEvent(event_info=self.experiment_info))
+        self._log_event(ExperimentStartEvent(experiment=self.experiment_info))
 
     def _continue_experiment(self, experiment_id) -> None:
         """Resumes an existing experiment with the server
@@ -136,9 +137,9 @@ class ExperimentClient:
         response = requests.get(url)
         if not response.ok:
             response.raise_for_status()
-        self.experiment_info = ExperimentInfo.model_validate(response.json())
+        self.experiment_info = Experiment.model_validate(response.json())
 
-        self._log_event(ExperimentContinueEvent(event_info=self.experiment_info))
+        self._log_event(ExperimentContinueEvent(experiment=self.experiment_info))
 
     def validate_workflow(
         self,
@@ -397,6 +398,20 @@ class ExperimentClient:
         else:
             response.raise_for_status()
 
+    def log_experiment_end(self) -> Event:
+        """Logs the end of the experiment in the experiment log
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        return self._log_event(ExperimentEndEvent(experiment=self.experiment_info))
+
     def log_decision(self, decision_name: str, decision_value: bool) -> Event:
         """Logs a decision in the experiment log
 
@@ -412,7 +427,7 @@ class ExperimentClient:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        decision = DecisionEvent.new_event(
+        decision = DecisionEvent(
             decision_name=decision_name, decision_value=decision_value
         )
         return self._log_event(decision)
@@ -429,7 +444,7 @@ class ExperimentClient:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        comment = CommentEvent.new_event(comment=comment)
+        comment = CommentEvent(comment=comment)
         return self._log_event(comment)
 
     def log_local_compute(
@@ -456,7 +471,7 @@ class ExperimentClient:
         -------
         response: Dict
            The JSON portion of the response from the server"""
-        local_compute = LocalComputeEvent.new_event(
+        local_compute = LocalComputeEvent(
             function_name=function_name, args=args, kwargs=kwargs, result=result
         )
         return self._log_event(local_compute)
@@ -470,7 +485,7 @@ class ExperimentClient:
     ) -> Event:
         """Logs a Globus computation in the experiment log"""
 
-        globus_compute = GlobusComputeEvent.new_event(
+        globus_compute = GlobusComputeEvent(
             function_name=function_name, args=args, kwargs=kwargs, result=result
         )
         return self._log_event(globus_compute)
@@ -482,11 +497,11 @@ class ExperimentClient:
     ) -> Event:
         """Logs a Gladier flow in the experiment log"""
 
-        gladier_flow = GladierFlowEvent.new_event(flow_name=flow_name, flow_id=flow_id)
+        gladier_flow = GladierFlowEvent(flow_name=flow_name, flow_id=flow_id)
         return self._log_event(gladier_flow)
 
     def log_loop_start(self, loop_name: str) -> Event:
         """Logs the start of a loop in the experiment log"""
 
-        loop_start = LoopStartEvent.new_event(loop_name=loop_name)
+        loop_start = LoopStartEvent(loop_name=loop_name)
         return self._log_event(loop_start)

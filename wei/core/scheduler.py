@@ -37,7 +37,7 @@ class Scheduler:
                     print(
                         f"Processed new workflow: {wf_run.name} with run_id: {run_id}"
                     )
-                    send_event(WorkflowQueuedEvent.new_event(wf_run=wf_run))
+                    send_event(WorkflowQueuedEvent.from_wf_run(wf_run=wf_run))
                     state_manager.set_workflow_run(wf_run)
                 elif wf_run.status in [WorkflowStatus.QUEUED, WorkflowStatus.WAITING]:
                     step = wf_run.steps[wf_run.step_index]
@@ -47,7 +47,7 @@ class Scheduler:
                         )
                         reserve_module(module, wf_run.run_id)
                         reserve_source_and_target(wf_run)
-                        send_event(WorkflowStartEvent.new_event(wf_run=wf_run))
+                        send_event(WorkflowStartEvent.from_wf_run(wf_run=wf_run))
                         wf_run.status = WorkflowStatus.RUNNING
                         print(
                             f"Starting step {wf_run.name}.{step.name} for run: {run_id}"

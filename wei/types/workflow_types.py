@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import (
     Field,
@@ -44,7 +44,7 @@ class Workflow(BaseModel):
 
     name: str
     """Name of the workflow"""
-    modules: List[str | SimpleModule]
+    modules: List[Union[str, SimpleModule]]
     """List of modules needed for the workflow"""
     flowdef: List[Step]
     """User Submitted Steps of the flow"""
