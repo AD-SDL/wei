@@ -2,13 +2,15 @@
 Router for the "workcells"/"wc" endpoints
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from wei.core.state_manager import StateManager
 from wei.core.workcell import set_config_from_workcell
 from wei.helpers import initialize_state
 from wei.types import Workcell, WorkflowStatus
+
+import time
 
 router = APIRouter()
 
@@ -53,6 +55,42 @@ def get_state() -> JSONResponse:
      response: Dict
        the state of the workcell
     """
+    with state_manager.state_lock():
+        return JSONResponse(content=state_manager.get_state())
+
+@router.websocket("/state/ws")
+async def get_state(websocket: WebSocket) -> JSONResponse:
+    """
+
+    Describes the state of the whole workcell including locations and daemon states
+
+    Parameters
+    ----------
+    None
+
+     Returns
+    -------
+     response: Dict
+       the state of the workcell
+    """
+    print("start")
+    await websocket.accept()
+    print("test")
+   
+    state = state_manager.get_state()
+    await websocket.send_json(state_manager.get_state())
+    while True: 
+        try:
+            new_state = state_manager.get_state()
+            if not(new_state == state):
+                state = new_state
+                await websocket.send_json(state_manager.get_state())
+            time.sleep(0.5)
+        except WebSocketDisconnect:
+            break
+            
+        
+
     with state_manager.state_lock():
         return JSONResponse(content=state_manager.get_state())
 

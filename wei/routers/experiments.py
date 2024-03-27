@@ -39,9 +39,9 @@ async def log_return(experiment_id: str) -> str:
 
 
 @router.get("/all")
-async def get_all_experiments() -> Dict[str, str]:
+async def get_all_experiments() -> JSONResponse:
     """Returns all experiments inside DataFolder"""
-    return state_manager.get_all_experiments()
+    return JSONResponse(state_manager.get_all_experiments())
 
 
 @router.get("/{experiment_id}")
