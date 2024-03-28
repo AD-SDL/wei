@@ -31,8 +31,10 @@ class ExperimentClient:
         self,
         server_host: str,
         server_port: str,
-        experiment_design: Optional[PathLike | ExperimentDesign] = None,
+        experiment_name: str,
         experiment_id: Optional[str] = None,
+        campaign_id: Optional[str] = None,
+        description: Optional[str] = None,
         working_dir: Optional[PathLike] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
@@ -60,17 +62,16 @@ class ExperimentClient:
         self.server_port = server_port
         self.url = f"http://{self.server_host}:{self.server_port}"
 
-        if isinstance(experiment_design, PathLike):
-            self.experiment_design = ExperimentDesign.from_yaml(experiment_design)
-        elif experiment_design:
-            assert ExperimentDesign.model_validate(
-                experiment_design
-            ), "experiment_design is invalid"
-            self.experiment_design = experiment_design
-        else:
+        if experiment_name is None:
             assert (
                 experiment_id is not None
-            ), "ExperimentDesign is required unless continuing an existing experiment"
+            ), "Experiment Name is required unless continuing an existing experiment"
+
+        self.experiment_design = ExperimentDesign(
+            experiment_name=experiment_name,
+            campaign_id=campaign_id,
+            description=description,
+        )
 
         if working_dir is None:
             self.working_dir = Path.cwd()

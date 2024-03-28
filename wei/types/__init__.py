@@ -5,7 +5,6 @@ from .event_types import Event
 from .experiment_types import (
     Campaign,
     Experiment,
-    ExperimentDataField,
     ExperimentDesign,
 )
 from .module_types import (
@@ -46,7 +45,6 @@ __all__ = [
     "Workcell",
     "WorkcellConfig",
     "Campaign",
-    "ExperimentDataField",
     "Experiment",
     "ExperimentDesign",
     "Event",

@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from pydantic import (
     Field,
@@ -10,7 +10,7 @@ from pydantic import (
 )
 
 from wei.types.base_types import BaseModel, PathLike
-from wei.types.module_types import Module
+from wei.types.module_types import ModuleDefinition
 
 
 class WorkcellConfig(BaseModel, extra="allow"):
@@ -75,17 +75,13 @@ class WorkcellConfig(BaseModel, extra="allow"):
 
 
 class Workcell(BaseModel):
-    """Container for information in a workcell"""
+    """Container for definition of a workcell, as used in a workcell file"""
 
     name: str
     """Name of the workflow"""
     config: WorkcellConfig
     """Globus search index, needed for publishing"""
-    modules: List[Module]
+    modules: List[ModuleDefinition]
     """The modules available to a workcell"""
     locations: Dict[str, Any] = {}
     """Locations used by the workcell"""
-
-    # *Runtime values*
-    id: Optional[str] = None
-    """ID of the workcell"""
