@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 from typing import Dict
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 
 from wei.config import Config
@@ -63,6 +63,32 @@ def is_server_up() -> Dict[str, bool]:
     Check if the server is up
     """
     return {"up": True}
+
+@app.websocket("/state/ws")
+async def get_state(websocket: WebSocket) -> None:
+    """
+
+    Describes the state of the whole workcell including locations and daemon states
+
+    Parameters
+    ----------
+    None
+
+     Returns
+    -------
+     response: Dict
+       the state of the workcell
+    """
+    print("start")
+    
+    await websocket.accept()
+    
+    print("test")
+   
+    # data = await websocket.receive_text()
+    # EventHandler.log_event(Event(event_type="recieve", event_name=str(data)))
+    await websocket.send_text({"testingtesing"})
+   
 
 
 app.add_middleware(

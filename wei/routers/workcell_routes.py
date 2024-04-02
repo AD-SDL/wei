@@ -9,6 +9,10 @@ from wei.core.state_manager import StateManager
 from wei.core.workcell import set_config_from_workcell
 from wei.helpers import initialize_state
 from wei.types import Workcell, WorkflowStatus
+from wei.core.events import EventHandler
+from wei.core.events import Event
+
+import asyncio
 
 import time
 
@@ -74,25 +78,33 @@ async def get_state(websocket: WebSocket) -> JSONResponse:
        the state of the workcell
     """
     print("start")
+    EventHandler.log_event(Event(event_type="start", event_name="start"))
     await websocket.accept()
+    EventHandler.log_event(Event(event_type="start", event_name="start"))
     print("test")
    
-    state = state_manager.get_state()
+    # data = await websocket.receive_text()
+    # EventHandler.log_event(Event(event_type="recieve", event_name=str(data)))
     await websocket.send_json(state_manager.get_state())
     while True: 
-        try:
-            new_state = state_manager.get_state()
-            if not(new_state == state):
-                state = new_state
-                await websocket.send_json(state_manager.get_state())
-            time.sleep(0.5)
-        except WebSocketDisconnect:
-            break
+        if state_manager.has_state_changed():
+            await websocket.send_json(state_manager.get_state())
+        await asyncio.sleep(0.5)
+
+    # while True: 
+    #     try:
+    #         EventHandler.log_event(Event(event_type="test", event_name="test"))
+    #         print("send")
+    #         test = await websocket.send_text({"hello world"})
+    #         EventHandler.log_event(Event(event_type="test", event_name=str(test)))
+            
+    #         time.sleep(0.5)
+    #     except WebSocketDisconnect:
+    #         break
             
         
 
-    with state_manager.state_lock():
-        return JSONResponse(content=state_manager.get_state())
+    
 
 
 @router.post("/state/reset", response_class=JSONResponse)
