@@ -1,8 +1,7 @@
 """Types related to Modules"""
 
 from enum import Enum
-from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import (
     AliasChoices,
@@ -95,15 +94,9 @@ class ModuleAbout(BaseModel):
     """List of admin commands supported by the module"""
 
 
-class Module(BaseModel):
-    """Container for a module found in a workcell file (more info than in a workflow file)"""
+class ModuleDefinition(BaseModel):
+    """Static definition of a module, as used in a workcell file"""
 
-    # Hidden
-    config_validation: ClassVar[Path] = (
-        Path(__file__).parent.resolve() / "data/module_configs_validation.json"
-    )
-
-    # Public
     name: str
     """name of the module, should be opentrons api compatible"""
     model: Optional[str] = None
@@ -111,7 +104,7 @@ class Module(BaseModel):
     interface: str = "wei_rest_interface"
     """Type of client (e.g wei_ros_interface, wei_rest_interface, etc.)"""
     config: Dict[str, Any] = {}
-    """the necessary configuration for the robot, arbitrary dict"""
+    """the necessary configuration for the robot, arbitrary dict validated by `validate_config`"""
     locations: List[str] = []
     """Optional, associates named locations with a module"""
     workcell_coordinates: Optional[Any] = Field(
@@ -121,17 +114,7 @@ class Module(BaseModel):
     )
     """location in workcell"""
     active: Optional[bool] = True
-    """Whether or not the robot is active"""
-
-    # Runtime values
-    id: str = Field(default_factory=ulid_factory)
-    """Robot id"""
-    state: ModuleStatus = Field(default=ModuleStatus.INIT)
-    """Current state of the module"""
-    reserved: Optional[str] = None
-    """ID of WorkflowRun that will run next on this Module"""
-    about: Optional[Any] = None
-    """About information for the module"""
+    """Whether or not the device is active (set to False to disable)"""
 
     @validator("config")
     def validate_config(cls, v: Any, values: Dict[str, Any], **kwargs: Any) -> Any:
@@ -151,6 +134,19 @@ class Module(BaseModel):
             raise ValueError(
                 f"Config for interface '{interface_type}' is invalid for module {values.get('name')}"
             )
+
+
+class Module(ModuleDefinition):
+    """Live instance of a Module"""
+
+    id: str = Field(default_factory=ulid_factory)
+    """ID of this instance of a Module"""
+    state: ModuleStatus = Field(default=ModuleStatus.INIT)
+    """Current state of the module"""
+    reserved: Optional[str] = None
+    """ID of WorkflowRun that will run next on this Module"""
+    about: Optional[Any] = None
+    """About information for the module"""
 
 
 class SimpleModule(BaseModel):

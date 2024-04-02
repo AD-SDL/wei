@@ -23,13 +23,10 @@ class TestWEI_Base(unittest.TestCase):
         )
         self.server_host = self.workcell.config.server_host
         self.server_port = self.workcell.config.server_port
-        self.experiment_design = self.root_dir / Path(
-            "tests/test_experiment.design.yaml"
-        )
         self.experiment = ExperimentClient(
-            self.server_host,
-            self.server_port,
-            self.experiment_design,
+            server_host=self.server_host,
+            server_port=self.server_port,
+            experiment_name="Test_Experiment",
             working_dir=Path(__file__).resolve().parent,
         )
         self.url = f"http://{self.server_host}:{self.server_port}"

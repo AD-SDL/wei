@@ -6,7 +6,10 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import Field
 
 from wei.types.base_types import BaseModel, ulid_factory
-from wei.types.experiment_types import Campaign, Experiment, ExperimentDataPoint
+from wei.types.experiment_types import (
+    Campaign,
+    Experiment,
+)
 from wei.types.step_types import Step
 from wei.types.workcell_types import Workcell
 from wei.types.workflow_types import WorkflowRun
@@ -73,7 +76,7 @@ class ExperimentDataPointEvent(Event):
     event_type: Literal["EXPERIMENT"] = "EXPERIMENT"
     event_name: Literal["DATA_POINT"] = "DATA_POINT"
 
-    data_point: ExperimentDataPoint
+    data_point: Dict[str, Any]
     """The data point being logged"""
 
 

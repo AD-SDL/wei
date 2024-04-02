@@ -12,6 +12,7 @@ from wei.config import Config
 from wei.types import Location, Module, Workcell, WorkflowRun
 from wei.types.base_types import ulid_factory
 from wei.types.experiment_types import Campaign, Experiment
+from wei.types.module_types import ModuleDefinition
 
 
 class StateManager:
@@ -365,13 +366,17 @@ class StateManager:
         }
 
     def set_module(
-        self, module_name: str, module: Union[Module, Dict[str, Any]]
+        self, module_name: str, module: Union[Module, ModuleDefinition, Dict[str, Any]]
     ) -> None:
         """
         Sets a module by name
         """
         if isinstance(module, Module):
             module_dump = module.model_dump(mode="json")
+        elif isinstance(module, ModuleDefinition):
+            module_dump = Module.model_validate(
+                module, from_attributes=True
+            ).model_dump(mode="json")
         else:
             module_dump = Module.model_validate(module).model_dump(mode="json")
         self._modules[module_name] = module_dump
