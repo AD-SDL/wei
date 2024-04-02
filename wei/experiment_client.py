@@ -232,7 +232,7 @@ class ExperimentClient:
 
     def start_run(
         self,
-        workflow_file: Path,
+        workflow_file: PathLike,
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
@@ -257,6 +257,7 @@ class ExperimentClient:
         """
         if payload is None:
             payload = {}
+        workflow_file = Path(workflow_file).expanduser().resolve()
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         workflow = Workflow.from_yaml(workflow_file)
         url = f"{self.url}/runs/start"

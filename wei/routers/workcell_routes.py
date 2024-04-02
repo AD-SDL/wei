@@ -5,6 +5,7 @@ Router for the "workcells"/"wc" endpoints
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
+from wei.config import Config
 from wei.core.state_manager import StateManager
 from wei.core.workcell import set_config_from_workcell
 from wei.helpers import initialize_state
@@ -36,6 +37,31 @@ def set_workcell(workcell: Workcell) -> JSONResponse:
         return JSONResponse(
             content=state_manager.get_workcell().model_dump(mode="json")
         )
+
+
+@router.get("/")
+def get_workcell() -> Workcell:
+    """
+
+    Describes the workcell's state
+
+    Parameters
+    ----------
+    None
+
+     Returns
+    -------
+     response: Dict
+       the definition of the workcell
+    """
+    with state_manager.state_lock():
+        return state_manager.get_workcell().model_dump(mode="json")
+
+
+@router.get("/config")
+def get_workcell_config() -> JSONResponse:
+    """Returns the server configuration (including values set/overridden by cli args)"""
+    return JSONResponse(Config.dump_to_json())
 
 
 @router.get("/state", response_class=JSONResponse)
