@@ -1,7 +1,7 @@
-wei.routers.events
-==================
+wei.routers.event\_routes
+=========================
 
-.. automodule:: wei.routers.events
+.. automodule:: wei.routers.event_routes
 
    
    

@@ -73,8 +73,6 @@ class WorkflowRun(Workflow):
     """current status of the workflow"""
     steps: List[Step] = []
     """WEI Processed Steps of the flow"""
-    result: Dict[str, Any] = Field(default={})
-    """result from the Workflow"""
     hist: Dict[str, Any] = Field(default={})
     """history of the workflow"""
     experiment_id: str = ""
@@ -90,16 +88,3 @@ class WorkflowRun(Workflow):
     """Time the workflow finished running"""
     duration: Optional[timedelta] = None
     """Duration of the workflow's run"""
-
-
-class Location(BaseModel):
-    """Container for a location"""
-
-    name: str
-    """Name of the location"""
-    coordinates: Dict[str, Any]
-    """Coordinates of the location"""
-    state: str = "Empty"
-    """State of the location"""
-    reserved: Optional[str] = None
-    """ID of WorkflowRun that will next occupy this Location"""

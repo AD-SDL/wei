@@ -10,10 +10,10 @@ from fastapi.responses import JSONResponse
 
 from wei.core.experiment import (
     get_experiment,
-    get_experiment_log_file,
     register_new_experiment,
 )
 from wei.core.state_manager import StateManager
+from wei.core.storage import get_experiment_log_file
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
 
 router = APIRouter()

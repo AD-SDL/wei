@@ -1,7 +1,7 @@
-wei.routers.admin
-=================
+wei.routers.admin\_routes
+=========================
 
-.. automodule:: wei.routers.admin
+.. automodule:: wei.routers.admin_routes
 
    
    

@@ -4,13 +4,10 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
-from wei.core.loggers import (
-    get_workflow_run_dir,
-    get_workflow_run_result_dir,
-)
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 from wei.core.step import validate_step
+from wei.core.storage import get_workflow_result_directory, get_workflow_run_directory
 from wei.types import Step, Workcell, Workflow, WorkflowRun
 from wei.types.workflow_types import WorkflowStatus
 
@@ -59,8 +56,16 @@ def create_run(
         }
     )
     wf_run = WorkflowRun(**wf_dict)
-    get_workflow_run_dir(wf_run).mkdir(parents=True, exist_ok=True)
-    get_workflow_run_result_dir(wf_run).mkdir(parents=True, exist_ok=True)
+    get_workflow_run_directory(
+        workflow_name=wf_run.name,
+        workflow_run_id=wf_run.run_id,
+        experiment_id=experiment_id,
+    ).mkdir(parents=True, exist_ok=True)
+    get_workflow_result_directory(
+        workflow_name=wf_run.name,
+        workflow_run_id=wf_run.run_id,
+        experiment_id=experiment_id,
+    ).mkdir(parents=True, exist_ok=True)
 
     steps = []
     for step in workflow.flowdef:
@@ -110,7 +115,14 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
     if files:
         for file in files:
             print(file)
-            file_path = get_workflow_run_dir(wf_run) / file.filename
+            file_path = (
+                get_workflow_run_directory(
+                    workflow_run_id=wf_run.run_id,
+                    workflow_name=wf_run.name,
+                    experiment_id=wf_run.experiment_id,
+                )
+                / file.filename
+            )
             with open(file_path, "wb") as f:
                 f.write(file.file.read())
             for step in wf_run.steps:

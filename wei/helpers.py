@@ -87,11 +87,10 @@ def parse_args() -> Namespace:
             f"--{name}",
             help=field.description,
             type=field_type,
-            default=None,
         )
-    args = parser.parse_args()
-    load_workcell_file(args.workcell)
-    for argument, value in vars(args).items():
+    cli_args = parser.parse_args()
+    load_workcell_file(cli_args.workcell)
+    for argument, value in vars(cli_args).items():
         if value is not None:
             setattr(Config, argument, value)
     Config.configured = True

@@ -1,7 +1,7 @@
-wei.routers.locations
-=====================
+wei.routers.location\_routes
+============================
 
-.. automodule:: wei.routers.locations
+.. automodule:: wei.routers.location_routes
 
    
    

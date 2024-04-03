@@ -1,7 +1,7 @@
-wei.core.interface
-==================
+wei.core.loggers
+================
 
-.. automodule:: wei.core.interface
+.. automodule:: wei.core.loggers
 
    
    
@@ -17,7 +17,7 @@ wei.core.interface
 
    .. autosummary::
    
-      InterfaceMap
+      Logger
    
    
 

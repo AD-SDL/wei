@@ -7,9 +7,10 @@ from typing import Tuple
 from wei.config import Config
 from wei.core.events import send_event
 from wei.core.location import free_source_and_target, update_source_and_target
-from wei.core.loggers import Logger, get_workflow_run_dir
+from wei.core.loggers import Logger
 from wei.core.module import clear_module_reservation, get_module_about
 from wei.core.state_manager import StateManager
+from wei.core.storage import get_workflow_run_directory
 from wei.types import (
     Module,
     ModuleStatus,
@@ -114,7 +115,9 @@ def run_step(
         step.start_time = datetime.now()
         action_response, action_msg, action_log = InterfaceMap.interfaces[
             interface
-        ].send_action(step=step, module=module, run_dir=get_workflow_run_dir(wf_run))
+        ].send_action(
+            step=step, module=module, run_dir=get_workflow_run_directory(wf_run.run_id)
+        )
         step_response = StepResponse(
             action_response=action_response,
             action_msg=action_msg,

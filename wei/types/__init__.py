@@ -18,8 +18,8 @@ from .module_types import (
     ModuleStatus,
 )
 from .step_types import Step, StepFileResponse, StepResponse, StepStatus
-from .workcell_types import Workcell, WorkcellConfig
-from .workflow_types import Location, Metadata, Workflow, WorkflowRun, WorkflowStatus
+from .workcell_types import Location, Workcell, WorkcellConfig
+from .workflow_types import Metadata, Workflow, WorkflowRun, WorkflowStatus
 
 __all__ = [
     "BaseModel",

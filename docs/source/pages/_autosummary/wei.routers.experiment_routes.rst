@@ -1,7 +1,7 @@
-wei.routers.experiments
-=======================
+wei.routers.experiment\_routes
+==============================
 
-.. automodule:: wei.routers.experiments
+.. automodule:: wei.routers.experiment_routes
 
    
    

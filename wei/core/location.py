@@ -3,7 +3,8 @@
 from typing import Any, Union
 
 from wei.core.state_manager import StateManager
-from wei.types import Location, Module, WorkflowRun
+from wei.types import Module, WorkflowRun
+from wei.types.workcell_types import Location
 
 state_manager = StateManager()
 

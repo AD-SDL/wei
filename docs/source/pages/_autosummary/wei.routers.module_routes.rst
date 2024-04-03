@@ -1,7 +1,7 @@
-wei.routers.modules
-===================
+wei.routers.module\_routes
+==========================
 
-.. automodule:: wei.routers.modules
+.. automodule:: wei.routers.module_routes
 
    
    

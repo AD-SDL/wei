@@ -2,7 +2,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import (
     Field,
@@ -20,7 +20,7 @@ class WorkcellConfig(BaseModel, extra="allow"):
     """
 
     lab_name: str = Field(
-        default="wei",
+        default="sdl",
         description="Name of the lab to associate the workcell and all associated data with",
     )
     use_diaspora: bool = Field(
@@ -85,3 +85,16 @@ class Workcell(BaseModel):
     """The modules available to a workcell"""
     locations: Dict[str, Any] = {}
     """Locations used by the workcell"""
+
+
+class Location(BaseModel):
+    """Container for a location"""
+
+    name: str
+    """Name of the location"""
+    coordinates: Dict[str, Any]
+    """Coordinates of the location"""
+    state: str = "Empty"
+    """State of the location"""
+    reserved: Optional[str] = None
+    """ID of WorkflowRun that will next occupy this Location"""
