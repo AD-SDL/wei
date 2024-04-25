@@ -72,7 +72,7 @@ class Experiment:
 
 
 def list_experiments():
-    """Return a list of all experiments in the Config folger
+    """Return a list of all experiments in the Config folder
 
     Returns
     -------
@@ -83,6 +83,10 @@ def list_experiments():
     pat1 = r"(.+)_id_(.+)"
     all_exps = {}
     for exp in all_exps_raw:
-        test = re.match(pat1, exp)
-        all_exps[test[2]] = test[1]
+        try:
+            test = re.match(pat1, exp)
+            all_exps[test[2]] = test[1]
+        except Exception:
+            # Incorrectly formatted folder name, ignore
+            pass
     return all_exps
