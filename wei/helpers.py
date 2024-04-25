@@ -56,6 +56,9 @@ def initialize_state() -> None:
     from wei.core.state_manager import StateManager
 
     state_manager = StateManager()
+    Config.data_directory.mkdir(parents=True, exist_ok=True)
+    (Config.data_directory / "experiments").mkdir(exist_ok=True)
+    (Config.data_directory / "temp").mkdir(exist_ok=True)
     state_manager.set_workcell(Workcell.from_yaml(Config.workcell_file))
     initialize_workcell_modules()
     initialize_workcell_locations()
