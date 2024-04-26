@@ -6,8 +6,8 @@ import re
 from wei.core.state_manager import StateManager
 from wei.core.storage import (
     get_experiment_directory,
-    get_experiment_workflows_directory,
     get_experiments_directory,
+    get_workflow_runs_directory,
     search_for_experiment_directory,
 )
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
@@ -22,7 +22,7 @@ def register_new_experiment(experiment_design: ExperimentDesign) -> Experiment:
     get_experiment_directory(
         new_experiment.experiment_id, new_experiment.experiment_name
     ).mkdir(parents=True, exist_ok=True)
-    get_experiment_workflows_directory(
+    get_workflow_runs_directory(
         new_experiment.experiment_id, new_experiment.experiment_name
     ).mkdir(parents=True, exist_ok=True)
     with state_manager.lab_state_lock():

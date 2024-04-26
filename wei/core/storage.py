@@ -15,7 +15,7 @@ def get_workcell_directory(workcell_id: str) -> Path:
     return Config.data_directory / "workcells" / f"{workcell.name}_id_{workcell_id}"
 
 
-def get_workcell_run_log_path(workcell_id: str) -> Path:
+def get_workcell_log_path(workcell_id: str) -> Path:
     """Returns the log file for the given workcell id."""
     return get_workcell_directory(workcell_id) / f"{workcell_id}.log"
 
@@ -47,28 +47,34 @@ def search_for_experiment_directory(experiment_id: str) -> Path:
     raise ValueError(f"Experiment {experiment_id} not found.")
 
 
-def get_experiment_log_file(experiment_id: str) -> Path:
-    """Returns the log file for the given experiment id."""
-    return (
-        get_experiment_directory(experiment_id=experiment_id) / f"{experiment_id}.log"
-    )
-
-
-def get_experiment_workflows_directory(
+def get_experiment_log_file(
     experiment_id: str, experiment_name: Optional[str] = None
 ) -> Path:
-    """Returns the directory for the given experiment id."""
+    """Returns the log file for the given experiment id."""
     return (
         get_experiment_directory(
             experiment_id=experiment_id, experiment_name=experiment_name
         )
-        / "workflows"
+        / f"{experiment_id}.log"
+    )
+
+
+def get_workflow_runs_directory(
+    experiment_id: str, experiment_name: Optional[str] = None
+) -> Path:
+    """Returns the workflow runs directory for the given experiment id."""
+    return (
+        get_experiment_directory(
+            experiment_id=experiment_id, experiment_name=experiment_name
+        )
+        / "workflow_runs"
     )
 
 
 def get_workflow_run_directory(
     workflow_run_id: str,
     experiment_id: Optional[str] = None,
+    experiment_name: Optional[str] = None,
     workflow_name: Optional[str] = None,
 ) -> Path:
     """Returns the directory for the given workflow id."""
@@ -77,8 +83,9 @@ def get_workflow_run_directory(
         workflow_name = wf_run.name
         experiment_id = wf_run.experiment_id
     return (
-        get_experiment_directory(experiment_id=experiment_id)
-        / "workflows"
+        get_workflow_runs_directory(
+            experiment_id=experiment_id, experiment_name=experiment_name
+        )
         / f"{workflow_name}_id_{workflow_run_id}"
     )
 
@@ -99,9 +106,17 @@ def get_workflow_result_directory(
     )
 
 
-def get_workflow_run_log_path(workflow_run_id: str) -> Path:
+def get_workflow_run_log_path(
+    workflow_run_id: str,
+    experiment_id: Optional[str] = None,
+    experiment_name: Optional[str] = None,
+) -> Path:
     """Returns the log file for the given workflow id."""
     return (
-        get_workflow_run_directory(workflow_run_id=workflow_run_id)
+        get_workflow_run_directory(
+            workflow_run_id=workflow_run_id,
+            experiment_id=experiment_id,
+            workflow_name=experiment_name,
+        )
         / f"{workflow_run_id}.log"
     )
