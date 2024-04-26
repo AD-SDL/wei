@@ -32,7 +32,6 @@ wei.types
    wei.types.experiment_types
    wei.types.interface_types
    wei.types.module_types
-   wei.types.resource_types
    wei.types.step_types
    wei.types.workcell_types
    wei.types.workflow_types

@@ -4,10 +4,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import (
-    Field,
-    field_validator,
-)
+from pydantic import Field, field_validator
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.module_types import SimpleModule
@@ -29,14 +26,23 @@ class WorkflowStatus(str, Enum):
     """Status for a workflow run"""
 
     NEW = "new"
+    """Newly created workflow run, hasn't been queued yet"""
     QUEUED = "queued"
+    """Workflow run is queued, hasn't started yet"""
     RUNNING = "running"
-    WAITING = "waiting"
+    """Workflow is currently running a step"""
+    IN_PROGRESS = "in_progress"
+    """Workflow run has started, but is not actively running a step"""
     PAUSED = "paused"
+    """Workflow run is paused"""
     COMPLETED = "completed"
+    """Workflow run has completed"""
     FAILED = "failed"
+    """Workflow run has failed"""
     UNKNOWN = "unknown"
+    """Workflow run status is unknown"""
     CANCELLED = "cancelled"
+    """Workflow run has been cancelled"""
 
 
 class Workflow(BaseModel):

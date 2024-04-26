@@ -4,13 +4,36 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import (
-    Field,
-    field_validator,
-)
+from pydantic import Field, field_validator
 
 from wei.types.base_types import BaseModel, PathLike
 from wei.types.module_types import ModuleDefinition
+
+
+class Workcell(BaseModel):
+    """Container for definition of a workcell, as used in a workcell file"""
+
+    name: str
+    """Name of the workflow"""
+    config: "WorkcellConfig"
+    """Globus search index, needed for publishing"""
+    modules: List[ModuleDefinition]
+    """The modules available to a workcell"""
+    locations: Dict[str, Any] = {}
+    """Locations used by the workcell"""
+
+
+class Location(BaseModel):
+    """Container for a location"""
+
+    name: str
+    """Name of the location"""
+    coordinates: Dict[str, Any]
+    """Coordinates of the location"""
+    state: str = "Empty"
+    """State of the location"""
+    reserved: Optional[str] = None
+    """ID of WorkflowRun that will next occupy this Location"""
 
 
 class WorkcellConfig(BaseModel, extra="allow"):
@@ -72,29 +95,3 @@ class WorkcellConfig(BaseModel, extra="allow"):
     def validate_data_directory(cls, v: PathLike) -> Path:
         """Converts the data_directory to a Path object"""
         return Path(v)
-
-
-class Workcell(BaseModel):
-    """Container for definition of a workcell, as used in a workcell file"""
-
-    name: str
-    """Name of the workflow"""
-    config: WorkcellConfig
-    """Globus search index, needed for publishing"""
-    modules: List[ModuleDefinition]
-    """The modules available to a workcell"""
-    locations: Dict[str, Any] = {}
-    """Locations used by the workcell"""
-
-
-class Location(BaseModel):
-    """Container for a location"""
-
-    name: str
-    """Name of the location"""
-    coordinates: Dict[str, Any]
-    """Coordinates of the location"""
-    state: str = "Empty"
-    """State of the location"""
-    reserved: Optional[str] = None
-    """ID of WorkflowRun that will next occupy this Location"""

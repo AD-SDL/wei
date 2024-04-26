@@ -25,9 +25,11 @@ fi
 
 
 # Best-effort attempt to align permissions
+mkdir -p /home/app/.wei/experiments /home/app/.wei/temp /home/app/.wei/.diaspora
 chown $USER_ID:$GROUP_ID /home/app || true
 chown $USER_ID:$GROUP_ID /home/app/.wei || true
 chown $USER_ID:$GROUP_ID /home/app/.wei/experiments || true
+chown $USER_ID:$GROUP_ID /home/app/.wei/temp || true
 chown $USER_ID:$GROUP_ID /home/app/.diaspora || true
 
 if [ "$USER_ID" -eq 0 ] && [ "$GROUP_ID" -eq 0 ]; then

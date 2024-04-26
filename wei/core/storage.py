@@ -9,6 +9,14 @@ from wei.core.state_manager import StateManager
 state_manager = StateManager()
 
 
+def initialize_storage():
+    """Initializes the storage directories."""
+    Config.data_directory.mkdir(parents=True, exist_ok=True)
+    (Config.data_directory / "experiments").mkdir(exist_ok=True)
+    (Config.data_directory / "temp").mkdir(exist_ok=True)
+    (Config.data_directory / "workcells").mkdir(exist_ok=True)
+
+
 def get_workcell_directory(workcell_id: str) -> Path:
     """Returns the directory for the given workcell name."""
     workcell = state_manager.get_workcell()
@@ -26,17 +34,29 @@ def get_experiments_directory() -> Path:
 
 
 def get_experiment_directory(
-    experiment_id: str, experiment_name: Optional[str] = None
+    experiment_id: str, experiment_name: Optional[str] = None, create: bool = False
 ) -> Path:
     """Returns the directory for the given experiment id."""
-    if experiment_name is None:
+    if not create:
         try:
-            experiment_name = state_manager.get_experiment(
-                experiment_id
-            ).experiment_name
-        except KeyError:
-            return search_for_experiment_directory(experiment_id)
-    return get_experiments_directory() / f"{experiment_name}_id_{experiment_id}"
+            try:
+                # Check to see if we have a cached version of the experiment
+                experiment = state_manager.get_experiment(experiment_id)
+                experiment_name = experiment.experiment_name
+                if experiment.experiment_directory is not None:
+                    # If the cached version has a saved directory, return it
+                    return Path(experiment.experiment_directory)
+            except Exception:
+                # No cached version, so search the disk
+                return search_for_experiment_directory(experiment_id)
+        except Exception:
+            # If we can't find the experiment directory, we'll create it at the default
+            pass
+    experiment_dir = (
+        get_experiments_directory() / f"{experiment_name}_id_{experiment_id}"
+    )
+    experiment_dir.mkdir(parents=True, exist_ok=True)
+    return experiment_dir
 
 
 def search_for_experiment_directory(experiment_id: str) -> Path:
@@ -108,6 +128,7 @@ def get_workflow_result_directory(
 
 def get_workflow_run_log_path(
     workflow_run_id: str,
+    workflow_name: Optional[str] = None,
     experiment_id: Optional[str] = None,
     experiment_name: Optional[str] = None,
 ) -> Path:
@@ -115,8 +136,9 @@ def get_workflow_run_log_path(
     return (
         get_workflow_run_directory(
             workflow_run_id=workflow_run_id,
+            workflow_name=workflow_name,
             experiment_id=experiment_id,
-            workflow_name=experiment_name,
+            experiment_name=experiment_name,
         )
         / f"{workflow_run_id}.log"
     )

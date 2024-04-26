@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from wei.config import Config
 from wei.core.events import EventHandler
+from wei.core.storage import initialize_storage
 from wei.helpers import parse_args
 from wei.routers import (
     admin_routes,
@@ -78,6 +79,7 @@ if __name__ == "__main__":
     import uvicorn
 
     parse_args()
+    initialize_storage()
     uvicorn.run(
         "wei.server:app",
         host=Config.server_host,

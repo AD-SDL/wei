@@ -48,7 +48,7 @@ def update_module(module_name: str, module: Module) -> None:
             if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
                 module.about = get_module_about(module, require_schema_compliance=False)
             module.state = state
-            with state_manager.state_lock():
+            with state_manager.wc_state_lock():
                 state_manager.set_module(module_name, module)
         if module.reserved:
             reserving_wf = state_manager.get_workflow_run(module.reserved)
@@ -65,7 +65,7 @@ def update_module(module_name: str, module: Module) -> None:
                 # *but that workflow isn't actually using the module,
                 # *so release the reservation, and allow the current workflow to proceed
                 print(f"Clearing reservation on module {module_name}")
-                with state_manager.state_lock():
+                with state_manager.wc_state_lock():
                     clear_module_reservation(module)
     except Exception:
         traceback.print_exc()

@@ -10,15 +10,10 @@ import yaml
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
-from wei.core.loggers import (
-    Logger,
-)
+from wei.core.loggers import Logger
 from wei.core.state_manager import StateManager
 from wei.core.storage import get_workflow_result_directory, get_workflow_run_log_path
-from wei.core.workflow import (
-    create_run,
-    save_workflow_files,
-)
+from wei.core.workflow import create_run, save_workflow_files
 from wei.types import Workflow, WorkflowStatus
 
 router = APIRouter()
@@ -73,7 +68,7 @@ async def start_run(
     wf_run = create_run(wf, workcell, experiment_id, payload, simulate)
     wf_run = save_workflow_files(wf_run, files)
 
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         state_manager.set_workflow_run(wf_run)
     return JSONResponse(
         content={
@@ -151,7 +146,7 @@ def get_run_status(
        a dictionary including the status on the queueing, and the result of the job if it's done
     """
     try:
-        with state_manager.state_lock():
+        with state_manager.wc_state_lock():
             workflow = state_manager.get_workflow_run(run_id)
         return JSONResponse(content=workflow.model_dump(mode="json"))
     except KeyError:

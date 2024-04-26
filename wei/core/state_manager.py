@@ -11,6 +11,7 @@ from pottery import InefficientAccessWarning, RedisDict, Redlock
 from wei.config import Config
 from wei.types import Module, Workcell, WorkflowRun
 from wei.types.base_types import ulid_factory
+from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment
 from wei.types.module_types import ModuleDefinition
 from wei.types.workcell_types import Location
@@ -88,25 +89,38 @@ class StateManager:
     def _campaigns(self) -> RedisDict:
         return RedisDict(key=f"{self._lab_prefix}:campaigns", redis=self._redis_client)
 
+    @property
+    def _events(self) -> RedisDict:
+        return RedisDict(key=f"{self._lab_prefix}:events", redis=self._redis_client)
+
     # Locking Methods
-    def lab_state_lock(self) -> Redlock:
+    def campaign_lock(self, campaign_id: str) -> Redlock:
         """
-        Gets a lock on the lab state. This should be called before any state updates are made,
-        or where we don't want the state to be changing underneath us (i.e., in the engine).
+        Get a lock on a particular campaign. This should be called before editing a Campaign.
         """
         return Redlock(
-            key=f"{self._lab_prefix}:state",
+            key="f{self._lab_prefix}:campaign_lock:{campaign_id}",
             masters={self._redis_client},
             auto_release_time=60,
         )
 
-    def state_lock(self) -> Redlock:
+    def experiment_lock(self, experiment_id: str) -> Redlock:
         """
-        Gets a lock on the state. This should be called before any state updates are made,
+        Get a lock on a particular experiment. This should be called before editing an experiment.
+        """
+        return Redlock(
+            key="f{self._lab_prefix}:experiment_lock:{experiment_id}",
+            masters={self._redis_client},
+            auto_release_time=60,
+        )
+
+    def wc_state_lock(self) -> Redlock:
+        """
+        Gets a lock on the workcell's state. This should be called before any state updates are made,
         or where we don't want the state to be changing underneath us (i.e., in the engine).
         """
         return Redlock(
-            key=f"{self._workcell_prefix}:state",
+            key=f"{self._workcell_prefix}:state_lock",
             masters={self._redis_client},
             auto_release_time=60,
         )
@@ -174,14 +188,12 @@ class StateManager:
         Sets a campaign by ID
         """
         self._campaigns[campaign.campaign_id] = campaign.model_dump(mode="json")
-        self.mark_state_changed()
 
     def delete_campaign(self, campaign_id: str) -> None:
         """
         Deletes a campaign by ID
         """
         del self._campaigns[campaign_id]
-        self.mark_state_changed()
 
     def update_campaign(
         self, campaign_id: str, func: Callable[..., Any], *args: Any, **kwargs: Any
@@ -214,14 +226,12 @@ class StateManager:
         Sets an experiment by ID
         """
         self._experiments[experiment.experiment_id] = experiment.model_dump(mode="json")
-        self.mark_state_changed()
 
     def delete_experiment(self, experiment_id: str) -> None:
         """
         Deletes an experiment by ID
         """
         del self._experiments[experiment_id]
-        self.mark_state_changed()
 
     def update_experiment(
         self, experiment_id: str, func: Callable[..., Any], *args: Any, **kwargs: Any
@@ -230,6 +240,25 @@ class StateManager:
         Updates the state of an experiment.
         """
         self.set_experiment(func(self.get_experiment(experiment_id), *args, **kwargs))
+
+    # Event Methods
+    def get_event(self, event_id: str) -> Event:
+        """
+        Returns an event by ID
+        """
+        return self._events[event_id]
+
+    def get_all_events(self) -> Dict[str, Event]:
+        """
+        Returns all events
+        """
+        return self._events.to_dict()
+
+    def set_event(self, event: Event) -> None:
+        """
+        Sets an event by ID
+        """
+        self._events[event.event_id] = event.model_dump(mode="json")
 
     # Workcell Methods
     def get_workcell(self) -> Workcell:

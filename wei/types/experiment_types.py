@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from pydantic import AliasChoices, Field
 
-from wei.types.base_types import BaseModel, ulid_factory
+from wei.types.base_types import BaseModel, PathLike, ulid_factory
 
 
 class Campaign(BaseModel):
@@ -34,3 +34,4 @@ class Experiment(ExperimentDesign):
 
     experiment_id: str = Field(default_factory=ulid_factory)
     """ID of the experiment"""
+    experiment_directory: Optional[PathLike] = None

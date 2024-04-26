@@ -14,6 +14,7 @@ from wei.core.experiment import parse_experiments_from_disk
 from wei.core.module import update_active_modules
 from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
+from wei.core.storage import initialize_storage
 from wei.core.workflow import cancel_workflow_run
 from wei.helpers import initialize_state, parse_args
 from wei.types.event_types import WorkcellStartEvent
@@ -29,6 +30,7 @@ class Engine:
     def __init__(self) -> None:
         """Initialize the scheduler."""
         self.state_manager = StateManager()
+        initialize_storage()
         disk_scan_thread = threading.Thread(target=parse_experiments_from_disk)
         disk_scan_thread.start()
         self.state_manager.clear_state(
@@ -39,11 +41,11 @@ class Engine:
             if wf_run.status in [
                 WorkflowStatus.RUNNING,
                 WorkflowStatus.QUEUED,
-                WorkflowStatus.WAITING,
+                WorkflowStatus.IN_PROGRESS,
             ]:
                 cancel_workflow_run(wf_run)
         self.scheduler = Scheduler(sequential=Config.sequential_scheduler)
-        with self.state_manager.state_lock():
+        with self.state_manager.wc_state_lock():
             initialize_state()
         time.sleep(Config.cold_start_delay)
         self.wait_for_server()

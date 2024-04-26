@@ -10,7 +10,6 @@ from wei.core.storage import (
     get_workflow_run_directory,
 )
 from wei.types.base_types import PathLike
-from wei.types.workflow_types import WorkflowRun
 
 
 class Logger:
@@ -96,7 +95,7 @@ class Logger:
         )
 
     @staticmethod
-    def get_workflow_run_logger(wf_run: WorkflowRun) -> logging.Logger:
+    def get_workflow_run_logger(wf_run_id: str) -> logging.Logger:
         """Finds the existing logger with the given name or creates a new one if it doesn't exist
 
         Parameters
@@ -110,8 +109,8 @@ class Logger:
         """
 
         return Logger.get_logger(
-            f"{wf_run.run_id}",
-            get_workflow_run_directory(wf_run.run_id),
+            f"{wf_run_id}",
+            get_workflow_run_directory(wf_run_id),
             log_level=Config.log_level,
         )
 

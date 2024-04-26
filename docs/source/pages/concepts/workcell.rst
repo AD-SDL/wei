@@ -7,7 +7,7 @@ A **Workcell** is a collection of :doc:`module` (instruments, robots, and other 
 Abstractly, a Workcell is defined by three different things: its **Modules**, its **Locations**, and its **Configuration**. All of this is specified in a ``.yaml`` file, which is loaded by the WEI instance that runs the Workcell.
 
 Modules
-=======
+========
 
 Modules are the individual components that make up a Workcell. These can be anything from a robot arm to a camera to a PCR machine. Each Module has a number of properties, including a name, a model, an interface, and a configuration.
 

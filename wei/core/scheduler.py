@@ -28,7 +28,7 @@ class Scheduler:
         If a workflow is able to run, it is started in a separate process.
         Workflows are processed in the order they are received, so older workflows have priority.
         """
-        with state_manager.state_lock():
+        with state_manager.wc_state_lock():
             # * Update all queued workflows
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():
                 if wf_run.status == WorkflowStatus.NEW:
@@ -38,7 +38,10 @@ class Scheduler:
                     )
                     send_event(WorkflowQueuedEvent.from_wf_run(wf_run=wf_run))
                     state_manager.set_workflow_run(wf_run)
-                elif wf_run.status in [WorkflowStatus.QUEUED, WorkflowStatus.WAITING]:
+                elif wf_run.status in [
+                    WorkflowStatus.QUEUED,
+                    WorkflowStatus.IN_PROGRESS,
+                ]:
                     step = wf_run.steps[wf_run.step_index]
                     if check_step(wf_run.experiment_id, run_id, step):
                         module = find_step_module(
@@ -46,7 +49,8 @@ class Scheduler:
                         )
                         reserve_module(module, wf_run.run_id)
                         reserve_source_and_target(wf_run)
-                        send_event(WorkflowStartEvent.from_wf_run(wf_run=wf_run))
+                        if wf_run.status == WorkflowStatus.QUEUED:
+                            send_event(WorkflowStartEvent.from_wf_run(wf_run=wf_run))
                         wf_run.status = WorkflowStatus.RUNNING
                         print(
                             f"Starting step {wf_run.name}.{step.name} for run: {run_id}"

@@ -135,6 +135,6 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
 def cancel_workflow_run(wf_run: WorkflowRun) -> None:
     """Cancels the workflow run"""
     wf_run.status = WorkflowStatus.CANCELLED
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         state_manager.set_workflow_run(wf_run)
     return wf_run

@@ -13,6 +13,8 @@ wei.routers.event\_routes
 
    .. autosummary::
    
+      get_all_events
+      get_event
       log_event
    
    

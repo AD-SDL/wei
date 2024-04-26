@@ -29,7 +29,7 @@ def send_event(event: Event) -> Any:
 
 
 class EventHandler:
-    """Registers Events during the Experiment execution both in a logfile and on Kafka"""
+    """Registers Events during the Experiment execution in a logfile, in Redis, and (if `use_diaspora` is true) on Kafka"""
 
     kafka_producer = None
     kafka_topic = None
@@ -80,10 +80,18 @@ class EventHandler:
         if event.workcell_id is None:
             event.workcell_id = state_manager.get_workcell_id()
         if event.experiment_id is not None:
+            # Log all events related to an experiment to the experiment's log file
             Logger.get_experiment_logger(event.experiment_id).info(
                 event.model_dump_json()
             )
-        Logger.get_workcell_logger(event.workcell_id).info(event.model_dump_json())
+        else:
+            # Log all non-experiment events to the workcell's log file
+            Logger.get_workcell_logger(event.workcell_id).info(event.model_dump_json())
+        if event.event_type == "WORKFLOW":
+            # Log all workflow events to the workflow run's log file, in addition to the experiment log file
+            Logger.get_workflow_run_logger(event.run_id).info(event.model_dump_json())
+
+        state_manager.set_event(event)
 
         if Config.use_diaspora:
             cls.log_event_diaspora(event=event)

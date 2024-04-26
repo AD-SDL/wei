@@ -8,10 +8,7 @@ from typing import Dict
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-from wei.core.experiment import (
-    get_experiment,
-    register_new_experiment,
-)
+from wei.core.experiment import get_experiment, register_new_experiment
 from wei.core.state_manager import StateManager
 from wei.core.storage import get_experiment_log_file
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
@@ -39,6 +36,7 @@ async def log_return(experiment_id: str) -> str:
 
 
 @router.get("/")
+@router.get("/all")
 async def get_all_experiments() -> Dict[str, Experiment]:
     """Returns all experiments inside DataFolder"""
     return state_manager.get_all_experiments()

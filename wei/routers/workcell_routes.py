@@ -31,7 +31,7 @@ def set_workcell(workcell: Workcell) -> JSONResponse:
      response: Dict
        the state of the workcell
     """
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         state_manager.set_workcell(workcell)
         set_config_from_workcell(workcell)
         return JSONResponse(
@@ -54,7 +54,7 @@ def get_workcell() -> Workcell:
      response: Dict
        the definition of the workcell
     """
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         return state_manager.get_workcell().model_dump(mode="json")
 
 
@@ -79,7 +79,7 @@ def get_state() -> JSONResponse:
      response: Dict
        the state of the workcell
     """
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         return JSONResponse(content=state_manager.get_state())
 
 
@@ -98,7 +98,7 @@ def reset_state() -> JSONResponse:
      response: Dict
        the state of the workcell
     """
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         state_manager.clear_state()
         initialize_state()
         return JSONResponse(content=state_manager.get_state())
@@ -117,7 +117,7 @@ async def clear_runs() -> JSONResponse:
         response: Dict
          the state of the workflows
     """
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         for run_id, wf_run in state_manager.get_all_workflow_runs().items():
             if (
                 wf_run.status == WorkflowStatus.COMPLETED

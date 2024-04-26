@@ -55,7 +55,7 @@ def validate_step(step: Step) -> Tuple[bool, str]:
                             False,
                             f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing file '{action_file.name}'",
                         )
-                return True, f"Step {step.name}: Validated successfully"
+                return True, f"Step '{step.name}': Validated successfully"
         return (
             False,
             f"Step '{step.name}': Module {step.module} has no action '{step.action}'",
@@ -103,7 +103,7 @@ def run_step(
     module: Module,
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
-    logger = Logger.get_workflow_run_logger(wf_run)
+    logger = Logger.get_workflow_run_logger(wf_run.run_id)
     step: Step = wf_run.steps[wf_run.step_index]
 
     logger.debug(f"Started running step with name: {step.name}")
@@ -158,8 +158,8 @@ def run_step(
             wf_run.duration = wf_run.end_time - wf_run.start_time
             send_event(WorkflowCompletedEvent.from_wf_run(wf_run=wf_run))
         else:
-            wf_run.status = WorkflowStatus.QUEUED
-    with state_manager.state_lock():
+            wf_run.status = WorkflowStatus.IN_PROGRESS
+    with state_manager.wc_state_lock():
         wf_run.steps[wf_run.step_index] = step
         update_source_and_target(wf_run)
         free_source_and_target(wf_run)
