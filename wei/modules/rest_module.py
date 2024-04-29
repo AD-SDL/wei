@@ -149,6 +149,8 @@ class RESTModule:
     async def lifespan(app: FastAPI):
         """Initializes the module, doing any instrument initialization and starting the REST app."""
 
+        # * Run initialization on a separate thread so it doesn't block the rest server from starting
+        # * (module won't accept actions until initialization is complete)
         Thread(target=RESTModule.initialization_runner, args=[app.state]).start()
 
         yield
