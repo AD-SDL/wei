@@ -3,11 +3,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from pydantic import (
-    AliasChoices,
-    Field,
-    validator,
-)
+from pydantic import AliasChoices, Field, validator
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
@@ -65,9 +61,9 @@ class ModuleAction(BaseModel):
 
     name: str
     """Name of the action"""
-    args: List[ModuleActionArg]
+    args: List[ModuleActionArg] = []
     """Arguments for the action"""
-    files: Optional[List[ModuleActionFile]] = []
+    files: List[ModuleActionFile] = []
     """Files to be sent along with the action"""
 
 
@@ -86,11 +82,11 @@ class ModuleAbout(BaseModel):
     """Description of the module"""
     actions: List[ModuleAction]
     """List of actions supported by the module"""
-    resource_pools: Optional[List[Any]] = Field(
-        alias=AliasChoices("resources", "resource_pools"), alias_priority=2
+    resource_pools: List[Any] = Field(
+        alias=AliasChoices("resources", "resource_pools"), alias_priority=2, default=[]
     )
     """List of resource pools used by the module"""
-    admin_commands: Optional[List[AdminCommands]] = []
+    admin_commands: List[AdminCommands] = []
     """List of admin commands supported by the module"""
 
 

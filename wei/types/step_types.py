@@ -1,16 +1,15 @@
 """Types related to workflow steps"""
 
+import json
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from pydantic import (
-    Field,
-    validator,
-)
+from pydantic import AliasChoices, Field, ValidationInfo, field_validator, validator
 
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
 
@@ -53,6 +52,24 @@ class StepResponse(BaseModel):
             action_response=StepStatus(headers["x-wei-action_response"]),
             action_msg=headers["x-wei-action_msg"],
             action_log=headers["x-wei-action_log"],
+        )
+
+    @classmethod
+    def step_succeeded(cls, action_msg: str, action_log: str = "") -> "StepResponse":
+        """Returns a StepResponse for a successful step"""
+        return cls(
+            action_response=StepStatus.SUCCEEDED,
+            action_msg=action_msg,
+            action_log=action_log,
+        )
+
+    @classmethod
+    def step_failed(cls, action_log: str, action_msg: str = "") -> "StepResponse":
+        """Returns a StepResponse for a failed step"""
+        return cls(
+            action_response=StepStatus.FAILED,
+            action_msg=action_msg,
+            action_log=action_log,
         )
 
 
@@ -136,4 +153,27 @@ class Step(BaseModel, arbitrary_types_allowed=True):
             except TypeError:  # Is not a file
                 pass
 
+        return v
+
+
+class ActionRequest(BaseModel):
+    """Request to perform an action on a module"""
+
+    name: str = Field(
+        alias=AliasChoices("action_handle", "name"),
+    )
+    """Name of the action to perform"""
+    args: Optional[Dict[str, Any]] = Field(alias=AliasChoices("action_vars", "args"))
+    """Arguments for the action"""
+    files: List[UploadFile] = []
+    """Files to be sent along with the action"""
+
+    @field_validator("args", mode="before")
+    @classmethod
+    def validate_args(cls, v: Any, info: ValidationInfo) -> Any:
+        """Validate the args field of the action request"""
+        if isinstance(v, str):
+            v = json.loads(v)
+        if v is None:
+            return {}
         return v

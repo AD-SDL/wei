@@ -15,7 +15,7 @@ readme = "README.md"
 license = {text = "MIT"}
 dependencies = [
     'devtools>=0.12',
-    'fastapi>=0.103',
+    'fastapi>=0.110',
     'pottery>=3.0.0',
     'pydantic>=2.4',
     'python-multipart>=0.0.6',
