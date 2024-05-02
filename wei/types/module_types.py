@@ -1,9 +1,10 @@
 """Types related to Modules"""
 
+import inspect
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from pydantic import AliasChoices, Field, validator
+from pydantic import AliasChoices, Field, ValidationError, field_validator, validator
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
@@ -39,7 +40,7 @@ class ModuleActionArg(BaseModel):
     """Supported Type(s) of the argument"""
     default: Optional[Any] = None
     """Default value of the argument"""
-    required: Optional[bool] = True
+    required: bool = True
     """Whether or not the argument is required"""
     description: str = ""
     """Description of the argument"""
@@ -63,11 +64,32 @@ class ModuleAction(BaseModel):
     """Name of the action"""
     args: List[ModuleActionArg] = []
     """Arguments for the action"""
+    description: Optional[str] = ""
+    """A description of the action"""
     files: List[ModuleActionFile] = []
     """Files to be sent along with the action"""
+    function: Optional[Callable] = Field(default=None, exclude=True)
+    """Function to be called when the action is executed"""
+
+    @field_validator("function", mode="after")
+    @classmethod
+    def validate_function(cls, v: Any) -> Optional[Callable]:
+        """Validate the function field of the ModuleAction"""
+        if v is None:
+            return v
+        if callable(v):
+            signature = inspect.signature(v)
+            if signature.parameters.__contains__(
+                "state"
+            ) and signature.parameters.__contains__("action"):
+                return v
+            else:
+                raise ValidationError(
+                    "Module Action Function must accept 'state' and 'action' parameters"
+                )
 
 
-class ModuleAbout(BaseModel):
+class ModuleAbout(BaseModel, extra="ignore"):
     """Defines how modules should reply on the /about endpoint"""
 
     name: str
