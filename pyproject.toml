@@ -23,7 +23,9 @@ dependencies = [
     'redis>=4.2.2',
     'requests>=2.31.0',
     'ulid-py>=1.1.0',
-    'uvicorn>=0.21',
+    'uvicorn[standard]>=0.21',
+    "h2o-lightwave[web]>=1.1.2",
+    "websockets>=12.0",
 ]
 
 [project.optional-dependencies]
@@ -179,3 +181,5 @@ plugins = ["pydantic.mypy"]
 strict = true
 disallow_untyped_defs = true
 implicit_reexport = true
+
+[tool.pdm]

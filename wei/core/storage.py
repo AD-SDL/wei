@@ -1,7 +1,7 @@
 """Handles all interactions with File storage/objects"""
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from wei.config import Config
 from wei.core.state_manager import StateManager
@@ -15,6 +15,7 @@ def initialize_storage():
     (Config.data_directory / "experiments").mkdir(exist_ok=True)
     (Config.data_directory / "temp").mkdir(exist_ok=True)
     (Config.data_directory / "workcells").mkdir(exist_ok=True)
+    (Config.data_directory / "modules").mkdir(exist_ok=True)
 
 
 def get_workcell_directory(workcell_id: str) -> Path:
@@ -142,3 +143,15 @@ def get_workflow_run_log_path(
         )
         / f"{workflow_run_id}.log"
     )
+
+
+def get_module_directory(
+    alias: str,
+    data_directory: Optional[Union[Path, str]] = None,
+):
+    """Returns the directory for the given module."""
+    if data_directory is None:
+        data_directory = Config.data_directory
+    module_dir = Path(data_directory) / "modules" / alias
+    module_dir.mkdir(parents=True, exist_ok=True)
+    return module_dir

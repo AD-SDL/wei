@@ -9,8 +9,20 @@ from contextlib import asynccontextmanager
 from threading import Thread
 from typing import Any, List, Optional, Union
 
-from fastapi import APIRouter, FastAPI, Request, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    FastAPI,
+    Request,
+    Response,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
 from fastapi.datastructures import State
+from fastapi.staticfiles import StaticFiles
+from h2o_lightwave import Q, ui, wave_serve
+from h2o_lightwave_web import web_directory
 
 from wei.types import ModuleStatus
 from wei.types.module_types import (
@@ -18,6 +30,7 @@ from wei.types.module_types import (
     ModuleAbout,
     ModuleAction,
     ModuleActionArg,
+    ModuleActionFile,
 )
 from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
 
@@ -65,7 +78,7 @@ class RESTModule:
         **kwargs,
     ):
         """Creates an instance of the RESTModule class"""
-        self.app = FastAPI(lifespan=RESTModule._lifespan)
+        self.app = FastAPI(lifespan=RESTModule._lifespan, description=description)
         self.app.state = State(state={})
         self.state = self.app.state  # * Mirror the state object for easier access
         self.router = APIRouter()
@@ -151,7 +164,6 @@ class RESTModule:
         """This function is called whenever an action is requested from the module.
         It should be overridden by the developer to define the module's behavior.
         It should return a StepResponse object that indicates the success or failure of the action."""
-        print(state.actions)
         if not state.actions:
             warnings.warn(
                 message="No actions or module-specific action handler defined, override `action_handler` or set `state.actions`.",
@@ -165,10 +177,51 @@ class RESTModule:
         else:
             for module_action in state.actions:
                 if module_action.name == action.name:
-                    # Perform the action here
                     if not module_action.function:
-                        return StepResponse.step_failed("Action not implemented")
-                    return module_action.function(state, action)
+                        return StepResponse.step_failed(
+                            "Action is defined, but not implemented"
+                        )
+
+                    # * Prepare arguments for the action function.
+                    # * If the action function has a 'state' or 'action' parameter
+                    # * we'll pass in our state and action objects.
+                    arg_dict = {}
+                    parameters = inspect.signature(module_action.function).parameters
+                    if parameters.__contains__("state"):
+                        arg_dict["state"] = state
+                    if parameters.__contains__("action"):
+                        arg_dict["action"] = action
+                    for arg_name, arg_value in action.args.items():
+                        if (
+                            parameters.__contains__(arg_name)
+                            or list(parameters.values())[-1].kind
+                            == inspect.Parameter.VAR_KEYWORD
+                        ):
+                            arg_dict[arg_name] = arg_value
+                    for file in action.files:
+                        if (
+                            parameters.__contains__(file.filename)
+                            or list(parameters.values())[-1].kind
+                            == inspect.Parameter.VAR_KEYWORD
+                        ):
+                            arg_dict[file.filename] = file.file
+
+                    for arg in module_action.args:
+                        if arg.name not in arg_dict:
+                            print(arg)
+                            if arg.required:
+                                return StepResponse.step_failed(
+                                    action_log=f"Missing required argument '{arg.name}'"
+                                )
+                    for file in module_action.files:
+                        if file.name not in arg_dict:
+                            if file.required:
+                                return StepResponse.step_failed(
+                                    action_log=f"Missing required file '{file.name}'"
+                                )
+
+                    # * Perform the action here and return result
+                    return module_action.function(**arg_dict)
             return StepResponse.step_failed(
                 action_msg=f"Action '{action.name}' not found",
                 action_log=f"Action '{action.name}' not found",
@@ -255,38 +308,42 @@ class RESTModule:
                 for parameter_name, parameter in signature.parameters.items():
                     if (
                         parameter_name not in action.args
-                        and parameter_name not in action.files
+                        and parameter_name not in [file.name for file in action.files]
                         and parameter_name != "state"
                         and parameter_name != "action"
                     ):
-                        type_hint = str(parameter.annotation)
-                        action.args.append(
-                            ModuleActionArg(
-                                name=parameter_name,
-                                type=type_hint,
-                                default=parameter.default,
-                                required=True
-                                if parameter.default is not None
-                                else False,
-                                description=kwargs.get("description", ""),
+                        type_hint = parameter.annotation.__name__
+                        if type_hint == "UploadFile":
+                            # * Add a file parameter to the action
+                            action.files.append(
+                                ModuleActionFile(
+                                    name=parameter_name,
+                                    required=True,
+                                )
                             )
-                        )
-                action.args = [
-                    ModuleActionArg(
-                        name=param_name,
-                        type="Any",
-                        default=None,
-                        required=True,
-                        description="",
-                    )
-                    for param_name in signature.parameters
-                ]
+                        else:
+                            # * Add an arg to the action
+                            default = (
+                                None
+                                if parameter.default == inspect.Parameter.empty
+                                else parameter.default
+                            )
+                            action.args.append(
+                                ModuleActionArg(
+                                    name=parameter_name,
+                                    type=type_hint,
+                                    default=default,
+                                    required=True if default is None else False,
+                                )
+                            )
             if self.actions is None:
                 self.actions = []
             self.actions.append(action)
             return function
 
         return decorator
+
+    # Lightwave callback function.
 
     def _configure_routes(self):
         """Configure the API endpoints for the REST module"""
@@ -315,6 +372,89 @@ class RESTModule:
                 except Exception:
                     traceback.print_exc()
                     return {"error": "Unable to generate module about"}
+
+        async def _serve_ui(q: Q):
+            # Paint our UI on the first page visit.
+            if not q.client.initialized:
+                # Create a local state.
+                q.client.count = 0
+                q.page["state"] = ui.form_card(
+                    box="1 1 2 2",
+                    title="State",
+                    items=[
+                        ui.text_xl("Status"),
+                        ui.text_l(self.state.status),
+                    ],
+                )
+                q.page["about"] = ui.form_card(
+                    box="1 3 2 8",
+                    title="About",
+                    items=[
+                        ui.text_xl(self.name),
+                        ui.text_l("Description"),
+                        ui.text(self.description),
+                        ui.text_l("Version"),
+                        ui.text(self.version),
+                        ui.text_l("Model"),
+                        ui.text(self.model),
+                        ui.text_l("Interface"),
+                        ui.text(self.interface),
+                    ],
+                )
+                action_components = []
+                for action in self.actions:
+                    action_components.extend(
+                        [
+                            ui.text_l(action.name),
+                            ui.text(action.description),
+                        ]
+                    )
+                    action_components.extend(
+                        [
+                            ui.button(
+                                name=action.name,
+                                label=action.name,
+                                primary=True,
+                                icon="PLAY",
+                                path="/action",
+                            ),
+                        ]
+                    )
+                q.page["actions"] = ui.form_card(
+                    box="3 1 2 10",
+                    title="Actions",
+                    items=action_components,
+                )
+                q.page["resources"] = ui.form_card(
+                    box="5 1 2 10",
+                    title="Resources",
+                    items=[
+                        # ui.text_xl("Resource"),
+                        # ui.text_l(self.state.status),
+                    ],
+                )
+                q.page["admin"] = ui.form_card(
+                    box="7 1 2 10",
+                    title="Admin",
+                    items=[
+                        # ui.text_xl("Resource"),
+                        # ui.text_l(self.state.status),
+                    ],
+                )
+
+                q.client.initialized = True
+
+            # Send the UI changes to the browser.
+            await q.page.save()
+
+        @self.router.websocket("/_s/")
+        async def ws(ws: WebSocket):
+            try:
+                await ws.accept()
+                await wave_serve(_serve_ui, ws.send_text, ws.receive_text)
+                await ws.close()
+            except WebSocketDisconnect:
+                print("Client disconnected")
 
         @self.router.post("/action")
         def action(
@@ -385,6 +525,7 @@ class RESTModule:
             ):  # * Don't override already set attributes with None's
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
         self._configure_routes()
+        self.app.mount("/", StaticFiles(directory=web_directory, html=True), name="/")
 
         # * Enforce a name
         if not self.state.name:
@@ -408,6 +549,7 @@ if __name__ == "__main__":
         startup_handler=example_startup_handler,
     )
 
+    @rest_module.action(name="succeed", description="An action that always succeeds")
     def succeed_action(state: State, action: ActionRequest) -> StepResponse:
         """Function to handle the "succeed" action. Always succeeds."""
         return StepResponse.step_succeeded(
@@ -415,14 +557,7 @@ if __name__ == "__main__":
             action_log=f"Succeeded: {time.time()}",
         )
 
-    rest_module.actions.append(
-        ModuleAction(
-            name="succeed",
-            description="An action that always succeeds",
-            function=succeed_action,
-        )
-    )
-
+    @rest_module.action(name="fail", description="An action that always fails")
     def fail_action(state: State, action: ActionRequest) -> StepResponse:
         """Function to handle the "fail" action. Always fails."""
         return StepResponse.step_failed(
@@ -430,13 +565,9 @@ if __name__ == "__main__":
             action_log=f"Failed: {time.time()}",
         )
 
-    rest_module.actions.append(
-        ModuleAction(
-            name="fail", description="An action that always fails", function=fail_action
-        )
+    @rest_module.action(
+        name="print", description="Action that prints the provided string."
     )
-
-    @rest_module.action(name="print")
     def print_action(state: State, action: ActionRequest, output: str) -> StepResponse:
         """Function to handle the "print" action."""
         print(output)
@@ -444,7 +575,7 @@ if __name__ == "__main__":
             action_msg=f"Printed {output}",
         )
 
-    # I can also override the default attributes/methods after instantiation
+    # * I can also override the default attributes/methods after instantiation
     def example_shutdown_handler(state: State):
         """Example startup handler."""
         print(
