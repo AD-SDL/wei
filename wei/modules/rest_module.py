@@ -9,20 +9,8 @@ from contextlib import asynccontextmanager
 from threading import Thread
 from typing import Any, List, Optional, Union
 
-from fastapi import (
-    APIRouter,
-    FastAPI,
-    Request,
-    Response,
-    UploadFile,
-    WebSocket,
-    WebSocketDisconnect,
-    status,
-)
+from fastapi import APIRouter, FastAPI, Request, Response, UploadFile, status
 from fastapi.datastructures import State
-from fastapi.staticfiles import StaticFiles
-from h2o_lightwave import Q, ui, wave_serve
-from h2o_lightwave_web import web_directory
 
 from wei.types import ModuleStatus
 from wei.types.module_types import (
@@ -191,30 +179,37 @@ class RESTModule:
                         arg_dict["state"] = state
                     if parameters.__contains__("action"):
                         arg_dict["action"] = action
-                    for arg_name, arg_value in action.args.items():
-                        if (
-                            parameters.__contains__(arg_name)
-                            or list(parameters.values())[-1].kind
-                            == inspect.Parameter.VAR_KEYWORD
-                        ):
-                            arg_dict[arg_name] = arg_value
-                    for file in action.files:
-                        if (
-                            parameters.__contains__(file.filename)
-                            or list(parameters.values())[-1].kind
-                            == inspect.Parameter.VAR_KEYWORD
-                        ):
-                            arg_dict[file.filename] = file.file
+                    if (
+                        list(parameters.values())[-1].kind
+                        == inspect.Parameter.VAR_KEYWORD
+                    ):
+                        # * Function has **kwargs, so we can pass all action args and files
+                        arg_dict = {**arg_dict, **action.args}
+                        arg_dict = {
+                            **arg_dict,
+                            **{file.filename: file.file for file in action.files},
+                        }
+                    else:
+                        for arg_name, arg_value in action.args.items():
+                            print(arg_name, arg_value)
+                            print(parameters.keys())
+                            if arg_name in parameters.keys():
+                                arg_dict[arg_name] = arg_value
+                        for file in action.files:
+                            if file.filename in parameters.keys():
+                                arg_dict[file.filename] = file.file
 
                     for arg in module_action.args:
-                        if arg.name not in arg_dict:
+                        if arg.name not in action.args:
                             print(arg)
                             if arg.required:
                                 return StepResponse.step_failed(
                                     action_log=f"Missing required argument '{arg.name}'"
                                 )
                     for file in module_action.files:
-                        if file.name not in arg_dict:
+                        if not any(
+                            arg_file.filename == file.name for arg_file in action.files
+                        ):
                             if file.required:
                                 return StepResponse.step_failed(
                                     action_log=f"Missing required file '{file.name}'"
@@ -373,89 +368,6 @@ class RESTModule:
                     traceback.print_exc()
                     return {"error": "Unable to generate module about"}
 
-        async def _serve_ui(q: Q):
-            # Paint our UI on the first page visit.
-            if not q.client.initialized:
-                # Create a local state.
-                q.client.count = 0
-                q.page["state"] = ui.form_card(
-                    box="1 1 2 2",
-                    title="State",
-                    items=[
-                        ui.text_xl("Status"),
-                        ui.text_l(self.state.status),
-                    ],
-                )
-                q.page["about"] = ui.form_card(
-                    box="1 3 2 8",
-                    title="About",
-                    items=[
-                        ui.text_xl(self.name),
-                        ui.text_l("Description"),
-                        ui.text(self.description),
-                        ui.text_l("Version"),
-                        ui.text(self.version),
-                        ui.text_l("Model"),
-                        ui.text(self.model),
-                        ui.text_l("Interface"),
-                        ui.text(self.interface),
-                    ],
-                )
-                action_components = []
-                for action in self.actions:
-                    action_components.extend(
-                        [
-                            ui.text_l(action.name),
-                            ui.text(action.description),
-                        ]
-                    )
-                    action_components.extend(
-                        [
-                            ui.button(
-                                name=action.name,
-                                label=action.name,
-                                primary=True,
-                                icon="PLAY",
-                                path="/action",
-                            ),
-                        ]
-                    )
-                q.page["actions"] = ui.form_card(
-                    box="3 1 2 10",
-                    title="Actions",
-                    items=action_components,
-                )
-                q.page["resources"] = ui.form_card(
-                    box="5 1 2 10",
-                    title="Resources",
-                    items=[
-                        # ui.text_xl("Resource"),
-                        # ui.text_l(self.state.status),
-                    ],
-                )
-                q.page["admin"] = ui.form_card(
-                    box="7 1 2 10",
-                    title="Admin",
-                    items=[
-                        # ui.text_xl("Resource"),
-                        # ui.text_l(self.state.status),
-                    ],
-                )
-
-                q.client.initialized = True
-
-            # Send the UI changes to the browser.
-            await q.page.save()
-
-        @self.router.websocket("/_s/")
-        async def ws(ws: WebSocket):
-            try:
-                await ws.accept()
-                await wave_serve(_serve_ui, ws.send_text, ws.receive_text)
-                await ws.close()
-            except WebSocketDisconnect:
-                print("Client disconnected")
-
         @self.router.post("/action")
         def action(
             request: Request,
@@ -525,7 +437,6 @@ class RESTModule:
             ):  # * Don't override already set attributes with None's
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
         self._configure_routes()
-        self.app.mount("/", StaticFiles(directory=web_directory, html=True), name="/")
 
         # * Enforce a name
         if not self.state.name:

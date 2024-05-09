@@ -24,7 +24,6 @@ dependencies = [
     'requests>=2.31.0',
     'ulid-py>=1.1.0',
     'uvicorn[standard]>=0.21',
-    "h2o-lightwave[web]>=1.1.2",
     "websockets>=12.0",
 ]
 
