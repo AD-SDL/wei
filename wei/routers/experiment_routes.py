@@ -21,17 +21,24 @@ state_manager = StateManager()
 @router.get("/{experiment_id}/log")
 async def log_return(experiment_id: str) -> str:
     """Returns the log for a given experiment"""
-    with open(
-        get_experiment_log_file(experiment_id),
-        "r",
-    ) as f:
-        val = f.readlines()
-    logs = []
-    for entry in val:
-        try:
-            logs.append(json.loads(entry.split("(INFO):")[1].strip()))
-        except Exception as e:
-            print(e)
+    try:
+        experiment_log = get_experiment_log_file(experiment_id)
+        if experiment_log.exists():
+            with open(
+                get_experiment_log_file(experiment_id),
+                "r",
+            ) as f:
+                val = f.readlines()
+            logs = []
+            for entry in val:
+                try:
+                    logs.append(json.loads(entry.split("(INFO):")[1].strip()))
+                except Exception as e:
+                    print(e)
+        else:
+            return JSONResponse({"error": "Log file not found"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
     return JSONResponse(logs)
 
 
