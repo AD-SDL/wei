@@ -115,6 +115,7 @@ async def get_state(websocket: WebSocket) -> JSONResponse:
     while True: 
         if state_manager.has_state_changed():
             await websocket.send_json(state_manager.get_state())
+           # EventHandler.log_event(Event(event_type="CHANGED", event_name="CHANGED"))
         await asyncio.sleep(0.5)
 
     # while True: 
