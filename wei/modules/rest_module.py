@@ -2,6 +2,8 @@
 
 import argparse
 import inspect
+import os
+import signal
 import time
 import traceback
 import warnings
@@ -9,7 +11,15 @@ from contextlib import asynccontextmanager
 from threading import Thread
 from typing import Any, List, Optional, Union
 
-from fastapi import APIRouter, FastAPI, Request, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    FastAPI,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.datastructures import State
 
 from wei.types import ModuleStatus
@@ -47,8 +57,20 @@ class RESTModule:
     """A list of actions that the module can perform."""
     resource_pools: List[Any] = []
     """A list of resource pools used by the module."""
-    admin_commands: List[AdminCommands] = []
+    admin_commands: set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
+
+    # * Admin command function placeholders
+    _estop = None
+    """Handles custom e-stop functionality"""
+    _pause = None
+    """Handles custom pause functionality"""
+    _reset = None
+    """Handles custom reset functionality"""
+    _resume = None
+    """Handles custom resume functionality"""
+    _cancel = None
+    """Handles custom cancel functionality"""
 
     def __init__(
         self,
@@ -58,7 +80,7 @@ class RESTModule:
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
         resource_pools: Optional[List[Any]] = None,
-        admin_commands: Optional[List[AdminCommands]] = None,
+        admin_commands: Optional[set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
         port: Optional[int] = 2000,
@@ -81,7 +103,7 @@ class RESTModule:
         self.interface = interface
         self.actions = actions if actions else []
         self.resource_pools = resource_pools if resource_pools else []
-        self.admin_commands = admin_commands if admin_commands else []
+        self.admin_commands = admin_commands if admin_commands else set()
 
         # * Set any additional keyword arguments as attributes as well
         for key, value in kwargs.items():
@@ -338,10 +360,121 @@ class RESTModule:
 
         return decorator
 
-    # Lightwave callback function.
+    def estop(self, **kwargs):
+        """Decorator to add estop functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.ESTOP)
+            self._estop = function
+            return function
+
+        return decorator
+
+    def pause(self, **kwargs):
+        """Decorator to add pause functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.PAUSE)
+            self._pause = function
+            return function
+
+        return decorator
+
+    def resume(self, **kwargs):
+        """Decorator to add resume functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.RESUME)
+            self._resume = function
+            return function
+
+        return decorator
+
+    def cancel(self, **kwargs):
+        """Decorator to add cancellation functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.CANCEL)
+            self._cancel = function
+            return function
+
+        return decorator
+
+    def reset(self, **kwargs):
+        """Decorator to add reset functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.RESET)
+            self._reset = function
+            return function
+
+        return decorator
 
     def _configure_routes(self):
         """Configure the API endpoints for the REST module"""
+
+        @self.router.post("/admin/estop")
+        async def estop(request: Request):
+            state = request.app.state
+            state.status = ModuleStatus.PAUSED
+            if self._estop:
+                return self._estop(state)
+            else:
+                return {"message": "Module e-stopped"}
+
+        @self.router.post("/admin/pause")
+        async def pause(request: Request):
+            state = request.app.state
+            state.status = ModuleStatus.PAUSED
+            if self._pause:
+                return self._pause(state)
+            else:
+                return {"message": "Module paused"}
+
+        @self.router.post("/admin/resume")
+        async def resume(request: Request):
+            state = request.app.state
+            if self._resume:
+                return self._resume(state)
+            else:
+                state.status = ModuleStatus.IDLE
+                return {"message": "Module resumed"}
+
+        @self.router.post("/admin/cancel")
+        async def cancel(request: Request):
+            state = request.app.state
+            state.status = ModuleStatus.ERROR
+            if self._cancel:
+                return self._cancel(state)
+            else:
+                return {"message": "Module canceled"}
+
+        @self.router.post("/admin/shutdown")
+        async def shutdown(background_tasks: BackgroundTasks):
+            def shutdown_server():
+                time.sleep(1)
+                pid = os.getpid()
+                os.kill(pid, signal.SIGTERM)
+
+            background_tasks.add_task(shutdown_server)
+            return {"message": "Shutting down server"}
+
+        @self.router.post("/admin/reset")
+        async def reset(request: Request):
+            state = request.app.state
+            state.status = ModuleStatus.INIT
+            if self._reset:
+                self._reset(state)
+            else:
+                try:
+                    state.shutdown_handler(state)
+                    self._startup_runner(state)
+                    return {"message": "Module reset"}
+                except Exception as e:
+                    state.exception_handler(
+                        state, e, "Error while attempting to reset the module"
+                    )
+                    return {"error": "Error while attempting to reset the module"}
 
         @self.router.get("/state")
         async def state(request: Request):
@@ -495,5 +628,11 @@ if __name__ == "__main__":
         print(f"Module Shutdown Time: {time.time()}")
 
     rest_module.shutdown_handler = example_shutdown_handler
+
+    @rest_module.estop()
+    def custom_estop(state: State):
+        """Custom e-stop functionality"""
+        print("Custom e-stop functionality")
+        return {"message": "Custom e-stop functionality"}
 
     rest_module.start()

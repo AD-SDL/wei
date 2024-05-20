@@ -29,6 +29,7 @@ class ModuleStatus(str, Enum):
     BUSY = "BUSY"
     ERROR = "ERROR"
     UNKNOWN = "UNKNOWN"
+    PAUSED = "PAUSED"
 
 
 class ModuleActionArg(BaseModel):

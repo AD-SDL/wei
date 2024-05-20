@@ -46,7 +46,7 @@ def string_to_bool(string: str) -> bool:
         raise ArgumentTypeError(f"Invalid boolean value: {string}")
 
 
-def initialize_state() -> None:
+def initialize_state(workcell=None) -> None:
     """
     Initializes the state of the workcell from the workcell definition.
     """
@@ -57,7 +57,10 @@ def initialize_state() -> None:
     from wei.types import Workcell
 
     state_manager = StateManager()
-    state_manager.set_workcell(Workcell.from_yaml(Config.workcell_file))
+    if workcell:
+        state_manager.set_workcell(workcell)
+    else:
+        state_manager.set_workcell(Workcell.from_yaml(Config.workcell_file))
     initialize_workcell_modules()
     initialize_workcell_locations()
 

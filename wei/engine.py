@@ -79,15 +79,16 @@ class Engine:
         """
         update_active_modules()
         tick = time.time()
-        while True:
+        while True and not self.state_manager.shutdown:
             try:
                 if (
                     time.time() - tick > Config.update_interval
                     or self.state_manager.has_state_changed()
                 ):
                     update_active_modules()
-                    self.scheduler.run_iteration()
-                    update_active_modules()
+                    if not self.state_manager.paused:
+                        self.scheduler.run_iteration()
+                        update_active_modules()
                     tick = time.time()
             except Exception:
                 traceback.print_exc()

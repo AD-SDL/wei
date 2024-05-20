@@ -93,6 +93,30 @@ class StateManager:
     def _events(self) -> RedisDict:
         return RedisDict(key=f"{self._lab_prefix}:events", redis=self._redis_client)
 
+    @property
+    def paused(self) -> bool:
+        """Get the pause state of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:paused") == "true"
+
+    @paused.setter
+    def set_paused(self, value: bool) -> None:
+        """Set the pause state of the workcell"""
+        self._redis_client.set(
+            f"{self._workcell_prefix}:paused", "true" if value else "false"
+        )
+
+    @property
+    def shutdown(self) -> bool:
+        """Get the shutdown state of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:shutdown") == "true"
+
+    @shutdown.setter
+    def set_shutdown(self, value: bool) -> None:
+        """Set the shutdown state of the workcell"""
+        self._redis_client.set(
+            f"{self._workcell_prefix}:shutdown", "true" if value else "false"
+        )
+
     # Locking Methods
     def campaign_lock(self, campaign_id: str) -> Redlock:
         """
@@ -150,6 +174,8 @@ class StateManager:
             self._workflow_runs.clear()
         self._workcell.clear()
         self.state_change_marker = "0"
+        self.paused = False
+        self.shutdown = False
         self.mark_state_changed()
 
     def mark_state_changed(self) -> int:
