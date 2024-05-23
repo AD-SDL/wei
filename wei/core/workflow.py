@@ -128,6 +128,7 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
                 for step_file_key, step_file_path in step.files.items():
                     if step_file_path == file.filename:
                         step.files[step_file_key] = str(file_path)
+                        print(f"{step_file_key}: {file_path} ({step_file_path})")
     return wf_run
 
 
