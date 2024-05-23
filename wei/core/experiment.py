@@ -2,6 +2,7 @@
 
 import os
 import re
+from pathlib import Path
 
 from wei.core.state_manager import StateManager
 from wei.core.storage import (
@@ -85,6 +86,6 @@ def parse_experiments_from_disk():
             experiment = Experiment(
                 experiment_id=experiment_id,
                 experiment_name=experiment_name,
-                experiment_directory=experiment_dir,
+                experiment_directory=str(Path(experiment_dir).resolve()),
             )
             state_manager.set_experiment(experiment)
