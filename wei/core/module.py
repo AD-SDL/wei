@@ -46,7 +46,7 @@ def update_module(module_name: str, module: Module) -> None:
         state = query_module_status(module)
         if state != module.state:
             if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
-                module.about = get_module_about(module, require_schema_compliance=False)
+                module.about = get_module_about(module)
             module.state = state
             with state_manager.wc_state_lock():
                 state_manager.set_module(module_name, module)
@@ -113,21 +113,18 @@ def validate_module_names(workflow: Workflow, workcell: Workcell) -> None:
     [find_step_module(workcell, module_name) for module_name in workflow.modules]
 
 
-def get_module_about(
-    module: Module, require_schema_compliance: bool = True
-) -> Union[ModuleAbout, None]:
+def get_module_about(module: Module) -> Union[ModuleAbout, None]:
     """Gets a module's about information"""
     module_name = module.name
     if module.interface in InterfaceMap.interfaces:
         try:
             interface = InterfaceMap.interfaces[module.interface]
-            response = interface.get_about(module)
             try:
                 about = ModuleAbout(**interface.get_about(module))
             except Exception:
-                if require_schema_compliance:
-                    return None
-                about = response
+                traceback.print_exc()
+                print(f"Unable to parse about information for Module {module_name}")
+                about = None
             return about
         except Exception as e:
             print(e)

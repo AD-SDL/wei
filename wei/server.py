@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from wei.config import Config
 from wei.core.events import EventHandler
 from wei.core.storage import initialize_storage
-from wei.helpers import parse_args
 from wei.routers import (
     admin_routes,
     event_routes,
@@ -19,6 +18,7 @@ from wei.routers import (
     workcell_routes,
     workflow_routes,
 )
+from wei.utils import parse_args
 
 
 @asynccontextmanager  # type: ignore

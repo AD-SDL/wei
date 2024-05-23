@@ -34,7 +34,7 @@ def validate_step(step: Step) -> Tuple[bool, str]:
     """Check if a step is valid based on the module's about"""
     if step.module in [module.name for module in state_manager.get_workcell().modules]:
         module = state_manager.get_module(step.module)
-        about = get_module_about(module, require_schema_compliance=True)
+        about = get_module_about(module)
         if about is None:
             return (
                 True,

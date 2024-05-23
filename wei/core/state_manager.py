@@ -99,7 +99,7 @@ class StateManager:
         return self._redis_client.get(f"{self._workcell_prefix}:paused") == "true"
 
     @paused.setter
-    def set_paused(self, value: bool) -> None:
+    def paused(self, value: bool) -> None:
         """Set the pause state of the workcell"""
         self._redis_client.set(
             f"{self._workcell_prefix}:paused", "true" if value else "false"
@@ -111,7 +111,7 @@ class StateManager:
         return self._redis_client.get(f"{self._workcell_prefix}:shutdown") == "true"
 
     @shutdown.setter
-    def set_shutdown(self, value: bool) -> None:
+    def shutdown(self, value: bool) -> None:
         """Set the shutdown state of the workcell"""
         self._redis_client.set(
             f"{self._workcell_prefix}:shutdown", "true" if value else "false"

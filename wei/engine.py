@@ -15,10 +15,9 @@ from wei.core.module import update_active_modules
 from wei.core.scheduler import Scheduler
 from wei.core.state_manager import StateManager
 from wei.core.storage import initialize_storage
-from wei.core.workflow import cancel_workflow_run
-from wei.helpers import initialize_state, parse_args
+from wei.core.workflow import cancel_active_workflow_runs
 from wei.types.event_types import WorkcellStartEvent
-from wei.types.workflow_types import WorkflowStatus
+from wei.utils import initialize_state, parse_args
 
 
 class Engine:
@@ -37,13 +36,7 @@ class Engine:
             reset_locations=Config.reset_locations,
             clear_workflow_runs=Config.clear_workflow_runs,
         )
-        for wf_run in self.state_manager.get_all_workflow_runs().values():
-            if wf_run.status in [
-                WorkflowStatus.RUNNING,
-                WorkflowStatus.QUEUED,
-                WorkflowStatus.IN_PROGRESS,
-            ]:
-                cancel_workflow_run(wf_run)
+        cancel_active_workflow_runs()
         self.scheduler = Scheduler(sequential=Config.sequential_scheduler)
         with self.state_manager.wc_state_lock():
             initialize_state()

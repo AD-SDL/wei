@@ -15,7 +15,8 @@ from wei.core.admin import (
     send_shutdown,
 )
 from wei.core.state_manager import StateManager
-from wei.helpers import initialize_state
+from wei.core.workflow import cancel_active_workflow_runs
+from wei.utils import initialize_state
 
 router = APIRouter()
 
@@ -88,7 +89,7 @@ def cancel_workcell() -> None:
     """Cancels the workcell"""
     for module in state_manager.get_all_modules().values():
         send_cancel(module)
-    # TODO: workcell.cancel()
+    cancel_active_workflow_runs()
 
 
 @router.api_route("/cancel/{module_name}", methods=["POST"])
@@ -97,11 +98,12 @@ def cancel_module(module_name: str) -> None:
     send_cancel(state_manager.get_module(module_name))
 
 
-@router.api_route("/shutdown", methods=["POST", "GET"])
-def shutdown_workcell() -> None:
+@router.api_route("/shutdown", methods=["POST"])
+def shutdown_workcell(modules: bool = False) -> None:
     """Shuts down the workcell"""
-    for module in state_manager.get_all_modules().values():
-        send_shutdown(module.shutdown)
+    if modules:
+        for module in state_manager.get_all_modules().values():
+            send_shutdown(module)
     state_manager.shutdown = True
     os.kill(os.getpid(), signal.SIGTERM)
 

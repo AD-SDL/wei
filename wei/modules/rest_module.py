@@ -104,6 +104,7 @@ class RESTModule:
         self.actions = actions if actions else []
         self.resource_pools = resource_pools if resource_pools else []
         self.admin_commands = admin_commands if admin_commands else set()
+        self.admin_commands.add(AdminCommands.SHUTDOWN)
 
         # * Set any additional keyword arguments as attributes as well
         for key, value in kwargs.items():

@@ -176,7 +176,7 @@ class ExperimentClient:
                 response.raise_for_status()
         return response
 
-    def _get_files_from_workflow(
+    def _extract_files_from_workflow(
         self, workflow: Workflow, payload: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -201,6 +201,7 @@ class ExperimentClient:
                         files[file] = path
                     if not Path(files[file]).is_absolute():
                         files[file] = self.working_dir / files[file]
+                    step.files[file] = Path(files[file]).name
         return files
 
     def _log_event(
@@ -261,7 +262,7 @@ class ExperimentClient:
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         workflow = Workflow.from_yaml(workflow_file)
         url = f"{self.url}/runs/start"
-        files = self._get_files_from_workflow(workflow, payload)
+        files = self._extract_files_from_workflow(workflow, payload)
         response = requests.post(
             url,
             data={
@@ -271,7 +272,8 @@ class ExperimentClient:
                 "simulate": simulate,
             },
             files={
-                ("files", (str(file), open(path, "rb"))) for file, path in files.items()
+                ("files", (str(Path(path).name), open(path, "rb")))
+                for _, path in files.items()
             },
         )
         if not response.ok:

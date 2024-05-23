@@ -164,7 +164,7 @@ class Module(ModuleDefinition):
     """Current state of the module"""
     reserved: Optional[str] = None
     """ID of WorkflowRun that will run next on this Module"""
-    about: Optional[Any] = None
+    about: Optional[ModuleAbout] = None
     """About information for the module"""
 
 

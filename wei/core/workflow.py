@@ -114,7 +114,6 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
     and updates the step files to point to the new location"""
     if files:
         for file in files:
-            print(file)
             file_path = (
                 get_workflow_run_directory(
                     workflow_run_id=wf_run.run_id,
@@ -126,9 +125,9 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
             with open(file_path, "wb") as f:
                 f.write(file.file.read())
             for step in wf_run.steps:
-                for step_file in step.files:
-                    step.files[step_file] = str(file_path)
-                    print(file_path)
+                for step_file_key, step_file_path in step.files.items():
+                    if step_file_path == file.filename:
+                        step.files[step_file_key] = str(file_path)
     return wf_run
 
 
@@ -138,3 +137,14 @@ def cancel_workflow_run(wf_run: WorkflowRun) -> None:
     with state_manager.wc_state_lock():
         state_manager.set_workflow_run(wf_run)
     return wf_run
+
+
+def cancel_active_workflow_runs() -> None:
+    """Cancels all currently running workflow runs"""
+    for wf_run in state_manager.get_all_workflow_runs().values():
+        if wf_run.status in [
+            WorkflowStatus.RUNNING,
+            WorkflowStatus.QUEUED,
+            WorkflowStatus.IN_PROGRESS,
+        ]:
+            cancel_workflow_run(wf_run)
