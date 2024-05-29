@@ -25,7 +25,7 @@ if [ "$USER_ID" -ne 0 ] && [ "$USER_ID" -ne 9999 ]; then
 fi
 
 # Best-effort attempt to align permissions for the default data directory
-mkdir -p /home/app/.wei/experiments /home/app/.wei/temp /home/app/.wei/.diaspora
+mkdir -p /home/app/.wei/experiments /home/app/.wei/temp /home/app/.diaspora
 chown $USER_ID:$GROUP_ID /home/app || true
 chown $USER_ID:$GROUP_ID /home/app/.wei || true
 chown $USER_ID:$GROUP_ID /home/app/.wei/experiments || true

@@ -88,11 +88,11 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
             if location.reserved and location.reserved != run_id:
                 print(f"Can't run {run_id}.{step.name}, source is reserved")
                 return False
-    module_data = state_manager.get_module(step.module)
-    if module_data.state != ModuleStatus.IDLE:
+    module = state_manager.get_module(step.module)
+    if module.state.status != ModuleStatus.IDLE:
         print(f"Can't run {run_id}.{step.name}, module is not idle")
         return False
-    if module_data.reserved and module_data.reserved != run_id:
+    if module.reserved and module.reserved != run_id:
         print(f"Can't run {run_id}.{step.name}, module is reserved")
         return False
     return True

@@ -9,7 +9,7 @@ import traceback
 import warnings
 from contextlib import asynccontextmanager
 from threading import Thread
-from typing import Any, List, Optional, Union
+from typing import Annotated, Any, List, Optional, Union, get_type_hints
 
 from fastapi import (
     APIRouter,
@@ -29,6 +29,7 @@ from wei.types.module_types import (
     ModuleAction,
     ModuleActionArg,
     ModuleActionFile,
+    ModuleState,
 )
 from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
 
@@ -141,10 +142,19 @@ class RESTModule:
         """This function is called when the module needs to startup any devices or resources.
         It should be overridden by the developer to do any necessary setup for the module."""
         warnings.warn(
-            message="No module-specific startup defined, override `startup_handler` to define.",
+            message="No module-specific startup defined, use the @<class RestModule>.startup decorator or override `startup_handler` to define.",
             category=UserWarning,
             stacklevel=1,
         )
+
+    def startup(self):
+        """Decorator to add a startup_handler to the module"""
+
+        def decorator(function):
+            self.startup_handler = function
+            return function
+
+        return decorator
 
     @staticmethod
     def shutdown_handler(state: State):
@@ -156,25 +166,45 @@ class RESTModule:
             stacklevel=1,
         )
 
+    def shutdown(self):
+        """Decorator to add a shutdown_handler to the module"""
+
+        def decorator(function):
+            self.shutdown_handler = function
+            return function
+
+        return decorator
+
     @staticmethod
     def state_handler(state: State):
         """This function is called when the module is asked for its current state. It should return a dictionary of the module's current state.
         This function can be overridden by the developer to provide more specific state information.
-        At a minimum, it should return the module's current status, defined at the top-level 'status' key."""
+        At a minimum, it should return the module's current status, defined as the top-level 'status' key."""
         warnings.warn(
             message="No module-specific state handler defined, override `state_handler` to define.",
             category=UserWarning,
             stacklevel=1,
         )
-        return {"State": state.status}
+
+        return ModuleState(status=state.status, error=state.error)
+
+    def public_state(self):
+        """Decorator to add a state_handler to the module."""
+
+        def decorator(function):
+            self.state_handler = function
+            return function
+
+        return decorator
 
     @staticmethod
     def action_handler(
         state: State, action: ActionRequest
     ) -> Union[StepResponse, StepFileResponse]:
         """This function is called whenever an action is requested from the module.
-        It should be overridden by the developer to define the module's behavior.
-        It should return a StepResponse object that indicates the success or failure of the action."""
+        It should return a StepResponse object that indicates the success or failure of the action.
+        Note: If overridden, this function should handle all actions for the module (i.e. any actions defined using the decorator should also be handled here).
+        """
         if not state.actions:
             warnings.warn(
                 message="No actions or module-specific action handler defined, override `action_handler` or set `state.actions`.",
@@ -190,7 +220,7 @@ class RESTModule:
                 if module_action.name == action.name:
                     if not module_action.function:
                         return StepResponse.step_failed(
-                            "Action is defined, but not implemented"
+                            "Action is defined, but not implemented. Please define a `function` for the action, or use the `@<class RestModule>.action` decorator."
                         )
 
                     # * Prepare arguments for the action function.
@@ -214,13 +244,11 @@ class RESTModule:
                         }
                     else:
                         for arg_name, arg_value in action.args.items():
-                            print(arg_name, arg_value)
-                            print(parameters.keys())
                             if arg_name in parameters.keys():
                                 arg_dict[arg_name] = arg_value
                         for file in action.files:
                             if file.filename in parameters.keys():
-                                arg_dict[file.filename] = file.file
+                                arg_dict[file.filename] = file
 
                     for arg in module_action.args:
                         if arg.name not in action.args:
@@ -279,38 +307,37 @@ class RESTModule:
         else:
             print("Tried to release action lock, but module is not BUSY.")
 
-    @staticmethod
-    def _startup_runner(state: State):
-        """Runs the startup function for the module in a non-blocking thread, with error handling"""
-        try:
-            # * Call the module's startup function, which the developer should have defined
-            state.startup_handler(state=state)
-        except Exception as exception:
-            # * If an exception occurs during startup, handle it and put the module in an error state
-            state.exception_handler(state, exception, "Error during startup")
-            state.status = (
-                ModuleStatus.ERROR
-            )  # * Make extra sure the status is set to ERROR
-        else:
-            # * If everything goes well, set the module status to IDLE
-            state.status = ModuleStatus.IDLE
-            print(
-                "Startup completed successfully. Module is now ready to accept actions."
-            )
-
     @asynccontextmanager
     @staticmethod
     async def _lifespan(app: FastAPI):
         """Initializes the module, doing any instrument startup and starting the REST app."""
 
+        def startup_thread(state: State):
+            """Runs the startup function for the module in a non-blocking thread, with error handling"""
+            try:
+                # * Call the module's startup function
+                state.startup_handler(state=state)
+            except Exception as exception:
+                # * If an exception occurs during startup, handle it and put the module in an error state
+                state.exception_handler(state, exception, "Error during startup")
+                state.status = (
+                    ModuleStatus.ERROR
+                )  # * Make extra sure the status is set to ERROR
+            else:
+                # * If everything goes well, set the module status to IDLE
+                state.status = ModuleStatus.IDLE
+                print(
+                    "Startup completed successfully. Module is now ready to accept actions."
+                )
+
         # * Run startup on a separate thread so it doesn't block the rest server from starting
         # * (module won't accept actions until startup is complete)
-        Thread(target=RESTModule._startup_runner, args=[app.state]).start()
+        Thread(target=startup_thread, args=[app.state]).start()
 
         yield
 
         try:
-            # * If the module has a defined shutdown function, call it
+            # * Call any shutdown logic
             app.state.shutdown_handler(app.state)
         except Exception as exception:
             # * If an exception occurs during shutdown, handle it so we at least see the error in logs/terminal
@@ -320,31 +347,55 @@ class RESTModule:
         """Decorator to add an action to the module"""
 
         def decorator(function):
+            if not kwargs.get("name"):
+                kwargs["name"] = function.__name__
+            if not kwargs.get("description"):
+                kwargs["description"] = function.__doc__
             action = ModuleAction(function=function, **kwargs)
             signature = inspect.signature(function)
             if signature.parameters:
-                for parameter_name, parameter in signature.parameters.items():
+                for parameter_name, parameter_type in get_type_hints(
+                    function, include_extras=True
+                ).items():
                     if (
                         parameter_name not in action.args
                         and parameter_name not in [file.name for file in action.files]
                         and parameter_name != "state"
                         and parameter_name != "action"
+                        and parameter_name != "return"
                     ):
-                        type_hint = parameter.annotation.__name__
+                        type_hint = parameter_type.__name__
+                        description = ""
+                        # * If the type hint is an Annotated type, extract the type and description
+                        # * Description here means the first string metadata in the Annotated type
+                        if type_hint == "Annotated":
+                            type_hint = get_type_hints(function, include_extras=False)[
+                                parameter_name
+                            ].__name__
+                            description = next(
+                                (
+                                    metadata
+                                    for metadata in parameter_type.__metadata__
+                                    if isinstance(metadata, str)
+                                ),
+                                "",
+                            )
                         if type_hint == "UploadFile":
                             # * Add a file parameter to the action
                             action.files.append(
                                 ModuleActionFile(
                                     name=parameter_name,
                                     required=True,
+                                    description=description,
                                 )
                             )
                         else:
+                            parameter_info = signature.parameters[parameter_name]
                             # * Add an arg to the action
                             default = (
                                 None
-                                if parameter.default == inspect.Parameter.empty
-                                else parameter.default
+                                if parameter_info.default == inspect.Parameter.empty
+                                else parameter_info.default
                             )
                             action.args.append(
                                 ModuleActionArg(
@@ -352,6 +403,7 @@ class RESTModule:
                                     type=type_hint,
                                     default=default,
                                     required=True if default is None else False,
+                                    description=description,
                                 )
                             )
             if self.actions is None:
@@ -557,6 +609,7 @@ class RESTModule:
         """Starts the REST server-based module"""
         import uvicorn
 
+        # * Initialize the state object with all non-private attributes
         for attr in dir(self):
             if attr.startswith("_") or attr in ["start", "state", "app", "router"]:
                 # * Skip private attributes and wrapper- or server-only methods/attributes
@@ -580,19 +633,18 @@ class RESTModule:
 
 # Example usage
 if __name__ == "__main__":
-
-    def example_startup_handler(state: State):
-        """Example startup handler."""
-        print("Example startup handler. This is where I'd connect to instruments, etc.")
-        print(f"Module Start Time: {time.time()}")
-
     rest_module = RESTModule(
         name="example_rest_node",
         version="0.0.1",
         description="An example REST module implementation",
         model="Example Instrument",
-        startup_handler=example_startup_handler,
     )
+
+    @rest_module.startup()
+    def example_startup_handler(state: State):
+        """Example startup handler."""
+        print("Example startup handler. This is where I'd connect to instruments, etc.")
+        print(f"Module Start Time: {time.time()}")
 
     @rest_module.action(name="succeed", description="An action that always succeeds")
     def succeed_action(state: State, action: ActionRequest) -> StepResponse:
@@ -613,22 +665,24 @@ if __name__ == "__main__":
     @rest_module.action(
         name="print", description="Action that prints the provided string."
     )
-    def print_action(state: State, action: ActionRequest, output: str) -> StepResponse:
+    def print_action(
+        state: State,
+        action: ActionRequest,
+        output: Annotated[str, "What output to print to the console"],
+    ) -> StepResponse:
         """Function to handle the "print" action."""
         print(output)
         return StepResponse.step_succeeded(
             action_msg=f"Printed {output}",
         )
 
-    # * I can also override the default attributes/methods after instantiation
+    @rest_module.shutdown()
     def example_shutdown_handler(state: State):
         """Example startup handler."""
         print(
             "Example shutdown handler. This is where you'd disconnect from instruments, etc."
         )
         print(f"Module Shutdown Time: {time.time()}")
-
-    rest_module.shutdown_handler = example_shutdown_handler
 
     @rest_module.estop()
     def custom_estop(state: State):

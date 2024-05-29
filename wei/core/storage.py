@@ -31,7 +31,6 @@ def get_workcell_log_path(workcell_id: str) -> Path:
 
 def get_experiments_directory() -> Path:
     """Returns the directory where the experiments are stored."""
-    print("Experiments Dir: " + str(Config.data_directory / "experiments"))
     return Config.data_directory / "experiments"
 
 
@@ -47,11 +46,9 @@ def get_experiment_directory(
                 experiment_name = experiment.experiment_name
                 if experiment.experiment_directory is not None:
                     # If the cached version has a saved directory, return it
-                    print("A: ", experiment.experiment_directory)
                     return Path(experiment.experiment_directory)
             except Exception:
                 # No cached version, so search the disk
-                print("B: ", search_for_experiment_directory(experiment_id))
                 return search_for_experiment_directory(experiment_id)
         except Exception:
             # If we can't find the experiment directory, we'll create it at the default
@@ -59,7 +56,6 @@ def get_experiment_directory(
     experiment_dir = (
         get_experiments_directory() / f"{experiment_name}_id_{experiment_id}"
     )
-    print("C: ", experiment_dir)
     experiment_dir.mkdir(parents=True, exist_ok=True)
     return experiment_dir
 

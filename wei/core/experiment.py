@@ -86,6 +86,8 @@ def parse_experiments_from_disk():
             experiment = Experiment(
                 experiment_id=experiment_id,
                 experiment_name=experiment_name,
-                experiment_directory=str(get_experiments_directory() / Path(experiment_dir)),
+                experiment_directory=str(
+                    get_experiments_directory() / Path(experiment_dir)
+                ),
             )
             state_manager.set_experiment(experiment)

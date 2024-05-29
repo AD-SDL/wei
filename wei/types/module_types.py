@@ -4,7 +4,14 @@ import inspect
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
-from pydantic import AliasChoices, Field, ValidationError, field_validator, validator
+from pydantic import (
+    AliasChoices,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+    validator,
+)
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
@@ -30,6 +37,25 @@ class ModuleStatus(str, Enum):
     ERROR = "ERROR"
     UNKNOWN = "UNKNOWN"
     PAUSED = "PAUSED"
+
+
+class ModuleState(BaseModel, extra="allow"):
+    """Model for the state of a Module"""
+
+    status: ModuleStatus = Field(default=ModuleStatus.UNKNOWN)
+    """Current state of the module"""
+    error: Optional[str] = None
+    """Error message if the module is in an error state"""
+
+
+class LegacyModuleState(BaseModel, extra="allow"):
+    """Legacy model for the state of a Module"""
+
+    State: ModuleStatus
+
+    def to_modern(self) -> ModuleState:
+        """Converts the LegacyModuleState to a ModuleStatus"""
+        return ModuleStatus(status=self.State)
 
 
 class ModuleActionArg(BaseModel):
@@ -88,6 +114,21 @@ class ModuleAction(BaseModel):
                 raise ValidationError(
                     "Module Action Function must accept 'state' and 'action' parameters"
                 )
+
+    @model_validator(mode="after")
+    @classmethod
+    def ensure_name_uniqueness(cls, v: Any) -> Any:
+        """Ensure that the names of the arguments and files are unique"""
+        names = set()
+        for arg in v.args:
+            if arg.name in names:
+                raise ValueError(f"Action name '{arg.name}' is not unique")
+            names.add(arg.name)
+        for file in v.files:
+            if file.name in names:
+                raise ValueError(f"File name '{file.name}' is not unique")
+            names.add(file.name)
+        return v
 
 
 class ModuleAbout(BaseModel, extra="ignore"):
@@ -160,7 +201,7 @@ class Module(ModuleDefinition):
 
     id: str = Field(default_factory=ulid_factory)
     """ID of this instance of a Module"""
-    state: ModuleStatus = Field(default=ModuleStatus.INIT)
+    state: ModuleState = Field(default_factory=ModuleState)
     """Current state of the module"""
     reserved: Optional[str] = None
     """ID of WorkflowRun that will run next on this Module"""

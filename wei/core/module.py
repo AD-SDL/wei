@@ -6,15 +6,9 @@ from typing import Union
 
 from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
-from wei.types import (
-    Module,
-    ModuleAbout,
-    ModuleStatus,
-    Workcell,
-    Workflow,
-    WorkflowStatus,
-)
+from wei.types import Module, ModuleAbout, Workcell, Workflow, WorkflowStatus
 from wei.types.interface_types import InterfaceMap
+from wei.types.module_types import LegacyModuleState, ModuleState
 
 state_manager = StateManager()
 
@@ -43,11 +37,24 @@ def update_active_modules() -> None:
 def update_module(module_name: str, module: Module) -> None:
     """Update a single module's state and about information."""
     try:
-        state = query_module_status(module)
-        if state != module.state:
-            if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
-                module.about = get_module_about(module)
-            module.state = state
+        old_state = module.state
+        old_about = module.about
+        if module.interface in InterfaceMap.interfaces:
+            try:
+                interface = InterfaceMap.interfaces[module.interface]
+                working_state = interface.get_state(module)
+                try:
+                    module.state = ModuleState.model_validate(working_state)
+                except Exception:
+                    module.state = LegacyModuleState.model_validate(
+                        working_state
+                    ).to_modern()
+            except Exception as e:
+                traceback.print_exc()
+                module.state = ModuleState(error=f"Error getting state: {e}")
+        if module.about is None:
+            module.about = get_module_about(module)
+        if old_state != module.state or old_about != module.about:
             with state_manager.wc_state_lock():
                 state_manager.set_module(module_name, module)
         if module.reserved:
@@ -70,31 +77,6 @@ def update_module(module_name: str, module: Module) -> None:
     except Exception:
         traceback.print_exc()
         print(f"Unable to update module {module_name}")
-
-
-def query_module_status(module: Module) -> ModuleStatus:
-    """Update a single module's state by querying the module."""
-    module_name = module.name
-    state = ModuleStatus.UNKNOWN
-    if module.interface in InterfaceMap.interfaces:
-        try:
-            interface = InterfaceMap.interfaces[module.interface]
-            working_state = interface.get_state(module)
-            if isinstance(working_state, dict):
-                working_state = working_state["State"]
-
-            if not (working_state == "" or working_state == "UNKNOWN"):
-                if module.state in [ModuleStatus.INIT, ModuleStatus.UNKNOWN]:
-                    print("Module Found: " + str(module_name))
-                state = ModuleStatus(working_state)
-        except Exception as e:
-            if module.state == ModuleStatus.INIT:
-                print(e)
-                print("Can't Find Module: " + str(module_name))
-    else:
-        if module.state == ModuleStatus.INIT:
-            print("No Module Interface for Module", str(module_name))
-    return state
 
 
 def validate_module_names(workflow: Workflow, workcell: Workcell) -> None:
