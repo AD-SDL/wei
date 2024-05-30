@@ -6,10 +6,7 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import Field
 
 from wei.types.base_types import BaseModel, ulid_factory
-from wei.types.experiment_types import (
-    Campaign,
-    Experiment,
-)
+from wei.types.experiment_types import Campaign, Experiment
 from wei.types.step_types import Step
 from wei.types.workcell_types import Workcell
 from wei.types.workflow_types import WorkflowRun
@@ -87,7 +84,7 @@ class DecisionEvent(Event):
     event_name: Literal["DECISION"] = "DECISION"
     decision_name: str
     """The name of the decision made"""
-    decision_value: Optional[str] = None
+    decision_value: Optional[bool] = None
     """The reason for the decision"""
 
 

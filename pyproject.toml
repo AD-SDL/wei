@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.5.8"
+version = "0.5.9"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
