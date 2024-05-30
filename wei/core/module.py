@@ -8,7 +8,7 @@ from wei.core.state_manager import StateManager
 from wei.core.workcell import find_step_module
 from wei.types import Module, ModuleAbout, Workcell, Workflow, WorkflowStatus
 from wei.types.interface_types import InterfaceMap
-from wei.types.module_types import LegacyModuleState, ModuleState
+from wei.types.module_types import LegacyModuleState, ModuleState, ModuleStatus
 
 state_manager = StateManager()
 
@@ -50,9 +50,8 @@ def update_module(module_name: str, module: Module) -> None:
                         working_state
                     ).to_modern()
             except Exception as e:
-                traceback.print_exc()
                 module.state = ModuleState(error=f"Error getting state: {e}")
-        if module.about is None:
+        if module.state.status != ModuleStatus.UNKNOWN and module.about is None:
             module.about = get_module_about(module)
         if old_state != module.state or old_about != module.about:
             with state_manager.wc_state_lock():

@@ -4,12 +4,13 @@ import argparse
 import inspect
 import os
 import signal
+import sys
 import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
 from threading import Thread
-from typing import Annotated, Any, List, Optional, Union, get_type_hints
+from typing import Any, List, Optional, Set, Union
 
 from fastapi import (
     APIRouter,
@@ -21,6 +22,7 @@ from fastapi import (
     status,
 )
 from fastapi.datastructures import State
+from typing_extensions import Annotated, get_type_hints
 
 from wei.types import ModuleStatus
 from wei.types.module_types import (
@@ -58,7 +60,7 @@ class RESTModule:
     """A list of actions that the module can perform."""
     resource_pools: List[Any] = []
     """A list of resource pools used by the module."""
-    admin_commands: set[AdminCommands] = set()
+    admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
 
     # * Admin command function placeholders
@@ -81,7 +83,7 @@ class RESTModule:
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
         resource_pools: Optional[List[Any]] = None,
-        admin_commands: Optional[set[AdminCommands]] = None,
+        admin_commands: Optional[Set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
         port: Optional[int] = 2000,
@@ -364,7 +366,10 @@ class RESTModule:
                         and parameter_name != "action"
                         and parameter_name != "return"
                     ):
-                        type_hint = parameter_type.__name__
+                        if sys.version_info >= (3.9):
+                            type_hint = parameter_type.__name__
+                        else:
+                            type_hint = type(parameter_type).__name__
                         description = ""
                         # * If the type hint is an Annotated type, extract the type and description
                         # * Description here means the first string metadata in the Annotated type

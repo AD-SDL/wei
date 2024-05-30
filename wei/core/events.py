@@ -38,6 +38,7 @@ class EventHandler:
     def initialize_diaspora(cls) -> None:
         """Initializes the Kafka producer and creates the topic if it doesn't exist already"""
         if Config.use_diaspora:
+            result = None
             try:
                 from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
 
@@ -50,13 +51,16 @@ class EventHandler:
                 cls.kafka_topic = Config.kafka_topic
                 print(f"Creating Diaspora topic: {cls.kafka_topic}")
                 c = Client()
-                assert c.register_topic(cls.kafka_topic)["status"] in [
+                result = c.register_topic(cls.kafka_topic)
+                assert result["status"] in [
                     "success",
                     "no-op",
                 ]
-            except Exception as e:
-                print(e)
+            except Exception:
+                traceback.print_exc()
                 print("Failed to connect to Diaspora or create topic.")
+                if result:
+                    print(result)
                 cls.kafka_producer = None
                 cls.kafka_topic = None
         else:

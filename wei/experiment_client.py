@@ -118,6 +118,7 @@ class ExperimentClient:
             response.raise_for_status()
         self.experiment_info = Experiment.model_validate(response.json())
         print(f"Experiment ID: {self.experiment_info.experiment_id}")
+        self.experiment_id = self.experiment_info.experiment_id
 
         self._log_event(ExperimentStartEvent(experiment=self.experiment_info))
 
