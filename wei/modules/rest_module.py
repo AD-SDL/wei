@@ -366,7 +366,7 @@ class RESTModule:
                         and parameter_name != "action"
                         and parameter_name != "return"
                     ):
-                        if sys.version_info >= (3.9):
+                        if sys.version_info >= (3, 9):
                             type_hint = parameter_type.__name__
                         else:
                             type_hint = type(parameter_type).__name__
