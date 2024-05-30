@@ -61,6 +61,7 @@ class ExperimentClient:
         self.server_host = server_host
         self.server_port = server_port
         self.url = f"http://{self.server_host}:{self.server_port}"
+        self.experiment_id = experiment_id
 
         if experiment_name is None:
             assert (
