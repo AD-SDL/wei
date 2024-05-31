@@ -139,6 +139,8 @@ class RESTModule:
                 help="A unique name for this particular instance of this module",
             )
 
+    # * Module and Application Lifecycle Functions
+
     @staticmethod
     def startup_handler(state: State):
         """This function is called when the module needs to startup any devices or resources.
@@ -178,23 +180,157 @@ class RESTModule:
         return decorator
 
     @staticmethod
-    def state_handler(state: State):
+    def exception_handler(
+        state: State, exception: Exception, error_message: Optional[str] = None
+    ):
+        """This function is called whenever a module encounters or throws an irrecoverable exception.
+        It should handle the exception (print errors, do any logging, etc.) and set the module status to ERROR."""
+        if error_message:
+            print(f"Error: {error_message}")
+        traceback.print_exc()
+        state.status = ModuleStatus.ERROR
+        state.error = str(exception)
+
+    @asynccontextmanager
+    @staticmethod
+    async def _lifespan(app: FastAPI):
+        """Initializes the module, doing any instrument startup and starting the REST app."""
+
+        def startup_thread(state: State):
+            """Runs the startup function for the module in a non-blocking thread, with error handling"""
+            try:
+                # * Call the module's startup function
+                state.startup_handler(state=state)
+            except Exception as exception:
+                # * If an exception occurs during startup, handle it and put the module in an error state
+                state.exception_handler(state, exception, "Error during startup")
+                state.status = (
+                    ModuleStatus.ERROR
+                )  # * Make extra sure the status is set to ERROR
+            else:
+                # * If everything goes well, set the module status to IDLE
+                state.status = ModuleStatus.IDLE
+                print(
+                    "Startup completed successfully. Module is now ready to accept actions."
+                )
+
+        # * Run startup on a separate thread so it doesn't block the rest server from starting
+        # * (module won't accept actions until startup is complete)
+        Thread(target=startup_thread, args=[app.state]).start()
+
+        yield
+
+        try:
+            # * Call any shutdown logic
+            app.state.shutdown_handler(app.state)
+        except Exception as exception:
+            # * If an exception occurs during shutdown, handle it so we at least see the error in logs/terminal
+            app.state.exception_handler(app.state, exception, "Error during shutdown")
+
+    # * Module State Handling Functions
+
+    @staticmethod
+    def _state_handler(state: State):
         """This function is called when the module is asked for its current state. It should return a dictionary of the module's current state.
-        This function can be overridden by the developer to provide more specific state information.
+        This function can be overridden by the developer to provide more specific state information using the `@<class RestModule>.state_handler` decorator.
         At a minimum, it should return the module's current status, defined as the top-level 'status' key."""
         warnings.warn(
-            message="No module-specific state handler defined, override `state_handler` to define.",
+            message="No module-specific state handler defined, use the `@<class RestModule>.state_handler` decorator to define.",
             category=UserWarning,
             stacklevel=1,
         )
 
         return ModuleState(status=state.status, error=state.error)
 
-    def public_state(self):
-        """Decorator to add a state_handler to the module."""
+    def state_handler(self):
+        """Decorator to add custom logic for the published state on the /state endpoint.
+        This should return a dictionary of the module's current state that is compliant with the `wei.types.module_types.ModuleState` model."""
 
         def decorator(function):
             self.state_handler = function
+            return function
+
+        return decorator
+
+    # * Module Action Handling Functions
+
+    def action(self, **kwargs):
+        """Decorator to add an action to the module.
+        This decorator can be used to define actions that the module can perform.
+
+        Args:
+            `name: str`
+                The name of the action. If not provided, the name of the function will be used.
+            `description: str`
+                A description of the action. If not provided, the function's docstring will be used.
+        """
+
+        def decorator(function):
+            if not kwargs.get("name"):
+                kwargs["name"] = function.__name__
+            if not kwargs.get("description"):
+                kwargs["description"] = function.__doc__
+            action = ModuleAction(function=function, **kwargs)
+            signature = inspect.signature(function)
+            if signature.parameters:
+                for parameter_name, parameter_type in get_type_hints(
+                    function, include_extras=True
+                ).items():
+                    if (
+                        parameter_name not in action.args
+                        and parameter_name not in [file.name for file in action.files]
+                        and parameter_name != "state"
+                        and parameter_name != "action"
+                        and parameter_name != "return"
+                    ):
+                        if sys.version_info >= (3, 9):
+                            type_hint = parameter_type.__name__
+                        else:
+                            type_hint = type(parameter_type).__name__
+                        description = ""
+                        # * If the type hint is an Annotated type, extract the type and description
+                        # * Description here means the first string metadata in the Annotated type
+                        if type_hint == "Annotated":
+                            type_hint = get_type_hints(function, include_extras=False)[
+                                parameter_name
+                            ].__name__
+                            description = next(
+                                (
+                                    metadata
+                                    for metadata in parameter_type.__metadata__
+                                    if isinstance(metadata, str)
+                                ),
+                                "",
+                            )
+                        if type_hint == "UploadFile":
+                            # * Add a file parameter to the action
+                            action.files.append(
+                                ModuleActionFile(
+                                    name=parameter_name,
+                                    required=True,
+                                    description=description,
+                                )
+                            )
+                        else:
+                            parameter_info = signature.parameters[parameter_name]
+                            # * Add an arg to the action
+                            default = (
+                                None
+                                if parameter_info.default == inspect.Parameter.empty
+                                else parameter_info.default
+                            )
+                            action.args.append(
+                                ModuleActionArg(
+                                    name=parameter_name,
+                                    type=type_hint,
+                                    default=default,
+                                    required=True if default is None else False,
+                                    description=description,
+                                )
+                            )
+            if self.actions is None:
+                self.actions = []
+            self.actions.append(action)
             return function
 
         return decorator
@@ -276,18 +412,6 @@ class RESTModule:
             )
 
     @staticmethod
-    def exception_handler(
-        state: State, exception: Exception, error_message: Optional[str] = None
-    ):
-        """This function is called whenever a module encounters or throws an irrecoverable exception.
-        It should handle the exception (print errors, do any logging, etc.) and set the module status to ERROR."""
-        if error_message:
-            print(f"Error: {error_message}")
-        traceback.print_exc()
-        state.status = ModuleStatus.ERROR
-        state.error = str(exception)
-
-    @staticmethod
     def get_action_lock(state: State, action: ActionRequest):
         """This function is used to ensure the module only performs actions when it is safe to do so.
         In most cases, this means ensuring the instrument is not currently acting
@@ -309,116 +433,9 @@ class RESTModule:
         else:
             print("Tried to release action lock, but module is not BUSY.")
 
-    @asynccontextmanager
-    @staticmethod
-    async def _lifespan(app: FastAPI):
-        """Initializes the module, doing any instrument startup and starting the REST app."""
+    # * Admin Command Handling Functions
 
-        def startup_thread(state: State):
-            """Runs the startup function for the module in a non-blocking thread, with error handling"""
-            try:
-                # * Call the module's startup function
-                state.startup_handler(state=state)
-            except Exception as exception:
-                # * If an exception occurs during startup, handle it and put the module in an error state
-                state.exception_handler(state, exception, "Error during startup")
-                state.status = (
-                    ModuleStatus.ERROR
-                )  # * Make extra sure the status is set to ERROR
-            else:
-                # * If everything goes well, set the module status to IDLE
-                state.status = ModuleStatus.IDLE
-                print(
-                    "Startup completed successfully. Module is now ready to accept actions."
-                )
-
-        # * Run startup on a separate thread so it doesn't block the rest server from starting
-        # * (module won't accept actions until startup is complete)
-        Thread(target=startup_thread, args=[app.state]).start()
-
-        yield
-
-        try:
-            # * Call any shutdown logic
-            app.state.shutdown_handler(app.state)
-        except Exception as exception:
-            # * If an exception occurs during shutdown, handle it so we at least see the error in logs/terminal
-            app.state.exception_handler(app.state, exception, "Error during shutdown")
-
-    def action(self, **kwargs):
-        """Decorator to add an action to the module"""
-
-        def decorator(function):
-            if not kwargs.get("name"):
-                kwargs["name"] = function.__name__
-            if not kwargs.get("description"):
-                kwargs["description"] = function.__doc__
-            action = ModuleAction(function=function, **kwargs)
-            signature = inspect.signature(function)
-            if signature.parameters:
-                for parameter_name, parameter_type in get_type_hints(
-                    function, include_extras=True
-                ).items():
-                    if (
-                        parameter_name not in action.args
-                        and parameter_name not in [file.name for file in action.files]
-                        and parameter_name != "state"
-                        and parameter_name != "action"
-                        and parameter_name != "return"
-                    ):
-                        if sys.version_info >= (3, 9):
-                            type_hint = parameter_type.__name__
-                        else:
-                            type_hint = type(parameter_type).__name__
-                        description = ""
-                        # * If the type hint is an Annotated type, extract the type and description
-                        # * Description here means the first string metadata in the Annotated type
-                        if type_hint == "Annotated":
-                            type_hint = get_type_hints(function, include_extras=False)[
-                                parameter_name
-                            ].__name__
-                            description = next(
-                                (
-                                    metadata
-                                    for metadata in parameter_type.__metadata__
-                                    if isinstance(metadata, str)
-                                ),
-                                "",
-                            )
-                        if type_hint == "UploadFile":
-                            # * Add a file parameter to the action
-                            action.files.append(
-                                ModuleActionFile(
-                                    name=parameter_name,
-                                    required=True,
-                                    description=description,
-                                )
-                            )
-                        else:
-                            parameter_info = signature.parameters[parameter_name]
-                            # * Add an arg to the action
-                            default = (
-                                None
-                                if parameter_info.default == inspect.Parameter.empty
-                                else parameter_info.default
-                            )
-                            action.args.append(
-                                ModuleActionArg(
-                                    name=parameter_name,
-                                    type=type_hint,
-                                    default=default,
-                                    required=True if default is None else False,
-                                    description=description,
-                                )
-                            )
-            if self.actions is None:
-                self.actions = []
-            self.actions.append(action)
-            return function
-
-        return decorator
-
-    def estop(self, **kwargs):
+    def estop(self):
         """Decorator to add estop functionality to the module"""
 
         def decorator(function):
@@ -428,7 +445,7 @@ class RESTModule:
 
         return decorator
 
-    def pause(self, **kwargs):
+    def pause(self):
         """Decorator to add pause functionality to the module"""
 
         def decorator(function):
@@ -438,7 +455,7 @@ class RESTModule:
 
         return decorator
 
-    def resume(self, **kwargs):
+    def resume(self):
         """Decorator to add resume functionality to the module"""
 
         def decorator(function):
@@ -448,7 +465,7 @@ class RESTModule:
 
         return decorator
 
-    def cancel(self, **kwargs):
+    def cancel(self):
         """Decorator to add cancellation functionality to the module"""
 
         def decorator(function):
@@ -458,7 +475,7 @@ class RESTModule:
 
         return decorator
 
-    def reset(self, **kwargs):
+    def reset(self):
         """Decorator to add reset functionality to the module"""
 
         def decorator(function):
@@ -537,7 +554,7 @@ class RESTModule:
         @self.router.get("/state")
         async def state(request: Request):
             state = request.app.state
-            return state.state_handler(state=state)
+            return self._state_handler(state=state)
 
         @self.router.get("/resources")
         async def resources(request: Request):
