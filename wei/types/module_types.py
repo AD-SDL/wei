@@ -2,7 +2,7 @@
 
 import inspect
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
 
 from pydantic import (
     AliasChoices,
@@ -10,7 +10,6 @@ from pydantic import (
     ValidationError,
     field_validator,
     model_validator,
-    validator,
 )
 
 from wei.types.base_types import BaseModel, ulid_factory
@@ -176,24 +175,24 @@ class ModuleDefinition(BaseModel):
     active: Optional[bool] = True
     """Whether or not the device is active (set to False to disable)"""
 
-    @validator("config")
-    def validate_config(cls, v: Any, values: Dict[str, Any], **kwargs: Any) -> Any:
-        """Validate the config field of the workcell config with special rules for each module interface"""
+    @model_validator(mode="after")
+    def validate_config_against_interface(self) -> Self:
+        """Ensure that the config field is valid for the specified interface"""
         from wei.types.interface_types import InterfaceMap
 
-        interface_type = str(values.get("interface", "")).lower()
+        interface_type = self.interface.lower()
 
-        if interface_type.lower() not in InterfaceMap.interfaces:
+        if interface_type not in InterfaceMap.interfaces:
             raise ValueError(
-                f"Interface '{interface_type}' for module {values.get('name')} is invalid"
+                f"Interface '{interface_type}' for module {self.name} is invalid"
             )
 
-        if InterfaceMap.interfaces[interface_type].config_validator(v):
-            return v
-        else:
+        if not InterfaceMap.interfaces[interface_type].config_validator(self.config):
             raise ValueError(
-                f"Config for interface '{interface_type}' is invalid for module {values.get('name')}"
+                f"Config for interface '{interface_type}' is invalid for module {self.name}"
             )
+
+        return self
 
 
 class Module(ModuleDefinition):

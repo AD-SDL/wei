@@ -9,6 +9,7 @@ from fastapi.datastructures import State
 
 from wei.modules.rest_module import RESTModule
 from wei.types import ModuleAction, ModuleActionArg, StepResponse
+from wei.types.module_types import ModuleState
 from wei.types.step_types import ActionRequest
 
 
@@ -23,7 +24,7 @@ def transfer_action(state: State, action: ActionRequest) -> StepResponse:
 test_rest_node = RESTModule(
     name="test_rest_node",
     description="A test module for WEI",
-    version="0.0.2",
+    version="1.0.0",
     resource_pools=[],
     model="test_module",
     actions=[
@@ -55,6 +56,12 @@ test_rest_node = RESTModule(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = 0.0
+
+
+@test_rest_node.state_handler()
+def state_handler(state: State) -> ModuleState:
+    """Handles the state of the module"""
+    return ModuleState(status=state.status, error=state.error, foobar=state.foobar)
 
 
 @test_rest_node.action()

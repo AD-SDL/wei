@@ -8,10 +8,10 @@ from fastapi import APIRouter
 from wei.config import Config
 from wei.core.admin import (
     send_cancel,
-    send_estop,
     send_pause,
     send_reset,
     send_resume,
+    send_safety_stop,
     send_shutdown,
 )
 from wei.core.state_manager import StateManager
@@ -23,18 +23,18 @@ router = APIRouter()
 state_manager = StateManager()
 
 
-@router.api_route("/estop", methods=["POST"])
-def estop_workcell() -> None:
+@router.api_route("/safety_stop", methods=["POST"])
+def safety_stop_workcell() -> None:
     """E-stops a workcell"""
     for module in state_manager.get_all_modules().values():
-        send_estop(module)
+        send_safety_stop(module)
     state_manager.paused = True
 
 
-@router.api_route("/estop/{module_name}", methods=["POST"])
-def estop_module(module_name: str) -> None:
+@router.api_route("/safety_stop/{module_name}", methods=["POST"])
+def safety_stop_module(module_name: str) -> None:
     """E-stops a module"""
-    send_estop(state_manager.get_module(module_name))
+    send_safety_stop(state_manager.get_module(module_name))
 
 
 @router.api_route("/reset", methods=["POST"])

@@ -64,7 +64,7 @@ class RESTModule:
     """A list of admin commands supported by the module."""
 
     # * Admin command function placeholders
-    _estop = None
+    _safety_stop = None
     """Handles custom e-stop functionality"""
     _pause = None
     """Handles custom pause functionality"""
@@ -110,6 +110,7 @@ class RESTModule:
         self.admin_commands.add(AdminCommands.SHUTDOWN)
 
         # * Set any additional keyword arguments as attributes as well
+        # * These will then get added to the state object
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -230,7 +231,7 @@ class RESTModule:
     # * Module State Handling Functions
 
     @staticmethod
-    def _state_handler(state: State):
+    def _state_handler(state: State) -> ModuleState:
         """This function is called when the module is asked for its current state. It should return a dictionary of the module's current state.
         This function can be overridden by the developer to provide more specific state information using the `@<class RestModule>.state_handler` decorator.
         At a minimum, it should return the module's current status, defined as the top-level 'status' key."""
@@ -247,7 +248,7 @@ class RESTModule:
         This should return a dictionary of the module's current state that is compliant with the `wei.types.module_types.ModuleState` model."""
 
         def decorator(function):
-            self.state_handler = function
+            self._state_handler = function
             return function
 
         return decorator
@@ -435,12 +436,12 @@ class RESTModule:
 
     # * Admin Command Handling Functions
 
-    def estop(self):
-        """Decorator to add estop functionality to the module"""
+    def safety_stop(self):
+        """Decorator to add safety_stop functionality to the module"""
 
         def decorator(function):
-            self.admin_commands.add(AdminCommands.ESTOP)
-            self._estop = function
+            self.admin_commands.add(AdminCommands.SAFETY_STOP)
+            self._safety_stop = function
             return function
 
         return decorator
@@ -488,12 +489,12 @@ class RESTModule:
     def _configure_routes(self):
         """Configure the API endpoints for the REST module"""
 
-        @self.router.post("/admin/estop")
-        async def estop(request: Request):
+        @self.router.post("/admin/safety_stop")
+        async def safety_stop(request: Request):
             state = request.app.state
             state.status = ModuleStatus.PAUSED
-            if self._estop:
-                return self._estop(state)
+            if self._safety_stop:
+                return self._safety_stop(state)
             else:
                 return {"message": "Module e-stopped"}
 
@@ -552,8 +553,11 @@ class RESTModule:
                     return {"error": "Error while attempting to reset the module"}
 
         @self.router.get("/state")
-        async def state(request: Request):
+        async def state(request: Request) -> ModuleState:
             state = request.app.state
+            # * If the module is in INIT, return without calling custom state handler
+            if state.status in [ModuleStatus.INIT, ModuleStatus.ERROR]:
+                return ModuleState(status=ModuleStatus.INIT, error=state.error)
             return self._state_handler(state=state)
 
         @self.router.get("/resources")
@@ -706,8 +710,8 @@ if __name__ == "__main__":
         )
         print(f"Module Shutdown Time: {time.time()}")
 
-    @rest_module.estop()
-    def custom_estop(state: State):
+    @rest_module.safety_stop()
+    def custom_safety_stop(state: State):
         """Custom e-stop functionality"""
         print("Custom e-stop functionality")
         return {"message": "Custom e-stop functionality"}

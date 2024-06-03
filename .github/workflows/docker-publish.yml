@@ -23,7 +23,6 @@ env:
 jobs:
   build_and_publish:
 
-    environment: production
     runs-on: ubuntu-latest
     permissions:
       contents: read

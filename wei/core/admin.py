@@ -4,11 +4,11 @@ from wei.types.interface_types import InterfaceMap
 from wei.types.module_types import AdminCommands, Module
 
 
-def send_estop(module: Module) -> None:
+def send_safety_stop(module: Module) -> None:
     """E-stops a module"""
-    if AdminCommands.ESTOP in module.about.admin_commands:
+    if AdminCommands.SAFETY_STOP in module.about.admin_commands:
         InterfaceMap.interfaces[module.interface].send_admin_command(
-            module, AdminCommands.ESTOP
+            module, AdminCommands.SAFETY_STOP
         )
         print(f"Module {module.name} has been e-stopped.")
     else:
