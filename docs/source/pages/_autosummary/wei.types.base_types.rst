@@ -1,7 +1,7 @@
-wei.routers.locations
+wei.types.base\_types
 =====================
 
-.. automodule:: wei.routers.locations
+.. automodule:: wei.types.base_types
 
    
    
@@ -13,9 +13,7 @@ wei.routers.locations
 
    .. autosummary::
    
-      loc
-      show_states
-      update
+      ulid_factory
    
    
 

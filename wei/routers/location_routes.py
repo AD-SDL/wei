@@ -7,8 +7,8 @@ from typing import Union
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from wei.core.data_classes import Location
 from wei.core.state_manager import StateManager
+from wei.types.workcell_types import Location
 
 router = APIRouter()
 
@@ -31,7 +31,7 @@ def show_states() -> JSONResponse:
        the state of the workcell locations, with the id of the run that last filled the location
     """
 
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         return JSONResponse(
             content={
                 "location_states": {
@@ -59,7 +59,7 @@ def loc(
        the state of the workcell locations, with the id of the run that last filled the location
     """
     try:
-        with state_manager.state_lock():
+        with state_manager.wc_state_lock():
             return JSONResponse(
                 content={
                     str(location): str(
@@ -94,7 +94,7 @@ async def update(
         location.state = value
         return location
 
-    with state_manager.state_lock():
+    with state_manager.wc_state_lock():
         if experiment_id == "":
             state_manager.update_location(location_name, update_location_state, "Empty")
         else:

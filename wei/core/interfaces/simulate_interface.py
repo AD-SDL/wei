@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, Tuple
 
-from wei.core.data_classes import Interface, Module, ModuleStatus, Step, StepStatus
+from wei.types import Interface, Module, ModuleStatus, Step, StepStatus
 
 
 def silent_callback(step: Step, **kwargs: Any) -> Tuple[str, str, str]:

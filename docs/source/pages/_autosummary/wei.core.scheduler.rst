@@ -18,7 +18,6 @@ wei.core.scheduler
    .. autosummary::
    
       Scheduler
-      SequentialScheduler
    
    
 

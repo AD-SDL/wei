@@ -4,10 +4,12 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
-from wei.core.data_classes import Step, Workcell, Workflow, WorkflowRun
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 from wei.core.step import validate_step
+from wei.core.storage import get_workflow_result_directory, get_workflow_run_directory
+from wei.types import Step, Workcell, Workflow, WorkflowRun
+from wei.types.workflow_types import WorkflowStatus
 
 state_manager = StateManager()
 
@@ -54,8 +56,16 @@ def create_run(
         }
     )
     wf_run = WorkflowRun(**wf_dict)
-    wf_run.run_dir.mkdir(parents=True, exist_ok=True)
-    wf_run.result_dir.mkdir(parents=True, exist_ok=True)
+    get_workflow_run_directory(
+        workflow_name=wf_run.name,
+        workflow_run_id=wf_run.run_id,
+        experiment_id=experiment_id,
+    ).mkdir(parents=True, exist_ok=True)
+    get_workflow_result_directory(
+        workflow_name=wf_run.name,
+        workflow_run_id=wf_run.run_id,
+        experiment_id=experiment_id,
+    ).mkdir(parents=True, exist_ok=True)
 
     steps = []
     for step in workflow.flowdef:
@@ -104,12 +114,38 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
     and updates the step files to point to the new location"""
     if files:
         for file in files:
-            print(file)
-            file_path = wf_run.run_dir / file.filename
+            file_path = (
+                get_workflow_run_directory(
+                    workflow_run_id=wf_run.run_id,
+                    workflow_name=wf_run.name,
+                    experiment_id=wf_run.experiment_id,
+                )
+                / file.filename
+            )
             with open(file_path, "wb") as f:
                 f.write(file.file.read())
             for step in wf_run.steps:
-                for step_file in step.files:
-                    step.files[step_file] = str(file_path)
-                    print(file_path)
+                for step_file_key, step_file_path in step.files.items():
+                    if step_file_path == file.filename:
+                        step.files[step_file_key] = str(file_path)
+                        print(f"{step_file_key}: {file_path} ({step_file_path})")
     return wf_run
+
+
+def cancel_workflow_run(wf_run: WorkflowRun) -> None:
+    """Cancels the workflow run"""
+    wf_run.status = WorkflowStatus.CANCELLED
+    with state_manager.wc_state_lock():
+        state_manager.set_workflow_run(wf_run)
+    return wf_run
+
+
+def cancel_active_workflow_runs() -> None:
+    """Cancels all currently running workflow runs"""
+    for wf_run in state_manager.get_all_workflow_runs().values():
+        if wf_run.status in [
+            WorkflowStatus.RUNNING,
+            WorkflowStatus.QUEUED,
+            WorkflowStatus.IN_PROGRESS,
+        ]:
+            cancel_workflow_run(wf_run)

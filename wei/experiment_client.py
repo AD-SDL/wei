@@ -3,13 +3,25 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from warnings import warn
+from typing import Any, Dict, List, Optional
 
 import requests
 
-from wei.core.data_classes import Workflow, WorkflowStatus
-from wei.core.events import Events
+from wei.types import Workflow, WorkflowStatus
+from wei.types.base_types import PathLike
+from wei.types.event_types import (
+    CommentEvent,
+    DecisionEvent,
+    Event,
+    ExperimentContinueEvent,
+    ExperimentEndEvent,
+    ExperimentStartEvent,
+    GladierFlowEvent,
+    GlobusComputeEvent,
+    LocalComputeEvent,
+    LoopStartEvent,
+)
+from wei.types.experiment_types import Experiment, ExperimentDesign
 
 
 class ExperimentClient:
@@ -17,37 +29,50 @@ class ExperimentClient:
 
     def __init__(
         self,
-        server_addr: str,
+        server_host: str,
         server_port: str,
-        experiment_name: Optional[str] = None,
+        experiment_name: str,
         experiment_id: Optional[str] = None,
-        working_dir: Optional[Union[str, Path]] = None,
-        output_dir: Optional[Union[str, Path]] = None,
+        campaign_id: Optional[str] = None,
+        description: Optional[str] = None,
+        working_dir: Optional[PathLike] = None,
     ) -> None:
         """Initializes an Experiment, and creates its log files
 
         Parameters
         ----------
-        server_addr: str
+        server_host: str
             address for WEI server
 
         server_port: str
             port for WEI server
 
         experiment_name: str
-            Human chosen name for experiment
+            Human readable name for the experiment
 
         experiment_id: Optional[str]
-            Programmatically generated experiment id, can be reused if needed
+            Programmatically generated experiment id, can be reused to continue an in-progress experiment
 
         working_dir: Optional[Union[str, Path]]
             The directory to resolve relative paths from. Defaults to the current working directory.
 
         """
 
-        self.server_addr = server_addr
+        self.server_host = server_host
         self.server_port = server_port
-        self.url = f"http://{self.server_addr}:{self.server_port}"
+        self.url = f"http://{self.server_host}:{self.server_port}"
+        self.experiment_id = experiment_id
+
+        if experiment_name is None:
+            assert (
+                experiment_id is not None
+            ), "Experiment Name is required unless continuing an existing experiment"
+
+        self.experiment_design = ExperimentDesign(
+            experiment_name=experiment_name,
+            campaign_id=campaign_id,
+            description=description,
+        )
 
         if working_dir is None:
             self.working_dir = Path.cwd()
@@ -56,26 +81,21 @@ class ExperimentClient:
 
         start_time = time.time()
         waiting = False
-        self.output_dir = output_dir
-        while time.time() - start_time < 60:
+        while time.time() - start_time < 10:
             try:
-                self.register_experiment(experiment_id, experiment_name)
+                if experiment_id is None:
+                    self._register_experiment()
+                else:
+                    self._continue_experiment(experiment_id)
                 break
             except requests.exceptions.ConnectionError:
                 if not waiting:
                     waiting = True
                     print("Waiting to connect to server...")
                 time.sleep(1)
-        self.events = Events(
-            self.server_addr,
-            self.server_port,
-            self.experiment_id,
-        )
-        self.events.start_experiment()
 
-    def register_experiment(self, experiment_id, experiment_name) -> None:
-        """Gets an existing experiment from the server,
-           or creates a new one if it doesn't exist
+    def _register_experiment(self) -> None:
+        """Registers a new experiment with the server
 
         Parameters
         ----------
@@ -91,29 +111,38 @@ class ExperimentClient:
         """
 
         url = f"{self.url}/experiments/"
-        response = requests.get(
+        response = requests.post(
             url,
-            params={
-                "experiment_id": experiment_id,
-                "experiment_name": experiment_name,
-            },
+            json=self.experiment_design.model_dump(mode="json"),
         )
         if not response.ok:
-            raise Exception(
-                f"Failed to register experiment with error {response.status_code}: {response.text}"
-            )
-        self.experiment_id = response.json()["experiment_id"]
-        print(f"Experiment ID: {self.experiment_id}")
-        self.experiment_path = response.json()["experiment_path"]
-        self.experiment_name = response.json()["experiment_name"]
-        if self.output_dir is None:
-            self.output_dir = (
-                str(self.working_dir)
-                + "/experiment_results/"
-                + str(self.experiment_name)
-                + "_id_"
-                + self.experiment_id
-            )
+            response.raise_for_status()
+        self.experiment_info = Experiment.model_validate(response.json())
+        print(f"Experiment ID: {self.experiment_info.experiment_id}")
+        self.experiment_id = self.experiment_info.experiment_id
+
+        self._log_event(ExperimentStartEvent(experiment=self.experiment_info))
+
+    def _continue_experiment(self, experiment_id) -> None:
+        """Resumes an existing experiment with the server
+
+        Parameters
+        ----------
+        experiment_id: str
+            Programmatically generated experiment id, can be reused to continue an existing experiment
+
+        Returns
+        -------
+        None
+        """
+
+        url = f"{self.url}/experiments/{experiment_id}"
+        response = requests.get(url)
+        if not response.ok:
+            response.raise_for_status()
+        self.experiment_info = Experiment.model_validate(response.json())
+
+        self._log_event(ExperimentContinueEvent(experiment=self.experiment_info))
 
     def validate_workflow(
         self,
@@ -130,7 +159,7 @@ class ExperimentClient:
 
         with open(workflow_file, "r", encoding="utf-8") as workflow_file_handle:
             params = {
-                "experiment_id": self.experiment_id,
+                "experiment_id": self.experiment_info.experiment_id,
                 "payload": payload,
             }
             response = requests.post(
@@ -145,9 +174,11 @@ class ExperimentClient:
                     ),
                 },
             )
+            if not response.ok:
+                response.raise_for_status()
         return response
 
-    def get_files_from_workflow(
+    def _extract_files_from_workflow(
         self, workflow: Workflow, payload: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -172,11 +203,39 @@ class ExperimentClient:
                         files[file] = path
                     if not Path(files[file]).is_absolute():
                         files[file] = self.working_dir / files[file]
+                    step.files[file] = Path(files[file]).name
         return files
+
+    def _log_event(
+        self,
+        event: Event,
+    ) -> Event:
+        """Logs an event to the WEI event log
+
+        Parameters
+        ----------
+        event : Event
+            The event to log
+
+        Returns
+        -------
+        Event
+            The event that was logged
+        """
+        event.experiment_id = self.experiment_info.experiment_id
+        url = f"{self.url}/events/"
+        response = requests.post(
+            url,
+            json=event.model_dump(mode="json"),
+        )
+        if response.ok:
+            return Event.model_validate(response.json())
+        else:
+            response.raise_for_status()
 
     def start_run(
         self,
-        workflow_file: Path,
+        workflow_file: PathLike,
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
@@ -201,26 +260,25 @@ class ExperimentClient:
         """
         if payload is None:
             payload = {}
+        workflow_file = Path(workflow_file).expanduser().resolve()
         assert workflow_file.exists(), f"{workflow_file} does not exist"
         workflow = Workflow.from_yaml(workflow_file)
         url = f"{self.url}/runs/start"
-        files = self.get_files_from_workflow(workflow, payload)
+        files = self._extract_files_from_workflow(workflow, payload)
         response = requests.post(
             url,
             data={
                 "workflow": workflow.model_dump_json(),
-                "experiment_id": self.experiment_id,
+                "experiment_id": self.experiment_info.experiment_id,
                 "payload": json.dumps(payload),
                 "simulate": simulate,
             },
             files={
-                ("files", (str(file), open(path, "rb"))) for file, path in files.items()
+                ("files", (str(Path(path).name), open(path, "rb")))
+                for _, path in files.items()
             },
         )
         if not response.ok:
-            print(f"{response.status_code}: {response.reason}")
-            print(response.text)
-            print(response.request)
             response.raise_for_status()
         response_json = response.json()
         if blocking:
@@ -247,7 +305,10 @@ class ExperimentClient:
                 if run_info["status"] == WorkflowStatus.COMPLETED:
                     print()
                     break
-                elif run_info["status"] == WorkflowStatus.FAILED:
+                elif run_info["status"] in [
+                    WorkflowStatus.FAILED,
+                    WorkflowStatus.CANCELLED,
+                ]:
                     print()
                     print(json.dumps(response.json(), indent=2))
                     break
@@ -275,15 +336,18 @@ class ExperimentClient:
             time.sleep(1)
         return results
 
-    def list_wf_result_files(self, wf_id: str) -> Any:
+    def list_wf_result_files(self, run_id: str) -> Any:
         """Returns a list of files from the WEI experiment result directory"""
-        url = f"{self.url}/runs/{wf_id}/results"
+        url = f"{self.url}/runs/{run_id}/results"
 
         response = requests.get(url)
         return response.json()["files"]
 
     def get_wf_result_file(
-        self, filename: str, output_filepath: str, run_id: str
+        self,
+        run_id: str,
+        filename: str,
+        output_filepath: str,
     ) -> Any:
         """Returns a file from the WEI experiment result directory"""
         url = f"{self.url}/runs/{run_id}/file"
@@ -340,8 +404,8 @@ class ExperimentClient:
         else:
             response.raise_for_status()
 
-    def query_queue(self) -> Dict[Any, Any]:
-        """Returns the queue info for this experiment as a string
+    def log_experiment_end(self) -> Event:
+        """Logs the end of the experiment in the experiment log
 
         Parameters
         ----------
@@ -350,36 +414,100 @@ class ExperimentClient:
 
         Returns
         -------
-
         response: Dict
-           The JSON portion of the response from the server with the queue info"""
-        url = f"{self.url}/queue/info"
-        response = requests.get(url)
+           The JSON portion of the response from the server"""
+        return self._log_event(ExperimentEndEvent(experiment=self.experiment_info))
 
-        if response.ok:
-            return response.json()
-        else:
-            response.raise_for_status()
-
-    def register_exp(self) -> Dict[Any, Any]:
-        """Deprecated method for registering an experiment with the server
+    def log_decision(self, decision_name: str, decision_value: bool) -> Event:
+        """Logs a decision in the experiment log
 
         Parameters
         ----------
-        None
+        decision_name : str
+            The name of the decision
+
+        decision_value : bool
+            The value of the decision
 
         Returns
         -------
-
         response: Dict
-        The JSON portion of the response from the server"""
-        warn(
-            """
-                This method is deprecated.
-                Experiment registration is now handled when initializing the ExperimentClient.
-                You can safely remove any calls to this function.
-                """,
-            DeprecationWarning,
-            stacklevel=2,
+           The JSON portion of the response from the server"""
+        decision = DecisionEvent(
+            decision_name=decision_name, decision_value=decision_value
         )
-        return {"exp_dir": self.experiment_path}
+        return self._log_event(decision)
+
+    def log_comment(self, comment: str) -> Event:
+        """Logs a comment in the experiment log
+
+        Parameters
+        ----------
+        comment : str
+            The comment to log
+
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        comment = CommentEvent(comment=comment)
+        return self._log_event(comment)
+
+    def log_local_compute(
+        self,
+        function_name: str,
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
+        result: Optional[Any] = None,
+    ) -> Event:
+        """Logs a local computation in the experiment log
+
+        Parameters
+        ----------
+        function_name : str
+            The name of the function called
+
+        args : List[Any]
+            The positional arguments passed to the function
+
+        kwargs : Dict[str, Any]
+            The keyword arguments passed to the function
+
+        Returns
+        -------
+        response: Dict
+           The JSON portion of the response from the server"""
+        local_compute = LocalComputeEvent(
+            function_name=function_name, args=args, kwargs=kwargs, result=result
+        )
+        return self._log_event(local_compute)
+
+    def log_globus_compute(
+        self,
+        function_name: str,
+        args: Optional[List[Any]] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
+        result: Optional[Any] = None,
+    ) -> Event:
+        """Logs a Globus computation in the experiment log"""
+
+        globus_compute = GlobusComputeEvent(
+            function_name=function_name, args=args, kwargs=kwargs, result=result
+        )
+        return self._log_event(globus_compute)
+
+    def log_gladier_flow(
+        self,
+        flow_name: str,
+        flow_id: Any,
+    ) -> Event:
+        """Logs a Gladier flow in the experiment log"""
+
+        gladier_flow = GladierFlowEvent(flow_name=flow_name, flow_id=flow_id)
+        return self._log_event(gladier_flow)
+
+    def log_loop_start(self, loop_name: str) -> Event:
+        """Logs the start of a loop in the experiment log"""
+
+        loop_start = LoopStartEvent(loop_name=loop_name)
+        return self._log_event(loop_start)

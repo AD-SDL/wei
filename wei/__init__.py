@@ -1,9 +1,9 @@
 # flake8: noqa
 """A system for orchestrating the actions of multiple robots and scientific instruments to autonomously perform generalized experiments"""
 
-from wei.helpers import extract_version
 from pathlib import Path
 
+from wei.utils import extract_version
 
 __version__ = extract_version(Path(__file__).parent.parent / "pyproject.toml")
 

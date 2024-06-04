@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.5.8"
+version = "0.5.9"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -15,7 +15,7 @@ readme = "README.md"
 license = {text = "MIT"}
 dependencies = [
     'devtools>=0.12',
-    'fastapi>=0.103',
+    'fastapi>=0.110',
     'pottery>=3.0.0',
     'pydantic>=2.4',
     'python-multipart>=0.0.6',
@@ -23,7 +23,8 @@ dependencies = [
     'redis>=4.2.2',
     'requests>=2.31.0',
     'ulid-py>=1.1.0',
-    'uvicorn>=0.21',
+    'uvicorn[standard]>=0.21',
+    "websockets>=12.0",
 ]
 
 [project.optional-dependencies]
@@ -103,6 +104,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
+    ".venv",
     "docs",
 ]
 
@@ -178,3 +180,5 @@ plugins = ["pydantic.mypy"]
 strict = true
 disallow_untyped_defs = true
 implicit_reexport = true
+
+[tool.pdm]

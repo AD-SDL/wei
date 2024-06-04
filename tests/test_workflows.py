@@ -1,6 +1,6 @@
 """Tests WEI workflow functionality"""
 
-from wei.core.data_classes import WorkflowStatus
+from wei.types import WorkflowStatus
 
 from .test_base import TestWEI_Base
 

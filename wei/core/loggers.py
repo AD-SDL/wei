@@ -4,11 +4,15 @@ import logging
 from pathlib import Path
 
 from wei.config import Config
-from wei.core.data_classes import PathLike, WorkflowRun
-from wei.core.experiment import Experiment
+from wei.core.storage import (
+    get_experiment_directory,
+    get_workcell_directory,
+    get_workflow_run_directory,
+)
+from wei.types.base_types import PathLike
 
 
-class WEI_Logger:
+class Logger:
     """The logging system that helps track events for the system"""
 
     @staticmethod
@@ -49,6 +53,26 @@ class WEI_Logger:
         return logger
 
     @staticmethod
+    def get_workcell_logger(workcell_id: str) -> logging.Logger:
+        """Finds the existing logger with the given name or creates a new one if it doesn't exist
+
+        Parameters
+        ----------
+        workcell_id : str
+            The id of the workcell that will refer to this unique logger
+        Returns
+        -------
+        logger: Logger
+            The logging object with the appropriate handlers
+        """
+
+        return Logger.get_logger(
+            f"{workcell_id}",
+            get_workcell_directory(workcell_id),
+            log_level=Config.log_level,
+        )
+
+    @staticmethod
     def get_experiment_logger(
         experiment_id: str,
     ) -> logging.Logger:
@@ -63,16 +87,15 @@ class WEI_Logger:
         logger: Logger
             The logging object with the appropriate handlers
         """
-        experiment = Experiment(experiment_id)
 
-        return WEI_Logger.get_logger(
-            f"experiment_{experiment_id}",
-            experiment.experiment_dir,
+        return Logger.get_logger(
+            f"{experiment_id}",
+            get_experiment_directory(experiment_id),
             log_level=Config.log_level,
         )
 
     @staticmethod
-    def get_workflow_run_logger(wf_run: WorkflowRun) -> logging.Logger:
+    def get_workflow_run_logger(wf_run_id: str) -> logging.Logger:
         """Finds the existing logger with the given name or creates a new one if it doesn't exist
 
         Parameters
@@ -85,9 +108,9 @@ class WEI_Logger:
             The logging object with the appropriate handlers
         """
 
-        return WEI_Logger.get_logger(
-            f"{wf_run.run_id}_run_log",
-            wf_run.run_dir,
+        return Logger.get_logger(
+            f"{wf_run_id}",
+            get_workflow_run_directory(wf_run_id),
             log_level=Config.log_level,
         )
 
@@ -114,7 +137,7 @@ class WEI_Logger:
         """
 
         if not logging.getLogger(log_name).hasHandlers():
-            logger = WEI_Logger._create_logger(
+            logger = Logger._create_logger(
                 log_name,
                 Path(log_dir) / f"{log_name}.log",
                 log_level,

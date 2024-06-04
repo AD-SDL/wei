@@ -30,7 +30,7 @@ def get_module(
       the state of the requested module
     """
     try:
-        with state_manager.state_lock():
+        with state_manager.wc_state_lock():
             return JSONResponse(
                 content={
                     str(module_name): state_manager.get_module(module_name).model_dump(

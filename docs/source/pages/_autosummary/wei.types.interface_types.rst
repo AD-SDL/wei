@@ -1,7 +1,7 @@
-wei.core.interface
-==================
+wei.types.interface\_types
+==========================
 
-.. automodule:: wei.core.interface
+.. automodule:: wei.types.interface_types
 
    
    

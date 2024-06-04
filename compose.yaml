@@ -1,39 +1,9 @@
 services:
   ###########
-  # Dev App #
-  ###########
-  test_app:
-    container_name: test_app
-    image: ${IMAGE_TEST}
-    build:
-      context: tests/
-      dockerfile: ${DOCKERFILE_TEST}
-      tags:
-        - ${IMAGE_TEST}:latest
-        - ${IMAGE_TEST}:dev
-    volumes:
-      - ${WORKCELLS_DIR}:/workcell_defs
-      - ${WEI_DATA_DIR}:/home/app/.wei
-      - diaspora_config:/home/app/.diaspora
-      - ${PROJECT_DIR}:/home/app/wei # for development only
-    env_file:
-      - .env
-    profiles:
-      - test
-    command: pytest -p no:cacheprovider wei
-    depends_on:
-      - synthesis
-      - transfer
-      - measure
-      - wei_server
-      - wei_engine
-      - wei_redis
-
-  ###########
   # Modules #
   ###########
   synthesis:
-    image: ${IMAGE_TEST}
+    image: ${IMAGE}
     container_name: synthesis
     ports:
       - 2000:2000
@@ -41,7 +11,7 @@ services:
       --port 2000
       --alias synthesis'
   transfer:
-    image: ${IMAGE_TEST}
+    image: ${IMAGE}
     container_name: transfer
     ports:
       - 2001:2001
@@ -49,7 +19,7 @@ services:
       --port 2001
       --alias transfer'
   measure:
-    image: ${IMAGE_TEST}
+    image: ${IMAGE}
     container_name: measure
     ports:
       - 2002:2002
@@ -72,12 +42,14 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ${WORKCELLS_DIR}:/workcell_defs
-      - ${WEI_DATA_DIR}:/home/app/.wei
       - diaspora_config:/home/app/.diaspora
-      - ${PROJECT_DIR}:/home/app/wei # for development only
-    env_file:
-      - .env
+      - ./tests/workcells:/workcell_defs
+      - ~/.wei:/home/app/.wei
+      - ./:/home/app/wei # for development only
+    environment:
+      - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
@@ -85,13 +57,14 @@ services:
     image: ${IMAGE}
     container_name: wei_engine
     volumes:
-      - ${WORKCELLS_DIR}:/workcell_defs
-      - ${WEI_DATA_DIR}:/home/app/.wei
-      - ${PROJECT_DIR}:/home/app/wei # for development only
+      - diaspora_config:/home/app/.diaspora
+      - ./tests/workcells:/workcell_defs
+      - ~/.wei:/home/app/.wei
+      - ./:/home/app/wei # for development only
     environment:
-     - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
-    env_file:
-      - .env
+      - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
@@ -102,8 +75,11 @@ services:
     ports:
       - 6379:6379
     volumes:
-      - ${REDIS_DIR}:/data
-    command: redis-server --save 60 1 --loglevel warning
+      - ~/.wei/redis:/data
+    command: 'redis-server
+      --save 600 1
+      --loglevel warning
+      --appendonly yes'
 
 ################
 # Data Storage #

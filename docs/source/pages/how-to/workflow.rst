@@ -9,7 +9,7 @@ Currently, a workflow is dependent on the specific workcell it will be run on: m
 Creating the Workflow File
 ===========================
 
-A workflow file should conform to the :class:`wei.core.data_classes.Workflow` specification.
+A workflow file should conform to the :class:`wei.types.Workflow` specification.
 
 Name
 ----
@@ -29,7 +29,7 @@ Metadata
 
 The metadata section is a dictionary of key-value pairs that provide additional information about the workflow. This section is optional, and can be used to store any additional information about the workflow that you would like to keep track of.
 
-For a complete breakdown of the metadata schema, see :class:`wei.core.data_classes.Metadata`.
+For a complete breakdown of the metadata schema, see :class:`wei.types.Metadata`.
 
 
 Example Workflow Metadata
@@ -70,7 +70,7 @@ Each step includes:
 - Any arguments the module will need to execute the action (optional, this can be left out if the module does not require any arguments)
 - Any files that the module will need to execute the action (optional, this can be left out if the module does not require any files).
 
-For a complete breakdown of the step schema, see :class:`wei.core.data_classes.Step`.
+For a complete breakdown of the step schema, see :class:`wei.types.Step`.
 
 Example Flowdef
 ^^^^^^^^^^^^^^^

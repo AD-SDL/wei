@@ -13,6 +13,7 @@ wei.core.workflow
 
    .. autosummary::
    
+      cancel_workflow_run
       create_run
       inject_payload
       replace_positions

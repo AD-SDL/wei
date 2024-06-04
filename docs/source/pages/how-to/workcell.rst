@@ -5,7 +5,7 @@ How-To: Workcells
 The Workcell File
 =================
 
-A given Workcell is represented declaratively in a YAML file. This file specifies the Modules, Locations, and Configuration of the Workcell, and is loaded by WEI when it starts up. This file should comply with the :class:`wei.core.data_classes.Workcell` schema.
+A given Workcell is represented declaratively in a YAML file. This file specifies the Modules, Locations, and Configuration of the Workcell, and is loaded by WEI when it starts up. This file should comply with the :class:`wei.types.Workcell` schema.
 
 Name
 ----
@@ -25,7 +25,7 @@ Configuration
 
 The configuration section specifies various properties of the Workcell, and determines how the WEI instance that loads the Workcell will behave. All of the values set here can be overridden by the user at runtime using command line parameters for both the WEI Engine and Server.
 
-For a complete breakdown of configuration options, see :class:`wei.core.data_classes.WorkcellConfig`.
+For a complete breakdown of configuration options, see :class:`wei.types.WorkcellConfig`.
 
 Example Config Section
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -42,7 +42,7 @@ Modules
 
 The ``modules`` section is a list of all the modules that make up the Workcell. Each module is represented by a dictionary with keys for the module's name, model, interface, and configuration. The ``active`` flag is optional and can be used to mark a module as currently unused. The configuration section will vary depending on the specific interface used to communicate with the module.
 
-Each module should conform to the :class:`wei.core.data_classes.Module` schema.
+Each module should conform to the :class:`wei.types.Module` schema.
 
 Example Modules Section
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -3,7 +3,7 @@
 import json
 from typing import Any, Dict, Tuple
 
-from wei.core.data_classes import Interface, Module, Step
+from wei.types import Interface, Module, Step
 
 try:
     import socket  # type: ignore

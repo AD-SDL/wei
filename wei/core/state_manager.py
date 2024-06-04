@@ -9,7 +9,12 @@ import redis
 from pottery import InefficientAccessWarning, RedisDict, Redlock
 
 from wei.config import Config
-from wei.core.data_classes import Location, Module, Workcell, WorkflowRun
+from wei.types import Module, Workcell, WorkflowRun
+from wei.types.base_types import ulid_factory
+from wei.types.event_types import Event
+from wei.types.experiment_types import Campaign, Experiment
+from wei.types.module_types import ModuleDefinition
+from wei.types.workcell_types import Location
 
 
 class StateManager:
@@ -28,8 +33,12 @@ class StateManager:
         warnings.filterwarnings("ignore", category=InefficientAccessWarning)
 
     @property
-    def _prefix(self) -> str:
-        return f"wei:{Config.workcell_name}"
+    def _lab_prefix(self) -> str:
+        return f"{Config.lab_name}"
+
+    @property
+    def _workcell_prefix(self) -> str:
+        return f"{self._lab_prefix}:{Config.workcell_name}"
 
     @property
     def _redis_client(self) -> Any:
@@ -48,28 +57,94 @@ class StateManager:
 
     @property
     def _locations(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:locations", redis=self._redis_client)
+        return RedisDict(
+            key=f"{self._workcell_prefix}:locations", redis=self._redis_client
+        )
 
     @property
     def _modules(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:modules", redis=self._redis_client)
+        return RedisDict(
+            key=f"{self._workcell_prefix}:modules", redis=self._redis_client
+        )
 
     @property
     def _workcell(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:workcell", redis=self._redis_client)
+        return RedisDict(
+            key=f"{self._workcell_prefix}:workcell", redis=self._redis_client
+        )
 
     @property
     def _workflow_runs(self) -> RedisDict:
-        return RedisDict(key=f"{self._prefix}:workflow_runs", redis=self._redis_client)
+        return RedisDict(
+            key=f"{self._workcell_prefix}:workflow_runs", redis=self._redis_client
+        )
+
+    @property
+    def _experiments(self) -> RedisDict:
+        return RedisDict(
+            key=f"{self._lab_prefix}:experiments", redis=self._redis_client
+        )
+
+    @property
+    def _campaigns(self) -> RedisDict:
+        return RedisDict(key=f"{self._lab_prefix}:campaigns", redis=self._redis_client)
+
+    @property
+    def _events(self) -> RedisDict:
+        return RedisDict(key=f"{self._lab_prefix}:events", redis=self._redis_client)
+
+    @property
+    def paused(self) -> bool:
+        """Get the pause state of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:paused") == "true"
+
+    @paused.setter
+    def paused(self, value: bool) -> None:
+        """Set the pause state of the workcell"""
+        self._redis_client.set(
+            f"{self._workcell_prefix}:paused", "true" if value else "false"
+        )
+
+    @property
+    def shutdown(self) -> bool:
+        """Get the shutdown state of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:shutdown") == "true"
+
+    @shutdown.setter
+    def shutdown(self, value: bool) -> None:
+        """Set the shutdown state of the workcell"""
+        self._redis_client.set(
+            f"{self._workcell_prefix}:shutdown", "true" if value else "false"
+        )
 
     # Locking Methods
-    def state_lock(self) -> Redlock:
+    def campaign_lock(self, campaign_id: str) -> Redlock:
         """
-        Gets a lock on the state. This should be called before any state updates are made,
+        Get a lock on a particular campaign. This should be called before editing a Campaign.
+        """
+        return Redlock(
+            key="f{self._lab_prefix}:campaign_lock:{campaign_id}",
+            masters={self._redis_client},
+            auto_release_time=60,
+        )
+
+    def experiment_lock(self, experiment_id: str) -> Redlock:
+        """
+        Get a lock on a particular experiment. This should be called before editing an experiment.
+        """
+        return Redlock(
+            key="f{self._lab_prefix}:experiment_lock:{experiment_id}",
+            masters={self._redis_client},
+            auto_release_time=60,
+        )
+
+    def wc_state_lock(self) -> Redlock:
+        """
+        Gets a lock on the workcell's state. This should be called before any state updates are made,
         or where we don't want the state to be changing underneath us (i.e., in the engine).
         """
         return Redlock(
-            key=f"{self._prefix}:state",
+            key=f"{self._workcell_prefix}:state_lock",
             masters={self._redis_client},
             auto_release_time=60,
         )
@@ -86,31 +161,130 @@ class StateManager:
             "workcell": self._workcell.to_dict(),
         }
 
-    def clear_state(self, reset_locations: bool = True) -> None:
+    def clear_state(
+        self, reset_locations: bool = True, clear_workflow_runs: bool = False
+    ) -> None:
         """
         Clears the state of the workcell, optionally leaving the locations state intact.
         """
         self._modules.clear()
         if reset_locations:
             self._locations.clear()
-        self._workflow_runs.clear()
+        if clear_workflow_runs:
+            self._workflow_runs.clear()
         self._workcell.clear()
         self.state_change_marker = "0"
-        # self._redis_client.set(f"{self._prefix}:state_changed", "0")
+        self.paused = False
+        self.shutdown = False
         self.mark_state_changed()
 
     def mark_state_changed(self) -> int:
         """Marks the state as changed and returns the current state change counter"""
-        return int(self._redis_client.incr(f"{self._prefix}:state_changed"))
+        return int(self._redis_client.incr(f"{self._workcell_prefix}:state_changed"))
 
     def has_state_changed(self) -> bool:
         """Returns True if the state has changed since the last time this method was called"""
-        state_change_marker = self._redis_client.get(f"{self._prefix}:state_changed")
+        state_change_marker = self._redis_client.get(
+            f"{self._workcell_prefix}:state_changed"
+        )
         if state_change_marker != self.state_change_marker:
             self.state_change_marker = state_change_marker
             return True
         else:
             return False
+
+    # Campaign Methods
+    def get_campaign(self, campaign_id: str) -> Campaign:
+        """
+        Returns a campaign by ID
+        """
+        return self._campaigns[campaign_id]
+
+    def get_all_campaigns(self) -> Dict[str, Campaign]:
+        """
+        Returns all campaigns
+        """
+        return {
+            str(campaign_id): Campaign.model_validate(campaign)
+            for campaign_id, campaign in self._campaigns.to_dict().items()
+        }
+
+    def set_campaign(self, campaign: Campaign) -> None:
+        """
+        Sets a campaign by ID
+        """
+        self._campaigns[campaign.campaign_id] = campaign.model_dump(mode="json")
+
+    def delete_campaign(self, campaign_id: str) -> None:
+        """
+        Deletes a campaign by ID
+        """
+        del self._campaigns[campaign_id]
+
+    def update_campaign(
+        self, campaign_id: str, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> None:
+        """
+        Updates the state of a campaign.
+        """
+        self.set_campaign(func(self.get_campaign(campaign_id), *args, **kwargs))
+
+    # Experiment Methods
+    def get_experiment(self, experiment_id: str) -> Experiment:
+        """
+        Returns an experiment by ID
+        """
+        return Experiment.model_validate(self._experiments[experiment_id])
+
+    def get_all_experiments(self) -> Dict[str, Experiment]:
+        """
+        Returns all experiments
+        """
+        return {
+            str(experiment_id): Experiment.model_validate(
+                experiment, from_attributes=True
+            )
+            for experiment_id, experiment in self._experiments.to_dict().items()
+        }
+
+    def set_experiment(self, experiment: Experiment) -> None:
+        """
+        Sets an experiment by ID
+        """
+        self._experiments[experiment.experiment_id] = experiment.model_dump(mode="json")
+
+    def delete_experiment(self, experiment_id: str) -> None:
+        """
+        Deletes an experiment by ID
+        """
+        del self._experiments[experiment_id]
+
+    def update_experiment(
+        self, experiment_id: str, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> None:
+        """
+        Updates the state of an experiment.
+        """
+        self.set_experiment(func(self.get_experiment(experiment_id), *args, **kwargs))
+
+    # Event Methods
+    def get_event(self, event_id: str) -> Event:
+        """
+        Returns an event by ID
+        """
+        return self._events[event_id]
+
+    def get_all_events(self) -> Dict[str, Event]:
+        """
+        Returns all events
+        """
+        return self._events.to_dict()
+
+    def set_event(self, event: Event) -> None:
+        """
+        Sets an event by ID
+        """
+        self._events[event.event_id] = event.model_dump(mode="json")
 
     # Workcell Methods
     def get_workcell(self) -> Workcell:
@@ -130,6 +304,18 @@ class StateManager:
         Empty the workcell definition
         """
         self._workcell.clear()
+
+    def get_workcell_id(self) -> str:
+        """
+        Returns the workcell ID
+        """
+        wc_id = self._redis_client.get(f"{self._workcell_prefix}:workcell_id")
+        if wc_id is None:
+            self._redis_client.set(
+                f"{self._workcell_prefix}:workcell_id", ulid_factory()
+            )
+            wc_id = self._redis_client.get(f"{self._workcell_prefix}:workcell_id")
+        return wc_id
 
     # Workflow Methods
     def get_workflow_run(self, run_id: Union[str, str]) -> WorkflowRun:
@@ -236,13 +422,17 @@ class StateManager:
         }
 
     def set_module(
-        self, module_name: str, module: Union[Module, Dict[str, Any]]
+        self, module_name: str, module: Union[Module, ModuleDefinition, Dict[str, Any]]
     ) -> None:
         """
         Sets a module by name
         """
         if isinstance(module, Module):
             module_dump = module.model_dump(mode="json")
+        elif isinstance(module, ModuleDefinition):
+            module_dump = Module.model_validate(
+                module, from_attributes=True
+            ).model_dump(mode="json")
         else:
             module_dump = Module.model_validate(module).model_dump(mode="json")
         self._modules[module_name] = module_dump

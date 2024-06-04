@@ -34,4 +34,5 @@
    wei.helpers
    wei.routers
    wei.server
+   wei.types
 

@@ -9,6 +9,12 @@ wei.core.events
 
    
    
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      send_event
+   
    
 
    
@@ -17,8 +23,7 @@ wei.core.events
 
    .. autosummary::
    
-      EventLogger
-      Events
+      EventHandler
    
    
 
