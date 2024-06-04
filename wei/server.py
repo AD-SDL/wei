@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from typing import Dict
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from wei.config import Config
@@ -34,7 +35,6 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     -------
     None
     """
-
     app.include_router(admin_routes.router, prefix="/admin")
     app.include_router(workflow_routes.router, prefix="/runs")
     app.include_router(experiment_routes.router, prefix="/experiments")
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     app.include_router(module_routes.router, prefix="/modules")
     app.include_router(workcell_routes.router, prefix="/workcells")
     app.include_router(workcell_routes.router, prefix="/wc")
-
+    app.mount("/", StaticFiles(directory="wei/ui/dist", html=True))
     EventHandler.initialize_diaspora()
 
     # Yield control to the application
@@ -74,7 +74,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 if __name__ == "__main__":
     import uvicorn
 
@@ -86,3 +85,5 @@ if __name__ == "__main__":
         port=Config.server_port,
         reload=False,
     )
+
+
