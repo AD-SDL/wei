@@ -1,6 +1,7 @@
 """Provides methods and classes to work with modules"""
 
 import concurrent.futures
+import json
 import traceback
 from typing import Union
 
@@ -43,14 +44,19 @@ def update_module(module_name: str, module: Module) -> None:
             try:
                 interface = InterfaceMap.interfaces[module.interface]
                 working_state = interface.get_state(module)
+                if isinstance(working_state, str):
+                    working_state = json.loads(working_state)
                 try:
                     module.state = ModuleState.model_validate(working_state)
                 except Exception:
+                    # traceback.print_exc()
                     module.state = LegacyModuleState.model_validate(
                         working_state
                     ).to_modern()
+                    print(f"Module {module.name} is using the Legacy State Schema")
             except Exception as e:
-                module.state = ModuleState(error=f"Error getting state: {e}")
+                traceback.print_exc()
+                module.state = ModuleState(status=ModuleStatus.UNKNOWN, error=f"Error getting state: {e}")
         if module.state.status != ModuleStatus.UNKNOWN and module.about is None:
             module.about = get_module_about(module)
         if old_state != module.state or old_about != module.about:
@@ -103,12 +109,10 @@ def get_module_about(module: Module) -> Union[ModuleAbout, None]:
             try:
                 about = ModuleAbout(**interface.get_about(module))
             except Exception:
-                traceback.print_exc()
                 print(f"Unable to parse about information for Module {module_name}")
                 about = None
             return about
         except Exception as e:
-            print(e)
             print("Unable to get about information for Module " + str(module_name))
     else:
         print("Module Interface not supported for Module ", str(module_name))

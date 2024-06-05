@@ -41,7 +41,7 @@ class ModuleStatus(str, Enum):
 class ModuleState(BaseModel, extra="allow"):
     """Model for the state of a Module"""
 
-    status: ModuleStatus = Field(default=ModuleStatus.UNKNOWN)
+    status: ModuleStatus
     """Current state of the module"""
     error: Optional[str] = None
     """Error message if the module is in an error state"""
@@ -54,7 +54,7 @@ class LegacyModuleState(BaseModel, extra="allow"):
 
     def to_modern(self) -> ModuleState:
         """Converts the LegacyModuleState to a ModuleStatus"""
-        return ModuleStatus(status=self.State)
+        return ModuleState(status=self.State)
 
 
 class ModuleActionArg(BaseModel):
@@ -200,7 +200,7 @@ class Module(ModuleDefinition):
 
     id: str = Field(default_factory=ulid_factory)
     """ID of this instance of a Module"""
-    state: ModuleState = Field(default_factory=ModuleState)
+    state: ModuleState = Field(default=ModuleState(status=ModuleStatus.UNKNOWN))
     """Current state of the module"""
     reserved: Optional[str] = None
     """ID of WorkflowRun that will run next on this Module"""
