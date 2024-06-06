@@ -609,7 +609,7 @@ class RESTModule:
                 state.release_action_lock(state=state, action=action_request)
                 # * Make sure step result is a StepResponse or StepFileResponse object
                 try:
-                    if step_result.path:
+                    if "x-wei-action_response" in step_result.headers:
                         step_result = StepFileResponse.model_validate(
                         step_result,
                         from_attributes=(not isinstance(step_result, dict)),
