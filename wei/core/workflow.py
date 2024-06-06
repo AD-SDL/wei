@@ -7,7 +7,7 @@ from fastapi import UploadFile
 from wei.core.module import validate_module_names
 from wei.core.state_manager import StateManager
 from wei.core.step import validate_step
-from wei.core.storage import get_workflow_result_directory, get_workflow_run_directory
+from wei.core.storage import get_workflow_run_directory
 from wei.types import Step, Workcell, Workflow, WorkflowRun
 from wei.types.workflow_types import WorkflowStatus
 
@@ -57,11 +57,6 @@ def create_run(
     )
     wf_run = WorkflowRun(**wf_dict)
     get_workflow_run_directory(
-        workflow_name=wf_run.name,
-        workflow_run_id=wf_run.run_id,
-        experiment_id=experiment_id,
-    ).mkdir(parents=True, exist_ok=True)
-    get_workflow_result_directory(
         workflow_name=wf_run.name,
         workflow_run_id=wf_run.run_id,
         experiment_id=experiment_id,

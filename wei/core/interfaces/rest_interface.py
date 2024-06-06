@@ -72,7 +72,6 @@ class RestInterface(Interface):
             if "run_dir" in kwargs.keys():
                 path = Path(
                     kwargs["run_dir"],
-                    "results",
                     Path(step.id + "_" + Path(response.action_msg).name),
                 )
                 path.parent.mkdir(parents=True, exist_ok=True)
