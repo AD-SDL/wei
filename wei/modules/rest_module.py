@@ -645,9 +645,11 @@ class RESTModule:
         # * If arguments are passed, set them as state variables
         args = self.arg_parser.parse_args()
         for arg_name in vars(args):
+            print(arg_name)
             if getattr(args, arg_name) is not None and (self.state._state.__contains__(
                 arg_name)
             ):  # * Don't override already set attributes with None's
+                print(arg_name)
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
         self._configure_routes()
 
