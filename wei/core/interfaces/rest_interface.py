@@ -1,7 +1,7 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
 
 import json
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, Tuple
 
 import requests
@@ -66,17 +66,9 @@ class RestInterface(Interface):
                 ("files", (file, open(path, "rb"))) for file, path in step.files.items()
             ],
         )
-        try:
-            print(rest_response.headers)
-            print(rest_response.status_code)
-            print(rest_response.headers)
-            print(rest_response.json())
-            print(rest_response.headers)
-            
-        except Exception as _:
-            pass
         if "x-wei-action_response" in rest_response.headers:
             response = StepResponse.from_headers(dict(rest_response.headers))
+            response.action_msg = PureWindowsPath(response.action_msg).as_posix()
             if "run_dir" in kwargs.keys():
                 path = Path(
                     kwargs["run_dir"],
