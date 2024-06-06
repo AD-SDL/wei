@@ -45,7 +45,7 @@ services:
       - diaspora_config:/home/app/.diaspora
       - ./tests/workcells:/workcell_defs
       - ~/.wei:/home/app/.wei
-      - ./:/home/app/wei # for development only
+      
     environment:
       - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
       - USER_ID=${USER_ID:-1000}

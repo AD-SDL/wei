@@ -49,7 +49,8 @@ ENTRYPOINT [ "/wei-entrypoint.sh" ]
 COPY ./ui/package*.json ./
 
 # install project dependencies
-RUN npm install
+RUN --mount=type=cache,target=./node_modules \
+	npm install
 
 # copy project files and folders to the current working directory (i.e. 'app' folder)
 
