@@ -609,12 +609,18 @@ class RESTModule:
                 state.release_action_lock(state=state, action=action_request)
                 # * Make sure step result is a StepResponse or StepFileResponse object
                 try:
-                    step_result = StepResponse.model_validate(
+                    if step_result.path:
+                        step_result = StepFileResponse.model_validate(
                         step_result,
                         from_attributes=(not isinstance(step_result, dict)),
                     )
+                    else:    
+                        step_result = StepResponse.model_validate(
+                            step_result,
+                            from_attributes=(not isinstance(step_result, dict)),
+                        )
                 except Exception:
-                    step_result = StepFileResponse.model_validate(
+                    step_result = StepResponse.model_validate(
                         step_result,
                         from_attributes=(not isinstance(step_result, dict)),
                     )
