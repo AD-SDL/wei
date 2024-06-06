@@ -607,24 +607,6 @@ class RESTModule:
             try:
                 step_result = state.action_handler(state=state, action=action_request)
                 state.release_action_lock(state=state, action=action_request)
-                # * Make sure step result is a StepResponse or StepFileResponse object
-                try:
-                    print(step_result)
-                    if "x-wei-action_response" in step_result.headers:
-                        step_result = StepFileResponse.model_validate(
-                        step_result,
-                        from_attributes=(not isinstance(step_result, dict)),
-                    )
-                    else:    
-                        step_result = StepResponse.model_validate(
-                            step_result,
-                            from_attributes=(not isinstance(step_result, dict)),
-                        )
-                except Exception:
-                    step_result = StepResponse.model_validate(
-                        step_result,
-                        from_attributes=(not isinstance(step_result, dict)),
-                    )
             except Exception as e:
                 # * Handle any exceptions that occur while processing the action request,
                 # * which should put the module in the ERROR state
