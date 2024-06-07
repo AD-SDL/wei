@@ -56,7 +56,9 @@ def update_module(module_name: str, module: Module) -> None:
                     print(f"Module {module.name} is using the Legacy State Schema")
             except Exception as e:
                 traceback.print_exc()
-                module.state = ModuleState(status=ModuleStatus.UNKNOWN, error=f"Error getting state: {e}")
+                module.state = ModuleState(
+                    status=ModuleStatus.UNKNOWN, error=f"Error getting state: {e}"
+                )
         if module.state.status != ModuleStatus.UNKNOWN and module.about is None:
             module.about = get_module_about(module)
         if old_state != module.state or old_about != module.about:
@@ -112,7 +114,7 @@ def get_module_about(module: Module) -> Union[ModuleAbout, None]:
                 print(f"Unable to parse about information for Module {module_name}")
                 about = None
             return about
-        except Exception as e:
+        except Exception:
             print("Unable to get about information for Module " + str(module_name))
     else:
         print("Module Interface not supported for Module ", str(module_name))

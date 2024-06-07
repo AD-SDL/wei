@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import requests
-
 from wei.types import Module, Workcell
 from wei.types.workcell_types import Location
 from wei.types.workflow_types import WorkflowRun
