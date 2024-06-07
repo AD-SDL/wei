@@ -301,3 +301,6 @@ test_experiment/
 
 # Output data
 .wei/
+
+#node modules
+**/node_modules

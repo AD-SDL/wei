@@ -171,7 +171,7 @@ async function send_wf(action:any) {
   formData.append("workflow", JSON.stringify(wf))
   var formData2 = new FormData();
   formData2.append("json", JSON.stringify({"experiment_name": action.name}))
-  var info: any =await fetch(props.main_url.concat('/experiments'), {
+  var info: any =await fetch(props.main_url.concat('/experiments/'), {
   method: "POST",
   body:  JSON.stringify({"experiment_name": action.name}),
   headers: {
