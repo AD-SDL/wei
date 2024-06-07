@@ -31,12 +31,11 @@ RUN --mount=type=cache,target=/root/.cache \
     pip install -r wei/requirements/requirements.txt
 
 # Copy wei files
-COPY wei wei/wei
+COPY src wei/src
 COPY tests wei/tests
 COPY pyproject.toml wei/pyproject.toml
 COPY README.md wei/README.md
 COPY scripts wei/scripts
-COPY ui wei/ui
 
 # Install dependencies and wei
 RUN --mount=type=cache,target=/root/.cache \
@@ -46,7 +45,7 @@ COPY wei-entrypoint.sh /wei-entrypoint.sh
 RUN chmod +x /wei-entrypoint.sh
 ENTRYPOINT [ "/wei-entrypoint.sh" ]
 
-COPY ./ui/package*.json ./
+COPY ./src/ui/package*.json ./
 
 # install project dependencies
 RUN npm install 
@@ -57,4 +56,4 @@ RUN npm install
 
 # build app for production with minification
 
-RUN npm run build --prefix wei/ui
+RUN npm run build --prefix wei/src/ui
