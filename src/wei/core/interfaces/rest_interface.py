@@ -72,7 +72,7 @@ class RestInterface(Interface):
             print(rest_response.headers)
             print(rest_response.json())
             print(rest_response.headers)
-            
+
         except Exception as _:
             pass
         if "x-wei-action_response" in rest_response.headers:
