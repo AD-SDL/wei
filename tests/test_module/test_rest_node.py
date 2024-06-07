@@ -8,7 +8,7 @@ from fastapi import UploadFile
 from fastapi.datastructures import State
 
 from wei.modules.rest_module import RESTModule
-from wei.types import ModuleAction, ModuleActionArg, StepResponse
+from wei.types import ModuleAction, ModuleActionArg, StepResponse, StepStatus, StepFileResponse
 from wei.types.module_types import ModuleState
 from wei.types.step_types import ActionRequest
 
@@ -84,7 +84,9 @@ def synthesize(
 @test_rest_node.action(name="measure")
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
-    return StepResponse.step_succeeded(f"{state.foobar}")
+    with open("test.txt", 'w') as f:
+        f.write("test")
+    return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
 
 
 test_rest_node.start()
