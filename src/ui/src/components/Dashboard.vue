@@ -23,12 +23,12 @@
                   </v-col>
                   <v-col cols=9 md=9 lg=9>
                     <LocationsColumn :locations=wc_state.locations />
-                  
+
                     <WorkflowsColumn :wc_state="wc_state"  :wfs="wfs" @view-workflows="tab = 2" />
                   </v-col>
                 </v-row>
               </v-container>
-              
+
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
@@ -64,9 +64,9 @@
       </v-window-item>
       <v-window-item :key="3" :value="3">
         <v-row class="pa-1 ma-1 justify-center">
-          
-          <Experiments :experiment_objects="experiment_objects" :wc_state=wc_state /> 
-         
+
+          <Experiments :experiment_objects="experiment_objects" :wc_state=wc_state />
+
         </v-row>
       </v-window-item>
       <!-- <v-window-item :key="4" :value="4">
@@ -116,7 +116,7 @@ async function get_events(experiment_id: string) {
   var test = await ((await fetch(main_url.value.concat("/experiments/".concat(experiment_id).concat("/log"))))).json() ;
   console.log(test)
   return test
-   
+
 }
 watchEffect(async () => {
   //workcell_urls.value = await (await fetch(backend_server.value)).json();
@@ -155,7 +155,7 @@ watchEffect(async () => {
     var experiment: Experimentval = new Experimentval();
     experiment.experiment_id = value;
     var events = await get_events(value)
-    
+
     experiment.experiment_name = experiments.value[value].experiment_name;
     experiment.experiment_workflows = wfs.value.filter((key: any) => wc_state.value.workflows[key].experiment_id === value);
     experiment.events = events;
@@ -163,9 +163,9 @@ watchEffect(async () => {
     experiment.num_events = experiment.events.length;
     experiment_objects.value.splice(0, 0, experiment)
     }
-    
+
 });
-    
+
 
 
   }, 500)

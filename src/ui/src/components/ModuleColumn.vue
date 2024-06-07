@@ -10,9 +10,9 @@
                 :class="value.state.status">
                 <v-card-text>
                   <h4 >{{ module_name }}</h4>
-                 
+
                   <p class="text-caption">
-                   status: {{ value.state.status }} 
+                   status: {{ value.state.status }}
                   </p>
                   <div  v-for="(value2, key2) in value.state" >
                   <p v-if="(key2.toString() != 'status') && (value2 != null)" class="text-caption">

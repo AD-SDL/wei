@@ -1,15 +1,15 @@
 <template>
   <div class="d-flex-column">
     <h4>Steps</h4>
-    
+
     <v-expansion-panels title="Steps">
-      
+
       <v-expansion-panel v-for="(value, key) in steps" :key="key">
         <v-expansion-panel-title>
           <h4>{{ value.name }}</h4>
         </v-expansion-panel-title>
         <v-expansion-panel-text>
-          
+
           <b>Description</b>: {{ value.comment }} <br>
           <b> Module</b>: {{ value.module }} <br>
           <b>Module Action</b>: {{ value.action }} <br>
@@ -36,6 +36,6 @@
 const props = defineProps(['steps'])
 const arg_headers = [
   { title: 'Name', key: 'name' },
- 
+
 ]
 </script>

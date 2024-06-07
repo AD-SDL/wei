@@ -48,7 +48,7 @@ ENTRYPOINT [ "/wei-entrypoint.sh" ]
 COPY ./src/ui/package*.json ./
 
 # install project dependencies
-RUN npm install 
+RUN npm install
 #--mount=type=cache,target=./node_modules \
 #	npm install
 

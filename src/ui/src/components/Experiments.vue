@@ -51,7 +51,7 @@ const arg_headers = [
   { title: 'num_wfs', key: 'num_wfs' },
   { title: 'num_events', key: 'num_events' },
   { title: '', key: 'data-table-expand' },
- 
+
 ]
 const expanded =  ref([])
 

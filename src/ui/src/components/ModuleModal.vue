@@ -45,7 +45,7 @@
                       <td><v-file-input v-model="item.value" label="File input"></v-file-input></td>
                     </tr>
                   </template>
-                
+
                 </v-data-table>
 
                 <v-btn @click = "send_wf(action); isActive.value=false">Send Action</v-btn>
@@ -101,16 +101,16 @@ function set_text(action: any) {
     "args : \n\t\t").concat(cleanArgs(action.args)).concat("checks : null \n\tcomment: a comment! \n\t")
     var args: {[k: string]: any} = {};
     action.args.forEach(function(arg: any) {
-    
+
     if(arg.value === undefined) {
       args[arg.name] =  arg.default}
     else {
       args[arg.name] = arg.value
     }
-    
 
-    
-  
+
+
+
   }
   )
   json_text.value = {"name": action.name,
@@ -124,7 +124,7 @@ function set_text(action: any) {
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
 async function send_wf(action:any) {
-  
+
   var wf:any = {}
   wf.name = action.name
   wf.metadata = {
@@ -134,10 +134,10 @@ async function send_wf(action:any) {
 
   }
   wf.modules = [props.modal_title]
-  const formData = new FormData(); 
+  const formData = new FormData();
   var args: {[k: string]: any} = {};
   action.args.forEach(function(arg: any) {
-    
+
     if(arg.value === undefined) {
       args[arg.name] =  arg.default}
     else {
@@ -147,15 +147,15 @@ async function send_wf(action:any) {
   })
   var files: {[k: string]: any} = {};
   action.files.forEach(function(file: any) {
-    
+
     if(file.value === undefined) {
       files[file.name] =  ""}
     else {
-      
+
       files[file.name] = file.value[0].name
     }})
-    
-  
+
+
   wf.flowdef = [{"name": action.name,
                  "module": props.modal_title,
                  "action": action.name,
@@ -164,10 +164,10 @@ async function send_wf(action:any) {
                  "comment": "Test",
                  "files": files
 
-    
-  
+
+
   }]
-  
+
   formData.append("workflow", JSON.stringify(wf))
   var formData2 = new FormData();
   formData2.append("json", JSON.stringify({"experiment_name": action.name}))
@@ -200,8 +200,8 @@ function cleanArgs(args: any) {
     var precursor = ""
     if(test !== "") {
       precursor = "\t"
-    } 
-    
+    }
+
     if(arg.value) {
                             test = test.concat((precursor.concat(arg.name.concat(" : ").concat(arg.value).concat("\n\t"))));
                         } else {
