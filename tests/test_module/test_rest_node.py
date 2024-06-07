@@ -6,7 +6,6 @@ from typing import Annotated
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
-
 from wei.modules.rest_module import RESTModule
 from wei.types import ModuleAction, ModuleActionArg, StepResponse
 from wei.types.module_types import ModuleState

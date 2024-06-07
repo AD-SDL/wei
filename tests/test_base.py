@@ -5,7 +5,6 @@ import unittest
 from pathlib import Path
 
 import requests
-
 import wei
 from wei import ExperimentClient
 from wei.types import Workcell
