@@ -607,17 +607,6 @@ class RESTModule:
             try:
                 step_result = state.action_handler(state=state, action=action_request)
                 state.release_action_lock(state=state, action=action_request)
-                # * Make sure step result is a StepResponse or StepFileResponse object
-                try:
-                    step_result = StepResponse.model_validate(
-                        step_result,
-                        from_attributes=(not isinstance(step_result, dict)),
-                    )
-                except Exception:
-                    step_result = StepFileResponse.model_validate(
-                        step_result,
-                        from_attributes=(not isinstance(step_result, dict)),
-                    )
             except Exception as e:
                 # * Handle any exceptions that occur while processing the action request,
                 # * which should put the module in the ERROR state
@@ -645,9 +634,10 @@ class RESTModule:
         # * If arguments are passed, set them as state variables
         args = self.arg_parser.parse_args()
         for arg_name in vars(args):
-            if getattr(args, arg_name) is not None and self.state._state.__contains__(
-                arg_name
-            ):  # * Don't override already set attributes with None's
+            print(arg_name)
+            if getattr(args, arg_name) is not None: # and (self.state._state.__contains__(
+               # arg_name)):  # * Don't override already set attributes with None's
+                print(arg_name)
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
         self._configure_routes()
 
