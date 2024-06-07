@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from typing import Dict
 
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from wei.config import Config
 from wei.core.events import EventHandler
@@ -85,5 +85,3 @@ if __name__ == "__main__":
         port=Config.server_port,
         reload=False,
     )
-
-

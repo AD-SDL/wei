@@ -1,7 +1,7 @@
 <template>
-  
+
         <WorkflowModal :modal_title="modal_title" :modal_text="modal_text" v-model="modal" />
-       
+
                     <v-data-table v-if="wfs.length > 0" :headers="arg_headers" hover :items="Object.values(wc_state.workflows).filter((key: any) => (wfs).includes(key.run_id))" no-data-text="No Arguments" density="compact" :sort-by="sortBy">
                   <template v-slot:item="{ item }: { item: any }">
                     <tr @click="set_modal(wc_state.workflows[item.run_id].name, wc_state.workflows[item.run_id])">
@@ -10,18 +10,18 @@
                       <td> {{ item.start_time }}</td>
                       <td> {{ item.steps[item.step_index].name }}</td>
                       <td> {{ item.end_time }}</td>
-                      
-                    
-                      
-                       
+
+
+
+
                     </tr>
                   </template>
                   <template #bottom></template>
                 </v-data-table>
-               
+
                     <p v-else class="text-caption">No workflows</p>
-                
-  
+
+
 </template>
 
 <script setup lang="ts">
@@ -41,7 +41,7 @@ const arg_headers = [
   { title: 'Start Time', key: 'start_time' },
   { title: 'Latest Step', key: 'latest_step' },
   { title: 'End Time', key: 'end_time' }
- 
+
 ]
 console.log(props.start_open)
 if (!props.start_open) {
