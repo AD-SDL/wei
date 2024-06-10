@@ -44,10 +44,12 @@ def state_handler(state: State) -> ModuleState:
 def transfer(
     state: State,
     action: ActionRequest,
-    source: Annotated[Location[str], "the location to transfer from"],
     target: Annotated[Location[str], "the location to transfer to"],
+    source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
+    if source == "":
+        return StepResponse.step_succeeded(f"Moved new plate to {target}")
     return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
 
 

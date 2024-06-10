@@ -336,9 +336,9 @@ class ExperimentClient:
             time.sleep(1)
         return results
 
-    def list_wf_result_files(self, run_id: str) -> Any:
-        """Returns a list of files from the WEI experiment result directory"""
-        url = f"{self.url}/runs/{run_id}/results"
+    def list_wf_files(self, run_id: str) -> Any:
+        """Returns a list of files from the WEI experiment run directory"""
+        url = f"{self.url}/runs/{run_id}/files"
 
         response = requests.get(url)
         return response.json()["files"]

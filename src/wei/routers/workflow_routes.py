@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from wei.core.loggers import Logger
 from wei.core.state_manager import StateManager
-from wei.core.storage import get_workflow_result_directory, get_workflow_run_log_path
+from wei.core.storage import get_workflow_run_directory, get_workflow_run_log_path
 from wei.core.workflow import create_run, save_workflow_files
 from wei.types import Workflow, WorkflowStatus
 
@@ -175,12 +175,13 @@ async def log_run_return(run_id: str) -> str:
 
 
 @router.get("/{run_id}/results")
+@router.get("/{run_id}/files")
 async def get_wf_files(run_id: str) -> Dict:
     """Returns the list of files in a given workflow run's result directory."""
-    return {"files": os.listdir(get_workflow_result_directory(run_id))}
+    return {"files": os.listdir(get_workflow_run_directory(run_id))}
 
 
 @router.get("/{run_id}/file")
 async def get_wf_file(run_id: str, filename: str) -> FileResponse:
     """Returns a specific file from a workflow run's result directory."""
-    return FileResponse(get_workflow_result_directory(run_id) / filename)
+    return FileResponse(get_workflow_run_directory(run_id) / filename)

@@ -50,12 +50,14 @@ class Workflow(BaseModel):
 
     name: str
     """Name of the workflow"""
-    modules: List[Union[str, SimpleModule]]
-    """List of modules needed for the workflow"""
-    flowdef: List[Step]
-    """User Submitted Steps of the flow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
+    flowdef: List[Step]
+    """User Submitted Steps of the flow"""
+
+    modules: List[Union[str, SimpleModule]] = []
+    """DEPRECATED: List of modules needed for the workflow.
+    These are no longer validated or required, but the key remains to support legacy workflows."""
 
     @field_validator("modules", mode="after")
     def validate_modules(cls, v) -> str:

@@ -8,7 +8,6 @@ from wei.core.state_manager import StateManager
 from wei.core.storage import (
     get_experiment_directory,
     get_experiments_directory,
-    get_workflow_runs_directory,
     search_for_experiment_directory,
 )
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
@@ -23,9 +22,6 @@ def register_new_experiment(experiment_design: ExperimentDesign) -> Experiment:
     new_experiment.experiment_directory = get_experiment_directory(
         new_experiment.experiment_id, new_experiment.experiment_name, create=True
     )
-    get_workflow_runs_directory(
-        new_experiment.experiment_id, new_experiment.experiment_name
-    ).mkdir(parents=True, exist_ok=True)
     # If a campaign is specified, check if it exists, and register the experiment
     if new_experiment.campaign_id is not None:
         try:

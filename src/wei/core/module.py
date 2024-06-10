@@ -88,18 +88,12 @@ def update_module(module_name: str, module: Module) -> None:
 
 def validate_module_names(workflow: Workflow, workcell: Workcell) -> None:
     """
-    Validates that
-        - the modules in the workflow.flowdef are also in the workflow.modules
-        - the modules in the workflow.modules are also in the workcell.modules
-        - by extension, the modules in workflow.flowdef are also in the workcell.modules
+    Validates that the modules in the workflow.flowdef are in the workcell.modules
     """
-    # Validate that each step's module is also in the Workflow at the top
-    for step in workflow.flowdef:
-        if not any([step.module == module_name for module_name in workflow.modules]):
-            raise ValueError(f"Module {step.module} not in flow modules")
-
-    # Validate that all the modules listed in the workflow are also in the workcell
-    [find_step_module(workcell, module_name) for module_name in workflow.modules]
+    [
+        find_step_module(workcell, module_name)
+        for module_name in [step.module for step in workflow.flowdef]
+    ]
 
 
 def get_module_about(module: Module) -> Union[ModuleAbout, None]:

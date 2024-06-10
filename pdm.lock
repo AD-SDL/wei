@@ -90,22 +90,6 @@ files = [
 ]
 
 [[package]]
-name = "aws-msk-iam-sasl-signer-python"
-version = "1.0.1"
-requires_python = ">=3.8"
-summary = "Amazon MSK Library in Python for SASL/OAUTHBEARER Auth"
-groups = ["diaspora"]
-dependencies = [
-    "Click>=7.0",
-    "boto3>=1.26.125",
-    "botocore>=1.29.125",
-]
-files = [
-    {file = "aws-msk-iam-sasl-signer-python-1.0.1.tar.gz", hash = "sha256:853f69487517c9d38db638d69571fd8b9cc8d55913761accfc00950697aea975"},
-    {file = "aws_msk_iam_sasl_signer_python-1.0.1-py2.py3-none-any.whl", hash = "sha256:9e707025abaf250b79811457069c278f4714f120cccad882249b3b2f010967e8"},
-]
-
-[[package]]
 name = "babel"
 version = "2.14.0"
 requires_python = ">=3.7"
@@ -117,39 +101,6 @@ dependencies = [
 files = [
     {file = "Babel-2.14.0-py3-none-any.whl", hash = "sha256:efb1a25b7118e67ce3a259bed20545c29cb68be8ad2c784c83689981b7a57287"},
     {file = "Babel-2.14.0.tar.gz", hash = "sha256:6919867db036398ba21eb5c7a0f6b28ab8cbc3ae7a73a44ebe34ae74a4e7d363"},
-]
-
-[[package]]
-name = "boto3"
-version = "1.34.93"
-requires_python = ">=3.8"
-summary = "The AWS SDK for Python"
-groups = ["diaspora"]
-dependencies = [
-    "botocore<1.35.0,>=1.34.93",
-    "jmespath<2.0.0,>=0.7.1",
-    "s3transfer<0.11.0,>=0.10.0",
-]
-files = [
-    {file = "boto3-1.34.93-py3-none-any.whl", hash = "sha256:b59355bf4a1408563969526f314611dbeacc151cf90ecb22af295dcc4fe18def"},
-    {file = "boto3-1.34.93.tar.gz", hash = "sha256:e39516e4ca21612932599819662759c04485d53ca457996a913163da11f052a4"},
-]
-
-[[package]]
-name = "botocore"
-version = "1.34.93"
-requires_python = ">=3.8"
-summary = "Low-level, data-driven core of boto 3."
-groups = ["diaspora"]
-dependencies = [
-    "jmespath<2.0.0,>=0.7.1",
-    "python-dateutil<3.0.0,>=2.1",
-    "urllib3!=2.2.0,<3,>=1.25.4; python_version >= \"3.10\"",
-    "urllib3<1.27,>=1.25.4; python_version < \"3.10\"",
-]
-files = [
-    {file = "botocore-1.34.93-py3-none-any.whl", hash = "sha256:6fbd5a53a2adc9b3d4ebd90ae0ede83a91a41d96231f8a5984051f75495f246d"},
-    {file = "botocore-1.34.93.tar.gz", hash = "sha256:79d39b0b87e962991c6dd55e78ce15155099f6fb741be88b1b8a456a702cc150"},
 ]
 
 [[package]]
@@ -348,7 +299,7 @@ name = "click"
 version = "8.1.7"
 requires_python = ">=3.7"
 summary = "Composable command line interface toolkit"
-groups = ["default", "diaspora"]
+groups = ["default"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
 ]
@@ -362,7 +313,7 @@ name = "colorama"
 version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
-groups = ["default", "dev", "diaspora", "docs"]
+groups = ["default", "dev", "docs"]
 marker = "sys_platform == \"win32\" or os_name == \"nt\" or platform_system == \"Windows\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
@@ -431,31 +382,30 @@ files = [
 
 [[package]]
 name = "diaspora-event-sdk"
-version = "0.2.4"
-summary = "SDK of Diaspora Event Fabric: Resilience-enabling services for science from HPC to edge"
+version = "0.3.2"
+summary = "Diaspora Event Fabric SDK"
 groups = ["diaspora"]
 dependencies = [
     "globus-sdk<4,>=3.20.1",
 ]
 files = [
-    {file = "diaspora-event-sdk-0.2.4.tar.gz", hash = "sha256:40e5fb7e260f5a172c256dcbef1608bfa6a57e015894ba8a2a9bd2e08b99d070"},
-    {file = "diaspora_event_sdk-0.2.4-py3-none-any.whl", hash = "sha256:4889423507411642a7aae669aaea25466f81623533d0a3473aa0d6377e59d3d7"},
+    {file = "diaspora-event-sdk-0.3.2.tar.gz", hash = "sha256:b275f13139b3c565031c7069a19ed249c842c725a57116627149d7be9ac1d70c"},
+    {file = "diaspora_event_sdk-0.3.2-py3-none-any.whl", hash = "sha256:51e9b8d38c17912653c337b507b4d2e9b333a2d1b134529dfc80f98d52768eaa"},
 ]
 
 [[package]]
 name = "diaspora-event-sdk"
-version = "0.2.4"
+version = "0.3.2"
 extras = ["kafka-python"]
-summary = "SDK of Diaspora Event Fabric: Resilience-enabling services for science from HPC to edge"
+summary = "Diaspora Event Fabric SDK"
 groups = ["diaspora"]
 dependencies = [
-    "aws-msk-iam-sasl-signer-python",
-    "diaspora-event-sdk==0.2.4",
+    "diaspora-event-sdk==0.3.2",
     "kafka-python",
 ]
 files = [
-    {file = "diaspora-event-sdk-0.2.4.tar.gz", hash = "sha256:40e5fb7e260f5a172c256dcbef1608bfa6a57e015894ba8a2a9bd2e08b99d070"},
-    {file = "diaspora_event_sdk-0.2.4-py3-none-any.whl", hash = "sha256:4889423507411642a7aae669aaea25466f81623533d0a3473aa0d6377e59d3d7"},
+    {file = "diaspora-event-sdk-0.3.2.tar.gz", hash = "sha256:b275f13139b3c565031c7069a19ed249c842c725a57116627149d7be9ac1d70c"},
+    {file = "diaspora_event_sdk-0.3.2-py3-none-any.whl", hash = "sha256:51e9b8d38c17912653c337b507b4d2e9b333a2d1b134529dfc80f98d52768eaa"},
 ]
 
 [[package]]
@@ -689,17 +639,6 @@ dependencies = [
 files = [
     {file = "Jinja2-3.1.3-py3-none-any.whl", hash = "sha256:7d6d50dd97d52cbc355597bd845fabfbac3f551e1f99619e39a35ce8c370b5fa"},
     {file = "Jinja2-3.1.3.tar.gz", hash = "sha256:ac8bd6544d4bb2c9792bf3a159e80bba8fda7f07e81bc3aed565432d5925ba90"},
-]
-
-[[package]]
-name = "jmespath"
-version = "1.0.1"
-requires_python = ">=3.7"
-summary = "JSON Matching Expressions"
-groups = ["diaspora"]
-files = [
-    {file = "jmespath-1.0.1-py3-none-any.whl", hash = "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980"},
-    {file = "jmespath-1.0.1.tar.gz", hash = "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe"},
 ]
 
 [[package]]
@@ -1196,20 +1135,6 @@ files = [
 ]
 
 [[package]]
-name = "python-dateutil"
-version = "2.9.0.post0"
-requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
-summary = "Extensions to the standard Python datetime module"
-groups = ["diaspora"]
-dependencies = [
-    "six>=1.5",
-]
-files = [
-    {file = "python-dateutil-2.9.0.post0.tar.gz", hash = "sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"},
-    {file = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl", hash = "sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"},
-]
-
-[[package]]
 name = "python-dotenv"
 version = "1.0.1"
 requires_python = ">=3.8"
@@ -1439,20 +1364,6 @@ files = [
 ]
 
 [[package]]
-name = "s3transfer"
-version = "0.10.1"
-requires_python = ">= 3.8"
-summary = "An Amazon S3 Transfer Manager"
-groups = ["diaspora"]
-dependencies = [
-    "botocore<2.0a.0,>=1.33.2",
-]
-files = [
-    {file = "s3transfer-0.10.1-py3-none-any.whl", hash = "sha256:ceb252b11bcf87080fb7850a224fb6e05c8a776bab8f2b64b7f25b969464839d"},
-    {file = "s3transfer-0.10.1.tar.gz", hash = "sha256:5683916b4c724f799e600f41dd9e10a9ff19871bf87623cc8f491cb4f5fa0a19"},
-]
-
-[[package]]
 name = "setuptools"
 version = "69.5.1"
 requires_python = ">=3.8"
@@ -1468,7 +1379,7 @@ name = "six"
 version = "1.16.0"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 summary = "Python 2 and 3 compatibility utilities"
-groups = ["default", "diaspora"]
+groups = ["default"]
 files = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
