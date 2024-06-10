@@ -2,7 +2,18 @@
 
 import inspect
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union, TypeVar, Generic
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Self,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from pydantic import (
     AliasChoices,
@@ -15,9 +26,15 @@ from pydantic import (
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
 
-T = TypeVar('T')
+T = TypeVar("T")
+
+
 class Location(Generic[T]):
+    """A wrapper for Location objects for type hinting"""
+
     pass
+
+
 class AdminCommands(str, Enum):
     """Valid Admin Commands to send to a Module"""
 

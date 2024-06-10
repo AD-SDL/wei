@@ -8,15 +8,12 @@ from fastapi import UploadFile
 from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
 from wei.types import (
-    ModuleAction,
-    ModuleActionArg,
     StepFileResponse,
     StepResponse,
     StepStatus,
 )
-from wei.types.module_types import ModuleState, Location
+from wei.types.module_types import Location, ModuleState
 from wei.types.step_types import ActionRequest
-
 
 # * Test predefined action functions
 
@@ -27,9 +24,7 @@ test_rest_node = RESTModule(
     version="1.0.0",
     resource_pools=[],
     model="test_module",
-    actions=[
-        
-    ],
+    actions=[],
 )
 
 
@@ -44,14 +39,17 @@ def state_handler(state: State) -> ModuleState:
     """Handles the state of the module"""
     return ModuleState(status=state.status, error=state.error, foobar=state.foobar)
 
+
 @test_rest_node.action()
 def transfer(
     state: State,
     action: ActionRequest,
     source: Annotated[Location[str], "the location to transfer from"],
     target: Annotated[Location[str], "the location to transfer to"],
-    ) -> StepResponse:
+) -> StepResponse:
+    """Transfers a sample from source to target"""
     return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
+
 
 @test_rest_node.action()
 def synthesize(
