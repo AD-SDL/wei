@@ -69,10 +69,8 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["wei*"]
-exclude = ["*tests*"]
+[tool.setuptools]
+package-dir = {"wei" = "src/wei"}
 
 #####################
 # Development Tools #
