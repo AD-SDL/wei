@@ -14,16 +14,11 @@ from wei.types import (
     StepResponse,
     StepStatus,
 )
-from wei.types.module_types import ModuleState
+from wei.types.module_types import ModuleState, Location
 from wei.types.step_types import ActionRequest
 
 
 # * Test predefined action functions
-def transfer_action(state: State, action: ActionRequest) -> StepResponse:
-    """Transfers a sample from `source` to `target`"""
-    source = str(action.args.get("source", None))
-    target = str(action.args["target"])
-    return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
 
 
 test_rest_node = RESTModule(
@@ -33,26 +28,7 @@ test_rest_node = RESTModule(
     resource_pools=[],
     model="test_module",
     actions=[
-        ModuleAction(
-            name="transfer",
-            description="Synthesizes a sample",
-            function=transfer_action,
-            args=[
-                ModuleActionArg(
-                    name="source",
-                    description="Location to transfer sample from",
-                    required=False,
-                    type="Location",
-                    default="[0, 0, 0, 0, 0, 0, 0]",
-                ),
-                ModuleActionArg(
-                    name="target",
-                    description="Location to transfer sample to",
-                    required=True,
-                    type="Location",
-                ),
-            ],
-        ),
+        
     ],
 )
 
@@ -68,6 +44,14 @@ def state_handler(state: State) -> ModuleState:
     """Handles the state of the module"""
     return ModuleState(status=state.status, error=state.error, foobar=state.foobar)
 
+@test_rest_node.action()
+def transfer(
+    state: State,
+    action: ActionRequest,
+    source: Annotated[Location[str], "the location to transfer from"],
+    target: Annotated[Location[str], "the location to transfer to"],
+    ) -> StepResponse:
+    return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
 
 @test_rest_node.action()
 def synthesize(
