@@ -2,18 +2,7 @@
 
 import inspect
 from enum import Enum
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Generic,
-    List,
-    Optional,
-    Self,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import (
     AliasChoices,
@@ -22,6 +11,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from typing_extensions import Self
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
