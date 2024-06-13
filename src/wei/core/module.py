@@ -3,6 +3,7 @@
 import concurrent.futures
 import json
 import traceback
+import warnings
 from typing import Union
 
 from wei.core.state_manager import StateManager
@@ -53,7 +54,11 @@ def update_module(module_name: str, module: Module) -> None:
                     module.state = LegacyModuleState.model_validate(
                         working_state
                     ).to_modern()
-                    print(f"Module {module.name} is using the Legacy State Schema")
+                    warnings.warn(
+                        message=f"Module {module.name} is using the Legacy State Schema.",
+                        category=UserWarning,
+                        stacklevel=1,
+                    )
             except Exception as e:
                 traceback.print_exc()
                 module.state = ModuleState(
