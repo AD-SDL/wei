@@ -156,6 +156,10 @@ class RESTModule:
         """Decorator to add a startup_handler to the module"""
 
         def decorator(function):
+            if inspect.isgenerator(function) or inspect.isgeneratorfunction(function):
+                raise Exception(
+                    "Startup handler cannot be a coroutine. Use a regular function (i.e. make sure you don't have a yield statement)."
+                )
             self.startup_handler = function
             return function
 
