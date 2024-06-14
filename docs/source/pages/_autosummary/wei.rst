@@ -31,8 +31,9 @@
    wei.core
    wei.engine
    wei.experiment_client
-   wei.helpers
+   wei.modules
    wei.routers
    wei.server
    wei.types
+   wei.utils
 

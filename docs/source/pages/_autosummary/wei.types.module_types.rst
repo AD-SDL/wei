@@ -18,6 +18,7 @@ wei.types.module\_types
    .. autosummary::
    
       AdminCommands
+      Location
       ModuleStatus
    
    
