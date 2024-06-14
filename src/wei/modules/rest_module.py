@@ -214,10 +214,13 @@ class RESTModule:
                 )  # * Make extra sure the status is set to ERROR
             else:
                 # * If everything goes well, set the module status to IDLE
-                state.status = ModuleStatus.IDLE
-                print(
-                    "Startup completed successfully. Module is now ready to accept actions."
-                )
+                if state.status == ModuleStatus.INIT:
+                    state.status = ModuleStatus.IDLE
+                    print(
+                        "Startup completed successfully. Module is now ready to accept actions."
+                    )
+                elif state.status == ModuleStatus.ERROR:
+                    print("Startup completed with errors.")
 
         # * Run startup on a separate thread so it doesn't block the rest server from starting
         # * (module won't accept actions until startup is complete)
