@@ -7,6 +7,7 @@ LABEL org.opencontainers.image.licenses=MIT
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y gosu; \
+	apt-get install -y npm; \
 	rm -rf /var/lib/apt/lists/*
 
 # User configuration
@@ -29,13 +30,16 @@ COPY requirements/dev.txt wei/requirements/dev.txt
 RUN --mount=type=cache,target=/root/.cache \
     pip install -r wei/requirements/requirements.txt
 
-# Copy wei files
-COPY wei wei/wei
+# Install Node Dependencies first, for caching purposes
+COPY ./src/ui/package*.json ./
+RUN npm install
+
+# Copy rest of wei files
+COPY src wei/src
 COPY tests wei/tests
 COPY pyproject.toml wei/pyproject.toml
 COPY README.md wei/README.md
 COPY scripts wei/scripts
-
 
 # Install dependencies and wei
 RUN --mount=type=cache,target=/root/.cache \
@@ -44,3 +48,6 @@ RUN --mount=type=cache,target=/root/.cache \
 COPY wei-entrypoint.sh /wei-entrypoint.sh
 RUN chmod +x /wei-entrypoint.sh
 ENTRYPOINT [ "/wei-entrypoint.sh" ]
+
+# build ui for production with minification
+RUN npm run build --prefix wei/src/ui

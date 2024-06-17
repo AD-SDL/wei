@@ -5,10 +5,9 @@ import unittest
 from pathlib import Path
 
 import requests
-
 import wei
 from wei import ExperimentClient
-from wei.core.data_classes import Workcell
+from wei.types import Workcell
 
 
 class TestWEI_Base(unittest.TestCase):
@@ -24,9 +23,9 @@ class TestWEI_Base(unittest.TestCase):
         self.server_host = self.workcell.config.server_host
         self.server_port = self.workcell.config.server_port
         self.experiment = ExperimentClient(
-            self.server_host,
-            self.server_port,
-            "Test Experiment",
+            server_host=self.server_host,
+            server_port=self.server_port,
+            experiment_name="Test_Experiment",
             working_dir=Path(__file__).resolve().parent,
         )
         self.url = f"http://{self.server_host}:{self.server_port}"

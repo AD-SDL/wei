@@ -13,6 +13,7 @@ wei.server
 
    .. autosummary::
    
+      is_server_up
       lifespan
    
    

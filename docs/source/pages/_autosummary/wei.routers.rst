@@ -1,4 +1,4 @@
-﻿wei.routers
+wei.routers
 ===========
 
 .. automodule:: wei.routers
@@ -27,11 +27,11 @@
    :toctree:
    :recursive:
 
-   wei.routers.admin
-   wei.routers.events
-   wei.routers.experiments
-   wei.routers.locations
-   wei.routers.modules
-   wei.routers.workcells
-   wei.routers.workflow_runs
+   wei.routers.admin_routes
+   wei.routers.event_routes
+   wei.routers.experiment_routes
+   wei.routers.location_routes
+   wei.routers.module_routes
+   wei.routers.workcell_routes
+   wei.routers.workflow_routes
 

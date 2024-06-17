@@ -17,7 +17,7 @@ wei.core.loggers
 
    .. autosummary::
    
-      WEI_Logger
+      Logger
    
    
 

@@ -1,4 +1,4 @@
-﻿wei.core
+wei.core
 ========
 
 .. automodule:: wei.core
@@ -28,10 +28,8 @@
    :recursive:
 
    wei.core.admin
-   wei.core.data_classes
    wei.core.events
    wei.core.experiment
-   wei.core.interface
    wei.core.interfaces
    wei.core.location
    wei.core.loggers
@@ -39,6 +37,7 @@
    wei.core.scheduler
    wei.core.state_manager
    wei.core.step
+   wei.core.storage
    wei.core.workcell
    wei.core.workflow
 

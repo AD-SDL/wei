@@ -6,6 +6,7 @@ config:
   redis_host: "wei_redis"
   server_host: "wei_server"
   server_port: 8000
+  use_diaspora: False
 
 #List of all components accessible in this workcell
 modules:

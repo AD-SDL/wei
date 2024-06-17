@@ -53,4 +53,4 @@ There are two methods for configuring the WEI Engine and Server that work in tan
 
 The only required argument for the WEI Engine and Server is the path to the workcell YAML file.
 
-For a complete breakdown of configuration options, see :class:`wei.core.data_classes.WorkcellConfig`.
+For a complete breakdown of configuration options, see :class:`wei.types.WorkcellConfig`.

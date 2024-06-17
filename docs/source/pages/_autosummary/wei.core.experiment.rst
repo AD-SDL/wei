@@ -13,17 +13,13 @@ wei.core.experiment
 
    .. autosummary::
    
-      list_experiments
+      get_experiment
+      parse_experiments_from_disk
+      register_new_experiment
    
    
 
    
-   
-   .. rubric:: Classes
-
-   .. autosummary::
-   
-      Experiment
    
    
 

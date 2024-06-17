@@ -37,12 +37,12 @@ State
 
 The State method is called by WEI to query the current state of the device or instrument controlled by the Module. It should return a dictionary of the current state of the device or instrument.
 
-The status returned by this method should conform to the :class:`wei.core.data_classes.ModuleStatus` enum.
+The status returned by this method should conform to the :class:`wei.types.ModuleStatus` enum.
 
 About
 -----
 
-The ``about`` method is called by WEI to query the Module for information about itself. It should return a dictionary of information about the Module, which should conform to the :class:`wei.core.data_classes.ModuleAbout` specification.
+The ``about`` method is called by WEI to query the Module for information about itself. It should return a dictionary of information about the Module, which should conform to the :class:`wei.types.ModuleAbout` specification.
 
 This ``about`` method is both a very useful affordance for WEI users, allowing them to more easily parse how to use a particular module, and a valuable piece of functionality for the WEI Engine. Among other things, it allows the WEI Engine to pre-validate workflows, reducing runtime errors and failed workflow runs.
 
