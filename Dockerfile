@@ -30,7 +30,11 @@ COPY requirements/dev.txt wei/requirements/dev.txt
 RUN --mount=type=cache,target=/root/.cache \
     pip install -r wei/requirements/requirements.txt
 
-# Copy wei files
+# Install Node Dependencies first, for caching purposes
+COPY ./src/ui/package*.json ./
+RUN npm install
+
+# Copy rest of wei files
 COPY src wei/src
 COPY tests wei/tests
 COPY pyproject.toml wei/pyproject.toml
@@ -45,15 +49,5 @@ COPY wei-entrypoint.sh /wei-entrypoint.sh
 RUN chmod +x /wei-entrypoint.sh
 ENTRYPOINT [ "/wei-entrypoint.sh" ]
 
-COPY ./src/ui/package*.json ./
-
-# install project dependencies
-RUN npm install
-#--mount=type=cache,target=./node_modules \
-#	npm install
-
-# copy project files and folders to the current working directory (i.e. 'app' folder)
-
-# build app for production with minification
-
+# build ui for production with minification
 RUN npm run build --prefix wei/src/ui
