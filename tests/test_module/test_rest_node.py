@@ -86,4 +86,5 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
 
 
-test_rest_node.start()
+if __name__ == "__main__":
+    test_rest_node.start()

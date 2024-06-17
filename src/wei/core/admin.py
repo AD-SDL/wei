@@ -5,14 +5,14 @@ from wei.types.module_types import AdminCommands, Module
 
 
 def send_safety_stop(module: Module) -> None:
-    """E-stops a module"""
+    """Safety stops a module"""
     if AdminCommands.SAFETY_STOP in module.about.admin_commands:
         InterfaceMap.interfaces[module.interface].send_admin_command(
             module, AdminCommands.SAFETY_STOP
         )
-        print(f"Module {module.name} has been e-stopped.")
+        print(f"Module {module.name} has been safety-stopped.")
     else:
-        print(f"Module {module.name} does not support e-stop.")
+        print(f"Module {module.name} does not support safety stop.")
         send_pause(module)
 
 

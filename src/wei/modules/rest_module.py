@@ -65,7 +65,7 @@ class RESTModule:
 
     # * Admin command function placeholders
     _safety_stop = None
-    """Handles custom e-stop functionality"""
+    """Handles custom safety-stop functionality"""
     _pause = None
     """Handles custom pause functionality"""
     _reset = None
@@ -502,7 +502,7 @@ class RESTModule:
             if self._safety_stop:
                 return self._safety_stop(state)
             else:
-                return {"message": "Module e-stopped"}
+                return {"message": "Module safety-stopped"}
 
         @self.router.post("/admin/pause")
         async def pause(request: Request):
@@ -707,8 +707,8 @@ if __name__ == "__main__":
 
     @rest_module.safety_stop()
     def custom_safety_stop(state: State):
-        """Custom e-stop functionality"""
-        print("Custom e-stop functionality")
-        return {"message": "Custom e-stop functionality"}
+        """Custom safety-stop functionality"""
+        print("Custom safety-stop functionality")
+        return {"message": "Custom safety-stop functionality"}
 
     rest_module.start()

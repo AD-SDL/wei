@@ -27,7 +27,7 @@ class Location(Generic[T]):
 class AdminCommands(str, Enum):
     """Valid Admin Commands to send to a Module"""
 
-    ESTOP = "estop"
+    SAFETY_STOP = "estop"
     RESET = "reset"
     PAUSE = "pause"
     RESUME = "resume"
