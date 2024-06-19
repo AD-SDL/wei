@@ -88,7 +88,9 @@ class WorkcellConfig(BaseModel, extra="allow"):
     cold_start_delay: int = Field(
         default=2, description="Delay before starting the engine"
     )
-    smtp_server: str = Field(default="0.0.0.0", description="Hostname for the WEI server")
+    smtp_server: str = Field(
+        default="0.0.0.0", description="Hostname for the SMTP server"
+    )
 
     # Validators
     @field_validator("data_directory")
