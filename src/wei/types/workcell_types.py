@@ -89,8 +89,9 @@ class WorkcellConfig(BaseModel, extra="allow"):
         default=2, description="Delay before starting the engine"
     )
     smtp_server: str = Field(
-        default="0.0.0.0", description="Hostname for the SMTP server"
+        default="mailgateway.anl.gov", description="Hostname for the SMTP server"
     )
+    smtp_port: int = Field(default=25, description="Port number for the SMTP server")
 
     # Validators
     @field_validator("data_directory")
