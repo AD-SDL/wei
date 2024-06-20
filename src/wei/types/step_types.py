@@ -29,19 +29,22 @@ class StepResponse(BaseModel):
     in response to action requests
     """
 
-    action_response: StepStatus = StepStatus.SUCCEEDED
-    """Whether the action succeeded, failed, is running, or is idle"""
-    action_msg: str = ""
-    """Any result from the action. If the result is a file, this should be the file name"""
-    action_log: str = ""
-    """Error or log messages resulting from the action"""
+    status: StepStatus = StepStatus.SUCCEEDED
+    """Whether the step succeeded or failed"""
+    error: str = ""
+    """Error message resulting from the action"""
+    data: dict = {}
+    """Key value dict of data returned from step"""
+    files: dict = {}
+    """Key value dict of file labels and file names from step"""
 
     def to_headers(self) -> Dict[str, str]:
         """Converts the response to a dictionary of headers"""
         return {
-            "x-wei-action_response": str(self.action_response),
-            "x-wei-action_msg": self.action_msg,
-            "x-wei-action_log": self.action_log,
+            "x-wei-status": str(self.status),
+            "x-wei-data": json.dumps(self.data),
+            "x-wei-error": (self.error),
+            "x-wei-files": json.dumps(self.files),
         }
 
     @classmethod
@@ -49,28 +52,23 @@ class StepResponse(BaseModel):
         """Creates a StepResponse from the headers of a file response"""
 
         return cls(
-            action_response=StepStatus(headers["x-wei-action_response"]),
-            action_msg=headers["x-wei-action_msg"],
-            action_log=headers["x-wei-action_log"],
+            status=StepStatus(headers["x-wei-status"]),
+            error=(headers["x-wei-error"]),
+            files=json.loads(headers["x-wei-files"]),
+            data=json.loads(headers["x-wei-data"]),
         )
 
     @classmethod
-    def step_succeeded(cls, action_msg: str, action_log: str = "") -> "StepResponse":
+    def step_succeeded(
+        cls, files: Dict[str, str] = None, data: Dict[str, str] = None
+    ) -> "StepResponse":
         """Returns a StepResponse for a successful step"""
-        return cls(
-            action_response=StepStatus.SUCCEEDED,
-            action_msg=action_msg,
-            action_log=action_log,
-        )
+        return cls(status=StepStatus.SUCCEEDED, files=files, data=data)
 
     @classmethod
-    def step_failed(cls, action_log: str, action_msg: str = "") -> "StepResponse":
+    def step_failed(cls, error: str) -> "StepResponse":
         """Returns a StepResponse for a failed step"""
-        return cls(
-            action_response=StepStatus.FAILED,
-            action_msg=action_msg,
-            action_log=action_log,
-        )
+        return cls(error=error)
 
 
 class StepFileResponse(FileResponse):
@@ -81,17 +79,21 @@ class StepFileResponse(FileResponse):
     - The StepResponse parameters as custom headers, prefixed with "x-wei-"
     """
 
-    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
+    def __init__(
+        self,
+        status: StepStatus,
+        files: Dict[str, str],
+        path: PathLike = None,
+        data: Dict[str, str] = None,
+    ):
         """
         Returns a FileResponse with the given path as the response content
         """
+        if path is None:
+            path = files[list(files.keys())[0]]
         return super().__init__(
             path=path,
-            headers=StepResponse(
-                action_response=action_response,
-                action_msg=str(path),
-                action_log=action_log,
-            ).to_headers(),
+            headers=StepResponse(status=status, files=files, data=data).to_headers(),
         )
 
 
@@ -122,7 +124,8 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """ID of step"""
     comment: Optional[str] = None
     """Notes about step"""
-
+    data_labels: Optional[Dict[str, str]] = None
+    """Dictionary of user provided data labels"""
     start_time: Optional[datetime] = None
     """Time the step started running"""
     end_time: Optional[datetime] = None
@@ -177,3 +180,34 @@ class ActionRequest(BaseModel):
         if v is None:
             return {}
         return v
+
+
+class DataPointLocation(str, Enum):
+    """Status for a step of a workflow"""
+
+    LOCALFILE = "local_file"
+    VALUE = "data_value"
+
+
+class DataPoint(BaseModel):
+    """An object to containt and locate data identified by modules"""
+
+    step_id: str
+    """step that generated the data point"""
+    workflow_id: str
+    """workflow that generated the data point"""
+    experiment_id: str
+    """experiment that generated the data point"""
+    value: Any
+    """data value"""
+    label: str
+    """label of this data point"""
+    campaign_id: Optional[str] = None
+    """campaign of the data point"""
+    data_label: Optional[str] = None
+    """user provided label of the data"""
+    data_location: Optional[Dict[str, Any]] = None
+    id: str = Field(default_factory=ulid_factory)
+    """specific id for this data point"""
+    is_file: bool = False
+    """whether the datapoint is a file"""

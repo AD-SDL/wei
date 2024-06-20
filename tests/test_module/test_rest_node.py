@@ -49,8 +49,8 @@ def transfer(
 ) -> StepResponse:
     """Transfers a sample from source to target"""
     if source == "":
-        return StepResponse.step_succeeded(f"Moved new plate to {target}")
-    return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
+        return StepResponse.step_succeeded()
+    return StepResponse.step_succeeded()
 
 
 @test_rest_node.action()
@@ -67,7 +67,7 @@ def synthesize(
 
     state.foobar = foo + bar
 
-    return StepResponse.step_succeeded("Synthesized sample {foo} + {bar}")
+    return StepResponse.step_succeeded()
 
 
 @test_rest_node.action(name="measure")
@@ -75,7 +75,7 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
     with open("test.txt", "w") as f:
         f.write("test")
-    return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
+    return StepFileResponse(StepStatus.SUCCEEDED, {"test_file": "test.txt"})
 
 
 test_rest_node.start()

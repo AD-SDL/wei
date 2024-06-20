@@ -14,6 +14,7 @@ from wei.types.base_types import ulid_factory
 from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment
 from wei.types.module_types import ModuleDefinition
+from wei.types.step_types import DataPoint
 from wei.types.workcell_types import Location
 
 
@@ -92,6 +93,10 @@ class StateManager:
     @property
     def _events(self) -> RedisDict:
         return RedisDict(key=f"{self._lab_prefix}:events", redis=self._redis_client)
+
+    @property
+    def _datapoints(self) -> RedisDict:
+        return RedisDict(key=f"{self._lab_prefix}:datapoints", redis=self._redis_client)
 
     @property
     def paused(self) -> bool:
@@ -285,6 +290,25 @@ class StateManager:
         Sets an event by ID
         """
         self._events[event.event_id] = event.model_dump(mode="json")
+
+    # DataPoint Methods
+    def get_datapoint(self, data_id: str) -> Event:
+        """
+        Returns an event by ID
+        """
+        return self._datapoints[data_id]
+
+    def get_all_datapoints(self) -> Dict[str, Event]:
+        """
+        Returns all events
+        """
+        return self._datapoints.to_dict()
+
+    def set_datapoint(self, datapoint: DataPoint) -> None:
+        """
+        Sets an event by ID
+        """
+        self._datapoints[datapoint.id] = datapoint.model_dump(mode="json")
 
     # Workcell Methods
     def get_workcell(self) -> Workcell:

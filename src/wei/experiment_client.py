@@ -404,6 +404,32 @@ class ExperimentClient:
         else:
             response.raise_for_status()
 
+    def get_datapoint(
+        self, datapoint_id: str, output_filepath: str = None
+    ) -> Dict[Any, Any]:
+        """Returns the datapoint for the given id
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           figuring it out"""
+        url = f"{self.url}/runs/data/" + datapoint_id
+        response = requests.get(url)
+        if response.ok:
+            try:
+                return response.json()
+            except Exception:
+                Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
+                with open(output_filepath, "wb") as f:
+                    f.write(response.content)
+        return response
+
     def log_experiment_end(self) -> Event:
         """Logs the end of the experiment in the experiment log
 

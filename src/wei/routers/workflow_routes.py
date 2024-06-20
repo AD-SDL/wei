@@ -15,6 +15,7 @@ from wei.core.state_manager import StateManager
 from wei.core.storage import get_workflow_run_directory, get_workflow_run_log_path
 from wei.core.workflow import create_run, save_workflow_files
 from wei.types import Workflow, WorkflowStatus
+from wei.types.step_types import DataPointLocation
 
 router = APIRouter()
 
@@ -185,3 +186,15 @@ async def get_wf_files(run_id: str) -> Dict:
 async def get_wf_file(run_id: str, filename: str) -> FileResponse:
     """Returns a specific file from a workflow run's result directory."""
     return FileResponse(get_workflow_run_directory(run_id) / filename)
+
+
+@router.get("/data/{datapoint_id}")
+async def get_datapoint(datapoint_id: str) -> FileResponse:
+    """Returns a specific datapoint from a workflow run's result directory."""
+    datapoint = state_manager.get_datapoint(datapoint_id)
+    if datapoint["data_location"]["type"] == DataPointLocation.LOCALFILE:
+        return FileResponse(
+            get_workflow_run_directory(datapoint["workflow_id"]) / datapoint["value"]
+        )
+    else:
+        return JSONResponse({"value": datapoint["value"]})

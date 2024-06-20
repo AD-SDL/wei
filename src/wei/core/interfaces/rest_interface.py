@@ -1,7 +1,7 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
 
 import json
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import requests
@@ -66,27 +66,26 @@ class RestInterface(Interface):
                 ("files", (file, open(path, "rb"))) for file, path in step.files.items()
             ],
         )
-        if "x-wei-action_response" in rest_response.headers:
+        if "x-wei-status" in rest_response.headers:
             response = StepResponse.from_headers(dict(rest_response.headers))
-            response.action_msg = PureWindowsPath(response.action_msg).as_posix()
-            if "run_dir" in kwargs.keys():
-                path = Path(
-                    kwargs["run_dir"],
-                    Path(step.id + "_" + Path(response.action_msg).name),
-                )
-                path.parent.mkdir(parents=True, exist_ok=True)
-            else:
-                path = Path(step.id + "_" + Path(response.action_msg).name)
-            with open(str(path), "wb") as f:
-                f.write(rest_response.content)
-            response.action_msg = path.name
         else:
             response = StepResponse.model_validate(rest_response.json())
-        action_response = response.action_response
-        action_msg = response.action_msg
-        action_log = response.action_log
-
-        return action_response, action_msg, action_log
+        if len(response.files) == 1:
+            if "run_dir" in kwargs.keys():
+                file_key = list(response.files.keys())[0]
+                filename = response.files[file_key]
+                path = Path(
+                    kwargs["run_dir"],
+                    Path(step.id + "_" + filename),
+                )
+            with open(str(path), "wb") as f:
+                f.write(rest_response.content)
+            response.files[file_key] = path
+        status = response.status
+        data = response.data
+        error = response.error
+        files = response.files
+        return status, data, error, files
 
     @staticmethod
     def get_about(module: Module, **kwargs: Any) -> Any:
