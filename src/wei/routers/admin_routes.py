@@ -25,7 +25,7 @@ state_manager = StateManager()
 
 @router.api_route("/safety_stop", methods=["POST"])
 def safety_stop_workcell() -> None:
-    """E-stops a workcell"""
+    """Safety-stops a workcell"""
     for module in state_manager.get_all_modules().values():
         send_safety_stop(module)
     state_manager.paused = True
@@ -33,7 +33,7 @@ def safety_stop_workcell() -> None:
 
 @router.api_route("/safety_stop/{module_name}", methods=["POST"])
 def safety_stop_module(module_name: str) -> None:
-    """E-stops a module"""
+    """Safety-stops a module"""
     send_safety_stop(state_manager.get_module(module_name))
 
 

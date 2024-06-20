@@ -60,7 +60,11 @@ def update_module(module_name: str, module: Module) -> None:
                         stacklevel=1,
                     )
             except Exception as e:
-                traceback.print_exc()
+                warnings.warn(
+                    message=f"Error getting state for module {module.name}: {e}",
+                    category=UserWarning,
+                    stacklevel=1,
+                )
                 module.state = ModuleState(
                     status=ModuleStatus.UNKNOWN, error=f"Error getting state: {e}"
                 )

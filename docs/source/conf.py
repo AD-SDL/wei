@@ -51,6 +51,9 @@ autodoc_default_options = {
     "members": True,
 }
 
+autodoc_pydantic_model_show_json_error_strategy = "warn"
+
+
 # Napoleon settings
 napoleon_google_docstring = True
 napoleon_numpy_docstring = True

@@ -7,11 +7,7 @@ from typing import Annotated
 from fastapi import UploadFile
 from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
-from wei.types import (
-    StepFileResponse,
-    StepResponse,
-    StepStatus,
-)
+from wei.types import StepFileResponse, StepResponse, StepStatus
 from wei.types.module_types import Location, ModuleState
 from wei.types.step_types import ActionRequest
 
@@ -26,12 +22,24 @@ test_rest_node = RESTModule(
     model="test_module",
     actions=[],
 )
+test_rest_node.arg_parser.add_argument(
+    "--foo",
+    type=float,
+    help="The starting amount of foo",
+    default=0.0,
+)
+test_rest_node.arg_parser.add_argument(
+    "--bar",
+    type=float,
+    help="The starting amount of bar",
+    default=0.0,
+)
 
 
 @test_rest_node.startup()
 def test_node_startup(state: State):
     """Initializes the module"""
-    state.foobar = 0.0
+    state.foobar = state.foo + state.bar
 
 
 @test_rest_node.state_handler()
@@ -78,4 +86,5 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     return StepFileResponse(StepStatus.SUCCEEDED, {"test_file": "test.txt"})
 
 
-test_rest_node.start()
+if __name__ == "__main__":
+    test_rest_node.start()

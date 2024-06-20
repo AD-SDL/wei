@@ -16,7 +16,6 @@ wei.core.module
       clear_module_reservation
       get_module_about
       initialize_workcell_modules
-      query_module_status
       reserve_module
       update_active_modules
       update_module

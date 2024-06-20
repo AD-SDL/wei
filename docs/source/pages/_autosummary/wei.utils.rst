@@ -1,7 +1,7 @@
-wei.helpers
-===========
+wei.utils
+=========
 
-.. automodule:: wei.helpers
+.. automodule:: wei.utils
 
    
    

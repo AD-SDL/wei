@@ -65,7 +65,7 @@ class RESTModule:
 
     # * Admin command function placeholders
     _safety_stop = None
-    """Handles custom e-stop functionality"""
+    """Handles custom safety-stop functionality"""
     _pause = None
     """Handles custom pause functionality"""
     _reset = None
@@ -156,6 +156,10 @@ class RESTModule:
         """Decorator to add a startup_handler to the module"""
 
         def decorator(function):
+            if inspect.isgenerator(function) or inspect.isgeneratorfunction(function):
+                raise Exception(
+                    "Startup handler cannot be a coroutine. Use a regular function (i.e. make sure you don't have a yield statement)."
+                )
             self.startup_handler = function
             return function
 
@@ -210,10 +214,13 @@ class RESTModule:
                 )  # * Make extra sure the status is set to ERROR
             else:
                 # * If everything goes well, set the module status to IDLE
-                state.status = ModuleStatus.IDLE
-                print(
-                    "Startup completed successfully. Module is now ready to accept actions."
-                )
+                if state.status == ModuleStatus.INIT:
+                    state.status = ModuleStatus.IDLE
+                    print(
+                        "Startup completed successfully. Module is now ready to accept actions."
+                    )
+                elif state.status == ModuleStatus.ERROR:
+                    print("Startup completed with errors.")
 
         # * Run startup on a separate thread so it doesn't block the rest server from starting
         # * (module won't accept actions until startup is complete)
@@ -495,7 +502,7 @@ class RESTModule:
             if self._safety_stop:
                 return self._safety_stop(state)
             else:
-                return {"message": "Module e-stopped"}
+                return {"message": "Module safety-stopped"}
 
         @self.router.post("/admin/pause")
         async def pause(request: Request):
@@ -700,8 +707,8 @@ if __name__ == "__main__":
 
     @rest_module.safety_stop()
     def custom_safety_stop(state: State):
-        """Custom e-stop functionality"""
-        print("Custom e-stop functionality")
-        return {"message": "Custom e-stop functionality"}
+        """Custom safety-stop functionality"""
+        print("Custom safety-stop functionality")
+        return {"message": "Custom safety-stop functionality"}
 
     rest_module.start()

@@ -1,8 +1,7 @@
 """Types related to Modules"""
 
-import inspect
 from enum import Enum
-from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import (
     AliasChoices,
@@ -28,7 +27,7 @@ class Location(Generic[T]):
 class AdminCommands(str, Enum):
     """Valid Admin Commands to send to a Module"""
 
-    ESTOP = "estop"
+    SAFETY_STOP = "estop"
     RESET = "reset"
     PAUSE = "pause"
     RESUME = "resume"
@@ -93,7 +92,7 @@ class ModuleActionFile(BaseModel):
 
 
 class ModuleAction(BaseModel):
-    """Defines an action that a module can perform"""
+    """Defines an action that a module can perform."""
 
     name: str
     """Name of the action"""
@@ -103,25 +102,19 @@ class ModuleAction(BaseModel):
     """A description of the action"""
     files: List[ModuleActionFile] = []
     """Files to be sent along with the action"""
-    function: Optional[Callable] = Field(default=None, exclude=True)
-    """Function to be called when the action is executed"""
+    function: Optional[Any] = Field(default=None, exclude=True)
+    """Function to be called when the action is executed. This must be a callable."""
 
     @field_validator("function", mode="after")
     @classmethod
-    def validate_function(cls, v: Any) -> Optional[Callable]:
+    def validate_function(cls, v: Any) -> Optional[Any]:
         """Validate the function field of the ModuleAction"""
         if v is None:
             return v
         if callable(v):
-            signature = inspect.signature(v)
-            if signature.parameters.__contains__(
-                "state"
-            ) and signature.parameters.__contains__("action"):
-                return v
-            else:
-                raise ValidationError(
-                    "Module Action Function must accept 'state' and 'action' parameters"
-                )
+            return v
+        else:
+            raise ValidationError("Function must be callable.")
 
     @model_validator(mode="after")
     @classmethod
