@@ -25,6 +25,7 @@ dependencies = [
     'ulid-py>=1.1.0',
     'uvicorn[standard]>=0.21',
     "websockets>=12.0",
+    "smtplib"
 ]
 
 [project.optional-dependencies]
