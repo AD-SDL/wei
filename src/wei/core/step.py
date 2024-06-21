@@ -141,13 +141,11 @@ def run_step(
         logger.debug(f"Finished running step with name: {step.name}")
 
     if step_response.action_response == StepStatus.FAILED:
-        smtp_server = Config.smtp_server
-        smtp_port = Config.smtp_port
         experiment = state_manager.get_experiment(wf_run.experiment_id)
         if experiment.email_addresses:
             for email in experiment.email_addresses:
                 send_email_notification(
-                    email, smtp_server, smtp_port, step, step_response
+                    email, wf_run.experiment_id, step, step_response
                 )
 
     step.end_time = datetime.now()
@@ -185,16 +183,17 @@ def run_step(
 
 def send_email_notification(
     email_address: str,
-    smtp_server: str,
-    smtp_port: str,
+    experiment_id: str,
     step: Step,
     step_response: StepResponse,
 ) -> None:
     """Send email notifications over thhe stmp server"""
 
     # Email details
+    smtp_server = Config.smtp_server
+    smtp_port = Config.smtp_port
     sender = "no-reply@anl.gov"
-    subject = f"RUN FAILED {step.name}"
+    subject = f"RUN FAILED {experiment_id}"
     # STEP FAILED ON ACTION/MODULE
     body_text = "Step failed"
     # BODY INCLUDE WORKFLOW OBJECT (JSON TO STR) & STEP RESPONSE
@@ -202,7 +201,7 @@ def send_email_notification(
     body_html = f"""\
     <html>
     <body>
-        <h1>{step.name} failed:</h1>
+        <h1>Step {step.name} failed:</h1>
         <p>{step_response}</p>
     </body>
     </html>
