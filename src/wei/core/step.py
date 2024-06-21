@@ -59,6 +59,7 @@ def validate_step(step: Step) -> Tuple[bool, str]:
                             f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing file '{action_file.name}'",
                         )
                 return True, f"Step '{step.name}': Validated successfully"
+
         return (
             False,
             f"Step '{step.name}': Module {step.module} has no action '{step.action}'",
@@ -143,7 +144,7 @@ def run_step(
         smtp_server = Config.smtp_server
         smtp_port = Config.smtp_port
         experiment = state_manager.get_experiment(wf_run.experiment_id)
-        if not experiment.email_addresses:
+        if experiment.email_addresses:
             for email in experiment.email_addresses:
                 send_email_notification(
                     email, smtp_server, smtp_port, step, step_response
@@ -198,10 +199,10 @@ def send_email_notification(
     body_text = "Step failed"
     # BODY INCLUDE WORKFLOW OBJECT (JSON TO STR) & STEP RESPONSE
     step_response = step_response.model_dump_json()
-    body_html = """\
+    body_html = f"""\
     <html>
     <body>
-        <h1>f"Step {step.name} failed:"</h1>
+        <h1>{step.name} failed:</h1>
         <p>{step_response}</p>
     </body>
     </html>
