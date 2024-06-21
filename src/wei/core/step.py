@@ -192,7 +192,7 @@ def send_email_notification(
     # Email details
     smtp_server = Config.smtp_server
     smtp_port = Config.smtp_port
-    sender = "no-reply@anl.gov"
+    sender = "no-reply-rpl@anl.gov"
     subject = f"RUN FAILED {experiment_id}"
     # STEP FAILED ON ACTION/MODULE
     body_text = "Step failed"
