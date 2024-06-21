@@ -61,6 +61,7 @@ pyzmq==26.0.2
 redis==4.6.0
 requests==2.31.0
 ruff==0.4.2
+secure-smtplib==0.1.1
 setuptools==69.5.1
 six==1.16.0
 sniffio==1.3.1
