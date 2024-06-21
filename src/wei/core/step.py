@@ -1,7 +1,10 @@
 """Functions related to WEI workflow steps."""
 
+import smtplib
 import traceback
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import Tuple
 
 from wei.config import Config
@@ -136,6 +139,16 @@ def run_step(
     else:
         logger.debug(f"Finished running step with name: {step.name}")
 
+    if step_response.action_response == StepStatus.FAILED:
+        smtp_server = Config.smtp_server
+        smtp_port = Config.smtp_port
+        experiment = state_manager.get_experiment(wf_run.experiment_id)
+        if not experiment.email_addresses:
+            for email in experiment.email_addresses:
+                send_email_notification(
+                    email, smtp_server, smtp_port, step, step_response
+                )
+
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
     step.result = step_response
@@ -167,3 +180,51 @@ def run_step(
         if wf_run.step_index < len(wf_run.steps) - 1:
             wf_run.step_index += 1
         state_manager.set_workflow_run(wf_run)
+
+
+def send_email_notification(
+    email_address: str,
+    smtp_server: str,
+    smtp_port: str,
+    step: Step,
+    step_response: StepResponse,
+) -> None:
+    """Send email notifications over thhe stmp server"""
+
+    # Email details
+    sender = "no-reply@anl.gov"
+    subject = f"RUN FAILED {step.name}"
+    # STEP FAILED ON ACTION/MODULE
+    body_text = "Step failed"
+    # BODY INCLUDE WORKFLOW OBJECT (JSON TO STR) & STEP RESPONSE
+    step_response = step_response.model_dump_json()
+    body_html = """\
+    <html>
+    <body>
+        <h1>f"Step {step.name} failed:"</h1>
+        <p>{step_response}</p>
+    </body>
+    </html>
+    """
+
+    try:
+        # Create the MIMEText objects for the email content
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = sender
+        msg["To"] = email_address
+
+        # Attach both plain text and HTML versions
+        part1 = MIMEText(body_text, "plain")
+        part2 = MIMEText(body_html, "html")
+        msg.attach(part1)
+        msg.attach(part2)
+
+        # Send the email via the SMTP server
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.sendmail(sender, email_address, msg.as_string())
+        print(f"Email sent to {email_address}")
+        return True
+    except Exception as e:
+        print(f"Error sending email to {email_address}: {e}")
+        return False
