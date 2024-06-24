@@ -58,12 +58,18 @@ def send_failed_step_notification(
     experiment = state_manager.get_experiment(workflow_run.experiment_id)
     for email_address in experiment.email_addresses:
         # * Email Content
-        subject = f'STEP FAILED: Experiment "{experiment.experiment_name}" ({experiment.experiment_id})'
+        subject = f"STEP FAILED: {step.name}"
         body_html = f"""\
         <html>
         <body>
             <h1>Step '{step.name}' Failed</h1>
-            Step '{step.name}' failed on module '{step.module}'. See below for more info.
+            <ul>
+                <li>Step: {step.name} ({step.id})</li>
+                <li>Module: {step.module}</li>
+                <li>Workflow: {workflow_run.name} ({workflow_run.run_id})</li>
+                <li>Experiment: {experiment.experiment_name} ({experiment.experiment_id})</li>
+            </ul>
+            See below for more info.
             <h2>Step Response</h2>
             <pre>{step.result.model_dump_json(indent=2)}</pre>
             <h2>Step Info</h2>
