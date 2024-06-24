@@ -36,7 +36,7 @@ class ExperimentClient:
         campaign_id: Optional[str] = None,
         description: Optional[str] = None,
         working_dir: Optional[PathLike] = None,
-        email_addresses: Optional[List[str]] = None,
+        email_addresses: List[str] = [],
     ) -> None:
         """Initializes an Experiment, and creates its log files
 

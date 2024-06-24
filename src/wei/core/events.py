@@ -9,6 +9,7 @@ from wei.config import Config
 from wei.core.loggers import Logger
 from wei.core.state_manager import StateManager
 from wei.types import Event
+from wei.utils import fire_and_forget
 
 state_manager = StateManager()
 
@@ -68,6 +69,7 @@ class EventHandler:
             cls.kafka_topic = None
 
     @classmethod
+    @fire_and_forget
     def log_event(cls, event: Event) -> None:
         """logs an event in the proper place for the given experiment
 

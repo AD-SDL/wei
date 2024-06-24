@@ -87,3 +87,5 @@ def parse_experiments_from_disk():
                 ),
             )
             state_manager.set_experiment(experiment)
+        except Exception:
+            continue

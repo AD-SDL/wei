@@ -1,10 +1,7 @@
 """Functions related to WEI workflow steps."""
 
-import smtplib
 import traceback
 from datetime import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from typing import Tuple
 
 from wei.config import Config
@@ -12,6 +9,7 @@ from wei.core.events import send_event
 from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import Logger
 from wei.core.module import clear_module_reservation, get_module_about
+from wei.core.notifications import send_failed_step_notification
 from wei.core.state_manager import StateManager
 from wei.core.storage import get_workflow_run_directory
 from wei.types import (
@@ -140,17 +138,11 @@ def run_step(
     else:
         logger.debug(f"Finished running step with name: {step.name}")
 
-    if step_response.action_response == StepStatus.FAILED:
-        experiment = state_manager.get_experiment(wf_run.experiment_id)
-        if experiment.email_addresses:
-            for email in experiment.email_addresses:
-                send_email_notification(
-                    email, wf_run.experiment_id, step, step_response
-                )
-
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
     step.result = step_response
+    if step.result.action_response == StepStatus.FAILED:
+        send_failed_step_notification(wf_run, step)
     send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
     wf_run.hist[step.name] = step_response
     if step_response.action_response == StepStatus.FAILED:
@@ -179,52 +171,3 @@ def run_step(
         if wf_run.step_index < len(wf_run.steps) - 1:
             wf_run.step_index += 1
         state_manager.set_workflow_run(wf_run)
-
-
-def send_email_notification(
-    email_address: str,
-    experiment_id: str,
-    step: Step,
-    step_response: StepResponse,
-) -> None:
-    """Send email notifications over thhe stmp server"""
-
-    # Email details
-    smtp_server = Config.smtp_server
-    smtp_port = Config.smtp_port
-    sender = "no-reply-rpl@anl.gov"
-    subject = f"RUN FAILED {experiment_id}"
-    # STEP FAILED ON ACTION/MODULE
-    body_text = "Step failed"
-    # BODY INCLUDE WORKFLOW OBJECT (JSON TO STR) & STEP RESPONSE
-    step_response = step_response.model_dump_json()
-    body_html = f"""\
-    <html>
-    <body>
-        <h1>Step {step.name} failed:</h1>
-        <p>{step_response}</p>
-    </body>
-    </html>
-    """
-
-    try:
-        # Create the MIMEText objects for the email content
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = sender
-        msg["To"] = email_address
-
-        # Attach both plain text and HTML versions
-        part1 = MIMEText(body_text, "plain")
-        part2 = MIMEText(body_html, "html")
-        msg.attach(part1)
-        msg.attach(part2)
-
-        # Send the email via the SMTP server
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.sendmail(sender, email_address, msg.as_string())
-        print(f"Email sent to {email_address}")
-        return True
-    except Exception as e:
-        print(f"Error sending email to {email_address}: {e}")
-        return False
