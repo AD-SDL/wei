@@ -88,6 +88,10 @@ class WorkcellConfig(BaseModel, extra="allow"):
     cold_start_delay: int = Field(
         default=2, description="Delay before starting the engine"
     )
+    smtp_server: str = Field(
+        default="mailgateway.anl.gov", description="Hostname for the SMTP server"
+    )
+    smtp_port: int = Field(default=25, description="Port number for the SMTP server")
 
     # Validators
     @field_validator("data_directory")

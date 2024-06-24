@@ -9,6 +9,7 @@ from wei.core.events import send_event
 from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import Logger
 from wei.core.module import clear_module_reservation, get_module_about
+from wei.core.notifications import send_failed_step_notification
 from wei.core.state_manager import StateManager
 from wei.core.storage import get_workflow_run_directory
 from wei.types import (
@@ -56,6 +57,7 @@ def validate_step(step: Step) -> Tuple[bool, str]:
                             f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing file '{action_file.name}'",
                         )
                 return True, f"Step '{step.name}': Validated successfully"
+
         return (
             False,
             f"Step '{step.name}': Module {step.module} has no action '{step.action}'",
@@ -139,6 +141,8 @@ def run_step(
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
     step.result = step_response
+    if step.result.action_response == StepStatus.FAILED:
+        send_failed_step_notification(wf_run, step)
     send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
     wf_run.hist[step.name] = step_response
     if step_response.action_response == StepStatus.FAILED:

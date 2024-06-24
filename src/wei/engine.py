@@ -2,7 +2,6 @@
 Engine Class and associated helpers and data
 """
 
-import threading
 import time
 import traceback
 
@@ -30,8 +29,7 @@ class Engine:
         """Initialize the scheduler."""
         self.state_manager = StateManager()
         initialize_storage()
-        disk_scan_thread = threading.Thread(target=parse_experiments_from_disk)
-        disk_scan_thread.start()
+        parse_experiments_from_disk()
         self.state_manager.clear_state(
             reset_locations=Config.reset_locations,
             clear_workflow_runs=Config.clear_workflow_runs,

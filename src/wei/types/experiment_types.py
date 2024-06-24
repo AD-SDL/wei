@@ -27,6 +27,8 @@ class ExperimentDesign(BaseModel):
     """ID of the campaign this experiment should be associated with (note: this campaign must already exist)"""
     description: Optional[str] = None
     """Description of the experiment"""
+    email_addresses: List[str] = []
+    """List of email addresses to send notifications"""
 
 
 class Experiment(ExperimentDesign):

@@ -25,6 +25,7 @@ dependencies = [
     'ulid-py>=1.1.0',
     'uvicorn[standard]>=0.21',
     "websockets>=12.0",
+    "secure-smtplib>=0.1.1",
 ]
 
 [project.optional-dependencies]
@@ -136,7 +137,8 @@ select = [
     # "RUF"
 ]
 ignore = [
-    "E501" # Line too long
+    "E501", # Line too long
+    "B006", # Do not use mutable data structures for argument defaults
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.

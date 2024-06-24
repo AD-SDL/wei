@@ -2,7 +2,6 @@
 Router for the "events" endpoints
 """
 
-import threading
 from typing import Any
 
 from fastapi import APIRouter
@@ -19,8 +18,7 @@ state_manager = StateManager()
 @router.post("/")
 def log_event(event: Event) -> Any:
     """Logs a value to the log file for a given experiment"""
-    thread = threading.Thread(target=EventHandler.log_event(event))
-    thread.start()
+    EventHandler.log_event(event)
 
     return event
 

@@ -36,6 +36,7 @@ class ExperimentClient:
         campaign_id: Optional[str] = None,
         description: Optional[str] = None,
         working_dir: Optional[PathLike] = None,
+        email_addresses: List[str] = [],
     ) -> None:
         """Initializes an Experiment, and creates its log files
 
@@ -56,12 +57,15 @@ class ExperimentClient:
         working_dir: Optional[Union[str, Path]]
             The directory to resolve relative paths from. Defaults to the current working directory.
 
+        email_addresses: Optional[List[str]]
+            List of email addresses to send notifications at the end of the experiment
         """
 
         self.server_host = server_host
         self.server_port = server_port
         self.url = f"http://{self.server_host}:{self.server_port}"
         self.experiment_id = experiment_id
+        self.email_addresses = email_addresses
 
         if experiment_name is None:
             assert (
@@ -72,6 +76,7 @@ class ExperimentClient:
             experiment_name=experiment_name,
             campaign_id=campaign_id,
             description=description,
+            email_addresses=email_addresses,
         )
 
         if working_dir is None:
