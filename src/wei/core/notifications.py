@@ -10,12 +10,12 @@ from wei.config import Config
 from wei.core.state_manager import StateManager
 from wei.types import Step
 from wei.types.workflow_types import WorkflowRun
-from wei.utils import fire_and_forget
+from wei.utils import threaded_task
 
 state_manager = StateManager()
 
 
-@fire_and_forget
+@threaded_task
 def send_email(subject: str, email_address: str, body: str):
     """Sends an email with the provided subject and body to the specified email address, using the configured SMTP relay server"""
     smtp_server = Config.smtp_server

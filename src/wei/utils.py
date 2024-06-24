@@ -121,8 +121,8 @@ def json_to_csv(json_data, csv_file_path):
         writer.writerows(flattened_data)
 
 
-def fire_and_forget(func):
-    """Mark a function as a 'fire and forget' task, to be run on a separate thread without awaiting. Returns the thread object, so you _can_ await if needed."""
+def threaded_task(func):
+    """Mark a function as a threaded task, to be run without awaiting. Returns the thread object, so you _can_ await if needed."""
 
     import functools
     import threading

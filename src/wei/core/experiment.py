@@ -11,6 +11,7 @@ from wei.core.storage import (
     search_for_experiment_directory,
 )
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
+from wei.utils import threaded_task
 
 state_manager = StateManager()
 
@@ -62,6 +63,7 @@ def get_experiment(experiment_id: str) -> Experiment:
     return experiment
 
 
+@threaded_task
 def parse_experiments_from_disk():
     """Scans the experiments directory and pulls in any experiments that are not in the state_manager."""
     experiments_dir = get_experiments_directory()
