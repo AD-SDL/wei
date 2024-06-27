@@ -1,9 +1,7 @@
 <template>
     <v-card class="pa-1" title="Recent Workflows">
         <v-card-text v-if="wfs">
-            <WorkflowTable title="Recent Workflows" :wc_state=wc_state
-                :wfs="wfs.slice(0, 10)"
-                start_open=true />
+            <WorkflowTable title="Recent Workflows" :wc_state=wc_state :wfs="wfs.slice(0, 10)" />
 
         </v-card-text>
         <v-card-text v-else>

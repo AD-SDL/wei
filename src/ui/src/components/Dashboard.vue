@@ -24,7 +24,7 @@
                   <v-col cols=9 md=9 lg=9>
                     <LocationsColumn :locations=wc_state.locations />
 
-                    <WorkflowsColumn :wc_state="wc_state"  :wfs="wfs" @view-workflows="tab = 2" />
+                    <WorkflowsColumn :wc_state="wc_state" :wfs="wfs" @view-workflows="tab = 2" />
                   </v-col>
                 </v-row>
               </v-container>
@@ -55,12 +55,12 @@
           </v-card>
         </v-container>
         <v-container v-else>
-                <p>No WC info yet</p>
-              </v-container>
+          <p>No WC info yet</p>
+        </v-container>
       </v-window-item>
       <v-window-item :key="2" :value="2">
         <h2> All Workflows </h2>
-        <WorkflowTable title="All Workflows" :wc_state=wc_state :wfs="wfs" start_open=true />
+        <WorkflowTable title="All Workflows" :wc_state=wc_state :wfs="wfs" />
       </v-window-item>
       <v-window-item :key="3" :value="3">
         <v-row class="pa-1 ma-1 justify-center">

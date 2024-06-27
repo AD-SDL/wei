@@ -1,6 +1,6 @@
 {
   "name": "squid_frontend",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--no-warnings' vite",
     "build": "vue-tsc --noEmit && vite build",
@@ -12,7 +12,7 @@
     "roboto-fontface": "*",
     "vue": "^3.3.0",
     "vue-json-pretty": "^2.4.0",
-    "vuetify": "^3.0.0"
+    "vuetify": "^3.6.0"
   },
   "devDependencies": {
     "@babel/types": "^7.23.0",
