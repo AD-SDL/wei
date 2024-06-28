@@ -1,6 +1,8 @@
 """Recource Data Classes"""
 
-from pydantic import BaseModel
+from typing import Any, List
+
+from pydantic import BaseModel, Field
 
 
 class ResourceContainer(BaseModel):
@@ -87,7 +89,50 @@ class StackQueue(ResourceContainer):
         contents(): Returns the contents of the stack/queue.
     """
 
-    pass
+    contents: List[Any] = Field(default_factory=list)
+
+    def push(self, instance: Any) -> int:
+        """
+        Adds an instance to the stack/queue.
+
+        Args:
+            instance (Any): The instance to add.
+
+        Returns:
+            int: The position of the instance in the stack/queue.
+
+        Raises:
+            ValueError: If the stack/queue is full.
+        """
+        if len(self.contents) < int(self.capacity):
+            self.contents.append(instance)
+            return len(self.contents) - 1
+        else:
+            raise ValueError("Stack/Queue is full.")
+
+    def pop(self) -> Any:
+        """
+        Removes and returns the last instance from the stack/queue.
+
+        Returns:
+            Any: The last instance in the stack/queue.
+
+        Raises:
+            ValueError: If the stack/queue is empty.
+        """
+        if self.contents:
+            return self.contents.pop()
+        else:
+            raise ValueError("Stack/Queue is empty.")
+
+    def contents(self) -> List[Any]:
+        """
+        Returns the contents of the stack/queue.
+
+        Returns:
+            List[Any]: The contents of the stack/queue.
+        """
+        return self.contents
 
 
 class Collection(ResourceContainer):
