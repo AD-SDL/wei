@@ -1,6 +1,6 @@
 """Recource Data Classes"""
 
-from typing import Any, List
+from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -147,4 +147,40 @@ class Collection(ResourceContainer):
         retrieve(location: str): Removes and returns the instance from a specific location.
     """
 
-    pass
+    contents: Dict[str, Any] = Field(default_factory=dict)
+
+    def insert(self, location: str, instance: Any) -> None:
+        """
+        Inserts an instance at a specific location.
+
+        Args:
+            location (str): The location to insert the instance.
+            instance (Any): The instance to insert.
+
+        Raises:
+            ValueError: If the collection is full.
+        """
+        if len(self.contents) < int(self.capacity):
+            self.contents[location] = instance
+        else:
+            raise ValueError("Collection is full.")
+
+    def retrieve(self, location: str = None, value: str = None) -> Any:
+        """
+        Removes and returns the instance from a specific location.
+
+        Args:
+            location (str): The location of the instance to retrieve.
+
+        Returns:
+            Any: The instance at the specified location.
+
+        Raises:
+            ValueError: If the location is invalid.
+        """
+        if value and value in self.contents:
+            pass
+        if location and location in self.contents:
+            return self.contents.pop(location)
+        else:
+            raise ValueError("Invalid location.")
