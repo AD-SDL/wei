@@ -31,7 +31,47 @@ class Pool(ResourceContainer):
         fill(): Fills the pool to its capacity.
     """
 
-    pass
+    def increase(self, amount: float) -> None:
+        """
+        Increases the quantity by a specified amount.
+
+        Args:
+            amount (float): The amount to increase.
+
+        Raises:
+            ValueError: If the increase exceeds the capacity.
+        """
+        if self.quantity + amount <= self.capacity:
+            self.quantity += amount
+        else:
+            raise ValueError("Exceeds capacity.")
+
+    def decrease(self, amount: float) -> None:
+        """
+        Decreases the quantity by a specified amount.
+
+        Args:
+            amount (float): The amount to decrease.
+
+        Raises:
+            ValueError: If the decrease results in a quantity below zero.
+        """
+        if self.quantity - amount >= 0:
+            self.quantity -= amount
+        else:
+            raise ValueError("Cannot decrease quantity below zero.")
+
+    def empty(self) -> None:
+        """
+        Empty by setting the quantity to zero.
+        """
+        self.quantity = 0.0
+
+    def fill(self) -> None:
+        """
+        Sets the quantity to its capacity.
+        """
+        self.quantity = self.capacity
 
 
 class StackQueue(ResourceContainer):
