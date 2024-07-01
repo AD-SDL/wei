@@ -272,13 +272,16 @@ class StateManager:
         """
         Returns an event by ID
         """
-        return self._events[event_id]
+        return Event.model_validate(self._events[event_id])
 
     def get_all_events(self) -> Dict[str, Event]:
         """
         Returns all events
         """
-        return self._events.to_dict()
+        return {
+            str(event_id): Event.model_validate(event)
+            for event_id, event in self._events.to_dict().items()
+        }
 
     def set_event(self, event: Event) -> None:
         """

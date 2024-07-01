@@ -31,5 +31,5 @@ def get_event(event_id: str) -> Event:
 
 @router.get("/")
 def get_all_events(event_id: str) -> Event:
-    """Returns the details for a specific event given the id"""
+    """Returns all events stored in the event cache."""
     return state_manager.get_all_events()

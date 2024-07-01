@@ -24,7 +24,7 @@ checks: # Runs all the pre-commit checks
 
 test: init .env build # Runs all the tests
 	@docker compose up -d
-	@docker compose run wei_engine pytest -p no:cacheprovider wei
+	@docker compose run test_wei_engine pytest -p no:cacheprovider wei
 	@#docker compose down
 
 clean:
