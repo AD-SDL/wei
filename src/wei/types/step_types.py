@@ -14,6 +14,43 @@ from pydantic import AliasChoices, Field, ValidationInfo, field_validator, valid
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
 
 
+class DataPoint(BaseModel):
+    """An object to containt and locate data identified by modules"""
+
+    label: str
+    """label of this data point"""
+    step_id: Optional[str] = None
+    """step that generated the data point"""
+    workflow_id: Optional[str] = None
+    """workflow that generated the data point"""
+    experiment_id: Optional[str] = None
+    """experiment that generated the data point"""
+    type: str = "base"
+    """type of the datapoint, inherited from class"""
+    campaign_id: Optional[str] = None
+    """campaign of the data point"""
+    id: str = Field(default_factory=ulid_factory)
+    """specific id for this data point"""
+
+
+class LocalFileDataPoint(DataPoint):
+    """a datapoint containing a file"""
+
+    type: str = "local_file"
+    """local file"""
+    path: str
+    """path to the file"""
+
+
+class ValueDataPoint(DataPoint):
+    """a datapoint contained in the Json value"""
+
+    type: str = "data_value"
+    """data_value"""
+    value: Any
+    """value of the data point"""
+
+
 class StepStatus(str, Enum):
     """Status for a step of a workflow"""
 
@@ -31,11 +68,11 @@ class StepResponse(BaseModel):
 
     status: StepStatus = StepStatus.SUCCEEDED
     """Whether the step succeeded or failed"""
-    error: str = ""
+    error: Optional[str] = None
     """Error message resulting from the action"""
-    data: dict = {}
+    data: Optional[dict] = None
     """Key value dict of data returned from step"""
-    files: dict = {}
+    files: Optional[dict] = None
     """Key value dict of file labels and file names from step"""
 
     def to_headers(self) -> Dict[str, str]:
@@ -43,7 +80,7 @@ class StepResponse(BaseModel):
         return {
             "x-wei-status": str(self.status),
             "x-wei-data": json.dumps(self.data),
-            "x-wei-error": (self.error),
+            "x-wei-error": json.dumps(self.error),
             "x-wei-files": json.dumps(self.files),
         }
 
@@ -53,7 +90,7 @@ class StepResponse(BaseModel):
 
         return cls(
             status=StepStatus(headers["x-wei-status"]),
-            error=(headers["x-wei-error"]),
+            error=json.loads(headers["x-wei-error"]),
             files=json.loads(headers["x-wei-files"]),
             data=json.loads(headers["x-wei-data"]),
         )
@@ -187,27 +224,3 @@ class DataPointLocation(str, Enum):
 
     LOCALFILE = "local_file"
     VALUE = "data_value"
-
-
-class DataPoint(BaseModel):
-    """An object to containt and locate data identified by modules"""
-
-    step_id: str
-    """step that generated the data point"""
-    workflow_id: str
-    """workflow that generated the data point"""
-    experiment_id: str
-    """experiment that generated the data point"""
-    value: Any
-    """data value"""
-    label: str
-    """label of this data point"""
-    campaign_id: Optional[str] = None
-    """campaign of the data point"""
-    data_label: Optional[str] = None
-    """user provided label of the data"""
-    data_location: Optional[Dict[str, Any]] = None
-    id: str = Field(default_factory=ulid_factory)
-    """specific id for this data point"""
-    is_file: bool = False
-    """whether the datapoint is a file"""

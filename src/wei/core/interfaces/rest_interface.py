@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
+from zipfile import ZipFile
 
 import requests
 
@@ -70,7 +71,7 @@ class RestInterface(Interface):
             response = StepResponse.from_headers(dict(rest_response.headers))
         else:
             response = StepResponse.model_validate(rest_response.json())
-        if len(response.files) == 1:
+        if response.files and len(response.files) == 1:
             if "run_dir" in kwargs.keys():
                 file_key = list(response.files.keys())[0]
                 filename = response.files[file_key]
@@ -81,6 +82,21 @@ class RestInterface(Interface):
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
             response.files[file_key] = path
+        elif response.files and len(response.files) > 1:
+            with open("temp_zip.zip", "wb") as f:
+                f.write(rest_response.content)
+            file = ZipFile("temp_zip.zip")
+            if "run_dir" in kwargs.keys():
+                for file_key in list(response.files.keys()):
+                    filename = response.files[file_key]
+                    new_filename = step.id + "_" + filename
+                    file.getinfo(filename).filename = new_filename
+
+                    path = Path(kwargs["run_dir"])
+
+                    file.extract(filename, path)
+                    response.files[file_key] = path / new_filename
+            file.close()
         status = response.status
         data = response.data
         error = response.error

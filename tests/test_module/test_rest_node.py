@@ -3,6 +3,7 @@ REST-based node that interfaces with WEI and provides various fake actions for t
 """
 
 from typing import Annotated
+from zipfile import ZipFile
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
@@ -83,7 +84,19 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
     with open("test.txt", "w") as f:
         f.write("test")
-    return StepFileResponse(StepStatus.SUCCEEDED, {"test_file": "test.txt"})
+    with open("test2.txt", "w") as f:
+        f.write("test")
+    testfile = ZipFile("test_zip.zip", "w")
+    testfile.write("test.txt")
+    testfile.write("test2.txt")
+    testfile.close()
+
+    return StepFileResponse(
+        StepStatus.SUCCEEDED,
+        {"test_file": "test.txt", "test2_file": "test2.txt"},
+        path="test_zip.zip",
+        data={"test": {"test": "test"}},
+    )
 
 
 if __name__ == "__main__":

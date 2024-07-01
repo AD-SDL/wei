@@ -89,10 +89,31 @@ class WorkflowRun(Workflow):
     """Index of the current step"""
     simulate: bool = False
     """Whether or not this workflow is being simulated"""
-
+    data: Optional[Dict[str, str]] = None
     start_time: Optional[datetime] = None
     """Time the workflow started running"""
     end_time: Optional[datetime] = None
     """Time the workflow finished running"""
     duration: Optional[timedelta] = None
     """Duration of the workflow's run"""
+
+    def get_step_by_name(self, name: str):
+        """return the step object by its name"""
+        for step in self.steps:
+            print(step)
+            if step.name == name:
+                return step
+
+    def get_step_by_id(self, id: str):
+        """return the step object indexed by its id"""
+        for step in self.steps:
+            if step.id == id:
+                return step
+
+    def get_datapoint_id_by_label(self, label: str):
+        """return the id of a datapoint based on its label"""
+        for step in self.steps:
+            if step.result.data:
+                for key in step.result.data:
+                    if key == label:
+                        return step.result.data[key]

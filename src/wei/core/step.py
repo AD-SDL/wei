@@ -2,7 +2,6 @@
 
 import traceback
 from datetime import datetime
-from pathlib import Path
 from typing import Tuple
 
 from wei.config import Config
@@ -27,7 +26,7 @@ from wei.types.event_types import (
     WorkflowStepEvent,
 )
 from wei.types.interface_types import InterfaceMap
-from wei.types.step_types import DataPoint, DataPointLocation
+from wei.types.step_types import LocalFileDataPoint, ValueDataPoint
 
 state_manager = StateManager()
 
@@ -140,45 +139,46 @@ def run_step(
 
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
-    step.result = step_response
-    new_data = {}
-    for data in step_response.data:
-        if step.data_labels is not None and data in step.data_labels:
-            label = step.data_labels[data]
-        else:
-            label = data
-        datapoint = DataPoint(
-            step.id,
-            wf_run.run_id,
-            wf_run.experiment_id,
-            step_response.data[data],
-            label,
-            data_location={"type": DataPointLocation.VALUE},
-        )
-        state_manager.set_datapoint(datapoint)
-        new_data[label] = datapoint.id
-    print(step_response.files)
-    for file in step_response.files:
-        if step.data_labels is not None and file in step.data_labels:
-            label = step.data_labels[file]
-        else:
-            label = file
-        datapoint = DataPoint(
-            step_id=step.id,
-            workflow_id=wf_run.run_id,
-            experiment_id=wf_run.experiment_id,
-            value=Path(step_response.files[file]).name,
-            label=label,
-            data_location={
-                "type": DataPointLocation.LOCALFILE,
-                "path": step_response.files[file],
-            },
-        )
-        state_manager.set_datapoint(datapoint)
-        new_data[label] = datapoint.id
+
+    new_data = None
+    if step_response.data:
+        new_data = {}
+        for data in step_response.data:
+            if step.data_labels is not None and data in step.data_labels:
+                label = step.data_labels[data]
+            else:
+                label = module.name + "_" + data
+            datapoint = ValueDataPoint(
+                label=label,
+                step_id=step.id,
+                workflow_id=wf_run.run_id,
+                experiment_id=wf_run.experiment_id,
+                value=step_response.data[data],
+            )
+            state_manager.set_datapoint(datapoint)
+            new_data[label] = datapoint.id
+    if step_response.files:
+        if not new_data:
+            new_data = {}
+        print(step_response.files)
+        for file in step_response.files:
+            if step.data_labels is not None and file in step.data_labels:
+                label = step.data_labels[file]
+            else:
+                label = module.name + "_" + file
+            datapoint = LocalFileDataPoint(
+                step_id=step.id,
+                workflow_id=wf_run.run_id,
+                experiment_id=wf_run.experiment_id,
+                label=label,
+                path=str(step_response.files[file]),
+            )
+            state_manager.set_datapoint(datapoint)
+            new_data[label] = datapoint.id
+
     send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
     step_response.data = new_data
-    wf_run.hist[step.name] = step_response
+    step.result = step_response
     if step_response.status == StepStatus.FAILED:
         logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
         wf_run.status = WorkflowStatus.FAILED
