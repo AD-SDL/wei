@@ -1,9 +1,15 @@
 <template>
   <v-container>
     <v-tabs v-model="tab" align-tabs="center" color="deep-purple-accent-4">
-      <v-tab :value="1">Workcells</v-tab>
-      <v-tab :value="2">Workflows</v-tab>
-      <v-tab :value="3">Experiments</v-tab>
+      <v-tab :value="1">
+        Workcells
+      </v-tab>
+      <v-tab :value="2">
+        Workflows
+      </v-tab>
+      <v-tab :value="3">
+        Experiments
+      </v-tab>
       <!-- <v-tab :value="4">Events</v-tab>
           <v-tab :value="5">Admin</v-tab>
           <v-tab :value="6">Resources</v-tab> -->
@@ -18,25 +24,26 @@
             <v-card-text>
               <v-container class="pa-1">
                 <v-row dense wrap justify-content="space-evenly">
-                  <v-col cols=3 md=3 lg=3>
-                    <ModuleColumn :modules=wc_state.modules :main_url=main_url :wc_state=wc_state />
+                  <v-col cols="3" md="3" lg="3">
+                    <ModulesPanel :modules="wc_state.modules" :main_url="main_url" :wc_state="wc_state" />
                   </v-col>
-                  <v-col cols=9 md=9 lg=9>
-                    <LocationsColumn :locations=wc_state.locations />
+                  <v-col cols="9" md="9" lg="9">
+                    <LocationsPanel :locations="wc_state.locations" />
 
-                    <WorkflowsColumn :wc_state="wc_state"  :wfs="wfs" @view-workflows="tab = 2" />
+                    <WorkflowsPanel :wc_state="wc_state" :wfs="wfs" @view-workflows="tab = 2" />
                   </v-col>
                 </v-row>
               </v-container>
-
             </v-card-text>
             <v-card-actions>
-              <v-spacer></v-spacer>
+              <v-spacer />
               <v-dialog max-width="800">
-                <template v-slot:activator="{ props: activatorProps }">
-                  <v-btn color="blue" dark v-bind="activatorProps">Workcell Info</v-btn>
+                <template #activator="{ props: activatorProps }">
+                  <v-btn color="blue" dark v-bind="activatorProps">
+                    Workcell Info
+                  </v-btn>
                 </template>
-                <template v-slot:default="{ isActive }">
+                <template #default="{ isActive }">
                   <v-card>
                     <v-card-title>
                       <h3>Workcell Info</h3>
@@ -45,8 +52,8 @@
                       <vue-json-pretty :data="wc_info" />
                     </v-card-text>
                     <v-card-actions>
-                      <v-spacer></v-spacer>
-                      <v-btn text="Close Dialog" @click="isActive.value = false"></v-btn>
+                      <v-spacer />
+                      <v-btn text="Close Dialog" @click="isActive.value = false" />
                     </v-card-actions>
                   </v-card>
                 </template>
@@ -55,18 +62,16 @@
           </v-card>
         </v-container>
         <v-container v-else>
-                <p>No WC info yet</p>
-              </v-container>
+          <p>No WC info yet</p>
+        </v-container>
       </v-window-item>
       <v-window-item :key="2" :value="2">
         <h2> All Workflows </h2>
-        <WorkflowTable title="All Workflows" :wc_state=wc_state :wfs="wfs" start_open=true />
+        <WorkflowTable title="All Workflows" :wc_state="wc_state" :wfs="wfs" />
       </v-window-item>
       <v-window-item :key="3" :value="3">
         <v-row class="pa-1 ma-1 justify-center">
-
-          <Experiments :experiment_objects="experiment_objects" :wc_state=wc_state />
-
+          <Experiments :experiment_objects="experiment_objects" :wc_state="wc_state" />
         </v-row>
       </v-window-item>
       <!-- <v-window-item :key="4" :value="4">
@@ -94,84 +99,58 @@ const tab = ref(1)
 const wfs = ref([''])
 const experiments = ref()
 const experiments_url = ref()
-const backend_server = ref()
-const workcell_urls = ref()
 const wc_state = ref()
 const wc_info = ref()
 const experiment_keys = ref()
 const experiment_objects: any = ref([])
 main_url.value = "http://".concat(window.location.host) //.concat("/server")
-class Experimentval {
+class ExperimentInfo {
   experiment_id?: string;
   experiment_workflows: any;
   experiment_name?: string;
   num_wfs?: any;
-  num_events? : any;
+  num_events?: any;
   events?: any
-
-
-
 }
 async function get_events(experiment_id: string) {
-  var test = await ((await fetch(main_url.value.concat("/experiments/".concat(experiment_id).concat("/log"))))).json() ;
-  console.log(test)
-  return test
-
+  return await ((await fetch(main_url.value.concat("/experiments/".concat(experiment_id).concat("/log"))))).json();
 }
 watchEffect(async () => {
-  //workcell_urls.value = await (await fetch(backend_server.value)).json();
-  //main_url.value = workcell_urls.value[0]
-
   has_url.value = true;
   state_url.value = main_url.value.concat("/wc/state")
 
   experiments_url.value = main_url.value.concat("/experiments/all")
   workcell_info_url.value = main_url.value.concat("/wc/")
 
-
-
   watchEffect(async () => wc_state.value = await (await fetch(state_url.value)).json())
   watchEffect(async () => wc_info.value = await (await fetch(workcell_info_url.value)).json())
 
+  var new_experiment_keys = [];
+  experiment_keys.value = [];
+  setInterval(updateDashboard, 1000)
 
-  //wc_state.value = { modules: { "test": { state: "test" } } }
-  var old_len: any = 0;
-  var i = 0;
-  setInterval(async () => {
-    if(experiment_keys.value) {
-      old_len =  experiment_keys.value.length
+  async function updateDashboard() {
+    wc_state.value = await (await fetch(state_url.value)).json();
+    wfs.value = Object.keys(wc_state.value.workflows).sort().reverse();
+    experiments.value = await ((await fetch(experiments_url.value)).json());
+    new_experiment_keys = Object.keys(experiments.value).sort();
+    let difference = new_experiment_keys.filter(x => !experiment_keys.value.includes(x));
+    difference.forEach(async function (value: any) {
+      var experiment: ExperimentInfo = new ExperimentInfo();
+      experiment.experiment_id = value;
+      var events = await get_events(value);
 
-    }  else {
-      old_len = 0;
-    }
-    wc_state.value = await (await fetch(state_url.value)).json()
-    wfs.value = Object.keys(wc_state.value.workflows).sort().reverse()
-    experiments.value = await ((await fetch(experiments_url.value)).json())
-    experiment_keys.value = Object.keys(experiments.value).sort()
-    i = 0;
-    experiment_keys.value.forEach(async function (value: any) {
-    i = i+1
-    if (i > old_len) {
-    var experiment: Experimentval = new Experimentval();
-    experiment.experiment_id = value;
-    var events = await get_events(value)
-
-    experiment.experiment_name = experiments.value[value].experiment_name;
-    experiment.experiment_workflows = wfs.value.filter((key: any) => wc_state.value.workflows[key].experiment_id === value);
-    experiment.events = events;
-    experiment.num_wfs = experiment.experiment_workflows.length;
-    experiment.num_events = experiment.events.length;
-    experiment_objects.value.splice(0, 0, experiment)
-    }
-
-});
-
-
-
-  }, 500)
+      experiment.experiment_name = experiments.value[value].experiment_name;
+      experiment.experiment_workflows = wfs.value.filter((key: any) => wc_state.value.workflows[key].experiment_id === value);
+      experiment.events = events;
+      experiment.num_wfs = experiment.experiment_workflows.length;
+      experiment.num_events = experiment.events.length;
+      experiment_objects.value.splice(0, 0, experiment);
+    });
+    experiment_keys.value = Object.keys(experiments.value).sort();
+  }
 }
 )
-
 </script>
 
 <script lang="ts">
@@ -183,55 +162,66 @@ export default {
 <style>
 .module_indicator {
   color: white;
-    border-radius: 5px;
+  border-radius: 5px;
     padding: 3px;
   }
 
-  .IDLE {
-    background-color: green;
-  }
+.module_status_IDLE {
+  background-color: green;
+}
 
-  .BUSY {
-    background-color: blue;
-  }
+.module_status_BUSY {
+  background-color: blue;
+}
 
-  .ERROR {
-    background-color: red;
-  }
+.module_status_ERROR {
+  background-color: red;
+}
 
-  .UNKNOWN {
-    background-color: darkgrey;
-  }
-
-
-  .INIT {
-    background-color: purple;
-  }
+.module_status_UNKNOWN {
+  background-color: darkgrey;
+  color: black;
+}
 
 
-  .wf_indicator {
-    width: 10px;
-    height: 10px;
-    border-radius: 5px;
-    margin-left: 10px;
-  }
+.module_status_INIT {
+  background-color: purple;
+}
 
-  .queued {
-    background-color: yellow;
-  }
+.module_status_PAUSED {
+  background-color: gold;
+  color: black;
+}
 
-  .new {
-    background-color: yellow;
-  }
+.wf_indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  margin-left: 10px;
+}
 
-  .running {
-    background-color: blue;
-  }
+.wf_status_queued,
+.wf_status_new,
+.wf_status_paused {
+  background-color: gold;
+  color: black;
+}
 
-  .completed {
-    background-color: green;
-  }
+.wf_status_running,
+.wf_status_in_progress {
+  background-color: blue;
+}
 
-  .failed {  background-color: red;
+.wf_status_completed {
+  background-color: green;
+}
+
+.wf_status_failed,
+.wf_status_cancelled {
+  background-color: red;
+}
+
+.wf_status_unknown {
+  background-color: darkgray;
 }
 </style>

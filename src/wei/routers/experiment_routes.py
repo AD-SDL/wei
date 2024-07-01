@@ -11,11 +11,22 @@ from fastapi.responses import JSONResponse
 from wei.core.experiment import get_experiment, register_new_experiment
 from wei.core.state_manager import StateManager
 from wei.core.storage import get_experiment_log_file
+from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
 
 router = APIRouter()
 
 state_manager = StateManager()
+
+
+@router.get("/{experiment_id}/events")
+async def event_return(experiment_id: str) -> Dict[str, Event]:
+    """Returns all of the saved events related to an experiment"""
+    events = {}
+    for event_id, event in state_manager.get_all_events().items():
+        if event.experiment_id == experiment_id:
+            events[event_id] = event
+    return events
 
 
 @router.get("/{experiment_id}/log")

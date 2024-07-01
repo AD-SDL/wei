@@ -1,5 +1,6 @@
 """Contains the Events class for logging experiment steps"""
 
+import time
 import traceback
 from typing import Any
 
@@ -14,6 +15,7 @@ from wei.utils import threaded_task
 state_manager = StateManager()
 
 
+@threaded_task
 def send_event(event: Event) -> Any:
     """Sends an event to the server to be logged"""
 
@@ -34,11 +36,20 @@ class EventHandler:
 
     kafka_producer = None
     kafka_topic = None
+    kafka_init_retry = 3
+    kafka_initializing = False
 
     @classmethod
-    def initialize_diaspora(cls) -> None:
+    @threaded_task
+    def initialize_diaspora(cls) -> bool:
         """Initializes the Kafka producer and creates the topic if it doesn't exist already"""
-        if Config.use_diaspora:
+        if (
+            Config.use_diaspora
+            and cls.kafka_init_retry > 0
+            and not cls.kafka_initializing
+        ):
+            cls.kafka_initializing = True
+            cls.kafka_init_retry -= 1
             result = None
             try:
                 from diaspora_event_sdk import Client, KafkaProducer, block_until_ready
@@ -50,23 +61,30 @@ class EventHandler:
 
                 cls.kafka_producer = KafkaProducer(key_serializer=str_to_bytes)
                 cls.kafka_topic = Config.kafka_topic
-                print(f"Creating Diaspora topic: {cls.kafka_topic}")
                 c = Client()
-                result = c.register_topic(cls.kafka_topic)
-                assert result["status"] in [
-                    "success",
-                    "no-op",
-                ]
+                if cls.kafka_topic not in c.list_topics()["topics"]:
+                    print(f"Creating Diaspora topic: {cls.kafka_topic}")
+                    result = c.register_topic(cls.kafka_topic)
+
+                    if result["status"] not in [
+                        "success",
+                        "no-op",
+                    ]:
+                        print("Failed to initialize diaspora.")
+                        print(result)
+                        cls.kafka_producer = None
+                        cls.kafka_topic = None
+                        cls.kafka_initializing = False
+                        return False
+                cls.kafka_initializing = False
+                return True
             except Exception:
                 traceback.print_exc()
                 print("Failed to connect to Diaspora or create topic.")
-                if result:
-                    print(result)
                 cls.kafka_producer = None
                 cls.kafka_topic = None
-        else:
-            cls.kafka_producer = None
-            cls.kafka_topic = None
+                cls.kafka_initializing = False
+                return False
 
     @classmethod
     @threaded_task
@@ -106,6 +124,9 @@ class EventHandler:
     def log_event_diaspora(cls, event: Event, retry_count=3) -> None:
         """Logs an event to diaspora"""
 
+        while cls.kafka_initializing:
+            time.sleep(1)
+
         if cls.kafka_producer and cls.kafka_topic:
             try:
                 future = cls.kafka_producer.send(
@@ -116,8 +137,12 @@ class EventHandler:
                 print(future.get(timeout=10))
             except Exception as e:
                 traceback.print_exc()
-                print(f"Failed to log event to diaspora: {str(e)}")
+                print(
+                    f"Failed to log event to diaspora ({str(e)}), retrying {retry_count} more time(s)"
+                )
                 cls.log_event_diaspora(event, retry_count=retry_count - 1)
         else:
-            cls.initialize_diaspora()
-            cls.log_event_diaspora(event, retry_count=retry_count - 1)
+            while cls.kafka_initializing:
+                time.sleep(1)
+            if cls.initialize_diaspora():
+                cls.log_event_diaspora(event, retry_count=retry_count - 1)
