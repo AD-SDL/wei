@@ -119,3 +119,18 @@ def json_to_csv(json_data, csv_file_path):
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(flattened_data)
+
+
+def threaded_task(func):
+    """Mark a function as a threaded task, to be run without awaiting. Returns the thread object, so you _can_ await if needed."""
+
+    import functools
+    import threading
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> threading.Thread:
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+
+    return wrapper

@@ -57,6 +57,7 @@ def validate_step(step: Step) -> Tuple[bool, str]:
                             f"Step '{step.name}': Module {step.module}'s action, '{step.action}', is missing file '{action_file.name}'",
                         )
                 return True, f"Step '{step.name}': Validated successfully"
+
         return (
             False,
             f"Step '{step.name}': Module {step.module} has no action '{step.action}'",

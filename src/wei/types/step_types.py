@@ -217,10 +217,3 @@ class ActionRequest(BaseModel):
         if v is None:
             return {}
         return v
-
-
-class DataPointLocation(str, Enum):
-    """Status for a step of a workflow"""
-
-    LOCALFILE = "local_file"
-    VALUE = "data_value"

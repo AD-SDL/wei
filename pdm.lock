@@ -5,7 +5,7 @@
 groups = ["default", "dev", "diaspora", "docs", "zmq"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:ddc499f45c44b4939805e3c15d68c065d9e6f7e706650fb7353d7cc732bb5a62"
+content_hash = "sha256:3eb15ad72354970b43ee62432368339a72987729123c502488e383af4525328a"
 
 [[package]]
 name = "alabaster"
@@ -1361,6 +1361,16 @@ files = [
     {file = "ruff-0.4.2-py3-none-win_amd64.whl", hash = "sha256:5ec481661fb2fd88a5d6cf1f83403d388ec90f9daaa36e40e2c003de66751798"},
     {file = "ruff-0.4.2-py3-none-win_arm64.whl", hash = "sha256:cbd1e87c71bca14792948c4ccb51ee61c3296e164019d2d484f3eaa2d360dfaf"},
     {file = "ruff-0.4.2.tar.gz", hash = "sha256:33bcc160aee2520664bc0859cfeaebc84bb7323becff3f303b8f1f2d81cb4edc"},
+]
+
+[[package]]
+name = "secure-smtplib"
+version = "0.1.1"
+summary = "Secure SMTP subclasses for Python 2"
+groups = ["default"]
+files = [
+    {file = "secure-smtplib-0.1.1.tar.gz", hash = "sha256:3d4903f6612626ccd9b77ef05313cb3c3952a59a4d756cda2377b272fabad8b9"},
+    {file = "secure_smtplib-0.1.1-py2.py3-none-any.whl", hash = "sha256:645ea0a341f306fa3307c8fe1169765c417ff363db9946fa69f3669a9b718069"},
 ]
 
 [[package]]
