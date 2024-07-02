@@ -2,6 +2,7 @@
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
 
+import time
 from typing import Annotated
 from zipfile import ZipFile
 
@@ -57,6 +58,7 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
+    time.sleep(2)
     if source == "":
         return StepResponse.step_succeeded()
     return StepResponse.step_succeeded()
@@ -71,6 +73,7 @@ def synthesize(
     protocol: Annotated[UploadFile, "Python Protocol File"],
 ) -> StepResponse:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
+    time.sleep(2)
     protocol = protocol.file.read().decode("utf-8")
     print(protocol)
 
@@ -82,6 +85,7 @@ def synthesize(
 @test_rest_node.action(name="measure")
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
+    time.sleep(2)
     with open("test.txt", "w") as f:
         f.write("test")
     with open("test2.txt", "w") as f:

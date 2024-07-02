@@ -3,8 +3,8 @@ name: Test_Workcell
 #Info about data processing and location of the workcell
 config:
   workcell_origin_coordinates: [0, 0, 0, 0, 0, 0]
-  redis_host: "wei_redis"
-  server_host: "wei_server"
+  redis_host: "test_wei_redis"
+  server_host: "test_wei_server"
   server_port: 8000
   use_diaspora: False
 

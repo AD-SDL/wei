@@ -78,6 +78,13 @@ class ExperimentClient:
             description=description,
             email_addresses=email_addresses,
         )
+        print(f"""
+server_host: {self.server_host}
+server_port: {self.server_port}
+url: {self.url}
+experiment_design: {self.experiment_design.model_dump_json(indent=2)}
+              """)
+        self.experiment_info = None
 
         if working_dir is None:
             self.working_dir = Path.cwd()
@@ -92,12 +99,17 @@ class ExperimentClient:
                     self._register_experiment()
                 else:
                     self._continue_experiment(experiment_id)
+                waiting = False
                 break
             except requests.exceptions.ConnectionError:
                 if not waiting:
                     waiting = True
                     print("Waiting to connect to server...")
                 time.sleep(1)
+        if waiting:
+            raise Exception(
+                "Timed out while attempting to connect with WEI server. Check that your server is running and the server_host and server_port are correct."
+            )
 
     def _register_experiment(self) -> None:
         """Registers a new experiment with the server
