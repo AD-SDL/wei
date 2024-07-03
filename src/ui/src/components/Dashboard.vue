@@ -113,7 +113,7 @@ class ExperimentInfo {
   events?: any
 }
 async function get_events(experiment_id: string) {
-  return await ((await fetch(main_url.value.concat("/experiments/".concat(experiment_id).concat("/log"))))).json();
+  return Object.values(await ((await fetch(main_url.value.concat("/experiments/".concat(experiment_id).concat("/events"))))).json());
 }
 watchEffect(async () => {
   has_url.value = true;
