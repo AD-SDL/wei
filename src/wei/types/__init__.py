@@ -17,6 +17,7 @@ from .module_types import (
     ModuleActionFile,
     ModuleStatus,
 )
+from .recource_types import Collection, Pool, StackQueue
 from .step_types import Step, StepFileResponse, StepResponse, StepStatus
 from .workcell_types import Location, Workcell, WorkcellConfig
 from .workflow_types import Metadata, Workflow, WorkflowRun, WorkflowStatus
@@ -49,4 +50,7 @@ __all__ = [
     "ExperimentDesign",
     "Event",
     "Interface",
+    "Pool",
+    "StackQueue",
+    "Collection",
 ]
