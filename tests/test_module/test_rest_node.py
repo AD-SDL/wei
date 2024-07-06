@@ -6,8 +6,16 @@ from typing import Annotated
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
+
 from wei.modules.rest_module import RESTModule
-from wei.types import StepFileResponse, StepResponse, StepStatus
+from wei.types import (
+    Collection,
+    Pool,
+    StackQueue,
+    StepFileResponse,
+    StepResponse,
+    StepStatus,
+)
 from wei.types.module_types import Location, ModuleState
 from wei.types.step_types import ActionRequest
 
@@ -35,11 +43,28 @@ test_rest_node.arg_parser.add_argument(
     default=0.0,
 )
 
+# Initialize resources
+stack_resource = StackQueue(
+    information="Stack for transfer", name="StackResource", capacity=10, quantity=3
+)
+pool_resource = Pool(
+    information="Pool for synthesis", name="PoolResource", capacity=100.0, quantity=50.0
+)
+collection_resource = Collection(
+    information="Collection for measurement",
+    name="CollectionResource",
+    capacity=5,
+    quantity=2,
+)
+
 
 @test_rest_node.startup()
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
+    state.stack_resource = stack_resource
+    state.pool_resource = pool_resource
+    state.collection_resource = collection_resource
 
 
 @test_rest_node.state_handler()
@@ -56,7 +81,14 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
+    instance = f"Plate{len(state.stack_resource.contents) + 1}"
+    position = state.stack_resource.push(instance)
+
     if source == "":
+        print(position)
+        print(state.stack_resource.quantity)
+        print(state.stack_resource.contents)
+        print("Stack resource updated")
         return StepResponse.step_succeeded(f"Moved new plate to {target}")
     return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
 
