@@ -1,5 +1,6 @@
 """Recource Data Classes"""
 
+import random
 from typing import Any, Dict, List
 
 from pydantic import BaseModel, Field
@@ -21,6 +22,18 @@ class ResourceContainer(BaseModel):
     capacity: float
     quantity: float = 0.0
 
+    def __init__(self, **data: Any):
+        """Constructor of the Resource Container"""
+        super().__init__(**data)
+        if self.quantity > 0 and not data.get("contents"):
+            self.initialize_contents()
+
+    def initialize_contents(self):
+        """
+        Initialize contents with random values. This method should be overridden by subclasses.
+        """
+        pass
+
 
 class Pool(ResourceContainer):
     """
@@ -32,6 +45,14 @@ class Pool(ResourceContainer):
         empty(): Empties the pool.
         fill(): Fills the pool to its capacity.
     """
+
+    contents: List[float] = Field(default_factory=list)
+
+    def initialize_contents(self):
+        """
+        Initialize contents with random float values.
+        """
+        self.contents = [random.uniform(0, 1) for _ in range(int(self.quantity))]
 
     def increase(self, amount: float) -> None:
         """
@@ -74,6 +95,7 @@ class Pool(ResourceContainer):
         Sets the quantity to its capacity.
         """
         self.quantity = self.capacity
+        self.contents = [random.uniform(0, 1) for _ in range(int(self.capacity))]
 
 
 class StackQueue(ResourceContainer):
@@ -90,6 +112,12 @@ class StackQueue(ResourceContainer):
     """
 
     contents: List[Any] = Field(default_factory=list)
+
+    def initialize_contents(self):
+        """
+        Initialize contents with random values.
+        """
+        self.contents = [f"random_item_{i}" for i in range(int(self.quantity))]
 
     def push(self, instance: Any) -> int:
         """
@@ -148,6 +176,14 @@ class Collection(ResourceContainer):
     """
 
     contents: Dict[str, Any] = Field(default_factory=dict)
+
+    def initialize_contents(self):
+        """
+        Initialize contents with random values.
+        """
+        self.contents = {
+            f"location_{i}": f"random_item_{i}" for i in range(int(self.quantity))
+        }
 
     def insert(self, location: str, instance: Any) -> None:
         """
