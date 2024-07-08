@@ -134,6 +134,7 @@ class StackQueue(ResourceContainer):
         """
         if len(self.contents) < int(self.capacity):
             self.contents.append(instance)
+            self.quantity += 1
             return len(self.contents) - 1
         else:
             raise ValueError("Stack/Queue is full.")
@@ -149,6 +150,7 @@ class StackQueue(ResourceContainer):
             ValueError: If the stack/queue is empty.
         """
         if self.contents:
+            self.quantity -= 1
             return self.contents.pop()
         else:
             raise ValueError("Stack/Queue is empty.")
