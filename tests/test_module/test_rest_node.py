@@ -81,6 +81,8 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
+    print(state.stack_resource.quantity)
+    print(state.stack_resource.contents)
     instance = f"Plate{len(state.stack_resource.contents) + 1}"
     position = state.stack_resource.push(instance)
 
