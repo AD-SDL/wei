@@ -117,7 +117,7 @@ class StackQueue(ResourceContainer):
         """
         Initialize contents with random values.
         """
-        self.contents = [f"random_item_{i}" for i in range(int(self.quantity))]
+        self.contents = [f"random_item_{i+1}" for i in range(int(self.quantity))]
 
     def push(self, instance: Any) -> int:
         """
