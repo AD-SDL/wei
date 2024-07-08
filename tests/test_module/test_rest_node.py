@@ -45,7 +45,7 @@ test_rest_node.arg_parser.add_argument(
 
 # Initialize resources
 stack_resource = StackQueue(
-    information="Stack for transfer", name="StackResource", capacity=10, quantity=3
+    information="Stack for transfer", name="StackResource", capacity=10, quantity=4
 )
 pool_resource = Pool(
     information="Pool for synthesis", name="PoolResource", capacity=100.0, quantity=50.0
@@ -106,10 +106,17 @@ def synthesize(
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
     protocol = protocol.file.read().decode("utf-8")
     print(protocol)
+    print(state.pool_resource.quantity)
+    print(state.pool_resource.contents)
+    state.pool_resource.increase(foo)
+    state.pool_resource.increase(bar)
+    state.foobar = state.pool_resource.quantity
+    print(state.pool_resource.quantity)
+    print(state.pool_resource.contents)
 
-    state.foobar = foo + bar
+    # state.foobar = foo + bar
 
-    return StepResponse.step_succeeded("Synthesized sample {foo} + {bar}")
+    return StepResponse.step_succeeded(f"Synthesized sample {foo} + {bar}")
 
 
 @test_rest_node.action(name="measure")
