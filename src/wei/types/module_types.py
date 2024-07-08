@@ -1,7 +1,7 @@
 """Types related to Modules"""
 
 from enum import Enum
-from typing import Any, Dict, Generic, List, Literal, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import (
     AliasChoices,
@@ -98,18 +98,22 @@ class ModuleActionResult(BaseModel):
     """Label of the result"""
     description: str = ""
     """ Description of the result"""
+    type: str = ""
+    """type of the datapoint returnted"""
 
 
 class LocalFileModuleActionResult(ModuleActionResult):
     """Defines a file for a module action"""
 
-    type: Literal["local_file"] = "local_file"
+    type: str = "local_file"
+    """type of the datapoint returned"""
 
 
 class ValueModuleActionResult(ModuleActionResult):
     """Defines a file for a module action"""
 
-    type: Literal["value"] = "value"
+    type: str = "value"
+    """type of the datapoint returned"""
 
 
 class ModuleAction(BaseModel):

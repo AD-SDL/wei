@@ -37,6 +37,7 @@
                   </template>
                   <template #bottom></template>
                 </v-data-table>
+                <h4 v-if="action.files.length > 0">Files</h4>
                 <v-data-table v-if="action.files.length > 0" :headers="file_headers" :items="action.files" hover
                   items-per-page="-1" no-data-text="No Files" density="compact">
                   <template v-slot:item="{ item }: { item: any }">
@@ -45,6 +46,17 @@
                       <td>{{ item.required }}</td>
                       <td>{{ item.description }}</td>
                       <td><v-file-input v-model="item.value" label="File input"></v-file-input></td>
+                    </tr>
+                  </template>
+                </v-data-table>
+                <h4 v-if="action.results.length > 0">Results</h4>
+                <v-data-table v-if="action.results.length > 0" :headers="result_headers" :items="action.results" hover
+                  items-per-page="-1" no-data-text="No Results" density="compact">
+                  <template v-slot:item="{ item }: { item: any }">
+                    <tr>
+                      <td>{{ item.label }}</td>
+                      <td>{{ item.type }}</td>
+                      <td>{{ item.description }}</td>
                     </tr>
                   </template>
                 </v-data-table>
@@ -88,6 +100,12 @@ const copy = ref(false)
 const file_headers = [
   { title: 'Name', key: 'name' },
   { title: 'Required', key: 'required' },
+  { title: 'Description', key: 'description' },
+]
+
+const result_headers = [
+  { title: 'Label', key: 'name' },
+  { title: 'Type', key: 'type' },
   { title: 'Description', key: 'description' },
 ]
 const text = ref()
