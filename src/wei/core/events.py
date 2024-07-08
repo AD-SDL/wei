@@ -144,5 +144,5 @@ class EventHandler:
         else:
             while cls.kafka_initializing:
                 time.sleep(1)
-            if cls.initialize_diaspora():
+            if cls.kafka_init_retry > 0 and cls.initialize_diaspora():
                 cls.log_event_diaspora(event, retry_count=retry_count - 1)
