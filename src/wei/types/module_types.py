@@ -1,7 +1,7 @@
 """Types related to Modules"""
 
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Literal, Optional, Tuple, TypeVar, Union
 
 from pydantic import (
     AliasChoices,
@@ -91,6 +91,27 @@ class ModuleActionFile(BaseModel):
     """Description of the file"""
 
 
+class ModuleActionResult(BaseModel):
+    """Defines a result for a module action"""
+
+    label: str
+    """Label of the result"""
+    description: str = ""
+    """ Description of the result"""
+
+
+class LocalFileModuleActionResult(ModuleActionResult):
+    """Defines a file for a module action"""
+
+    type: Literal["local_file"] = "local_file"
+
+
+class ValueModuleActionResult(ModuleActionResult):
+    """Defines a file for a module action"""
+
+    type: Literal["value"] = "value"
+
+
 class ModuleAction(BaseModel):
     """Defines an action that a module can perform."""
 
@@ -102,6 +123,8 @@ class ModuleAction(BaseModel):
     """A description of the action"""
     files: List[ModuleActionFile] = []
     """Files to be sent along with the action"""
+    results: List[ModuleActionResult] = []
+    """Datapoints resulting from action"""
     function: Optional[Any] = Field(default=None, exclude=True)
     """Function to be called when the action is executed. This must be a callable."""
 

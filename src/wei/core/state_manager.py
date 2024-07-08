@@ -11,10 +11,10 @@ from pottery import InefficientAccessWarning, RedisDict, Redlock
 from wei.config import Config
 from wei.types import Module, Workcell, WorkflowRun
 from wei.types.base_types import ulid_factory
+from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment
 from wei.types.module_types import ModuleDefinition
-from wei.types.step_types import DataPoint
 from wei.types.workcell_types import Location
 
 

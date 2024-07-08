@@ -10,7 +10,12 @@ from fastapi import UploadFile
 from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
 from wei.types import StepFileResponse, StepResponse, StepStatus
-from wei.types.module_types import Location, ModuleState
+from wei.types.module_types import (
+    LocalFileModuleActionResult,
+    Location,
+    ModuleState,
+    ValueModuleActionResult,
+)
 from wei.types.step_types import ActionRequest
 
 # * Test predefined action functions
@@ -71,7 +76,7 @@ def synthesize(
     foo: Annotated[float, "The amount of foo to use"],
     bar: Annotated[float, "The amount of bar to use"],
     protocol: Annotated[UploadFile, "Python Protocol File"],
-) -> StepResponse:
+) -> Annotated[StepResponse, "ajdlkfjal;skfj"]:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
     time.sleep(2)
     protocol = protocol.file.read().decode("utf-8")
@@ -82,7 +87,16 @@ def synthesize(
     return StepResponse.step_succeeded()
 
 
-@test_rest_node.action(name="measure")
+@test_rest_node.action(
+    name="measure",
+    results=[
+        LocalFileModuleActionResult(label="test_file", description="a test file"),
+        LocalFileModuleActionResult(
+            label="test2_file", description="a second test file"
+        ),
+        ValueModuleActionResult(label="test", description="a test value result"),
+    ],
+)
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
     time.sleep(2)

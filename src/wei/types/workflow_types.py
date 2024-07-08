@@ -67,6 +67,20 @@ class Workflow(BaseModel):
                 v[i] = v[i].name
         return v
 
+    @field_validator("flowdef", mode="after")
+    @classmethod
+    def ensure_data_label_uniqueness(cls, v: Any) -> Any:
+        """Ensure that the names of the arguments and files are unique"""
+        labels = []
+        for step in v:
+            if step.data_labels:
+                for key in step.data_labels:
+                    if step.data_labels[key] in labels:
+                        raise ValueError("Data labels must be unique across workflow")
+                    else:
+                        labels.append(step.data_labels[key])
+        return v
+
 
 class WorkflowRun(Workflow):
     """Container for a workflow run"""

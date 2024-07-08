@@ -141,13 +141,13 @@ async function send_wf(action: any) {
   })
   var files: { [k: string]: any } = {};
   action.files.forEach(function (file: any) {
-
+    console.log(file)
     if (file.value === undefined) {
       files[file.name] = ""
     }
     else {
 
-      files[file.name] = file.value[0].name
+      files[file.name] = file.value.name
     }
   })
   wf.flowdef = [{
@@ -173,7 +173,7 @@ async function send_wf(action: any) {
   formData.append("experiment_id", info["experiment_id"])
   action.files.forEach(function (file: any) {
     if (file.value) {
-      formData.append("files", file.value[0])
+      formData.append("files", file.value)
     }
   })
   fetch(props.main_url.concat('/runs/start'), {

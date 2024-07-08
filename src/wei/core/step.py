@@ -20,13 +20,13 @@ from wei.types import (
     WorkflowRun,
     WorkflowStatus,
 )
+from wei.types.datapoint_types import LocalFileDataPoint, ValueDataPoint
 from wei.types.event_types import (
     WorkflowCompletedEvent,
     WorkflowFailedEvent,
     WorkflowStepEvent,
 )
 from wei.types.interface_types import InterfaceMap
-from wei.types.step_types import LocalFileDataPoint, ValueDataPoint
 
 state_manager = StateManager()
 

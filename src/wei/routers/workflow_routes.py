@@ -49,7 +49,10 @@ async def start_run(
     response: Dict
     - a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    wf = Workflow.model_validate_json(workflow)
+    try:
+        wf = Workflow.model_validate_json(workflow)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     if payload is None:
         payload = {}
