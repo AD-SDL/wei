@@ -125,7 +125,7 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     print(state.collection_resource.quantity)
     print(state.collection_resource.contents)
     instance = {"measurement": state.foobar}
-    location = f"location_{len(state.collection_resource.contents)}"
+    location = f"location_{len(state.collection_resource.contents)+1}"
     state.collection_resource.insert(location, instance)
     print(state.collection_resource.quantity)
     print(state.collection_resource.contents)
