@@ -84,10 +84,9 @@ def transfer(
     print(state.stack_resource.quantity)
     print(state.stack_resource.contents)
     instance = f"Plate{len(state.stack_resource.contents) + 1}"
-    position = state.stack_resource.push(instance)
+    state.stack_resource.push(instance)
 
     if source == "":
-        print(position)
         print(state.stack_resource.quantity)
         print(state.stack_resource.contents)
         print("Stack resource updated")
@@ -122,6 +121,15 @@ def synthesize(
 @test_rest_node.action(name="measure")
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
+
+    print(state.collection_resource.quantity)
+    print(state.collection_resource.contents)
+    instance = {"measurement": state.foobar}
+    location = f"location_{len(state.collection_resource.contents)}"
+    state.collection_resource.insert(location, instance)
+    print(state.collection_resource.quantity)
+    print(state.collection_resource.contents)
+
     with open("test.txt", "w") as f:
         f.write("test")
     return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
