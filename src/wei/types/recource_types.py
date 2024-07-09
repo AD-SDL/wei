@@ -135,7 +135,6 @@ class StackQueue(ResourceContainer):
         if len(self.contents) < int(self.capacity):
             self.contents.append(instance)
             self.quantity += 1
-            return len(self.contents) - 1
         else:
             raise ValueError("Stack/Queue is full.")
 
@@ -184,7 +183,7 @@ class Collection(ResourceContainer):
         Initialize contents with random values.
         """
         self.contents = {
-            f"location_{i}": f"random_item_{i}" for i in range(int(self.quantity))
+            f"location_{i+1}": f"random_item_{i+1}" for i in range(int(self.quantity))
         }
 
     def insert(self, location: str, instance: Any) -> None:
@@ -200,6 +199,7 @@ class Collection(ResourceContainer):
         """
         if len(self.contents) < int(self.capacity):
             self.contents[location] = instance
+            self.quantity += 1
         else:
             raise ValueError("Collection is full.")
 
@@ -219,6 +219,7 @@ class Collection(ResourceContainer):
         if value and value in self.contents:
             pass
         if location and location in self.contents:
+            self.quantity -= 1
             return self.contents.pop(location)
         else:
             raise ValueError("Invalid location.")
