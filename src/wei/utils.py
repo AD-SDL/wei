@@ -134,3 +134,19 @@ def threaded_task(func):
         return thread
 
     return wrapper
+
+
+def threaded_daemon(func):
+    """Mark a function as a threaded daemon, to be run without awaiting. Returns the thread object, so you _can_ await if needed, and stops when the calling thread terminates."""
+
+    import functools
+    import threading
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> threading.Thread:
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.daemon = True
+        thread.start()
+        return thread
+
+    return wrapper

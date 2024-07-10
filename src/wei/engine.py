@@ -16,7 +16,7 @@ from wei.core.state_manager import StateManager
 from wei.core.storage import initialize_storage
 from wei.core.workflow import cancel_active_workflow_runs
 from wei.types.event_types import WorkcellStartEvent
-from wei.utils import initialize_state, parse_args
+from wei.utils import initialize_state, parse_args, threaded_daemon
 
 
 class Engine:
@@ -39,7 +39,6 @@ class Engine:
         with self.state_manager.wc_state_lock():
             initialize_state()
         time.sleep(Config.cold_start_delay)
-        self.wait_for_server()
 
         print("Engine initialized, waiting for workflows...")
         send_event(WorkcellStartEvent(workcell=self.state_manager.get_workcell()))
@@ -87,6 +86,11 @@ class Engine:
                     f"Error in engine loop, waiting {Config.update_interval} seconds before trying again."
                 )
                 time.sleep(Config.update_interval)
+
+    @threaded_daemon
+    def start_engine_thread(self):
+        """Spins the engine in its own thread"""
+        self.spin()
 
 
 if __name__ == "__main__":
