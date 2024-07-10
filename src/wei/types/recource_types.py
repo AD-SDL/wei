@@ -20,7 +20,7 @@ class Asset(BaseModel):
     name: str
 
     class Config:
-        """Make sure the dataclass is set to allow extra fields with Pydantic"""
+        """Sets the dataclass to allow extra fields with Pydantic"""
 
         extra = "allow"
 
@@ -54,7 +54,7 @@ class ResourceContainer(BaseModel):
         pass
 
     class Config:
-        """Make sure the dataclass is set to allow extra fields with Pydantic"""
+        """Sets the dataclass to allow extra fields with Pydantic"""
 
         extra = "allow"
 
