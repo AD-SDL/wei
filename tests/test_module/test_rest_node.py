@@ -9,8 +9,10 @@ from fastapi.datastructures import State
 
 from wei.modules.rest_module import RESTModule
 from wei.types import (
+    Asset,
     Collection,
     Pool,
+    PoolCollection,
     StackQueue,
     StepFileResponse,
     StepResponse,
@@ -46,10 +48,24 @@ test_rest_node.arg_parser.add_argument(
 # NEED A RESOURCE DECORATOR similar to action decotor
 # Initialize resources
 stack_resource = StackQueue(
-    information="Stack for transfer", name="StackResource", capacity=10, quantity=4
+    information="Stack for transfer",
+    name="StackResource",
+    capacity=10,
+    quantity=3,
+    contents=[Asset(name="Plate1"), Asset(name="Plate2"), Asset(name="Plate3")],
 )
-pool_resource = Pool(
-    information="Pool for synthesis", name="PoolResource", capacity=100.0, quantity=50.0
+pool_collection_resource = PoolCollection(
+    name="Plate1",
+    wells=[
+        Pool(
+            information=f"Well {i+1}",
+            name=f"Well{i+1}",
+            capacity=100.0,
+            quantity=50.0,
+            contents={"description": "Yellow ink", "quantity": 50.0},
+        )
+        for i in range(96)
+    ],
 )
 collection_resource = Collection(
     information="Collection for measurement",
@@ -64,7 +80,7 @@ def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
     state.stack_resource = stack_resource
-    state.pool_resource = pool_resource
+    state.pool_resource = pool_collection_resource
     state.collection_resource = collection_resource
 
 
@@ -84,8 +100,8 @@ def transfer(
     """Transfers a sample from source to target"""
     print(state.stack_resource.quantity)
     print(state.stack_resource.contents)
-    instance = f"Plate{len(state.stack_resource.contents) + 1}"
-    state.stack_resource.push(instance)
+    new_plate = Asset(name=f"Plate{len(state.stack_resource.contents) + 1}")
+    state.stack_resource.push(new_plate)
 
     if source == "":
         print(state.stack_resource.quantity)
@@ -108,11 +124,17 @@ def synthesize(
     print(protocol)
     print(state.pool_resource.quantity)
     print(state.pool_resource.contents)
-    state.pool_resource.increase(foo)
-    state.pool_resource.increase(bar)
-    state.foobar = state.pool_resource.quantity
-    print(state.pool_resource.quantity)
-    print(state.pool_resource.contents)
+    # Assume we use the first and second wells in the plate for this example
+    well1 = state.pool_collection_resource.wells[0]
+    well2 = state.pool_collection_resource.wells[1]
+    well3 = state.pool_collection_resource.wells[2]
+    well4 = state.pool_collection_resource.wells[3]
+    well1.increase(foo)
+    well2.decrease(bar)
+    well3.fill()
+    well4.empty()
+    print(state.pool_collection_resource.quantity)
+    print(state.pool_collection_resource.contents)
 
     # state.foobar = foo + bar
 
