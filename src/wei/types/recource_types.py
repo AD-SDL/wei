@@ -3,7 +3,26 @@
 import random
 from typing import Any, Dict, List
 
+import ulid
 from pydantic import BaseModel, Field
+
+
+class Asset(BaseModel):
+    """
+    Represents an asset (microplate) used for bio/chemistry experiments.
+
+    Attributes:
+        id (str): Unique identifier for the asset.
+        name (str): Name of the asset.
+    """
+
+    id: str = Field(default_factory=lambda: str(ulid.new()))
+    name: str
+
+    class Config:
+        """Make sure the dataclass is set to allow extra fields with Pydantic"""
+
+        extra = "allow"
 
 
 class ResourceContainer(BaseModel):
@@ -34,6 +53,11 @@ class ResourceContainer(BaseModel):
         """
         pass
 
+    class Config:
+        """Make sure the dataclass is set to allow extra fields with Pydantic"""
+
+        extra = "allow"
+
 
 class Pool(ResourceContainer):
     """
@@ -46,7 +70,11 @@ class Pool(ResourceContainer):
         fill(): Fills the pool to its capacity.
     """
 
-    contents: List[float] = Field(default_factory=list)
+    contents: List[float] = Field(
+        default_factory=list
+    )  # No need for initial content with random values
+    # We also need collection of pool like to stroe multiple liquid types
+    # Weel in a plate would be collection of pools
 
     def initialize_contents(self):
         """
@@ -98,6 +126,12 @@ class Pool(ResourceContainer):
         self.contents = [random.uniform(0, 1) for _ in range(int(self.capacity))]
 
 
+class CollectionPool(ResourceContainer):
+    """Collection pool"""
+
+    pass
+
+
 class StackQueue(ResourceContainer):
     """
     Class representing a stack or queue resource.
@@ -111,13 +145,13 @@ class StackQueue(ResourceContainer):
         contents(): Returns the contents of the stack/queue.
     """
 
-    contents: List[Any] = Field(default_factory=list)
+    contents: List[Asset] = Field(default_factory=list)
 
     def initialize_contents(self):
         """
-        Initialize contents with random values.
+        Initialize contents with default assets.
         """
-        self.contents = [f"random_item_{i+1}" for i in range(int(self.quantity))]
+        self.contents = [Asset(name=f"Plate{i+1}") for i in range(int(self.quantity))]
 
     def push(self, instance: Any) -> int:
         """
