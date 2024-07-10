@@ -43,6 +43,7 @@ test_rest_node.arg_parser.add_argument(
     default=0.0,
 )
 
+# NEED A RESOURCE DECORATOR similar to action decotor
 # Initialize resources
 stack_resource = StackQueue(
     information="Stack for transfer", name="StackResource", capacity=10, quantity=4
