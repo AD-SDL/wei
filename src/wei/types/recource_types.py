@@ -70,17 +70,13 @@ class Pool(ResourceContainer):
         fill(): Fills the pool to its capacity.
     """
 
-    contents: List[float] = Field(
-        default_factory=list
-    )  # No need for initial content with random values
-    # We also need collection of pool like to stroe multiple liquid types
-    # Weel in a plate would be collection of pools
+    contents: Dict[str, Any] = Field(default_factory=dict)
 
     def initialize_contents(self):
         """
-        Initialize contents with random float values.
+        Initialize contents with default information about the asset.
         """
-        self.contents = [random.uniform(0, 1) for _ in range(int(self.quantity))]
+        self.contents = {"description": self.name, "quantity": self.quantity}
 
     def increase(self, amount: float) -> None:
         """
@@ -126,10 +122,24 @@ class Pool(ResourceContainer):
         self.contents = [random.uniform(0, 1) for _ in range(int(self.capacity))]
 
 
-class CollectionPool(ResourceContainer):
-    """Collection pool"""
+class PoolCollection(BaseModel):
+    """
+    Class representing a collection of pools in a plate.
 
-    pass
+    Attributes:
+        id (str): Unique identifier for the plate.
+        name (str): Name of the plate.
+        wells (List[Pool]): List of pools representing wells in the plate.
+    """
+
+    id: str = Field(default_factory=lambda: str(ulid.new()))
+    name: str
+    wells: List[Pool]
+
+    class Config:
+        """Sets the dataclass to allow extra fields with Pydantic"""
+
+        extra = "allow"
 
 
 class StackQueue(ResourceContainer):
