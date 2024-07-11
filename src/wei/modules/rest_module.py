@@ -10,7 +10,7 @@ import traceback
 import warnings
 from contextlib import asynccontextmanager
 from threading import Thread
-from typing import Any, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 from fastapi import (
     APIRouter,
@@ -58,7 +58,7 @@ class RESTModule:
     """The interface used by the module."""
     actions: List[ModuleAction] = []
     """A list of actions that the module can perform."""
-    resource_pools: List[Any] = []
+    resources: List[Any] = []
     """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
@@ -82,7 +82,7 @@ class RESTModule:
         model: Optional[str] = None,
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
-        resource_pools: Optional[List[Any]] = None,
+        resources: Optional[List[Any]] = None,
         admin_commands: Optional[Set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
@@ -105,7 +105,7 @@ class RESTModule:
         self.model = model
         self.interface = interface
         self.actions = actions if actions else []
-        self.resource_pools = resource_pools if resource_pools else []
+        self.resources = resources if resources else []
         self.admin_commands = admin_commands if admin_commands else set()
         self.admin_commands.add(AdminCommands.SHUTDOWN)
 
@@ -256,6 +256,24 @@ class RESTModule:
 
         def decorator(function):
             self._state_handler = function
+            return function
+
+        return decorator
+
+    @staticmethod
+    def _resources_handler(state: State) -> Dict[str, Any]:
+        warnings.warn(
+            message="No module-specific resources handler defined, use the `@<class RestModule>.resources` decorator to define.",
+            category=UserWarning,
+            stacklevel=1,
+        )
+        return {}
+
+    def resources(self):
+        """Decorator to add resource-handling functions to the module."""
+
+        def decorator(function):
+            self._resources_handler = function
             return function
 
         return decorator
@@ -710,5 +728,10 @@ if __name__ == "__main__":
         """Custom safety-stop functionality"""
         print("Custom safety-stop functionality")
         return {"message": "Custom safety-stop functionality"}
+
+    @rest_module.resources()
+    def example_resources_handler(state: State):
+        """Example resources handler."""
+        return {"example_resource": "This is an example resource"}
 
     rest_module.start()
