@@ -1,6 +1,5 @@
 """Recource Data Classes"""
 
-import random
 from typing import Any, Dict, List
 
 import ulid
@@ -90,6 +89,7 @@ class Pool(ResourceContainer):
         """
         if self.quantity + amount <= self.capacity:
             self.quantity += amount
+            self.contents["quantity"] = self.quantity
         else:
             raise ValueError("Exceeds capacity.")
 
@@ -105,6 +105,7 @@ class Pool(ResourceContainer):
         """
         if self.quantity - amount >= 0:
             self.quantity -= amount
+            self.contents["quantity"] = self.quantity
         else:
             raise ValueError("Cannot decrease quantity below zero.")
 
@@ -113,13 +114,14 @@ class Pool(ResourceContainer):
         Empty by setting the quantity to zero.
         """
         self.quantity = 0.0
+        self.contents["quantity"] = 0.0
 
     def fill(self) -> None:
         """
         Sets the quantity to its capacity.
         """
         self.quantity = self.capacity
-        self.contents = [random.uniform(0, 1) for _ in range(int(self.capacity))]
+        self.contents["quantity"] = self.capacity
 
 
 class PoolCollection(BaseModel):
@@ -134,7 +136,7 @@ class PoolCollection(BaseModel):
 
     id: str = Field(default_factory=lambda: str(ulid.new()))
     name: str
-    wells: List[Pool]
+    wells: Dict[str, Pool] = Field(default_factory=dict)
 
     class Config:
         """Sets the dataclass to allow extra fields with Pydantic"""
