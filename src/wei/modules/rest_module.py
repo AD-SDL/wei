@@ -24,7 +24,7 @@ from fastapi import (
 from fastapi.datastructures import State
 from typing_extensions import Annotated, get_type_hints
 
-from wei.types import ModuleStatus
+from wei.types import Asset, ModuleStatus
 from wei.types.module_types import (
     AdminCommands,
     ModuleAbout,
@@ -261,13 +261,67 @@ class RESTModule:
         return decorator
 
     @staticmethod
-    def _resources_handler(state: State) -> Dict[str, Any]:
+    def _resources_handler(
+        state: State,
+        resource_type: str,
+        resource: Any,
+        action: str,
+        name: Optional[str] = None,
+        **kwargs,
+    ) -> Union[ModuleState, Dict[str, Any]]:
         warnings.warn(
             message="No module-specific resources handler defined, use the `@<class RestModule>.resources` decorator to define.",
             category=UserWarning,
             stacklevel=1,
         )
-        return {}
+        if resource_type == "stack":
+            if action == "push":
+                asset = kwargs.get("asset")
+                if not asset:
+                    asset_name = name if name else f"Plate{len(resource.contents) + 1}"
+                    asset = Asset(name=asset_name)
+                resource.push(asset)
+            elif action == "pop":
+                resource.pop()
+
+        elif resource_type == "pool":
+            well_id = kwargs.get("well_id")
+            amount = kwargs.get("amount", 0)
+            if well_id and well_id in resource.wells:
+                if action == "increase":
+                    resource.wells[well_id].increase(amount)
+                elif action == "decrease":
+                    resource.wells[well_id].decrease(amount)
+                elif action == "fill":
+                    resource.wells[well_id].fill()
+                elif action == "empty":
+                    resource.wells[well_id].empty()
+        elif resource_type == "collection":
+            location = kwargs.get("location")
+            instance = kwargs.get("instance")
+            if action == "insert" and location and instance:
+                resource.insert(location, instance)
+            elif action == "retrieve" and location:
+                return resource.retrieve(
+                    location
+                )  # TODO: Might need to be handled else where
+        elif resource_type == "pool_collection":
+            if action == "update_well":
+                well_id = kwargs.get("well_id")
+                well_action = kwargs.get("well_action")
+                amount = kwargs.get("amount", 0)
+                if well_id and well_id in resource.wells:
+                    well = resource.wells[well_id]
+                    if well_action == "increase":
+                        well.increase(amount)
+                    elif well_action == "decrease":
+                        well.decrease(amount)
+                    elif well_action == "fill":
+                        well.fill()
+                    elif well_action == "empty":
+                        well.empty()
+
+        return ModuleState(status=state.status, error=state.error)
 
     def resources(self):
         """Decorator to add resource-handling functions to the module."""
