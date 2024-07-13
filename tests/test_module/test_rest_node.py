@@ -89,28 +89,7 @@ def state_handler(state: State) -> ModuleState:
 # @test_rest_node.resources()
 # def resources_handler(state: State) -> Dict[str, Any]:
 #     """Handles the resources of the module"""
-#     test_rest_node.print_resource_state(state)
-#     return {
-#         "stack_resource": {
-#             "quantity": state.stack_resource.quantity,
-#             "contents": [
-#                 {"id": asset.id, "name": asset.name} for asset in state.stack_resource.contents
-#             ]
-#         },
-#         "pool_collection_resource": {
-#             "wells": {
-#                 well_id: {
-#                     "quantity": well.quantity,
-#                     "contents": well.contents
-#                 }
-#                 for well_id, well in state.pool_collection_resource.wells.items()
-#             }
-#         },
-#         "collection_resource": {
-#             "quantity": state.collection_resource.quantity,
-#             "contents": state.collection_resource.contents
-#         }
-#     }
+#     pass
 
 
 @test_rest_node.action()
@@ -119,15 +98,14 @@ def transfer(
     action: ActionRequest,
     target: Annotated[Location[str], "the location to transfer to"],
     source: Annotated[Location[str], "the location to transfer from"] = "",
-    plate_name: Optional[str] = None,
+    plate_name: Optional[str] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
     stack_resource = state.stack_resource
 
-    if source == "":
-        test_rest_node._resources_handler(
-            state, "stack", stack_resource, "push", name=plate_name
-        )
+    test_rest_node._resources_handler(
+        state, "stack/queue", stack_resource, "push", name=plate_name
+    )
     return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
 
 
@@ -178,6 +156,21 @@ def synthesize(
         "update_well",
         well_id="D1",
         well_action="empty",
+    )
+
+    # Example usage of update_plate
+    new_plate_contents = {
+        "A2": {"description": "Red ink", "quantity": 10.0},
+        "B2": {"description": "Blue ink", "quantity": 20.0},
+        "C2": {"description": "Green ink", "quantity": 30.0},
+        "D2": {"description": "Yellow ink", "quantity": 40.0},
+    }
+    test_rest_node._resources_handler(
+        state,
+        "pool_collection",
+        pool_collection_resource,
+        "update_plate",
+        new_contents=new_plate_contents,
     )
 
     return StepResponse.step_succeeded(f"Synthesized sample {foo} + {bar}")
