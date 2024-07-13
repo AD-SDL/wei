@@ -1,6 +1,6 @@
 """Recource Data Classes"""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import ulid
 from pydantic import BaseModel, Field
@@ -134,9 +134,36 @@ class PoolCollection(BaseModel):
         wells (List[Pool]): List of pools representing wells in the plate.
     """
 
-    id: str = Field(default_factory=lambda: str(ulid.new()))
     name: str
     wells: Dict[str, Pool] = Field(default_factory=dict)
+
+    def update_well(self, well_id: str, action: str, amount: float = 0.0):
+        """Updates specific wells"""
+        if well_id in self.wells:
+            well = self.wells[well_id]
+            if action == "increase":
+                well.increase(amount)
+            elif action == "decrease":
+                well.decrease(amount)
+            elif action == "fill":
+                well.fill()
+            elif action == "empty":
+                well.empty()
+
+    def update_plate(self, new_contents: Dict[str, Dict[str, Union[str, float]]]):
+        """Updates the whole plate content"""
+        for well_id, content in new_contents.items():
+            if well_id in self.wells:
+                self.wells[well_id].contents = content
+                self.wells[well_id].quantity = content.get("quantity", 0.0)
+            else:
+                self.wells[well_id] = Pool(
+                    information=f"Well {well_id}",
+                    name=f"Well{well_id}",
+                    capacity=100.0,  # Assume a default capacity if not provided
+                    quantity=content.get("quantity", 0.0),
+                    contents=content,
+                )
 
     class Config:
         """Sets the dataclass to allow extra fields with Pydantic"""
