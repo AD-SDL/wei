@@ -269,11 +269,6 @@ class RESTModule:
         name: Optional[str] = None,
         **kwargs,
     ) -> Union[ModuleState, Dict[str, Any]]:
-        warnings.warn(
-            message="No module-specific resources handler defined, use the `@<class RestModule>.resources` decorator to define.",
-            category=UserWarning,
-            stacklevel=1,
-        )
         if action == "get_resources":
             resources_info = {}
 
@@ -315,8 +310,10 @@ class RESTModule:
                         asset_name = f"Plate{len(resource.contents) + 1}"
                     asset = Asset(name=asset_name)
                 resource.push(asset)
+                state.stack_resource = resource
             elif action == "pop":
                 resource.pop()
+                state.stack_resource = resource
 
         elif resource_type == "pool":
             well_id = kwargs.get("well_id")
@@ -330,15 +327,17 @@ class RESTModule:
                     resource.wells[well_id].fill()
                 elif action == "empty":
                     resource.wells[well_id].empty()
+                state.pool_resource = resource
+
         elif resource_type == "collection":
             location = kwargs.get("location")
             instance = kwargs.get("instance")
             if action == "insert" and location and instance:
                 resource.insert(location, instance)
+                state.collection_resource = resource
             elif action == "retrieve" and location:
-                return resource.retrieve(
-                    location
-                )  # TODO: Might need to be handled else where
+                return resource.retrieve(location)
+
         elif resource_type == "pool_collection":
             if action == "update_well":
                 well_id = kwargs.get("well_id")
@@ -354,9 +353,11 @@ class RESTModule:
                         well.fill()
                     elif well_action == "empty":
                         well.empty()
+                state.pool_collection_resource = resource
             elif action == "update_plate":
                 new_contents = kwargs.get("new_contents", {})
                 resource.update_plate(new_contents)
+                state.pool_collection_resource = resource
 
         return ModuleState(status=state.status, error=state.error)
 
@@ -673,12 +674,12 @@ class RESTModule:
             # * If the module is in INIT, return without calling custom state handler
             if state.status in [ModuleStatus.INIT, ModuleStatus.ERROR]:
                 return ModuleState(status=ModuleStatus.INIT, error=state.error)
-            return self._resources_handler(state, "any", None, "get_resources")
+            return self._state_handler(state=state)
 
         @self.router.get("/resources")
         async def resources(request: Request):
             state = request.app.state
-            return self._resources_handler(state)
+            return self._resources_handler(state, "any", None, "get_resources")
 
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:

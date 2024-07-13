@@ -102,10 +102,13 @@ def transfer(
 ) -> StepResponse:
     """Transfers a sample from source to target"""
     stack_resource = state.stack_resource
+    # print(stack_resource.quantity)
+    # print(stack_resource.contents)
 
     test_rest_node._resources_handler(
         state, "stack/queue", stack_resource, "push", name=plate_name
     )
+    print(test_rest_node._resources_handler(state, "any", None, "get_resources"))
     return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
 
 
