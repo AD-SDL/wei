@@ -274,11 +274,45 @@ class RESTModule:
             category=UserWarning,
             stacklevel=1,
         )
-        if resource_type == "stack":
+        if action == "get_resources":
+            resources_info = {}
+
+            if hasattr(state, "stack_resource"):
+                resources_info["stack_resource"] = {
+                    "quantity": state.stack_resource.quantity,
+                    "contents": [
+                        {"id": asset.id, "name": asset.name}
+                        for asset in state.stack_resource.contents
+                    ],
+                }
+
+            if hasattr(state, "pool_collection_resource"):
+                resources_info["pool_collection_resource"] = {
+                    "wells": {
+                        well_id: {
+                            "quantity": well.quantity,
+                            "contents": well.contents,
+                        }
+                        for well_id, well in state.pool_collection_resource.wells.items()
+                    }
+                }
+
+            if hasattr(state, "collection_resource"):
+                resources_info["collection_resource"] = {
+                    "quantity": state.collection_resource.quantity,
+                    "contents": state.collection_resource.contents,
+                }
+
+            return resources_info
+
+        if resource_type == "stack/queue":
             if action == "push":
                 asset = kwargs.get("asset")
                 if not asset:
-                    asset_name = name if name else f"Plate{len(resource.contents) + 1}"
+                    if name != "":
+                        asset_name = name
+                    else:
+                        asset_name = f"Plate{len(resource.contents) + 1}"
                     asset = Asset(name=asset_name)
                 resource.push(asset)
             elif action == "pop":
@@ -320,6 +354,9 @@ class RESTModule:
                         well.fill()
                     elif well_action == "empty":
                         well.empty()
+            elif action == "update_plate":
+                new_contents = kwargs.get("new_contents", {})
+                resource.update_plate(new_contents)
 
         return ModuleState(status=state.status, error=state.error)
 
@@ -640,8 +677,8 @@ class RESTModule:
 
         @self.router.get("/resources")
         async def resources(request: Request):
-            # state = request.app.state
-            return {"resources": {}}
+            state = request.app.state
+            return self._resources_handler(state)
 
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
