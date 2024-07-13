@@ -673,7 +673,7 @@ class RESTModule:
             # * If the module is in INIT, return without calling custom state handler
             if state.status in [ModuleStatus.INIT, ModuleStatus.ERROR]:
                 return ModuleState(status=ModuleStatus.INIT, error=state.error)
-            return self._state_handler(state=state)
+            return self._resources_handler(state, "any", None, "get_resources")
 
         @self.router.get("/resources")
         async def resources(request: Request):
