@@ -4,7 +4,6 @@ REST-based node that interfaces with WEI and provides various fake actions for t
 
 import time
 from typing import Annotated
-from zipfile import ZipFile
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
@@ -76,7 +75,7 @@ def synthesize(
     foo: Annotated[float, "The amount of foo to use"],
     bar: Annotated[float, "The amount of bar to use"],
     protocol: Annotated[UploadFile, "Python Protocol File"],
-) -> Annotated[StepResponse, "ajdlkfjal;skfj"]:
+) -> StepResponse:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
     time.sleep(2)
     protocol = protocol.file.read().decode("utf-8")
@@ -104,15 +103,10 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         f.write("test")
     with open("test2.txt", "w") as f:
         f.write("test")
-    testfile = ZipFile("test_zip.zip", "w")
-    testfile.write("test.txt")
-    testfile.write("test2.txt")
-    testfile.close()
 
     return StepFileResponse(
         StepStatus.SUCCEEDED,
-        {"test_file": "test.txt", "test2_file": "test2.txt"},
-        path="test_zip.zip",
+        files={"test_file": "test.txt", "test2_file": "test2.txt"},
         data={"test": {"test": "test"}},
     )
 

@@ -3,8 +3,9 @@
 import json
 from datetime import datetime, timedelta
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional
+from zipfile import ZipFile
 
 import yaml
 from fastapi import UploadFile
@@ -89,10 +90,13 @@ class StepFileResponse(FileResponse):
         """
         Returns a FileResponse with the given path as the response content
         """
-        if path is None:
-            path = files[list(files.keys())[0]]
+        temp = ZipFile("temp.zip", "w")
+        for file in files:
+            temp.write(files[file])
+            files[file] = str(PureWindowsPath(files[file]).name)
+
         return super().__init__(
-            path=path,
+            path="temp.zip",
             headers=StepResponse(status=status, files=files, data=data).to_headers(),
         )
 
