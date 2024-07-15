@@ -442,7 +442,7 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                 return response.json()
             except Exception:
                 return response.content
-        return response
+        response.raise_for_status()
 
     def save_datapoint_value(
         self, datapoint_id: str, output_filepath: str
@@ -470,7 +470,7 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                 Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
                 with open(output_filepath, "wb") as f:
                     f.write(response.content)
-        return response
+        response.raise_for_status()
 
     def log_experiment_end(self) -> Event:
         """Logs the end of the experiment in the experiment log

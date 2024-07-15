@@ -4,6 +4,7 @@ Router for the "runs" endpoints
 
 import json
 import os
+import traceback
 from typing import Annotated, Any, Dict, Optional
 
 import yaml
@@ -52,6 +53,7 @@ async def start_run(
     try:
         wf = Workflow.model_validate_json(workflow)
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e)) from e
 
     if payload is None:

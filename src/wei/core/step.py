@@ -161,7 +161,6 @@ def run_step(
     if step_response.files:
         if not new_data:
             new_data = {}
-        print(step_response.files)
         for file in step_response.files:
             if step.data_labels is not None and file in step.data_labels:
                 label = step.data_labels[file]

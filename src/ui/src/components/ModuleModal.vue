@@ -159,7 +159,6 @@ async function send_wf(action: any) {
   })
   var files: { [k: string]: any } = {};
   action.files.forEach(function (file: any) {
-    console.log(file)
     if (file.value === undefined) {
       files[file.name] = ""
     }

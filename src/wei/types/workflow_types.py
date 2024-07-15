@@ -103,7 +103,6 @@ class WorkflowRun(Workflow):
     """Index of the current step"""
     simulate: bool = False
     """Whether or not this workflow is being simulated"""
-    data: Optional[Dict[str, str]] = None
     start_time: Optional[datetime] = None
     """Time the workflow started running"""
     end_time: Optional[datetime] = None

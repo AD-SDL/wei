@@ -63,8 +63,6 @@ def transfer(
 ) -> StepResponse:
     """Transfers a sample from source to target"""
     time.sleep(2)
-    if source == "":
-        return StepResponse.step_succeeded()
     return StepResponse.step_succeeded()
 
 

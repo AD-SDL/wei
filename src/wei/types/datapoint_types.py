@@ -1,6 +1,6 @@
 """Types related to datapoint types"""
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import Field
 
@@ -8,17 +8,17 @@ from wei.types.base_types import BaseModel, ulid_factory
 
 
 class DataPoint(BaseModel):
-    """An object to containt and locate data identified by modules"""
+    """An object to contain and locate data identified by modules"""
 
     label: str
     """label of this data point"""
-    step_id: Optional[str] = None
+    step_id: Optional[str]
     """step that generated the data point"""
-    workflow_id: Optional[str] = None
+    workflow_id: Optional[str]
     """workflow that generated the data point"""
-    experiment_id: Optional[str] = None
+    experiment_id: Optional[str]
     """experiment that generated the data point"""
-    type: str = "base"
+    type: str
     """type of the datapoint, inherited from class"""
     campaign_id: Optional[str] = None
     """campaign of the data point"""
@@ -29,7 +29,7 @@ class DataPoint(BaseModel):
 class LocalFileDataPoint(DataPoint):
     """a datapoint containing a file"""
 
-    type: str = "local_file"
+    type: str = Literal["local_file"]
     """local file"""
     path: str
     """path to the file"""
@@ -38,7 +38,7 @@ class LocalFileDataPoint(DataPoint):
 class ValueDataPoint(DataPoint):
     """a datapoint contained in the Json value"""
 
-    type: str = "data_value"
+    type: str = Literal["data_value"]
     """data_value"""
     value: Any
     """value of the data point"""
