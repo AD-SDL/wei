@@ -6,7 +6,7 @@ import ulid
 from pydantic import BaseModel, Field
 
 
-class Asset(BaseModel):
+class Asset(BaseModel, extra="allow"):
     """
     Represents an asset (microplate) used for bio/chemistry experiments.
 
@@ -18,13 +18,8 @@ class Asset(BaseModel):
     id: str = Field(default_factory=lambda: str(ulid.new()))
     name: str
 
-    class Config:
-        """Sets the dataclass to allow extra fields with Pydantic"""
 
-        extra = "allow"
-
-
-class ResourceContainer(BaseModel):
+class ResourceContainer(BaseModel, extra="allow"):
     """
     Base class for all resource containers.
 
@@ -51,11 +46,6 @@ class ResourceContainer(BaseModel):
         Initialize contents with random values. This method should be overridden by subclasses.
         """
         pass
-
-    class Config:
-        """Sets the dataclass to allow extra fields with Pydantic"""
-
-        extra = "allow"
 
 
 class Pool(ResourceContainer):
@@ -124,7 +114,7 @@ class Pool(ResourceContainer):
         self.contents["quantity"] = self.capacity
 
 
-class PoolCollection(BaseModel):
+class PoolCollection(BaseModel, extra="allow"):  # Could be renamed with Plate
     """
     Class representing a collection of pools in a plate.
 
@@ -164,11 +154,6 @@ class PoolCollection(BaseModel):
                     quantity=content.get("quantity", 0.0),
                     contents=content,
                 )
-
-    class Config:
-        """Sets the dataclass to allow extra fields with Pydantic"""
-
-        extra = "allow"
 
 
 class StackQueue(ResourceContainer):

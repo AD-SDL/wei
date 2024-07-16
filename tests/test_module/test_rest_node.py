@@ -46,33 +46,41 @@ test_rest_node.arg_parser.add_argument(
 )
 
 
-@test_rest_node.startup()
-def test_node_startup(state: State):
-    """Initializes the module"""
-    state.foobar = state.foo + state.bar
-    # Initialize resources
-    state.stack_resource = StackQueue(
+@test_rest_node.resource()
+def stack_resource():
+    """Stack type of resource"""
+    return StackQueue(
         information="Stack for transfer",
         name="StackResource",
         capacity=10,
         quantity=3,
         contents=[Asset(name="Plate1"), Asset(name="Plate2"), Asset(name="Plate3")],
     )
-    rows = "ABCDEFGH"
-    columns = range(1, 13)
-    wells = {
-        f"{row}{col}": Pool(
-            information=f"Well {row}{col}",
-            name=f"Well{row}{col}",
-            capacity=100.0,
-            quantity=50.0,
-            contents={"description": "Yellow ink", "quantity": 50.0},
-        )
-        for row in rows
-        for col in columns
-    }
-    state.pool_collection_resource = PoolCollection(name="Plate1", wells=wells)
-    state.collection_resource = Collection(
+
+
+@test_rest_node.resource()
+def pool_collection_resource():
+    """Pool collection type of resource"""
+    return PoolCollection(
+        name="Plate1",
+        wells={
+            f"{row}{col}": Pool(
+                information=f"Well {row}{col}",
+                name=f"Well{row}{col}",
+                capacity=100.0,
+                quantity=50.0,
+                contents={"description": "Yellow ink", "quantity": 50.0},
+            )
+            for row in "ABCDEFGH"
+            for col in range(1, 13)
+        },
+    )
+
+
+@test_rest_node.resource()
+def collection_resource():
+    """Collection type of resource"""
+    return Collection(
         information="Collection for measurement",
         name="CollectionResource",
         capacity=5,
@@ -80,16 +88,16 @@ def test_node_startup(state: State):
     )
 
 
+@test_rest_node.startup()
+def test_node_startup(state: State):
+    """Initializes the module"""
+    state.foobar = state.foo + state.bar
+
+
 @test_rest_node.state_handler()
 def state_handler(state: State) -> ModuleState:
     """Handles the state of the module"""
     return ModuleState(status=state.status, error=state.error, foobar=state.foobar)
-
-
-# @test_rest_node.resources()
-# def resources_handler(state: State) -> Dict[str, Any]:
-#     """Handles the resources of the module"""
-#     pass
 
 
 @test_rest_node.action()
@@ -101,14 +109,15 @@ def transfer(
     plate_name: Optional[str] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
-    stack_resource = state.stack_resource
-    # print(stack_resource.quantity)
-    # print(stack_resource.contents)
 
-    test_rest_node._resources_handler(
-        state, "stack/queue", stack_resource, "push", name=plate_name
+    asset = (
+        Asset(name=plate_name)
+        if plate_name
+        else Asset(name=f"Plate{len(stack_resource.contents) + 1}")
     )
-    print(test_rest_node._resources_handler(state, "any", None, "get_resources"))
+    stack_resource.push(asset)
+    print(stack_resource.contents)
+    print(test_rest_node.resources)
     return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
 
 
@@ -124,57 +133,20 @@ def synthesize(
     protocol = protocol.file.read().decode("utf-8")
     print(protocol)
 
-    pool_collection_resource = state.pool_collection_resource
+    pool_collection_resource.wells["A1"].increase(foo)
+    pool_collection_resource.wells["B1"].decrease(bar)
+    pool_collection_resource.wells["C1"].fill()
+    pool_collection_resource.wells["D1"].empty()
 
-    test_rest_node._resources_handler(
-        state,
-        "pool_collection",
-        pool_collection_resource,
-        "update_well",
-        well_id="A1",
-        well_action="increase",
-        amount=foo,
-    )
-    test_rest_node._resources_handler(
-        state,
-        "pool_collection",
-        pool_collection_resource,
-        "update_well",
-        well_id="B1",
-        well_action="decrease",
-        amount=bar,
-    )
-    test_rest_node._resources_handler(
-        state,
-        "pool_collection",
-        pool_collection_resource,
-        "update_well",
-        well_id="C1",
-        well_action="fill",
-    )
-    test_rest_node._resources_handler(
-        state,
-        "pool_collection",
-        pool_collection_resource,
-        "update_well",
-        well_id="D1",
-        well_action="empty",
-    )
-
-    # Example usage of update_plate
     new_plate_contents = {
         "A2": {"description": "Red ink", "quantity": 10.0},
         "B2": {"description": "Blue ink", "quantity": 20.0},
         "C2": {"description": "Green ink", "quantity": 30.0},
         "D2": {"description": "Yellow ink", "quantity": 40.0},
     }
-    test_rest_node._resources_handler(
-        state,
-        "pool_collection",
-        pool_collection_resource,
-        "update_plate",
-        new_contents=new_plate_contents,
-    )
+    pool_collection_resource.update_plate(new_plate_contents)
+    print(pool_collection_resource.wells)
+    print(test_rest_node.resources)
 
     return StepResponse.step_succeeded(f"Synthesized sample {foo} + {bar}")
 
@@ -183,13 +155,13 @@ def synthesize(
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
 
-    print(state.collection_resource.quantity)
-    print(state.collection_resource.contents)
+    print(collection_resource.quantity)
+    print(collection_resource.contents)
     instance = {"measurement": state.foobar}
-    location = f"location_{len(state.collection_resource.contents)+1}"
-    state.collection_resource.insert(location, instance)
-    print(state.collection_resource.quantity)
-    print(state.collection_resource.contents)
+    location = f"location_{len(collection_resource.contents)+1}"
+    collection_resource.insert(location, instance)
+    print(collection_resource.quantity)
+    print(collection_resource.contents)
 
     with open("test.txt", "w") as f:
         f.write("test")
