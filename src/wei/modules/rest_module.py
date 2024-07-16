@@ -679,7 +679,7 @@ class RESTModule:
         @self.router.get("/resources")
         async def resources(request: Request):
             state = request.app.state
-            return self._resources_handler(state, "any", None, "get_resources")
+            return self._resources_handler(state)
 
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
