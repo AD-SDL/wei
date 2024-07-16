@@ -10,7 +10,7 @@ import traceback
 import warnings
 from contextlib import asynccontextmanager
 from threading import Thread
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any, List, Optional, Set, Union
 
 from fastapi import (
     APIRouter,
@@ -24,7 +24,7 @@ from fastapi import (
 from fastapi.datastructures import State
 from typing_extensions import Annotated, get_type_hints
 
-from wei.types import Asset, ModuleStatus
+from wei.types import ModuleStatus
 from wei.types.module_types import (
     AdminCommands,
     ModuleAbout,
@@ -260,112 +260,26 @@ class RESTModule:
 
         return decorator
 
-    @staticmethod
-    def _resources_handler(
-        state: State,
-        resource_type: str,
-        resource: Any,
-        action: str,
-        name: Optional[str] = None,
-        **kwargs,
-    ) -> Union[ModuleState, Dict[str, Any]]:
-        if action == "get_resources":
-            resources_info = {}
-
-            if hasattr(state, "stack_resource"):
-                resources_info["stack_resource"] = {
-                    "quantity": state.stack_resource.quantity,
-                    "contents": [
-                        {"id": asset.id, "name": asset.name}
-                        for asset in state.stack_resource.contents
-                    ],
-                }
-
-            if hasattr(state, "pool_collection_resource"):
-                resources_info["pool_collection_resource"] = {
-                    "wells": {
-                        well_id: {
-                            "quantity": well.quantity,
-                            "contents": well.contents,
-                        }
-                        for well_id, well in state.pool_collection_resource.wells.items()
-                    }
-                }
-
-            if hasattr(state, "collection_resource"):
-                resources_info["collection_resource"] = {
-                    "quantity": state.collection_resource.quantity,
-                    "contents": state.collection_resource.contents,
-                }
-
-            return resources_info
-
-        if resource_type == "stack/queue":
-            if action == "push":
-                asset = kwargs.get("asset")
-                if not asset:
-                    if name != "":
-                        asset_name = name
-                    else:
-                        asset_name = f"Plate{len(resource.contents) + 1}"
-                    asset = Asset(name=asset_name)
-                resource.push(asset)
-                state.stack_resource = resource
-            elif action == "pop":
-                resource.pop()
-                state.stack_resource = resource
-
-        elif resource_type == "pool":
-            well_id = kwargs.get("well_id")
-            amount = kwargs.get("amount", 0)
-            if well_id and well_id in resource.wells:
-                if action == "increase":
-                    resource.wells[well_id].increase(amount)
-                elif action == "decrease":
-                    resource.wells[well_id].decrease(amount)
-                elif action == "fill":
-                    resource.wells[well_id].fill()
-                elif action == "empty":
-                    resource.wells[well_id].empty()
-                state.pool_resource = resource
-
-        elif resource_type == "collection":
-            location = kwargs.get("location")
-            instance = kwargs.get("instance")
-            if action == "insert" and location and instance:
-                resource.insert(location, instance)
-                state.collection_resource = resource
-            elif action == "retrieve" and location:
-                return resource.retrieve(location)
-
-        elif resource_type == "pool_collection":
-            if action == "update_well":
-                well_id = kwargs.get("well_id")
-                well_action = kwargs.get("well_action")
-                amount = kwargs.get("amount", 0)
-                if well_id and well_id in resource.wells:
-                    well = resource.wells[well_id]
-                    if well_action == "increase":
-                        well.increase(amount)
-                    elif well_action == "decrease":
-                        well.decrease(amount)
-                    elif well_action == "fill":
-                        well.fill()
-                    elif well_action == "empty":
-                        well.empty()
-                state.pool_collection_resource = resource
-            elif action == "update_plate":
-                new_contents = kwargs.get("new_contents", {})
-                resource.update_plate(new_contents)
-                state.pool_collection_resource = resource
-
-        return ModuleState(status=state.status, error=state.error)
-
-    def resources(self):
-        """Decorator to add resource-handling functions to the module."""
+    def resource(self):
+        "Adds a new resource into resources"
 
         def decorator(function):
-            self._resources_handler = function
+            resource = function()
+            self.resources.append(resource)
+            return self.resources[-1]
+
+        return decorator
+
+    @staticmethod
+    def _resource_handler(state: State) -> List[Any]:
+        "Returns resources list"
+        return state.resources
+
+    def resource_handler(self):
+        "Resource handler decorator"
+
+        def decorator(function):
+            self._resource_handler = function
             return function
 
         return decorator
@@ -679,7 +593,7 @@ class RESTModule:
         @self.router.get("/resources")
         async def resources(request: Request):
             state = request.app.state
-            return self._resources_handler(state)
+            return self._resource_handler(state)
 
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
@@ -822,7 +736,7 @@ if __name__ == "__main__":
         return {"message": "Custom safety-stop functionality"}
 
     @rest_module.resources()
-    def example_resources_handler(state: State):
+    def example_resource_handler(state: State):
         """Example resources handler."""
         return {"example_resource": "This is an example resource"}
 
