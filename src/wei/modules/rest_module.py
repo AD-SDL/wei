@@ -260,15 +260,9 @@ class RESTModule:
 
         return decorator
 
-    def resource(self):
-        "Adds a new resource into resources"
-
-        def decorator(function):
-            resource = function()
-            self.resources.append(resource)
-            return self.resources[-1]
-
-        return decorator
+    def add_resource(self, resource: Any):
+        """Add a resource to the resources list"""
+        self.resources.append(resource)
 
     @staticmethod
     def _resource_handler(state: State) -> List[Any]:
