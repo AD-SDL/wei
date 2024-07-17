@@ -10,7 +10,7 @@ import traceback
 import warnings
 from contextlib import asynccontextmanager
 from threading import Thread
-from typing import Any, List, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 from fastapi import (
     APIRouter,
@@ -58,7 +58,7 @@ class RESTModule:
     """The interface used by the module."""
     actions: List[ModuleAction] = []
     """A list of actions that the module can perform."""
-    resources: List[Any] = []
+    resources: Dict[str, Any] = {}
     """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
@@ -82,7 +82,7 @@ class RESTModule:
         model: Optional[str] = None,
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
-        resources: Optional[List[Any]] = None,
+        resources: Optional[Dict[str, Any]] = None,
         admin_commands: Optional[Set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
@@ -105,7 +105,7 @@ class RESTModule:
         self.model = model
         self.interface = interface
         self.actions = actions if actions else []
-        self.resources = resources if resources else []
+        self.resources = resources if resources else {}
         self.admin_commands = admin_commands if admin_commands else set()
         self.admin_commands.add(AdminCommands.SHUTDOWN)
 
@@ -260,9 +260,9 @@ class RESTModule:
 
         return decorator
 
-    def add_resource(self, resource: Any):
+    def add_resource(self, resource: Optional[Any] = None):
         """Add a resource to the resources list"""
-        self.resources.append(resource)
+        self.resources[resource.name] = resource
 
     @staticmethod
     def _resource_handler(state: State) -> List[Any]:
@@ -343,6 +343,8 @@ class RESTModule:
                             default = (
                                 None
                                 if parameter_info.default == inspect.Parameter.empty
+                                else "None"
+                                if parameter_info.default is None
                                 else parameter_info.default
                             )
                             action.args.append(
@@ -728,10 +730,5 @@ if __name__ == "__main__":
         """Custom safety-stop functionality"""
         print("Custom safety-stop functionality")
         return {"message": "Custom safety-stop functionality"}
-
-    @rest_module.resources()
-    def example_resource_handler(state: State):
-        """Example resources handler."""
-        return {"example_resource": "This is an example resource"}
 
     rest_module.start()

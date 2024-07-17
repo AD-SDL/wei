@@ -6,14 +6,13 @@ from typing import Annotated, Optional
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
-
 from wei.modules.rest_module import RESTModule
 from wei.types import (
     Asset,
     Collection,
+    Plate,
     Pool,
-    PoolCollection,
-    StackQueue,
+    StackResource,
     StepFileResponse,
     StepResponse,
     StepStatus,
@@ -47,38 +46,66 @@ test_rest_node.arg_parser.add_argument(
 
 
 # Define and add resources
-test_rest_node.state.stack_resource = StackQueue(
-    information="Stack for transfer",
-    name="StackResource",
-    capacity=10,
-    quantity=3,
-    contents=[Asset(name="Plate1"), Asset(name="Plate2"), Asset(name="Plate3")],
+test_rest_node.add_resource(
+    StackResource(
+        description="Stack for transfer",
+        name="Stack1",
+        capacity=10,
+        contents=[Asset(name="Plate1"), Asset(name="Plate2"), Asset(name="Plate3")],
+    ),
 )
-test_rest_node.resources.append(test_rest_node.state.stack_resource)
 
-test_rest_node.state.pool_collection_resource = PoolCollection(
-    name="Plate1",
-    wells={
-        f"{row}{col}": Pool(
-            information=f"Well {row}{col}",
-            name=f"Well{row}{col}",
-            capacity=100.0,
-            quantity=50.0,
-            contents={"description": "Yellow ink", "quantity": 50.0},
-        )
-        for row in "ABCDEFGH"
-        for col in range(1, 13)
-    },
+test_rest_node.add_resource(
+    StackResource(
+        description="Stack for transfer",
+        name="Stack2",
+        capacity=10,
+        contents=[],
+    ),
 )
-test_rest_node.resources.append(test_rest_node.state.pool_collection_resource)
 
-test_rest_node.state.collection_resource = Collection(
-    information="Collection for measurement",
-    name="CollectionResource",
-    capacity=5,
-    quantity=2,
+test_rest_node.add_resource(
+    StackResource(
+        description="Stack for transfer",
+        name="Stack3",
+        capacity=1,
+        contents=[],
+    ),
 )
-test_rest_node.resources.append(test_rest_node.state.collection_resource)
+
+test_rest_node.add_resource(
+    StackResource(
+        description="Trash",
+        name="Trash",
+        capacity=None,
+        contents=[],
+    ),
+)
+
+test_rest_node.add_resource(
+    Plate(
+        name="Plate1",
+        contents={
+            f"{row}{col}": Pool(
+                description=f"Well {row}{col}",
+                name=f"Well{row}{col}",
+                capacity=100.0,
+                quantity=50.0,
+            )
+            for row in "ABCDEFGH"
+            for col in range(1, 13)
+        },
+    ),
+)
+
+test_rest_node.add_resource(
+    Collection(
+        description="Collection for measurement",
+        name="CollectionResource",
+        capacity=5,
+        quantity=2,
+    ),
+)
 
 
 @test_rest_node.startup()
@@ -99,18 +126,22 @@ def transfer(
     action: ActionRequest,
     target: Annotated[Location[str], "the location to transfer to"],
     source: Annotated[Location[str], "the location to transfer from"] = "",
-    plate_name: Optional[str] = "",
+    plate_name: Optional[str] = None,
 ) -> StepResponse:
     """Transfers a sample from source to target"""
 
-    asset = (
-        Asset(name=plate_name)
-        if plate_name
-        else Asset(name=f"Plate{len(test_rest_node.resources[0].contents) + 1}")
-    )
-    test_rest_node.resources[0].push(asset)
-    print(test_rest_node.resources)
-    return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
+    if source:
+        print(state.resources[source])
+        asset = state.resources[source].pop()
+        print(state.resources[source])
+        if plate_name:
+            asset.name = plate_name
+    else:
+        asset = Asset(name=plate_name) if plate_name else Asset()
+    print(state.resources[target])
+    state.resources[target].push(asset)
+    print(state.resources[target])
+    return StepResponse.step_succeeded(f"Moved plate from {source} to {target}")
 
 
 @test_rest_node.action()
@@ -125,19 +156,19 @@ def synthesize(
     protocol = protocol.file.read().decode("utf-8")
     print(protocol)
 
-    test_rest_node.resources[1].wells["A1"].increase(foo)
-    test_rest_node.resources[1].wells["B1"].decrease(bar)
-    test_rest_node.resources[1].wells["C1"].fill()
-    test_rest_node.resources[1].wells["D1"].empty()
+    state.resources["Plate1"].wells["A1"].increase(foo)
+    state.resources["Plate1"].wells["B1"].decrease(bar)
+    state.resources["Plate1"].wells["C1"].fill()
+    state.resources["Plate1"].wells["D1"].empty()
 
     new_plate_contents = {
-        "A2": {"description": "Red ink", "quantity": 10.0},
-        "B2": {"description": "Blue ink", "quantity": 20.0},
-        "C2": {"description": "Green ink", "quantity": 30.0},
-        "D2": {"description": "Yellow ink", "quantity": 40.0},
+        "A2": 10.0,
+        "B2": 20.0,
+        "C2": 30.0,
+        "D2": 40.0,
     }
-    test_rest_node.resources[1].update_plate(new_plate_contents)
-    print(test_rest_node.resources)
+    state.resources["Plate1"].update_plate(new_plate_contents)
+    print(state.resources)
 
     return StepResponse.step_succeeded(f"Synthesized sample {foo} + {bar}")
 
@@ -146,13 +177,13 @@ def synthesize(
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
 
-    print(test_rest_node.resources[2].quantity)
-    print(test_rest_node.resources[2].contents)
+    print(state.resources["CollectionResource"].quantity)
+    print(state.resources["CollectionResource"].contents)
     instance = {"measurement": state.foobar}
-    location = f"location_{len(test_rest_node.resources[2].contents)+1}"
-    test_rest_node.resources[2].insert(location, instance)
-    print(test_rest_node.resources[2].quantity)
-    print(test_rest_node.resources[2].contents)
+    location = f"location_{len(state.resources['CollectionResource'].contents) + 1}"
+    state.resources["CollectionResource"].insert(location, instance)
+    print(state.resources["CollectionResource"].quantity)
+    print(state.resources["CollectionResource"].contents)
 
     with open("test.txt", "w") as f:
         f.write("test")

@@ -2,11 +2,7 @@
 
 from .base_types import BaseModel, PathLike, ulid_factory
 from .event_types import Event
-from .experiment_types import (
-    Campaign,
-    Experiment,
-    ExperimentDesign,
-)
+from .experiment_types import Campaign, Experiment, ExperimentDesign
 from .module_types import (
     AdminCommands,
     Interface,
@@ -17,7 +13,7 @@ from .module_types import (
     ModuleActionFile,
     ModuleStatus,
 )
-from .resource_types import Asset, Collection, Pool, PoolCollection, StackQueue
+from .resource_types import Asset, Collection, Plate, Pool, StackResource
 from .step_types import Step, StepFileResponse, StepResponse, StepStatus
 from .workcell_types import Location, Workcell, WorkcellConfig
 from .workflow_types import Metadata, Workflow, WorkflowRun, WorkflowStatus
@@ -51,8 +47,8 @@ __all__ = [
     "Event",
     "Interface",
     "Pool",
-    "StackQueue",
+    "StackResource",
     "Collection",
-    "PoolCollection",
+    "Plate",
     "Asset",
 ]
