@@ -2,9 +2,9 @@
 
 import json
 
-from wei.types import WorkflowStatus
+from test_base import TestWEI_Base
 
-from .test_base import TestWEI_Base
+from wei.types import WorkflowStatus
 
 
 class TestWEI_Workflows(TestWEI_Base):
