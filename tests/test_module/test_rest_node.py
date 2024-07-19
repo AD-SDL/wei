@@ -6,6 +6,7 @@ from typing import Annotated, Optional
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
+
 from wei.modules.rest_module import RESTModule
 from wei.types import (
     Asset,
@@ -27,7 +28,6 @@ test_rest_node = RESTModule(
     name="test_rest_node",
     description="A test module for WEI",
     version="1.0.0",
-    resource_pools=[],
     model="test_module",
     actions=[],
 )
@@ -45,79 +45,140 @@ test_rest_node.arg_parser.add_argument(
 )
 
 
-# Define and add resources
-test_rest_node.add_resource(
-    StackResource(
-        description="Stack for transfer",
-        name="Stack1",
-        capacity=10,
-        contents=[Asset(name="Plate1"), Asset(name="Plate2"), Asset(name="Plate3")],
-    ),
-)
-
-test_rest_node.add_resource(
-    StackResource(
-        description="Stack for transfer",
-        name="Stack2",
-        capacity=10,
-        contents=[],
-    ),
-)
-
-test_rest_node.add_resource(
-    StackResource(
-        description="Stack for transfer",
-        name="Stack3",
-        capacity=1,
-        contents=[],
-    ),
-)
-
-test_rest_node.add_resource(
-    StackResource(
-        description="Trash",
-        name="Trash",
-        capacity=None,
-        contents=[],
-    ),
-)
-
-test_rest_node.add_resource(
-    Plate(
-        name="Plate1",
-        contents={
-            f"{row}{col}": Pool(
-                description=f"Well {row}{col}",
-                name=f"Well{row}{col}",
-                capacity=100.0,
-                quantity=50.0,
-            )
-            for row in "ABCDEFGH"
-            for col in range(1, 13)
-        },
-    ),
-)
-
-test_rest_node.add_resource(
-    Collection(
-        description="Collection for measurement",
-        name="CollectionResource",
-        capacity=5,
-        quantity=2,
-    ),
-)
-
-
 @test_rest_node.startup()
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
+    if not state.resources_path:
+        test_rest_node.add_resource(
+            StackResource(
+                description="Stack for transfer",
+                name="Stack1",
+                capacity=10,
+                contents=[
+                    Asset(name="Plate1"),
+                    Asset(name="Plate2"),
+                    Asset(name="Plate3"),
+                ],
+            )
+        )
+        test_rest_node.add_resource(
+            StackResource(
+                description="Stack for transfer",
+                name="Stack2",
+                capacity=10,
+                contents=[],
+            )
+        )
+        test_rest_node.add_resource(
+            StackResource(
+                description="Stack for transfer",
+                name="Stack3",
+                capacity=1,
+                contents=[],
+            )
+        )
+        test_rest_node.add_resource(
+            StackResource(
+                description="Trash",
+                name="Trash",
+                capacity=None,
+                contents=[],
+            )
+        )
+        test_rest_node.add_resource(
+            Plate(
+                name="Plate1",
+                contents={
+                    f"{row}{col}": Pool(
+                        description=f"Well {row}{col}",
+                        name=f"Well{row}{col}",
+                        capacity=100.0,
+                        quantity=50.0,
+                    )
+                    for row in "ABCDEFGH"
+                    for col in range(1, 13)
+                },
+            )
+        )
+        test_rest_node.add_resource(
+            Collection(
+                description="Collection for measurement",
+                name="CollectionResource",
+                capacity=5,
+                quantity=2,
+            )
+        )
 
 
 @test_rest_node.state_handler()
 def state_handler(state: State) -> ModuleState:
     """Handles the state of the module"""
     return ModuleState(status=state.status, error=state.error, foobar=state.foobar)
+
+
+# Define and add resources if no resources path is provided
+# if not test_rest_node.state.resources_path:
+#     test_rest_node.add_resource(
+#         StackResource(
+#             description="Stack for transfer",
+#             name="Stack1",
+#             capacity=10,
+#             contents=[Asset(name="Plate1"), Asset(name="Plate2"), Asset(name="Plate3")],
+#         ),
+#     )
+
+#     test_rest_node.add_resource(
+#         StackResource(
+#             description="Stack for transfer",
+#             name="Stack2",
+#             capacity=10,
+#             contents=[],
+#         ),
+#     )
+
+#     test_rest_node.add_resource(
+#         StackResource(
+#             description="Stack for transfer",
+#             name="Stack3",
+#             capacity=1,
+#             contents=[],
+#         ),
+#     )
+
+#     test_rest_node.add_resource(
+#         StackResource(
+#             description="Trash",
+#             name="Trash",
+#             capacity=None,
+#             contents=[],
+#         ),
+#     )
+
+#     test_rest_node.add_resource(
+#         Plate(
+#             name="Plate1",
+#             contents={
+#                 f"{row}{col}": Pool(
+#                     description=f"Well {row}{col}",
+#                     name=f"Well{row}{col}",
+#                     capacity=100.0,
+#                     quantity=50.0,
+#                 )
+#                 for row in "ABCDEFGH"
+#                 for col in range(1, 13)
+#             },
+#         ),
+#     )
+
+#     test_rest_node.add_resource(
+#         Collection(
+#             description="Collection for measurement",
+#             name="CollectionResource",
+#             capacity=5,
+#             quantity=2,
+#         ),
+#     )
 
 
 @test_rest_node.action()
