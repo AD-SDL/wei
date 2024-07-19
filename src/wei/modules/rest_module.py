@@ -2,6 +2,7 @@
 
 import argparse
 import inspect
+import json
 import os
 import signal
 import sys
@@ -83,6 +84,7 @@ class RESTModule:
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
         resources: Optional[Dict[str, Any]] = None,
+        resources_path: Optional[str] = None,
         admin_commands: Optional[Set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
@@ -106,6 +108,7 @@ class RESTModule:
         self.interface = interface
         self.actions = actions if actions else []
         self.resources = resources if resources else {}
+        self.resources_path = resources_path
         self.admin_commands = admin_commands if admin_commands else set()
         self.admin_commands.add(AdminCommands.SHUTDOWN)
 
@@ -138,6 +141,12 @@ class RESTModule:
                 type=str,
                 default=self.name,
                 help="A unique name for this particular instance of this module",
+            )
+            self.arg_parser.add_argument(
+                "--resources-path",
+                type=str,
+                default=self.resources_path,
+                help="Path to the initial resources JSON file",
             )
 
     # * Module and Application Lifecycle Functions
@@ -259,6 +268,11 @@ class RESTModule:
             return function
 
         return decorator
+
+    def load_resources_from_file(self, file_path: str):
+        """Loads a resources file from the file_path"""
+        with open(file_path, "r") as f:
+            self.resources = json.load(f)
 
     def add_resource(self, resource: Optional[Any] = None):
         """Add a resource to the resources list"""
@@ -664,6 +678,11 @@ class RESTModule:
                 getattr(args, arg_name) is not None
             ):  # * Don't override already set attributes with None's
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
+
+        # Load resources from the specified JSON file if provided
+        if self.state.resources_path:
+            self.load_resources_from_file(self.state.resources_path)
+
         self._configure_routes()
 
         # * Enforce a name
