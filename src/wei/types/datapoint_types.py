@@ -29,7 +29,7 @@ class DataPoint(BaseModel):
 class LocalFileDataPoint(DataPoint):
     """a datapoint containing a file"""
 
-    type: str = Literal["local_file"]
+    type: Literal["local_file"] = "local_file"
     """local file"""
     path: str
     """path to the file"""
@@ -38,7 +38,7 @@ class LocalFileDataPoint(DataPoint):
 class ValueDataPoint(DataPoint):
     """a datapoint contained in the Json value"""
 
-    type: str = Literal["data_value"]
+    type: Literal["data_value"] = "data_value"
     """data_value"""
     value: Any
     """value of the data point"""

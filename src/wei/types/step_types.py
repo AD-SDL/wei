@@ -90,6 +90,14 @@ class StepFileResponse(FileResponse):
         """
         Returns a FileResponse with the given path as the response content
         """
+        if len(files) == 1:
+            return super().__init__(
+                path=list(files.values())[0],
+                headers=StepResponse(
+                    status=status, files=files, data=data
+                ).to_headers(),
+            )
+
         temp = ZipFile("temp.zip", "w")
         for file in files:
             temp.write(files[file])

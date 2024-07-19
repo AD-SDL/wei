@@ -104,7 +104,7 @@ const file_headers = [
 ]
 
 const result_headers = [
-  { title: 'Label', key: 'name' },
+  { title: 'Default Label', key: 'name' },
   { title: 'Type', key: 'type' },
   { title: 'Description', key: 'description' },
 ]
