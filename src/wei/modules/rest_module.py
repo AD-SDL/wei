@@ -627,6 +627,16 @@ class RESTModule:
             else:
                 return {"message": f"Resource {id} not found."}
 
+        @self.router.post("/resources/{id}/increase")
+        async def resource_pool_increase(request: Request, well_id: str, amount: float):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                state.resources[id].wells[well_id].increase(amount)
+                return {"message": f"Increased well {well_id} in {id} by {amount}."}
+            else:
+                return {"message": f"Resource {id} not found."}
+
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
             state = request.app.state
