@@ -608,13 +608,24 @@ class RESTModule:
 
         # Resource action endpoints
         @self.router.post("/resources/{id}/push")
-        async def resource_stack_push(request: Request, id: str, asset: Asset):
+        async def resource_stack_push(request: Request, asset: Asset):
+            id = request.path_params["id"]
             state = request.app.state
             if id in state.resources:
                 state.resources[id].push(asset)
                 return {"message": f"Asset pushed to {id}."}
             else:
-                return {"error": f"Resource {id} not found."}
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/pop")
+        async def resource_stack_pop(request: Request):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                asset = state.resources[id].pop()
+                return {"message": f"Asset {asset.name} popped from {id}."}
+            else:
+                return {"message": f"Resource {id} not found."}
 
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
