@@ -637,6 +637,138 @@ class RESTModule:
             else:
                 return {"message": f"Resource {id} not found."}
 
+        @self.router.post("/resources/{id}/decrease")
+        async def resource_pool_decrease(request: Request, well_id: str, amount: float):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                state.resources[id].wells[well_id].decrease(amount)
+                return {"message": f"Decreased well {well_id} in {id} by {amount}."}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/fill")
+        async def resource_pool_fill(request: Request, well_id: str):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                try:
+                    state.resources[id].wells[well_id].fill()
+                    return {"message": f"Filled well {well_id} in {id}."}
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/empty")
+        async def resource_pool_empty(request: Request, well_id: str):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                state.resources[id].wells[well_id].empty()
+                return {"message": f"Emptied well {well_id} in {id}."}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/insert")
+        async def resource_collection_insert(
+            request: Request, location: str, instance: Any
+        ):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                try:
+                    state.resources[id].insert(location, instance)
+                    return {"message": f"Inserted instance at {location} in {id}."}
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/retrieve")
+        async def resource_collection_retrieve(
+            request: Request,
+            location: Optional[str] = None,
+            value: Optional[str] = None,
+        ):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                try:
+                    instance = state.resources[id].retrieve(location, value)
+                    return {
+                        "message": f"Retrieved instance: {instance} from {id} at {location}."
+                    }
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/increase")
+        async def resource_plate_increase(
+            request: Request, well_id: str, amount: float
+        ):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                try:
+                    state.resources[id].wells[well_id].increase(amount)
+                    return {"message": f"Increased well {well_id} in {id} by {amount}."}
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/decrease")
+        async def resource_plate_decrease(
+            request: Request, well_id: str, amount: float
+        ):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                try:
+                    state.resources[id].wells[well_id].decrease(amount)
+                    return {"message": f"Decreased well {well_id} in {id} by {amount}."}
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/fill")
+        async def resource_plate_fill(request: Request, well_id: str):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                try:
+                    state.resources[id].wells[well_id].fill()
+                    return {"message": f"Filled well {well_id} in {id}."}
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/empty")
+        async def resource_plate_empty(request: Request, well_id: str):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                state.resources[id].wells[well_id].empty()
+                return {"message": f"Emptied well {well_id} in {id}."}
+            else:
+                return {"message": f"Resource {id} not found."}
+
+        @self.router.post("/resources/{id}/update")
+        async def resource_plate_update(
+            request: Request, new_contents: Dict[str, float]
+        ):
+            id = request.path_params["id"]
+            state = request.app.state
+            if id in state.resources:
+                state.resources[id].update_plate(new_contents)
+                return {"message": f"Updated plate {id} with new contents."}
+            else:
+                return {"message": f"Resource {id} not found."}
+
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
             state = request.app.state
