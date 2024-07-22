@@ -34,6 +34,7 @@ from wei.types.module_types import (
     ModuleActionFile,
     ModuleState,
 )
+from wei.types.resource_types import Asset
 from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
 
 
@@ -604,6 +605,16 @@ class RESTModule:
         async def resources(request: Request):
             state = request.app.state
             return self._resource_handler(state)
+
+        # Resource action endpoints
+        @self.router.post("/resources/{id}/push")
+        async def resource_stack_push(request: Request, id: str, asset: Asset):
+            state = request.app.state
+            if id in state.resources:
+                state.resources[id].push(asset)
+                return {"message": f"Asset pushed to {id}."}
+            else:
+                return {"error": f"Resource {id} not found."}
 
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:

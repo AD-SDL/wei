@@ -49,6 +49,7 @@ test_rest_node.arg_parser.add_argument(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
+    # Could be resource function after the startup function
     if not state.resources_path:
         test_rest_node.add_resource(
             StackResource(
