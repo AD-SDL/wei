@@ -10,6 +10,7 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
+from datetime import datetime
 from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -274,6 +275,18 @@ class RESTModule:
         """Loads a resources file from the file_path"""
         with open(file_path, "r") as f:
             self.resources = json.load(f)
+
+    def write_resources_to_file(self, file_path: Optional[str] = None):
+        """Writes the resources dictionary to a file with a timestamp."""
+        if file_path is None:
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            file_path = os.path.expanduser(f"~/.resources_{timestamp}.json")
+        else:
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            file_path = os.path.join(file_path, f"resources_{timestamp}.json")
+        with open(file_path, "w") as f:
+            json.dump(self.resources, f, indent=4)
+        return file_path
 
     def add_resource(self, resource: Optional[Any] = None):
         """Add a resource to the resources list"""
@@ -783,6 +796,12 @@ class RESTModule:
                 except Exception:
                     traceback.print_exc()
                     return {"error": "Unable to generate module about"}
+
+        @self.router.post("/resources/write")
+        async def write_resources(request: Request):
+            state = request.app.state
+            file_path = state.rest_module.write_resources_to_file()
+            return {"message": f"Resources written to {file_path}"}
 
         @self.router.post("/action")
         def action(
