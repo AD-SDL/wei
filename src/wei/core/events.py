@@ -9,11 +9,9 @@ import requests
 
 from wei.config import Config
 from wei.core.loggers import Logger
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.types import Event
 from wei.utils import threaded_task
-
-state_manager = StateManager()
 
 
 @threaded_task

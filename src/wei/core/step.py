@@ -10,7 +10,7 @@ from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import Logger
 from wei.core.module import clear_module_reservation, get_module_about
 from wei.core.notifications import send_failed_step_notification
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.storage import get_workflow_run_directory
 from wei.types import (
     Module,
@@ -27,8 +27,6 @@ from wei.types.event_types import (
     WorkflowStepEvent,
 )
 from wei.types.interface_types import InterfaceMap
-
-state_manager = StateManager()
 
 
 def validate_step(step: Step) -> Tuple[bool, str]:

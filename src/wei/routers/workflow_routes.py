@@ -11,14 +11,12 @@ from fastapi import APIRouter, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
 from wei.core.loggers import Logger
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.storage import get_workflow_run_directory, get_workflow_run_log_path
 from wei.core.workflow import create_run, save_workflow_files
 from wei.types import Workflow, WorkflowStatus
 
 router = APIRouter()
-
-state_manager = StateManager()
 
 
 @router.post("/start")

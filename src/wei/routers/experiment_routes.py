@@ -9,14 +9,12 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from wei.core.experiment import get_experiment, register_new_experiment
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.storage import get_experiment_log_file
 from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
 
 router = APIRouter()
-
-state_manager = StateManager()
 
 
 @router.get("/{experiment_id}/events")

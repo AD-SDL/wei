@@ -457,3 +457,6 @@ class StateManager:
         self.set_module(
             module_name, func(self.get_module(module_name), *args, **kwargs)
         )
+
+
+state_manager = StateManager()

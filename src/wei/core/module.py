@@ -6,13 +6,11 @@ import traceback
 import warnings
 from typing import Union
 
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.workcell import find_step_module
 from wei.types import Module, ModuleAbout, Workcell, Workflow, WorkflowStatus
 from wei.types.interface_types import InterfaceMap
 from wei.types.module_types import LegacyModuleState, ModuleState, ModuleStatus
-
-state_manager = StateManager()
 
 
 def initialize_workcell_modules() -> None:

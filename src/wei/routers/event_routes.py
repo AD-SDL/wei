@@ -7,12 +7,10 @@ from typing import Any
 from fastapi import APIRouter
 
 from wei.core.events import EventHandler
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.types import Event
 
 router = APIRouter()
-
-state_manager = StateManager()
 
 
 @router.post("/")
