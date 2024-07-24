@@ -27,7 +27,7 @@ def test_get_resources():
 def test_push_resource():
     """"""
 
-    resource_id = "01J3EK2AECBW0JCP3B0P38Q7K5"  # Replace with an actual resource ID
+    resource_id = "01J3HKP4EX03BB3KJDQHS6GF3T"  # Replace with an actual resource ID
     asset = Asset(name="TEST_PLATE")
     response = requests.post(
         f"{BASE_URL}/resources/{resource_id}/push", json=asset.model_dump()
@@ -99,6 +99,6 @@ def get_resources():
 
 
 if __name__ == "__main__":
-    # get_resources()
-    test_push_resource()
+    get_resources()
+    # test_push_resource()
     # test_increase_pool()
