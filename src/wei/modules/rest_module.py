@@ -540,6 +540,12 @@ class RESTModule:
 
         return decorator
 
+    def _find_resource_key_by_id(self, resource_id: str):
+        for key, resource in self.app.state.resources.items():
+            if resource.id == resource_id:
+                return key
+        return None
+
     def _configure_routes(self):
         """Configure the API endpoints for the REST module"""
 
@@ -619,16 +625,15 @@ class RESTModule:
             state = request.app.state
             return self._resource_handler(state)
 
-        # Resource action endpoints
-        @self.router.post("/resources/{id}/push")
-        async def resource_stack_push(request: Request, asset: Asset):
-            id = request.path_params["id"]
+        @self.router.post("/resources/{resource_id}/push")
+        async def resource_stack_push(request: Request, resource_id: str, asset: Asset):
             state = request.app.state
-            if id in state.resources:
-                state.resources[id].push(asset)
-                return {"message": f"Asset pushed to {id}."}
+            resource_key = self._find_resource_key_by_id(resource_id)
+            if resource_key:
+                state.resources[resource_key].push(asset)
+                return {"message": f"Asset pushed to {resource_key}."}
             else:
-                return {"message": f"Resource {id} not found."}
+                return {"message": f"Resource {resource_id} not found."}
 
         @self.router.post("/resources/{id}/pop")
         async def resource_stack_pop(request: Request):
@@ -640,23 +645,33 @@ class RESTModule:
             else:
                 return {"message": f"Resource {id} not found."}
 
-        @self.router.post("/resources/{id}/increase")
-        async def resource_pool_increase(request: Request, well_id: str, amount: float):
+        @self.router.post("/resources/{id}/pools/{pool_id}/increase")
+        async def resource_pool_increase(
+            request: Request, id: str, pool_id: str, amount: float
+        ):
             id = request.path_params["id"]
+            pool_id = request.path_params["pool_id"]
             state = request.app.state
             if id in state.resources:
-                state.resources[id].wells[well_id].increase(amount)
-                return {"message": f"Increased well {well_id} in {id} by {amount}."}
+                try:
+                    state.resources[id].wells[pool_id].increase(amount)
+                    return {"message": f"Increased pool {pool_id} in {id} by {amount}."}
+                except ValueError as e:
+                    return {"message": str(e)}
             else:
                 return {"message": f"Resource {id} not found."}
 
-        @self.router.post("/resources/{id}/decrease")
-        async def resource_pool_decrease(request: Request, well_id: str, amount: float):
-            id = request.path_params["id"]
+        @self.router.post("/resources/{plate_id}/pools/{pool_id}/decrease")
+        async def resource_pool_decrease(request: Request, amount: float):
+            id = request.path_params["plate_id"]
+            pool_id = request.path_params["pool_id"]
             state = request.app.state
             if id in state.resources:
-                state.resources[id].wells[well_id].decrease(amount)
-                return {"message": f"Decreased well {well_id} in {id} by {amount}."}
+                try:
+                    state.resources[id].wells[pool_id].decrease(amount)
+                    return {"message": f"Decreased pool {pool_id} in {id} by {amount}."}
+                except ValueError as e:
+                    return {"message": str(e)}
             else:
                 return {"message": f"Resource {id} not found."}
 
