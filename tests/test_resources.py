@@ -27,7 +27,7 @@ def test_get_resources():
 def test_push_resource():
     """"""
 
-    resource_id = "01J3KPJSY5FMHBWRQCS8MNXVN3"  # Replace with an actual resource ID
+    resource_id = "01J3NMSTXHP66R696QX2A76CWJ"  # Replace with an actual resource ID
     asset = Asset(name="TEST_PLATE")
     response = requests.post(
         f"{BASE_URL}/resources/{resource_id}/push", json=asset.model_dump()
@@ -38,7 +38,7 @@ def test_push_resource():
 
 def test_pop_resource():
     """"""
-    resource_id = "01J3KPJSY5FMHBWRQCS8MNXVN3"  # Replace with an actual resource ID
+    resource_id = "01J3NMSTXHP66R696QX2A76CWJ"  # Replace with an actual resource ID
     response = requests.post(f"{BASE_URL}/resources/{resource_id}/pop")
     print(f"POST /resources/{resource_id}/pop")
     print(response.json())
@@ -46,8 +46,8 @@ def test_pop_resource():
 
 def test_increase_pool():
     """"""
-    plate_id = "01J3KPJSYA3BSYCNDDXW5D36SW"  # Replace with an actual plate ID
-    pool_id = "01J3KPJSY6KR9F15XYRJXPGHSN"  # Replace with an actual pool ID
+    plate_id = "01J3NMSTXPSDX94J143KSN1SWB"  # Replace with an actual plate ID
+    pool_id = "01J3NMSTXHF8JXDTP001ZTY4TT"  # Replace with an actual pool ID
     amount = 20.0  # Adjust the amount to be increased
     response = requests.post(
         f"{BASE_URL}/resources/{plate_id}/pools/{pool_id}/increase",
@@ -59,8 +59,8 @@ def test_increase_pool():
 
 def test_decrease_pool():
     """"""
-    plate_id = "01J3EJ9DJ14025FAJR74QGGCQ3"  # Replace with an actual plate ID
-    pool_id = "01J3EJ9DHWT29H423DKPJGWMDK"  # Replace with an actual pool ID
+    plate_id = "01J3NMSTXPSDX94J143KSN1SWB"  # Replace with an actual plate ID
+    pool_id = "01J3NMSTXHF8JXDTP001ZTY4TT"  # Replace with an actual pool ID
     amount = 10.0  # Adjust the amount to be decreased
     response = requests.post(
         f"{BASE_URL}/resources/{plate_id}/pools/{pool_id}/decrease",
@@ -72,8 +72,8 @@ def test_decrease_pool():
 
 def test_fill_pool():
     """"""
-    plate_id = "01J3EJ9DJ14025FAJR74QGGCQ3"  # Replace with an actual plate ID
-    pool_id = "01J3EJ9DHWT29H423DKPJGWMDK"  # Replace with an actual pool ID
+    plate_id = "01J3NMSTXPSDX94J143KSN1SWB"  # Replace with an actual plate ID
+    pool_id = "01J3NMSTXHF8JXDTP001ZTY4TT"  # Replace with an actual pool ID
     response = requests.post(f"{BASE_URL}/resources/{plate_id}/pools/{pool_id}/fill")
     print(f"POST /resources/{plate_id}/pools/{pool_id}/fill")
     print(response.json())
@@ -81,8 +81,8 @@ def test_fill_pool():
 
 def test_empty_pool():
     """"""
-    plate_id = "01J3EJ9DJ14025FAJR74QGGCQ3"  # Replace with an actual plate ID
-    pool_id = "01J3EJ9DHWT29H423DKPJGWMDK"  # Replace with an actual pool ID
+    plate_id = "01J3NMSTXPSDX94J143KSN1SWB"  # Replace with an actual plate ID
+    pool_id = "01J3NMSTXHF8JXDTP001ZTY4TT"  # Replace with an actual pool ID
     response = requests.post(f"{BASE_URL}/resources/{plate_id}/pools/{pool_id}/empty")
     print(f"POST /resources/{plate_id}/pools/{pool_id}/empty")
     print(response.json())
@@ -90,7 +90,7 @@ def test_empty_pool():
 
 def test_update_plate():
     """"""
-    plate_id = "01J3EJ9DJ14025FAJR74QGGCQ3"  # Replace with an actual plate ID
+    plate_id = "01J3NMSTXPSDX94J143KSN1SWB"  # Replace with an actual plate ID
     new_contents = {"A1": 10.0, "A2": 20.0}  # Adjust the contents as needed
     response = requests.put(
         f"{BASE_URL}/resources/{plate_id}/update_plate", json=new_contents
@@ -101,7 +101,7 @@ def test_update_plate():
 
 def test_insert_collection():
     """"""
-    collection_id = "01J3HKP4EX03BB3KJDQHS6GF3T"  # Replace with an actual collection ID
+    collection_id = "01J3NMSTXP4T2BX974SHVAZS2X"  # Replace with an actual collection ID
     location = "A1"  # Location to insert the asset
     asset = Asset(name="TEST_ASSET")
     response = requests.post(
@@ -114,7 +114,7 @@ def test_insert_collection():
 
 def test_retrieve_collection():
     """"""
-    collection_id = "01J3HKP4EX03BB3KJDQHS6GF3T"  # Replace with an actual collection ID
+    collection_id = "01J3NMSTXP4T2BX974SHVAZS2X"  # Replace with an actual collection ID
     location = "A1"  # Location to retrieve the asset from
     response = requests.post(
         f"{BASE_URL}/resources/{collection_id}/retrieve", json={"location": location}
@@ -142,6 +142,11 @@ def get_resources():
 
 
 if __name__ == "__main__":
-    get_resources()
-    test_push_resource()
-    test_increase_pool()
+    # test_push_resource()
+    # test_increase_pool()
+    # test_decrease_pool()
+    # test_pop_resource()
+    # test_update_plate()
+    # test_insert_collection()
+    test_save_resources()
+    # get_resources()
