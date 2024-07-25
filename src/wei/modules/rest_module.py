@@ -635,167 +635,130 @@ class RESTModule:
             else:
                 return {"message": f"Resource {resource_id} not found."}
 
-        @self.router.post("/resources/{id}/pop")
-        async def resource_stack_pop(request: Request):
-            id = request.path_params["id"]
+        @self.router.post("/resources/{resource_id}/pop")
+        async def resource_stack_pop(request: Request, resource_id: str):
             state = request.app.state
-            if id in state.resources:
-                asset = state.resources[id].pop()
-                return {"message": f"Asset {asset.name} popped from {id}."}
+            resource_key = self._find_resource_key_by_id(resource_id)
+            if resource_key:
+                asset = state.resources[resource_key].pop()
+                return {
+                    "message": f"Asset removed from {resource_key}.",
+                    "asset": asset,
+                }
             else:
-                return {"message": f"Resource {id} not found."}
+                return {"message": f"Resource {resource_id} not found."}
 
-        @self.router.post("/resources/{id}/pools/{pool_id}/increase")
-        async def resource_pool_increase(
-            request: Request, id: str, pool_id: str, amount: float
+        @self.router.post("/resources/{plate_id}/pools/{pool_id}/increase")
+        async def increase_pool_amount(
+            request: Request, plate_id: str, pool_id: str, amount: float
         ):
-            id = request.path_params["id"]
-            pool_id = request.path_params["pool_id"]
-            state = request.app.state
-            if id in state.resources:
+            resource_key = self._find_resource_key_by_id(plate_id)
+            print(self.state.resources[resource_key])
+            if resource_key and pool_id in self.state.resources[resource_key].wells:
                 try:
-                    state.resources[id].wells[pool_id].increase(amount)
-                    return {"message": f"Increased pool {pool_id} in {id} by {amount}."}
-                except ValueError as e:
-                    return {"message": str(e)}
-            else:
-                return {"message": f"Resource {id} not found."}
-
-        @self.router.post("/resources/{plate_id}/pools/{pool_id}/decrease")
-        async def resource_pool_decrease(request: Request, amount: float):
-            id = request.path_params["plate_id"]
-            pool_id = request.path_params["pool_id"]
-            state = request.app.state
-            if id in state.resources:
-                try:
-                    state.resources[id].wells[pool_id].decrease(amount)
-                    return {"message": f"Decreased pool {pool_id} in {id} by {amount}."}
-                except ValueError as e:
-                    return {"message": str(e)}
-            else:
-                return {"message": f"Resource {id} not found."}
-
-        @self.router.post("/resources/{id}/fill")
-        async def resource_pool_fill(request: Request, well_id: str):
-            id = request.path_params["id"]
-            state = request.app.state
-            if id in state.resources:
-                try:
-                    state.resources[id].wells[well_id].fill()
-                    return {"message": f"Filled well {well_id} in {id}."}
-                except ValueError as e:
-                    return {"message": str(e)}
-            else:
-                return {"message": f"Resource {id} not found."}
-
-        @self.router.post("/resources/{id}/empty")
-        async def resource_pool_empty(request: Request, well_id: str):
-            id = request.path_params["id"]
-            state = request.app.state
-            if id in state.resources:
-                state.resources[id].wells[well_id].empty()
-                return {"message": f"Emptied well {well_id} in {id}."}
-            else:
-                return {"message": f"Resource {id} not found."}
-
-        @self.router.post("/resources/{id}/insert")
-        async def resource_collection_insert(
-            request: Request, location: str, instance: Any
-        ):
-            id = request.path_params["id"]
-            state = request.app.state
-            if id in state.resources:
-                try:
-                    state.resources[id].insert(location, instance)
-                    return {"message": f"Inserted instance at {location} in {id}."}
-                except ValueError as e:
-                    return {"message": str(e)}
-            else:
-                return {"message": f"Resource {id} not found."}
-
-        @self.router.post("/resources/{id}/retrieve")
-        async def resource_collection_retrieve(
-            request: Request,
-            location: Optional[str] = None,
-            value: Optional[str] = None,
-        ):
-            id = request.path_params["id"]
-            state = request.app.state
-            if id in state.resources:
-                try:
-                    instance = state.resources[id].retrieve(location, value)
+                    self.state.resources[resource_key].wells[pool_id].increase(amount)
                     return {
-                        "message": f"Retrieved instance: {instance} from {id} at {location}."
+                        "message": f"Pool {pool_id} in plate {plate_id} increased by {amount}."
                     }
                 except ValueError as e:
                     return {"message": str(e)}
             else:
-                return {"message": f"Resource {id} not found."}
+                return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
 
-        @self.router.post("/resources/{id}/increase")
-        async def resource_plate_increase(
-            request: Request, well_id: str, amount: float
+        @self.router.post("/resources/{plate_id}/pools/{pool_id}/decrease")
+        async def decrease_pool_amount(
+            request: Request, plate_id: str, pool_id: str, amount: float
         ):
-            id = request.path_params["id"]
-            state = request.app.state
-            if id in state.resources:
+            resource_key = self._find_resource_key_by_id(plate_id)
+            if resource_key and pool_id in self.state.resources[resource_key].wells:
                 try:
-                    state.resources[id].wells[well_id].increase(amount)
-                    return {"message": f"Increased well {well_id} in {id} by {amount}."}
+                    self.state.resources[resource_key].wells[pool_id].decrease(amount)
+                    return {
+                        "message": f"Pool {pool_id} in plate {plate_id} decreased by {amount}."
+                    }
                 except ValueError as e:
                     return {"message": str(e)}
             else:
-                return {"message": f"Resource {id} not found."}
+                return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
 
-        @self.router.post("/resources/{id}/decrease")
-        async def resource_plate_decrease(
-            request: Request, well_id: str, amount: float
-        ):
-            id = request.path_params["id"]
+        @self.router.post("/resources/{plate_id}/pools/{pool_id}/fill")
+        async def resource_pool_fill(request: Request, plate_id: str, pool_id: str):
             state = request.app.state
-            if id in state.resources:
+            resource_key = self._find_resource_key_by_id(plate_id)
+            if resource_key and pool_id in state.resources[resource_key].wells:
                 try:
-                    state.resources[id].wells[well_id].decrease(amount)
-                    return {"message": f"Decreased well {well_id} in {id} by {amount}."}
+                    state.resources[resource_key].wells[pool_id].fill()
+                    return {"message": f"Filled pool {pool_id} in {plate_id}."}
                 except ValueError as e:
                     return {"message": str(e)}
             else:
-                return {"message": f"Resource {id} not found."}
+                return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
 
-        @self.router.post("/resources/{id}/fill")
-        async def resource_plate_fill(request: Request, well_id: str):
-            id = request.path_params["id"]
+        @self.router.post("/resources/{plate_id}/pools/{pool_id}/empty")
+        async def resource_pool_empty(request: Request, plate_id: str, pool_id: str):
             state = request.app.state
-            if id in state.resources:
+            resource_key = self._find_resource_key_by_id(plate_id)
+            if resource_key and pool_id in state.resources[resource_key].wells:
                 try:
-                    state.resources[id].wells[well_id].fill()
-                    return {"message": f"Filled well {well_id} in {id}."}
+                    state.resources[resource_key].wells[pool_id].empty()
+                    return {"message": f"Emptied pool {pool_id} in {plate_id}."}
                 except ValueError as e:
                     return {"message": str(e)}
             else:
-                return {"message": f"Resource {id} not found."}
+                return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
 
-        @self.router.post("/resources/{id}/empty")
-        async def resource_plate_empty(request: Request, well_id: str):
-            id = request.path_params["id"]
-            state = request.app.state
-            if id in state.resources:
-                state.resources[id].wells[well_id].empty()
-                return {"message": f"Emptied well {well_id} in {id}."}
-            else:
-                return {"message": f"Resource {id} not found."}
-
-        @self.router.post("/resources/{id}/update")
-        async def resource_plate_update(
-            request: Request, new_contents: Dict[str, float]
+        @self.router.put("/resources/{plate_id}/update_plate")
+        async def update_plate(
+            request: Request, plate_id: str, new_contents: Dict[str, float]
         ):
-            id = request.path_params["id"]
             state = request.app.state
-            if id in state.resources:
-                state.resources[id].update_plate(new_contents)
-                return {"message": f"Updated plate {id} with new contents."}
+            resource_key = self._find_resource_key_by_id(plate_id)
+            if resource_key:
+                state.resources[resource_key].update_plate(new_contents)
+                return {"message": f"Plate {resource_key} updated."}
             else:
-                return {"message": f"Resource {id} not found."}
+                return {"message": f"Plate {plate_id} not found."}
+
+        @self.router.post("/resources/{collection_id}/insert")
+        async def resource_collection_insert(
+            request: Request, collection_id: str, location: str, asset: Asset
+        ):
+            state = request.app.state
+            resource_key = self._find_resource_key_by_id(collection_id)
+            if resource_key:
+                try:
+                    state.resources[resource_key].insert(location, asset)
+                    return {
+                        "message": f"Asset inserted at location {location} in {resource_key}."
+                    }
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Collection {collection_id} not found."}
+
+        @self.router.post("/resources/{collection_id}/retrieve")
+        async def resource_collection_retrieve(
+            request: Request, collection_id: str, location: str
+        ):
+            state = request.app.state
+            resource_key = self._find_resource_key_by_id(collection_id)
+            if resource_key:
+                try:
+                    asset = state.resources[resource_key].retrieve(location)
+                    return {
+                        "message": f"Asset retrieved from location {location} in {resource_key}.",
+                        "asset": asset,
+                    }
+                except ValueError as e:
+                    return {"message": str(e)}
+            else:
+                return {"message": f"Collection {collection_id} not found."}
+
+        @self.router.post("/resources/save")
+        async def save_resources_to_file(request: Request):
+            state = request.app.state
+            file_path = state.rest_module.write_resources_to_file()
+            return {"message": f"Resources written to {file_path}"}
 
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
@@ -811,12 +774,6 @@ class RESTModule:
                 except Exception:
                     traceback.print_exc()
                     return {"error": "Unable to generate module about"}
-
-        @self.router.post("/resources/write")
-        async def write_resources(request: Request):
-            state = request.app.state
-            file_path = state.rest_module.write_resources_to_file()
-            return {"message": f"Resources written to {file_path}"}
 
         @self.router.post("/action")
         def action(
