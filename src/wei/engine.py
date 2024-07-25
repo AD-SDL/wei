@@ -75,6 +75,7 @@ class Engine:
                     time.time() - tick > Config.update_interval
                     or state_manager.has_state_changed()
                 ):
+                    print(f"Heartbeat: {time.time()}")
                     update_active_modules()
                     if not state_manager.paused:
                         self.scheduler.run_iteration()
