@@ -10,7 +10,7 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
-from datetime import datetime
+from pathlib import Path
 from threading import Thread
 from typing import Any, Dict, List, Optional, Set, Union
 
@@ -145,7 +145,7 @@ class RESTModule:
                 help="A unique name for this particular instance of this module",
             )
             self.arg_parser.add_argument(
-                "--resources-path",
+                "--resources_path",
                 type=str,
                 default=self.resources_path,
                 help="Path to the initial resources JSON file",
@@ -278,21 +278,26 @@ class RESTModule:
 
     def write_resources_to_file(self, file_path: Optional[str] = None):
         """Writes the resources dictionary to a file with a timestamp."""
+
         if file_path is None:
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            file_path = os.path.expanduser(f"~/.resources/resource_{timestamp}.json")
+            resources_directory = Path("/.resources")
         else:
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            file_path = os.path.join(file_path, f"resource_{timestamp}.json")
+            resources_directory = Path(file_path) / ".resources"
+
+        if not resources_directory.exists():
+            resources_directory.mkdir(parents=True, exist_ok=True)
+
+        file_name = "resources.json"
+        full_file_path = file_name
 
         resources_dict = {
             key: resource.model_dump() for key, resource in self.state.resources.items()
         }
 
-        with open(file_path, "w") as f:
+        with open(full_file_path, "w") as f:
             json.dump(resources_dict, f, indent=4)
 
-        return file_path
+        return str(full_file_path)
 
     def add_resource(self, resource: Optional[Any] = None):
         """Add a resource to the resources list"""
