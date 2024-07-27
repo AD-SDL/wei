@@ -280,15 +280,15 @@ class RESTModule:
         """Writes the resources dictionary to a file with a timestamp."""
 
         if file_path is None:
-            resources_directory = Path("/.resources")
+            resources_directory = Path("~/.wei/resource")
         else:
             resources_directory = Path(file_path) / ".resources"
 
         if not resources_directory.exists():
-            resources_directory.mkdir(parents=True, exist_ok=True)
+            resources_directory.mkdir(parents=True)
 
         file_name = "resources.json"
-        full_file_path = file_name
+        full_file_path = resources_directory / file_name
 
         resources_dict = {
             key: resource.model_dump() for key, resource in self.state.resources.items()
