@@ -1,6 +1,7 @@
 """Handling REST execution for steps in the RPL-SDL efforts"""
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, Tuple
 from zipfile import ZipFile
@@ -73,12 +74,12 @@ class RestInterface(Interface):
             response = StepResponse.model_validate(rest_response.json())
         if response.files and len(response.files) == 1:
             if "run_dir" in kwargs.keys():
+                run_dir = Path(kwargs["run_dir"])
+                step_dir = run_dir / step.id
+                os.mkdir(step_dir)
                 file_key = list(response.files.keys())[0]
                 filename = response.files[file_key]
-                path = Path(
-                    kwargs["run_dir"],
-                    Path(step.id + "_" + filename),
-                )
+                path = step_dir / filename
             with open(str(path), "wb") as f:
                 f.write(rest_response.content)
             response.files[file_key] = path
@@ -87,15 +88,13 @@ class RestInterface(Interface):
                 f.write(rest_response.content)
             file = ZipFile("temp_zip.zip")
             if "run_dir" in kwargs.keys():
+                run_dir = Path(kwargs["run_dir"])
+                step_dir = run_dir / step.id
+                os.mkdir(step_dir)
                 for file_key in list(response.files.keys()):
                     filename = response.files[file_key]
-                    new_filename = step.id + "_" + filename
-                    file.getinfo(filename).filename = new_filename
-
-                    path = Path(kwargs["run_dir"])
-
-                    file.extract(filename, path)
-                    response.files[file_key] = path / new_filename
+                    file.extract(filename, step_dir)
+                    response.files[file_key] = step_dir / filename
             file.close()
         status = response.status
         data = response.data

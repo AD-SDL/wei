@@ -196,7 +196,14 @@ async def get_wf_file(run_id: str, filename: str) -> FileResponse:
 async def get_datapoint(datapoint_id: str) -> FileResponse:
     """Returns a specific datapoint from a workflow run's result directory."""
     datapoint = state_manager.get_datapoint(datapoint_id)
-    if datapoint["type"] == "local_file":
-        return FileResponse(datapoint["path"])
+    if datapoint.type == "local_file":
+        return FileResponse(datapoint.path)
     else:
-        return JSONResponse({"value": datapoint["value"]})
+        return JSONResponse({"value": datapoint.value})
+
+
+@router.get("/data/{datapoint_id}/info")
+async def get_datapoint_info(datapoint_id: str) -> FileResponse:
+    """Returns a specific datapoint from a workflow run's result directory."""
+    datapoint = state_manager.get_datapoint(datapoint_id)
+    return JSONResponse(datapoint.model_dump())

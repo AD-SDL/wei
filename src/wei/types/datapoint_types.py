@@ -7,7 +7,7 @@ from pydantic import Field
 from wei.types.base_types import BaseModel, ulid_factory
 
 
-class DataPoint(BaseModel):
+class DataPoint(BaseModel, extra="allow"):
     """An object to contain and locate data identified by modules"""
 
     label: str

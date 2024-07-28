@@ -295,17 +295,22 @@ class StateManager:
         self._events[event.event_id] = event.model_dump(mode="json")
 
     # DataPoint Methods
-    def get_datapoint(self, data_id: str) -> Event:
+    def get_datapoint(self, data_id: str) -> DataPoint:
         """
         Returns an event by ID
         """
-        return self._datapoints[data_id]
+        return DataPoint.model_validate(
+            self._datapoints[data_id], from_attributes=True, strict=False
+        )
 
-    def get_all_datapoints(self) -> Dict[str, Event]:
+    def get_all_datapoints(self) -> Dict[str, DataPoint]:
         """
         Returns all events
         """
-        return self._datapoints.to_dict()
+        return {
+            str(datapoint_id): DataPoint.model_validate(datapoint)
+            for datapoint_id, datapoint in self._datapoints.to_dict().items()
+        }
 
     def set_datapoint(self, datapoint: DataPoint) -> None:
         """

@@ -165,7 +165,7 @@ def run_step(
             if step.data_labels is not None and file in step.data_labels:
                 label = step.data_labels[file]
             else:
-                label = module.name + "_" + file
+                label = file
             datapoint = LocalFileDataPoint(
                 step_id=step.id,
                 workflow_id=wf_run.run_id,
