@@ -22,14 +22,15 @@
         value.result.status }} <br>
             <div v-if="!(value.result.data == null)"> <b>Data:</b><br>
 
-              {{Object.values(test[value.id]) }}
 
               <v-data-table :headers="data_headers" :items="Object.values(test[value.id])" >
                 <template v-slot:item="{ item }: { item: any }">
         <tr>
           <td>{{ item.label }}</td>
           <td>{{ item.type }}</td>
-          <v-btn @click=trydownload(item.id) >test</v-btn>
+          <td  v-if="item.type == 'local_file'"><v-btn @click="trydownload(item.id, item.label)">Download</v-btn></td>
+          <td  v-if="item.type == 'data_value'"> <VueJsonPretty :data="item.value" /> </td>
+
         </tr>
       </template>
               </v-data-table></div>
@@ -52,6 +53,7 @@ test.value = {}
 const data_headers = [
   { title: 'Label', key: 'label' },
   { title: 'Type', key: 'type' },
+  { title: 'Value', key: 'value' },
 
 
 ]
@@ -76,9 +78,9 @@ const forceFileDownload = (val : any, title: any)  => {
       link.click()
 }
 
-async function trydownload(id: string) {
+async function trydownload(id: string, label: string) {
     let val = await (await fetch('http://localhost:8000/runs/data/'.concat(id))).blob()
-    forceFileDownload(val, "test")
+    forceFileDownload(val, label)
 
 
 }
