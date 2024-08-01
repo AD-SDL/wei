@@ -603,7 +603,7 @@ class RESTModule:
                 error_message = f"Module is not ready to accept actions. Module Status: {state.status}"
                 print(error_message)
                 response.status_code = status.HTTP_409_CONFLICT
-                return StepResponse.step_failed(action_log=error_message)
+                return StepResponse.step_failed(error=error_message)
 
             # * Try to run the action_handler for this module
             try:
@@ -614,7 +614,7 @@ class RESTModule:
                 # * which should put the module in the ERROR state
                 state.exception_handler(state, e)
                 step_result = StepResponse.step_failed(
-                    action_log=f"An exception occurred while processing the action request '{action_request.name}' with arguments '{action_request.args}: {e}"
+                    error=f"An exception occurred while processing the action request '{action_request.name}' with arguments '{action_request.args}: {e}"
                 )
             print(step_result)
             return step_result
@@ -675,8 +675,7 @@ if __name__ == "__main__":
     def fail_action(state: State, action: ActionRequest) -> StepResponse:
         """Function to handle the "fail" action. Always fails."""
         return StepResponse.step_failed(
-            action_msg="Oh no! The action failed!",
-            action_log=f"Failed: {time.time()}",
+            error=f"Failed: {time.time()}",
         )
 
     @rest_module.action(
