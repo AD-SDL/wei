@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-from wei.types import Workflow, WorkflowStatus
+from wei.types import Workflow, WorkflowRun, WorkflowStatus
 from wei.types.base_types import PathLike
 from wei.types.event_types import (
     CommentEvent,
@@ -331,10 +331,11 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                     break
                 prior_status = status
                 prior_index = step_index
-            return run_info
+
+            return WorkflowRun(**run_info)
         else:
             run_info = self.query_run(response_json["run_id"])
-            return run_info
+            return WorkflowRun(**run_info)
 
     def await_runs(self, run_list: List[str]) -> Dict[Any, Any]:
         """
@@ -420,6 +421,56 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
             return response.json()
         else:
             response.raise_for_status()
+
+    def get_datapoint_value(self, datapoint_id: str) -> Dict[Any, Any]:
+        """Returns the datapoint for the given id
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           figuring it out"""
+        url = f"{self.url}/runs/data/" + datapoint_id
+        response = requests.get(url)
+        if response.ok:
+            try:
+                return response.json()
+            except Exception:
+                return response.content
+        response.raise_for_status()
+
+    def save_datapoint_value(
+        self, datapoint_id: str, output_filepath: str
+    ) -> Dict[Any, Any]:
+        """Returns the datapoint for the given id
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           figuring it out"""
+        url = f"{self.url}/runs/data/" + datapoint_id
+        response = requests.get(url)
+        if response.ok:
+            try:
+                with open(output_filepath, "w") as f:
+                    f.write(str(response.json()["value"]))
+
+            except Exception:
+                Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
+                with open(output_filepath, "wb") as f:
+                    f.write(response.content)
+        response.raise_for_status()
 
     def log_experiment_end(self) -> Event:
         """Logs the end of the experiment in the experiment log

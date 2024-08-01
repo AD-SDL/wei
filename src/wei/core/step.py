@@ -21,6 +21,7 @@ from wei.types import (
     WorkflowRun,
     WorkflowStatus,
 )
+from wei.types.datapoint_types import LocalFileDataPoint, ValueDataPoint
 from wei.types.event_types import (
     WorkflowCompletedEvent,
     WorkflowFailedEvent,
@@ -113,24 +114,24 @@ def run_step(
 
     try:
         step.start_time = datetime.now()
-        action_response, action_msg, action_log = InterfaceMap.interfaces[
-            interface
-        ].send_action(
-            step=step, module=module, run_dir=get_workflow_run_directory(wf_run.run_id)
+        status, data, error, files = InterfaceMap.interfaces[interface].send_action(
+            step=step,
+            module=module,
+            run_dir=get_workflow_run_directory(wf_run.run_id),
         )
         step_response = StepResponse(
-            action_response=action_response,
-            action_msg=action_msg,
-            action_log=action_log,
+            status=status,
+            data=data,
+            error=error,
+            files=files,
         )
     except Exception as e:
         logger.debug(f"Exception occurred while running step with name: {step.name}")
         logger.debug(str(e))
         logger.debug(traceback.format_exc())
         step_response = StepResponse(
-            action_response=StepStatus.FAILED,
-            action_msg="Exception occurred while running step",
-            action_log=str(e),
+            status=StepStatus.FAILED,
+            error=str(e),
         )
         traceback.print_exc()
     else:
@@ -138,12 +139,46 @@ def run_step(
 
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
-    step.result = step_response
-    if step.result.action_response == StepStatus.FAILED:
-        send_failed_step_notification(wf_run, step)
+
+    new_data = None
+    if step_response.data:
+        new_data = {}
+        for data in step_response.data:
+            if step.data_labels is not None and data in step.data_labels:
+                label = step.data_labels[data]
+            else:
+                label = module.name + "_" + data
+            datapoint = ValueDataPoint(
+                label=label,
+                step_id=step.id,
+                workflow_id=wf_run.run_id,
+                experiment_id=wf_run.experiment_id,
+                value=step_response.data[data],
+            )
+            state_manager.set_datapoint(datapoint)
+            new_data[label] = datapoint.id
+    if step_response.files:
+        if not new_data:
+            new_data = {}
+        for file in step_response.files:
+            if step.data_labels is not None and file in step.data_labels:
+                label = step.data_labels[file]
+            else:
+                label = file
+            datapoint = LocalFileDataPoint(
+                step_id=step.id,
+                workflow_id=wf_run.run_id,
+                experiment_id=wf_run.experiment_id,
+                label=label,
+                path=str(step_response.files[file]),
+            )
+            state_manager.set_datapoint(datapoint)
+            new_data[label] = datapoint.id
+
     send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
-    wf_run.hist[step.name] = step_response
-    if step_response.action_response == StepStatus.FAILED:
+    step_response.data = new_data
+    step.result = step_response
+    if step_response.status == StepStatus.FAILED:
         logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
         wf_run.status = WorkflowStatus.FAILED
         wf_run.end_time = datetime.now()
@@ -153,6 +188,7 @@ def run_step(
                 wf_run=wf_run,
             )
         )
+        send_failed_step_notification(wf_run, step)
     else:
         if wf_run.step_index + 1 == len(wf_run.steps):
             wf_run.status = WorkflowStatus.COMPLETED

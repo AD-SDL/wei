@@ -4,6 +4,7 @@ Router for the "runs" endpoints
 
 import json
 import os
+import traceback
 from typing import Annotated, Any, Dict, Optional
 
 import yaml
@@ -15,6 +16,7 @@ from wei.core.state_manager import state_manager
 from wei.core.storage import get_workflow_run_directory, get_workflow_run_log_path
 from wei.core.workflow import create_run, save_workflow_files
 from wei.types import Workflow, WorkflowStatus
+from wei.types.datapoint_types import DataPoint
 
 router = APIRouter()
 
@@ -47,7 +49,11 @@ async def start_run(
     response: Dict
     - a dictionary including whether queueing succeeded, the jobs ahead, and the id
     """
-    wf = Workflow.model_validate_json(workflow)
+    try:
+        wf = Workflow.model_validate_json(workflow)
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     if payload is None:
         payload = {}
@@ -183,3 +189,20 @@ async def get_wf_files(run_id: str) -> Dict:
 async def get_wf_file(run_id: str, filename: str) -> FileResponse:
     """Returns a specific file from a workflow run's result directory."""
     return FileResponse(get_workflow_run_directory(run_id) / filename)
+
+
+@router.get("/data/{datapoint_id}")
+async def get_datapoint(datapoint_id: str):
+    """Returns a specific datapoint from a workflow run's result directory."""
+    datapoint = state_manager.get_datapoint(datapoint_id)
+    if datapoint.type == "local_file":
+        return FileResponse(datapoint.path)
+    else:
+        return JSONResponse({"value": datapoint.value})
+
+
+@router.get("/data/{datapoint_id}/info")
+async def get_datapoint_info(datapoint_id: str) -> DataPoint:
+    """Returns a specific datapoint from a workflow run's result directory."""
+    datapoint = state_manager.get_datapoint(datapoint_id)
+    return datapoint

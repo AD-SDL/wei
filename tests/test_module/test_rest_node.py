@@ -2,14 +2,18 @@
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
 
-import time
 from typing import Annotated
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
 from wei.types import StepFileResponse, StepResponse, StepStatus
-from wei.types.module_types import Location, ModuleState
+from wei.types.module_types import (
+    LocalFileModuleActionResult,
+    Location,
+    ModuleState,
+    ValueModuleActionResult,
+)
 from wei.types.step_types import ActionRequest
 
 # * Test predefined action functions
@@ -57,10 +61,7 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
-    time.sleep(2)
-    if source == "":
-        return StepResponse.step_succeeded(f"Moved new plate to {target}")
-    return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
+    return StepResponse.step_succeeded()
 
 
 @test_rest_node.action()
@@ -72,22 +73,36 @@ def synthesize(
     protocol: Annotated[UploadFile, "Python Protocol File"],
 ) -> StepResponse:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
-    time.sleep(2)
     protocol = protocol.file.read().decode("utf-8")
     print(protocol)
 
     state.foobar = foo + bar
 
-    return StepResponse.step_succeeded("Synthesized sample {foo} + {bar}")
+    return StepResponse.step_succeeded()
 
 
-@test_rest_node.action(name="measure")
+@test_rest_node.action(
+    name="measure",
+    results=[
+        LocalFileModuleActionResult(label="test_file", description="a test file"),
+        LocalFileModuleActionResult(
+            label="test2_file", description="a second test file"
+        ),
+        ValueModuleActionResult(label="test", description="a test value result"),
+    ],
+)
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
-    time.sleep(2)
     with open("test.txt", "w") as f:
         f.write("test")
-    return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
+    with open("test2.txt", "w") as f:
+        f.write("test")
+
+    return StepFileResponse(
+        StepStatus.SUCCEEDED,
+        files={"test_file": "test.txt", "test2_file": "test2.txt"},
+        data={"test": {"test": "test"}},
+    )
 
 
 if __name__ == "__main__":

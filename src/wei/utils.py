@@ -81,9 +81,9 @@ def parse_args() -> Namespace:
     field_type_map = get_type_hints(WorkcellConfig)
     for name, field in WorkcellConfig.model_fields.items():
         field_type = field_type_map[name]
-        if field_type == PathLike:
+        if field_type is PathLike:
             field_type = Path
-        elif field_type == bool:
+        elif field_type is bool:
             field_type = string_to_bool
         parser.add_argument(
             f"--{name}",

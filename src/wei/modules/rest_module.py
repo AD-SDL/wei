@@ -358,15 +358,14 @@ class RESTModule:
                 stacklevel=1,
             )
             return StepResponse.step_failed(
-                action_msg=f"action: {action.name}, args: {action.args}",
-                action_log=f"action: {action.name}, args: {action.args}",
+                error=f"action: {action.name}, args: {action.args}",
             )
         else:
             for module_action in state.actions:
                 if module_action.name == action.name:
                     if not module_action.function:
                         return StepResponse.step_failed(
-                            "Action is defined, but not implemented. Please define a `function` for the action, or use the `@<class RestModule>.action` decorator."
+                            error="Action is defined, but not implemented. Please define a `function` for the action, or use the `@<class RestModule>.action` decorator."
                         )
 
                     # * Prepare arguments for the action function.
@@ -400,7 +399,7 @@ class RESTModule:
                         if arg.name not in action.args:
                             if arg.required:
                                 return StepResponse.step_failed(
-                                    action_log=f"Missing required argument '{arg.name}'"
+                                    error=f"Missing required argument '{arg.name}'"
                                 )
                     for file in module_action.files:
                         if not any(
@@ -408,15 +407,12 @@ class RESTModule:
                         ):
                             if file.required:
                                 return StepResponse.step_failed(
-                                    action_log=f"Missing required file '{file.name}'"
+                                    error=f"Missing required file '{file.name}'"
                                 )
 
                     # * Perform the action here and return result
                     return module_action.function(**arg_dict)
-            return StepResponse.step_failed(
-                action_msg=f"Action '{action.name}' not found",
-                action_log=f"Action '{action.name}' not found",
-            )
+            return StepResponse.step_failed(error=f"Action '{action.name}' not found")
 
     @staticmethod
     def get_action_lock(state: State, action: ActionRequest):
@@ -607,7 +603,7 @@ class RESTModule:
                 error_message = f"Module is not ready to accept actions. Module Status: {state.status}"
                 print(error_message)
                 response.status_code = status.HTTP_409_CONFLICT
-                return StepResponse.step_failed(action_log=error_message)
+                return StepResponse.step_failed(error=error_message)
 
             # * Try to run the action_handler for this module
             try:
@@ -618,7 +614,7 @@ class RESTModule:
                 # * which should put the module in the ERROR state
                 state.exception_handler(state, e)
                 step_result = StepResponse.step_failed(
-                    action_log=f"An exception occurred while processing the action request '{action_request.name}' with arguments '{action_request.args}: {e}"
+                    error=f"An exception occurred while processing the action request '{action_request.name}' with arguments '{action_request.args}: {e}"
                 )
             print(step_result)
             return step_result
@@ -679,8 +675,7 @@ if __name__ == "__main__":
     def fail_action(state: State, action: ActionRequest) -> StepResponse:
         """Function to handle the "fail" action. Always fails."""
         return StepResponse.step_failed(
-            action_msg="Oh no! The action failed!",
-            action_log=f"Failed: {time.time()}",
+            error=f"Failed: {time.time()}",
         )
 
     @rest_module.action(

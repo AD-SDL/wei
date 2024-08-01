@@ -18,10 +18,23 @@
           <div v-if="!(value.start_time == '') && !(value.start_time == null)"><b>Start Time</b>: {{ value.start_time }}
           </div>
           <div v-if="!(value.end_time == '') && !(value.end_time == null)"><b>End Time</b>: {{ value.end_time }}</div>
-          <div v-if="!(value.result == '') && !(value.result == null)"><b>Action Response</b>: {{
-        value.result.action_response }} <br>
-            <div v-if="!(value.result.action_msg == '')"> <b>Action Message:</b> {{ value.result.action_msg }}<br></div>
-            <div v-if="!(value.result.action_log == '')"><b>Action Log:</b> {{ value.result.action_log }}</div>
+          <div v-if="!(value.result == '') && !(value.result == null)"><b>Status</b>: {{
+        value.result.status }} <br>
+            <div v-if="!(value.result.data == null)"> <b>Data:</b><br>
+
+
+              <v-data-table :headers="data_headers" :items="Object.values(test[value.id])" >
+                <template v-slot:item="{ item }: { item: any }">
+        <tr>
+          <td>{{ item.label }}</td>
+          <td>{{ item.type }}</td>
+          <td  v-if="item.type == 'local_file'"><v-btn @click="trydownload(item.id, item.label)">Download</v-btn></td>
+          <td  v-if="item.type == 'data_value'"> <VueJsonPretty :data="item.value" /> </td>
+
+        </tr>
+      </template>
+              </v-data-table></div>
+            <div v-if="!(value.result.error == null)"><b>Error:</b> {{ value.result.error }}</div>
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -30,5 +43,45 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 const props = defineProps(['steps'])
+import VueJsonPretty from 'vue-json-pretty';
+import { VDataTable } from 'vuetify/components';
+
+const test = ref()
+test.value = {}
+const data_headers = [
+  { title: 'Label', key: 'label' },
+  { title: 'Type', key: 'type' },
+  { title: 'Value', key: 'value' },
+
+
+]
+props.steps.forEach((step : any)=> { test.value[step.id] = {}; if(step.result.data)
+  {Object.keys(step.result.data).forEach(async (key: string) =>   {
+
+    let val = await ((await fetch( "http://localhost:8000/runs/data/".concat(step.result.data[key]).concat("/info"))).json())
+    console.log(val)
+    test.value[step.id][val.id] = val
+
+  })
+
+}});
+
+const forceFileDownload = (val : any, title: any)  => {
+      console.log(title)
+      const url = window.URL.createObjectURL(new Blob([val]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', title)
+      document.body.appendChild(link)
+      link.click()
+}
+
+async function trydownload(id: string, label: string) {
+    let val = await (await fetch('http://localhost:8000/runs/data/'.concat(id))).blob()
+    forceFileDownload(val, label)
+
+
+}
 </script>

@@ -46,6 +46,8 @@ flowdef:
     module: measure
     action: measure
     comment: Measure the amount of foobar in the sample
+    data_labels:
+      test_file: test_label
 
   - name: Discard sample
     module: transfer

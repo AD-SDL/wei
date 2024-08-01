@@ -11,6 +11,7 @@ from pottery import InefficientAccessWarning, RedisDict, Redlock
 from wei.config import Config
 from wei.types import Module, Workcell, WorkflowRun
 from wei.types.base_types import ulid_factory
+from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment
 from wei.types.module_types import ModuleDefinition
@@ -92,6 +93,10 @@ class StateManager:
     @property
     def _events(self) -> RedisDict:
         return RedisDict(key=f"{self._lab_prefix}:events", redis=self._redis_client)
+
+    @property
+    def _datapoints(self) -> RedisDict:
+        return RedisDict(key=f"{self._lab_prefix}:datapoints", redis=self._redis_client)
 
     @property
     def paused(self) -> bool:
@@ -288,6 +293,30 @@ class StateManager:
         Sets an event by ID
         """
         self._events[event.event_id] = event.model_dump(mode="json")
+
+    # DataPoint Methods
+    def get_datapoint(self, data_id: str) -> DataPoint:
+        """
+        Returns an event by ID
+        """
+        return DataPoint.model_validate(
+            self._datapoints[data_id], from_attributes=True, strict=False
+        )
+
+    def get_all_datapoints(self) -> Dict[str, DataPoint]:
+        """
+        Returns all events
+        """
+        return {
+            str(datapoint_id): DataPoint.model_validate(datapoint)
+            for datapoint_id, datapoint in self._datapoints.to_dict().items()
+        }
+
+    def set_datapoint(self, datapoint: DataPoint) -> None:
+        """
+        Sets an event by ID
+        """
+        self._datapoints[datapoint.id] = datapoint.model_dump(mode="json")
 
     # Workcell Methods
     def get_workcell(self) -> Workcell:
