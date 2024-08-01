@@ -3,10 +3,11 @@
 from typing import Any, Dict, List, Optional, Union
 
 import ulid
-from pydantic import BaseModel, Field, computed_field
+from pydantic import computed_field
+from sqlmodel import Field, SQLModel
 
 
-class Asset(BaseModel, extra="allow"):
+class Asset(SQLModel, table=True):
     """
     Represents an asset (microplate) used for bio/chemistry experiments.
 
@@ -15,17 +16,16 @@ class Asset(BaseModel, extra="allow"):
         name (str): Name of the asset.
     """
 
-    id: str = Field(default_factory=lambda: str(ulid.new()))
+    id: str = Field(default_factory=lambda: str(ulid.new()), primary_key=True)
     name: str = ""
 
 
-class ResourceContainer(Asset, extra="allow"):
+class ResourceContainer(Asset, table=True):
     """
     Base class for all resource containers.
 
     Attributes:
         description (str): Information about the resource.
-        name (str): Name of the resource.
         capacity (float): Capacity of the resource.
         quantity (float): Current quantity of the resource.
     """
@@ -34,7 +34,7 @@ class ResourceContainer(Asset, extra="allow"):
     capacity: Optional[Union[float, int]] = None
 
 
-class Pool(ResourceContainer):
+class Pool(ResourceContainer, table=True):
     """
     Class representing a continuous pool resource containing a single element.
 
@@ -93,7 +93,7 @@ class Pool(ResourceContainer):
             raise ValueError("Cannot fill without a defined capacity.")
 
 
-class StackResource(ResourceContainer):
+class StackResource(ResourceContainer, table=True):
     """
     Class representing a stack resource.
 
@@ -106,7 +106,9 @@ class StackResource(ResourceContainer):
         contents(): Returns the contents of the stack/queue.
     """
 
-    contents: List[Asset] = Field(default_factory=list)
+    contents: List[Asset] = Field(
+        default_factory=list, sa_column_kwargs={"nullable": True}
+    )
 
     @computed_field
     @property
@@ -154,7 +156,7 @@ class StackResource(ResourceContainer):
             raise ValueError(f"Resource {self.name} is empty.")
 
 
-class QueueResource(ResourceContainer):
+class QueueResource(ResourceContainer, table=True):
     """
     Class representing a queue-style resource.
 
@@ -167,7 +169,9 @@ class QueueResource(ResourceContainer):
         contents(): Returns the contents of the queue.
     """
 
-    contents: List[Asset] = Field(default_factory=list)
+    contents: List[Asset] = Field(
+        default_factory=list, sa_column_kwargs={"nullable": True}
+    )
 
     @computed_field
     @property
@@ -215,7 +219,7 @@ class QueueResource(ResourceContainer):
             raise ValueError(f"Resource {self.name} is empty.")
 
 
-class Collection(ResourceContainer):
+class Collection(ResourceContainer, table=True):
     """
     Class representing a resource container that allows random access.
 
@@ -227,7 +231,9 @@ class Collection(ResourceContainer):
         retrieve(location: str): Removes and returns the instance from a specific location.
     """
 
-    contents: Dict[str, Any] = Field(default_factory=dict)
+    contents: Dict[str, Any] = Field(
+        default_factory=dict, sa_column_kwargs={"nullable": True}
+    )
 
     @computed_field
     @property
@@ -279,7 +285,7 @@ class Collection(ResourceContainer):
             raise ValueError("Invalid location.")
 
 
-class Plate(Collection, extra="allow"):
+class Plate(Collection, table=True):
     """
     Class representing a multi-welled plate.
 
@@ -289,7 +295,9 @@ class Plate(Collection, extra="allow"):
         wells (List[Pool]): List of pools representing wells in the plate.
     """
 
-    contents: Dict[str, Pool] = Field(default_factory=dict)
+    contents: Dict[str, Pool] = Field(
+        default_factory=dict, sa_column_kwargs={"nullable": True}
+    )
     well_capacity: Optional[float] = None
 
     @computed_field

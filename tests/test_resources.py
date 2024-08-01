@@ -148,5 +148,5 @@ if __name__ == "__main__":
     # test_pop_resource()
     # test_update_plate()
     # test_insert_collection()
-    test_save_resources()
-    # get_resources()
+    # test_save_resources()
+    get_resources()
