@@ -81,7 +81,8 @@ def get_all_assets() -> Dict[str, Asset]:
     """
     Get all available assets
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.get_all_assets()
 
 
 @app.get("/resource/{resource_id}")
@@ -89,7 +90,8 @@ def get_resource_by_id(resource_id: str) -> ResourceContainer:
     """
     Get a resource by its ID
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.get_resource_by_id(resource_id)
 
 
 @app.get("/asset/{asset_id}")
@@ -97,7 +99,8 @@ def get_asset_by_id(asset_id: str) -> Asset:
     """
     Get an asset by its ID
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.get_asset_by_id(asset_id)
 
 
 @app.post("/resource")
@@ -105,7 +108,8 @@ def create_resource(resource: ResourceContainer) -> ResourceContainer:
     """
     Create a new resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.create_resource(resource)
 
 
 @app.post("/asset")
@@ -113,7 +117,8 @@ def create_asset(asset: Asset) -> Asset:
     """
     Create a new asset
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.create_asset(asset)
 
 
 @app.put("/asset/{asset_id}")
@@ -121,7 +126,8 @@ def update_asset(asset_id: str, asset: Asset) -> Asset:
     """
     Update an asset
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.update_asset(asset_id, asset)
 
 
 @app.delete("/resource/{resource_id}")
@@ -129,7 +135,8 @@ def delete_resource(resource_id: str) -> ResourceContainer:
     """
     Delete a resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.delete_resource(resource_id)
 
 
 @app.delete("/asset/{asset_id}")
@@ -137,7 +144,8 @@ def delete_asset(asset_id: str) -> Asset:
     """
     Delete an asset
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.delete_asset(asset_id)
 
 
 @app.put("/resources/{resource_id}/push")
@@ -145,7 +153,8 @@ def push_asset_to_resource(resource_id: str, asset: Asset) -> int:
     """
     Push an asset to a stack resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.push_asset_to_resource(resource_id, asset)
 
 
 @app.put("/resources/{resource_id}/pop")
@@ -153,7 +162,8 @@ def pop_asset_from_resource(resource_id: str) -> Asset:
     """
     Pop an asset from a stack resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.pop_asset_from_resource(resource_id)
 
 
 @app.put("/resources/{resource_id}/increase")
@@ -161,7 +171,8 @@ def increase_resource_quantity(resource_id: str, quantity: float) -> float:
     """
     Increase the quantity in a Pool resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.increase_resource_quantity(resource_id, quantity)
 
 
 @app.put("/resources/{resource_id}/decrease")
@@ -169,7 +180,8 @@ def decrease_resource_quantity(resource_id: str, quantity: float) -> float:
     """
     Decrease the quantity in a Pool resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.decrease_resource_quantity(resource_id, quantity)
 
 
 @app.put("/resources/{resource_id}/fill")
@@ -177,7 +189,8 @@ def fill_pool_resource(resource_id: str) -> float:
     """
     Fill a Pool resource to its capacity
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.fill_pool_resource(resource_id)
 
 
 @app.put("/resources/{resource_id}/empty")
@@ -185,7 +198,8 @@ def empty_pool_resource(resource_id: str) -> float:
     """
     Empty a Pool resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.empty_pool_resource(resource_id)
 
 
 @app.put("/resources/{resource_id}/insert")
@@ -193,7 +207,8 @@ def insert_asset_into_resource(resource_id: str, asset: Asset) -> int:
     """
     Insert an asset into a Collection resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.insert_asset_into_resource(resource_id, asset)
 
 
 @app.put("/resources/{resource_id}/retrieve")
@@ -201,7 +216,8 @@ def remove_asset_from_resource(resource_id: str, asset_id: str) -> Asset:
     """
     Retrieve an asset from a Collection resource
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.remove_asset_from_resource(resource_id, asset_id)
 
 
 if __name__ == "__main__":
