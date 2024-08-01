@@ -4,9 +4,7 @@ from pathlib import Path
 from typing import Optional, Union
 
 from wei.config import Config
-from wei.core.state_manager import StateManager
-
-state_manager = StateManager()
+from wei.core.state_manager import state_manager
 
 
 def initialize_storage():

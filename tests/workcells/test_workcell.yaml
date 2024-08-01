@@ -7,6 +7,7 @@ config:
   server_host: "test_wei_server"
   server_port: 8000
   use_diaspora: False
+  autostart_engine: True
 
 #List of all components accessible in this workcell
 modules:

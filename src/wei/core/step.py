@@ -9,7 +9,7 @@ from wei.core.events import send_event
 from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import Logger
 from wei.core.module import clear_module_reservation, get_module_about
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.storage import get_workflow_run_directory
 from wei.types import (
     Module,
@@ -27,8 +27,6 @@ from wei.types.event_types import (
     WorkflowStepEvent,
 )
 from wei.types.interface_types import InterfaceMap
-
-state_manager = StateManager()
 
 
 def validate_step(step: Step) -> Tuple[bool, str]:
@@ -75,16 +73,16 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
         if "target" in step.locations:
             location = state_manager.get_location(step.locations["target"])
             if not (location.state == "Empty"):
-                print(f"Can't run {run_id}.{step.name}, target is not empty")
+                print(f"Can't run '{run_id}.{step.name}', target is not empty")
                 return False
             if location.reserved and location.reserved != run_id:
-                print(f"Can't run {run_id}.{step.name}, target is reserved")
+                print(f"Can't run '{run_id}.{step.name}', target is reserved")
                 return False
         if "source" in step.locations:
             location = state_manager.get_location(step.locations["source"])
             if not (location.state == str(experiment_id)):
                 print(
-                    f"Can't run {run_id}.{step.name}, source asset doesn't belong to experiment"
+                    f"Can't run '{run_id}.{step.name}', source asset doesn't belong to experiment"
                 )
                 return False
             if location.reserved and location.reserved != run_id:
@@ -92,10 +90,10 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
                 return False
     module = state_manager.get_module(step.module)
     if module.state.status != ModuleStatus.IDLE:
-        print(f"Can't run {run_id}.{step.name}, module is not idle")
+        print(f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle")
         return False
     if module.reserved and module.reserved != run_id:
-        print(f"Can't run {run_id}.{step.name}, module is reserved")
+        print(f"Can't run '{run_id}.{step.name}', module '{step.module}' is reserved")
         return False
     return True
 

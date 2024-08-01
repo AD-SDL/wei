@@ -12,11 +12,11 @@ from wei.core.events import send_event
 from wei.core.experiment import parse_experiments_from_disk
 from wei.core.module import update_active_modules
 from wei.core.scheduler import Scheduler
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.storage import initialize_storage
 from wei.core.workflow import cancel_active_workflow_runs
 from wei.types.event_types import WorkcellStartEvent
-from wei.utils import initialize_state, parse_args
+from wei.utils import initialize_state, parse_args, threaded_daemon
 
 
 class Engine:
@@ -27,22 +27,21 @@ class Engine:
 
     def __init__(self) -> None:
         """Initialize the scheduler."""
-        self.state_manager = StateManager()
+
         initialize_storage()
         parse_experiments_from_disk()
-        self.state_manager.clear_state(
+        state_manager.clear_state(
             reset_locations=Config.reset_locations,
             clear_workflow_runs=Config.clear_workflow_runs,
         )
         cancel_active_workflow_runs()
         self.scheduler = Scheduler(sequential=Config.sequential_scheduler)
-        with self.state_manager.wc_state_lock():
+        with state_manager.wc_state_lock():
             initialize_state()
         time.sleep(Config.cold_start_delay)
-        self.wait_for_server()
 
         print("Engine initialized, waiting for workflows...")
-        send_event(WorkcellStartEvent(workcell=self.state_manager.get_workcell()))
+        send_event(WorkcellStartEvent(workcell=state_manager.get_workcell()))
 
     def wait_for_server(self):
         """Checks that the server is up before starting the engine."""
@@ -70,14 +69,15 @@ class Engine:
         """
         update_active_modules()
         tick = time.time()
-        while True and not self.state_manager.shutdown:
+        while True and not state_manager.shutdown:
             try:
                 if (
                     time.time() - tick > Config.update_interval
-                    or self.state_manager.has_state_changed()
+                    or state_manager.has_state_changed()
                 ):
+                    print(f"Heartbeat: {time.time()}")
                     update_active_modules()
-                    if not self.state_manager.paused:
+                    if not state_manager.paused:
                         self.scheduler.run_iteration()
                         update_active_modules()
                     tick = time.time()
@@ -87,6 +87,11 @@ class Engine:
                     f"Error in engine loop, waiting {Config.update_interval} seconds before trying again."
                 )
                 time.sleep(Config.update_interval)
+
+    @threaded_daemon
+    def start_engine_thread(self):
+        """Spins the engine in its own thread"""
+        self.spin()
 
 
 if __name__ == "__main__":

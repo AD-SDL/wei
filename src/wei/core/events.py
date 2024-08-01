@@ -1,5 +1,6 @@
 """Contains the Events class for logging experiment steps"""
 
+import random
 import time
 import traceback
 from typing import Any
@@ -8,25 +9,25 @@ import requests
 
 from wei.config import Config
 from wei.core.loggers import Logger
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.types import Event
 from wei.utils import threaded_task
 
-state_manager = StateManager()
-
 
 @threaded_task
-def send_event(event: Event) -> Any:
+def send_event(event: Event, retry_count=3) -> Any:
     """Sends an event to the server to be logged"""
 
     event.workcell_id = getattr(Config, "workcell_id", None)
     url = f"http://{Config.server_host}:{Config.server_port}/events/"
-    response = requests.post(
-        url,
-        json=event.model_dump(mode="json"),
-    )
+    response = requests.post(url, json=event.model_dump(mode="json"), timeout=10)
     if response.ok:
         return response.json()
+    elif retry_count > 0:
+        time.sleep(
+            random.uniform(1, 10)
+        )  # * Random retry interval to reduce retry pressure.
+        return send_event(event, retry_count - 1)
     else:
         response.raise_for_status()
 

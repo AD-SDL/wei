@@ -143,11 +143,11 @@ class RESTModule:
     # * Module and Application Lifecycle Functions
 
     @staticmethod
-    def startup_handler(state: State):
+    def _startup_handler(state: State):
         """This function is called when the module needs to startup any devices or resources.
         It should be overridden by the developer to do any necessary setup for the module."""
         warnings.warn(
-            message="No module-specific startup defined, use the @<class RestModule>.startup decorator or override `startup_handler` to define.",
+            message="No module-specific startup defined, use the @<class RestModule>.startup decorator or override `_startup_handler` to define.",
             category=UserWarning,
             stacklevel=1,
         )
@@ -160,17 +160,17 @@ class RESTModule:
                 raise Exception(
                     "Startup handler cannot be a coroutine. Use a regular function (i.e. make sure you don't have a yield statement)."
                 )
-            self.startup_handler = function
+            self._startup_handler = function
             return function
 
         return decorator
 
     @staticmethod
-    def shutdown_handler(state: State):
+    def _shutdown_handler(state: State):
         """This function is called when the module needs to teardown any devices or resources.
         It should be overridden by the developer to do any necessary teardown for the module."""
         warnings.warn(
-            message="No module-specific shutdown defined, override `shutdown_handler` to define.",
+            message="No module-specific shutdown defined, override `_shutdown_handler` to define.",
             category=UserWarning,
             stacklevel=1,
         )
@@ -179,7 +179,7 @@ class RESTModule:
         """Decorator to add a shutdown_handler to the module"""
 
         def decorator(function):
-            self.shutdown_handler = function
+            self._shutdown_handler = function
             return function
 
         return decorator
@@ -205,7 +205,7 @@ class RESTModule:
             """Runs the startup function for the module in a non-blocking thread, with error handling"""
             try:
                 # * Call the module's startup function
-                state.startup_handler(state=state)
+                state._startup_handler(state=state)
             except Exception as exception:
                 # * If an exception occurs during startup, handle it and put the module in an error state
                 state.exception_handler(state, exception, "Error during startup")
@@ -230,7 +230,7 @@ class RESTModule:
 
         try:
             # * Call any shutdown logic
-            app.state.shutdown_handler(app.state)
+            app.state._shutdown_handler(app.state)
         except Exception as exception:
             # * If an exception occurs during shutdown, handle it so we at least see the error in logs/terminal
             app.state.exception_handler(app.state, exception, "Error during shutdown")
@@ -549,7 +549,7 @@ class RESTModule:
                 self._reset(state)
             else:
                 try:
-                    state.shutdown_handler(state)
+                    state._shutdown_handler(state)
                     self._startup_runner(state)
                     return {"message": "Module reset"}
                 except Exception as e:
@@ -632,8 +632,8 @@ class RESTModule:
 
         # * Initialize the state object with all non-private attributes
         for attr in dir(self):
-            if attr.startswith("_") or attr in ["start", "state", "app", "router"]:
-                # * Skip private attributes and wrapper- or server-only methods/attributes
+            if attr in ["start", "state", "app", "router"]:
+                # * Skip wrapper- or server-only methods/attributes
                 continue
             self.state.__setattr__(attr, getattr(self, attr))
 

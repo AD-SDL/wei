@@ -53,10 +53,9 @@ def initialize_state(workcell=None) -> None:
     from wei.config import Config
     from wei.core.location import initialize_workcell_locations
     from wei.core.module import initialize_workcell_modules
-    from wei.core.state_manager import StateManager
+    from wei.core.state_manager import state_manager
     from wei.types import Workcell
 
-    state_manager = StateManager()
     if workcell:
         state_manager.set_workcell(workcell)
     else:
@@ -77,7 +76,7 @@ def parse_args() -> Namespace:
 
     parser = ArgumentParser()
     parser.add_argument(
-        "--workcell", type=Path, help="Path to workcell file", required=True
+        "--workcell", type=Path, help="Path to workcell file", required=False
     )
     field_type_map = get_type_hints(WorkcellConfig)
     for name, field in WorkcellConfig.model_fields.items():
@@ -130,6 +129,22 @@ def threaded_task(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs) -> threading.Thread:
         thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+
+    return wrapper
+
+
+def threaded_daemon(func):
+    """Mark a function as a threaded daemon, to be run without awaiting. Returns the thread object, so you _can_ await if needed, and stops when the calling thread terminates."""
+
+    import functools
+    import threading
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> threading.Thread:
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.daemon = True
         thread.start()
         return thread
 

@@ -4,7 +4,7 @@ import os
 import re
 from pathlib import Path
 
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.storage import (
     get_experiment_directory,
     get_experiments_directory,
@@ -12,8 +12,6 @@ from wei.core.storage import (
 )
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
 from wei.utils import threaded_task
-
-state_manager = StateManager()
 
 
 def register_new_experiment(experiment_design: ExperimentDesign) -> Experiment:
