@@ -8,26 +8,25 @@ from wei.types import (
     StackResource,
 )
 
-DATABASE_URL = "postgresql://username:password@localhost/database"
-
-engine = create_engine(DATABASE_URL)
-
-
-def create_db_and_tables():
-    """
-    Create database tables based on the SQLModel definitions.
-    """
-    SQLModel.metadata.create_all(engine)
-
 
 class ResourceInterface:
     """Interface to work with resources database"""
 
-    def __init__(self):
+    def __init__(self, database_url: str = "sqlite:///database.db"):
         """
         Initialize the ResourceInterface with a SQLAlchemy engine.
+
+        Args:
+            database_url (str): The URL for the database connection.
         """
-        self.engine = engine
+        self.engine = create_engine(database_url)
+        self.create_db_and_tables()
+
+    def create_db_and_tables(self):
+        """
+        Create database tables based on the SQLModel definitions.
+        """
+        SQLModel.metadata.create_all(self.engine)
 
     def get_session(self):
         """
