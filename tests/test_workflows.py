@@ -21,4 +21,4 @@ class TestWEI_Workflows(TestWEI_Base):
             simulate=False,
         )
 
-        assert run_info["status"] == WorkflowStatus.COMPLETED
+        assert run_info.status == WorkflowStatus.COMPLETED
