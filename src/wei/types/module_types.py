@@ -105,14 +105,14 @@ class ModuleActionResult(BaseModel):
 class LocalFileModuleActionResult(ModuleActionResult):
     """Defines a file for a module action"""
 
-    type: str = "local_file"
+    type: Literal["local_file"] = "local_file"
     """type of the datapoint returned"""
 
 
 class ValueModuleActionResult(ModuleActionResult):
     """Defines a file for a module action"""
 
-    type: str = "value"
+    type: Literal["value"] = "value"
     """type of the datapoint returned"""
 
 
