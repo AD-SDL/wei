@@ -9,6 +9,7 @@ from wei.core.events import send_event
 from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import Logger
 from wei.core.module import clear_module_reservation, get_module_about
+from wei.core.notifications import send_failed_step_notification
 from wei.core.state_manager import state_manager
 from wei.core.storage import get_workflow_run_directory
 from wei.types import (
@@ -187,6 +188,7 @@ def run_step(
                 wf_run=wf_run,
             )
         )
+        send_failed_step_notification(wf_run, step)
     else:
         if wf_run.step_index + 1 == len(wf_run.steps):
             wf_run.status = WorkflowStatus.COMPLETED

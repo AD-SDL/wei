@@ -10,7 +10,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Self
+from typing_extensions import Literal, Self
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
