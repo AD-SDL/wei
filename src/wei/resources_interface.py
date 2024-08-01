@@ -2,9 +2,10 @@
 
 from sqlmodel import Session, SQLModel, create_engine, select
 
-from wei.types import (
+from wei.types.resource_types import (
     Collection,
     Pool,
+    ResourceContainer,
     StackResource,
 )
 
@@ -36,6 +37,18 @@ class ResourceInterface:
             Session: A new SQLAlchemy session.
         """
         return Session(self.engine)
+
+    def get_all_resources(self):
+        """
+        Retrieve all resources from the database.
+
+        Returns:
+            List[ResourceContainer]: List of all resources.
+        """
+        with self.get_session() as session:
+            statement = select(ResourceContainer)
+            resources = session.exec(statement).all()
+        return resources
 
     def add_resource(self, resource):
         """

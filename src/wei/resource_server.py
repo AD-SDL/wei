@@ -6,7 +6,10 @@ from typing import Dict
 
 from fastapi import FastAPI
 
+from wei.resources_interface import ResourceInterface
 from wei.types.resource_types import Asset, ResourceContainer
+
+database_url = "sqlite:///database.db"
 
 
 @asynccontextmanager  # type: ignore
@@ -23,6 +26,11 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     None
     """
 
+    # Initialize the database and create tables
+    resource_interface = ResourceInterface(database_url)
+    resource_interface.create_db_and_tables()
+    app.state.resource_interface = resource_interface
+
     # Yield control to the application
     yield
 
@@ -35,6 +43,16 @@ app = FastAPI(
 )
 
 
+def get_resource_interface():
+    """
+    Dependency function to get the ResourceInterface from app state.
+
+    Returns:
+        ResourceInterface: The resource interface with the default database URL.
+    """
+    return app.state.resource_interface
+
+
 @app.get("/up")
 def is_server_up() -> Dict[str, bool]:
     """
@@ -44,11 +62,18 @@ def is_server_up() -> Dict[str, bool]:
 
 
 @app.get("/resources")
-def get_all_resources() -> Dict[str, ResourceContainer]:
+def get_all_resources():
     """
-    Get all available resources
+    Retrieve all resources from the database.
+
+    Args:
+        resource_interface (ResourceInterface): The resource interface instance.
+
+    Returns:
+        List[ResourceContainer]: List of all resources.
     """
-    pass
+    resource_interface: ResourceInterface = app.state.resource_interface
+    return resource_interface.get_all_resources()
 
 
 @app.get("/assets")
@@ -189,7 +214,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--port", type=str, help="Port for the resource server", default="8001"
     )
+    parser.add_argument(
+        "--database-url",
+        type=str,
+        help="Database URL for the resource server",
+        default="sqlite:///database.db",
+    )
     args = parser.parse_args()
+
+    resource_interface = ResourceInterface(database_url=args.database_url)
 
     uvicorn.run(
         "wei.resource_server:app",
