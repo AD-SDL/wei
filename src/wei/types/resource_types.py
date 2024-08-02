@@ -1,10 +1,12 @@
 """Resource Data Classes"""
 
-from typing import Any, Dict, List, Optional, Union
+import json
+from typing import Any, Dict, List, Optional
 
 import ulid
-from pydantic import computed_field
-from sqlmodel import Field, SQLModel
+from sqlalchemy import Column, Text
+from sqlmodel import Field as SQLField
+from sqlmodel import SQLModel
 
 
 class Asset(SQLModel, table=True):
@@ -16,8 +18,8 @@ class Asset(SQLModel, table=True):
         name (str): Name of the asset.
     """
 
-    id: str = Field(default_factory=lambda: str(ulid.new()), primary_key=True)
-    name: str = ""
+    id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
+    name: str = SQLField(default="")
 
 
 class ResourceContainer(Asset, table=True):
@@ -26,12 +28,11 @@ class ResourceContainer(Asset, table=True):
 
     Attributes:
         description (str): Information about the resource.
-        capacity (float): Capacity of the resource.
-        quantity (float): Current quantity of the resource.
+        capacity (Optional[Union[float, int]]): Capacity of the resource.
     """
 
-    description: str = ""
-    capacity: Optional[Union[float, int]] = None
+    description: str = SQLField(default="")
+    capacity: Optional[float] = SQLField(default=None, nullable=True)
 
 
 class Pool(ResourceContainer, table=True):
@@ -45,7 +46,7 @@ class Pool(ResourceContainer, table=True):
         fill(): Fills the pool to its capacity.
     """
 
-    quantity: float = 0.0
+    quantity: float = SQLField(default=0.0)
 
     def increase(self, amount: float) -> None:
         """
@@ -106,21 +107,25 @@ class StackResource(ResourceContainer, table=True):
         contents(): Returns the contents of the stack/queue.
     """
 
-    contents: List[Asset] = Field(
-        default_factory=list, sa_column_kwargs={"nullable": True}
-    )
+    contents: str = SQLField(sa_column=Column(Text, default="[]"))
 
-    @computed_field
+    @property
+    def contents_list(self) -> List[Asset]:
+        """Returns the contents as a list of assets"""
+        return [Asset.from_json(item) for item in json.loads(self.contents)]
+
     @property
     def quantity(self) -> int:
         """Returns the number of assets in the stack resource container"""
-        return len(self.contents)
+        return len(self.contents_list)
 
     @quantity.setter
     def quantity(self, value: int):
         """Fill empty stack space with anonymous assets"""
-        while len(self.contents) < value:
-            self.push(Asset())
+        contents = self.contents_list
+        while len(contents) < value:
+            contents.append(Asset())
+        self.contents = json.dumps([item.model_dump_json() for item in contents])
 
     def push(self, instance: Any) -> int:
         """
@@ -135,10 +140,13 @@ class StackResource(ResourceContainer, table=True):
         Raises:
             ValueError: If the stack is full.
         """
-        if not self.capacity or len(self.contents) < int(self.capacity):
-            self.contents.append(instance)
+        contents = self.contents_list
+        if not self.capacity or len(contents) < int(self.capacity):
+            contents.append(instance)
+            self.contents = json.dumps([item.model_dump_json() for item in contents])
         else:
             raise ValueError(f"Resource {self.name} is full.")
+        return len(contents) - 1
 
     def pop(self) -> Any:
         """
@@ -150,8 +158,11 @@ class StackResource(ResourceContainer, table=True):
         Raises:
             ValueError: If the stack is empty.
         """
-        if self.contents:
-            return self.contents.pop()
+        contents = self.contents_list
+        if contents:
+            instance = contents.pop()
+            self.contents = json.dumps([item.model_dump_json() for item in contents])
+            return instance
         else:
             raise ValueError(f"Resource {self.name} is empty.")
 
@@ -169,21 +180,25 @@ class QueueResource(ResourceContainer, table=True):
         contents(): Returns the contents of the queue.
     """
 
-    contents: List[Asset] = Field(
-        default_factory=list, sa_column_kwargs={"nullable": True}
-    )
+    contents: str = SQLField(sa_column=Column(Text, default="[]"))
 
-    @computed_field
+    @property
+    def contents_list(self) -> List[Asset]:
+        """Returns the contents as a list of assets"""
+        return [Asset.from_json(item) for item in json.loads(self.contents)]
+
     @property
     def quantity(self) -> int:
         """Returns the number of assets in the resource container"""
-        return len(self.contents)
+        return len(self.contents_list)
 
     @quantity.setter
     def quantity(self, value: int):
         """Fill empty stack space with anonymous assets"""
-        while len(self.contents) < value:
-            self.push(Asset())
+        contents = self.contents_list
+        while len(contents) < value:
+            contents.append(Asset())
+        self.contents = json.dumps([item.model_dump_json() for item in contents])
 
     def push(self, instance: Any) -> int:
         """
@@ -198,23 +213,29 @@ class QueueResource(ResourceContainer, table=True):
         Raises:
             ValueError: If the queue is full.
         """
+        contents = self.contents_list
         if not self.capacity or self.quantity < int(self.capacity):
-            self.contents.append(instance)
+            contents.append(instance)
+            self.contents = json.dumps([item.model_dump_json() for item in contents])
         else:
             raise ValueError(f"Resource {self.name} is full.")
+        return len(contents) - 1
 
     def pop(self) -> Any:
         """
-        Removes and returns the last instance from the queue.
+        Removes and returns the first instance from the queue.
 
         Returns:
-            Any: The last instance in the stack/queue.
+            Any: The first instance in the queue.
 
         Raises:
-            ValueError: If the stack/queue is empty.
+            ValueError: If the queue is empty.
         """
-        if self.contents:
-            return self.contents.pop(0)
+        contents = self.contents_list
+        if contents:
+            instance = contents.pop(0)
+            self.contents = json.dumps([item.model_dump_json() for item in contents])
+            return instance
         else:
             raise ValueError(f"Resource {self.name} is empty.")
 
@@ -231,15 +252,17 @@ class Collection(ResourceContainer, table=True):
         retrieve(location: str): Removes and returns the instance from a specific location.
     """
 
-    contents: Dict[str, Any] = Field(
-        default_factory=dict, sa_column_kwargs={"nullable": True}
-    )
+    contents: str = SQLField(sa_column=Column(Text, default="{}"))
 
-    @computed_field
+    @property
+    def contents_dict(self) -> Dict[str, Asset]:
+        """Returns the contents as a dictionary of assets"""
+        return {k: Asset.from_json(v) for k, v in json.loads(self.contents).items()}
+
     @property
     def quantity(self) -> int:
         """Returns the number of elements in the collection"""
-        return len(self.contents.items())
+        return len(self.contents_dict)
 
     @quantity.setter
     def quantity(self, value: int):
@@ -259,8 +282,12 @@ class Collection(ResourceContainer, table=True):
         Raises:
             ValueError: If the collection is full.
         """
+        contents = self.contents_dict
         if self.quantity < int(self.capacity):
-            self.contents[location] = instance
+            contents[location] = instance
+            self.contents = json.dumps(
+                {k: v.model_dump_json() for k, v in contents.items()}
+            )
         else:
             raise ValueError("Collection is full.")
 
@@ -277,10 +304,13 @@ class Collection(ResourceContainer, table=True):
         Raises:
             ValueError: If the location is invalid.
         """
-        if value and value in self.contents:
-            pass
-        if location and location in self.contents:
-            return self.contents.pop(location)
+        contents = self.contents_dict
+        if location and location in contents:
+            instance = contents.pop(location)
+            self.contents = json.dumps(
+                {k: v.model_dump_json() for k, v in contents.items()}
+            )
+            return instance
         else:
             raise ValueError("Invalid location.")
 
@@ -295,30 +325,28 @@ class Plate(Collection, table=True):
         wells (List[Pool]): List of pools representing wells in the plate.
     """
 
-    contents: Dict[str, Pool] = Field(
-        default_factory=dict, sa_column_kwargs={"nullable": True}
-    )
     well_capacity: Optional[float] = None
 
-    @computed_field
     @property
     def wells(self) -> Dict[str, Pool]:
         """Returns the contents of the plate"""
-        return self.contents
+        return {k: Pool.from_json(v) for k, v in self.contents_dict.items()}
 
     @wells.setter
-    def wells(self, value: Pool):
-        self.contents = value
+    def wells(self, value: Dict[str, Pool]):
+        self.contents = json.dumps({k: v.model_dump_json() for k, v in value.items()})
 
     def update_plate(self, new_contents: Dict[str, float]):
         """Updates the whole plate content"""
+        wells = self.wells
         for well_id, quantity in new_contents.items():
-            if well_id in self.wells:
-                self.wells[well_id].quantity = quantity
+            if well_id in wells:
+                wells[well_id].quantity = quantity
             else:
-                self.wells[well_id] = Pool(
+                wells[well_id] = Pool(
                     description=f"Well {well_id}",
                     name=f"Well{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
                 )
+        self.wells = wells
