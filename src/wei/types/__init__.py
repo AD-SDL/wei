@@ -18,6 +18,7 @@ from .resource_types import (
     Collection,
     Plate,
     Pool,
+    QueueResource,
     ResourceContainer,
     StackResource,
 )
@@ -55,6 +56,7 @@ __all__ = [
     "Interface",
     "Pool",
     "StackResource",
+    "QueueResource",
     "Collection",
     "Plate",
     "Asset",
