@@ -1,5 +1,6 @@
 """Resources dataclasses in SQLModel"""
 
+import json
 from typing import Dict, List, Optional
 
 import ulid
@@ -134,10 +135,8 @@ class Stack(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: List[str] = Field(
-        default_factory=list, sa_column=Column(Text, nullable=False)
-    )
-    assets: List[AssetTable] = Relationship(back_populates="stack")
+    contents: str = Field(default="[]", sa_column=Column(Text, nullable=False))
+    assets: List[AssetTable] = Relationship(back_populates="stack_resource")
 
     def push(self, asset_id: str) -> None:
         """
@@ -149,9 +148,10 @@ class Stack(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the stack is full.
         """
-        if not self.capacity or len(self.contents) < self.capacity:
-            self.contents.append(asset_id)
-            self.contents = self.contents  # Ensure SQLModel recognizes the change
+        contents_list = json.loads(self.contents)
+        if not self.capacity or len(contents_list) < self.capacity:
+            contents_list.append(asset_id)
+            self.contents = json.dumps(contents_list)
         else:
             raise ValueError("Stack is full.")
 
@@ -165,9 +165,10 @@ class Stack(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the stack is empty.
         """
-        if self.contents:
-            asset_id = self.contents.pop()
-            self.contents = self.contents  # Ensure SQLModel recognizes the change
+        contents_list = json.loads(self.contents)
+        if contents_list:
+            asset_id = contents_list.pop()
+            self.contents = json.dumps(contents_list)
             return asset_id
         else:
             raise ValueError("Stack is empty.")
@@ -182,10 +183,8 @@ class Queue(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: List[str] = Field(
-        default_factory=list, sa_column=Column(Text, nullable=False)
-    )
-    assets: List[AssetTable] = Relationship(back_populates="queue")
+    contents: str = Field(default="[]", sa_column=Column(Text, nullable=False))
+    assets: List[AssetTable] = Relationship(back_populates="queue_resource")
 
     def push(self, asset_id: str) -> None:
         """
@@ -197,9 +196,10 @@ class Queue(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the queue is full.
         """
-        if not self.capacity or len(self.contents) < self.capacity:
-            self.contents.append(asset_id)
-            self.contents = self.contents  # Ensure SQLModel recognizes the change
+        contents_list = json.loads(self.contents)
+        if not self.capacity or len(contents_list) < self.capacity:
+            contents_list.append(asset_id)
+            self.contents = json.dumps(contents_list)
         else:
             raise ValueError("Queue is full.")
 
@@ -213,9 +213,10 @@ class Queue(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the queue is empty.
         """
-        if self.contents:
-            asset_id = self.contents.pop(0)
-            self.contents = self.contents  # Ensure SQLModel recognizes the change
+        contents_list = json.loads(self.contents)
+        if contents_list:
+            asset_id = contents_list.pop(0)
+            self.contents = json.dumps(contents_list)
             return asset_id
         else:
             raise ValueError("Queue is empty.")
@@ -230,9 +231,7 @@ class Collection(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: Dict[str, str] = Field(
-        default_factory=dict, sa_column=Column(Text, nullable=False)
-    )
+    contents: str = Field(default="{}", sa_column=Column(Text, nullable=False))
     assets: List[AssetTable] = Relationship(back_populates="collection")
 
     def insert(self, location: str, asset_id: str) -> None:
@@ -246,9 +245,10 @@ class Collection(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the collection is full.
         """
-        if len(self.contents) < self.capacity:
-            self.contents[location] = asset_id
-            self.contents = self.contents  # Ensure SQLModel recognizes the change
+        contents_dict = json.loads(self.contents)
+        if len(contents_dict) < self.capacity:
+            contents_dict[location] = asset_id
+            self.contents = json.dumps(contents_dict)
         else:
             raise ValueError("Collection is full.")
 
@@ -265,9 +265,10 @@ class Collection(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the location is invalid.
         """
-        if location in self.contents:
-            asset_id = self.contents.pop(location)
-            self.contents = self.contents  # Ensure SQLModel recognizes the change
+        contents_dict = json.loads(self.contents)
+        if location in contents_dict:
+            asset_id = contents_dict.pop(location)
+            self.contents = json.dumps(contents_dict)
             return asset_id
         else:
             raise ValueError("Invalid location.")
@@ -283,9 +284,7 @@ class Plate(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: Dict[str, str] = Field(
-        default_factory=dict, sa_column=Column(Text, nullable=False)
-    )
+    contents: str = Field(default="{}", sa_column=Column(Text, nullable=False))
     well_capacity: Optional[float] = Field(default=None)
     assets: List[AssetTable] = Relationship(back_populates="plate")
 
@@ -296,14 +295,15 @@ class Plate(ResourceContainerBase, table=True):
         Args:
             new_contents (Dict[str, float]): The new contents to update.
         """
+        contents_dict = json.loads(self.contents)
         for well_id, quantity in new_contents.items():
-            if well_id in self.contents:
-                self.contents[well_id] = quantity
+            if well_id in contents_dict:
+                contents_dict[well_id] = quantity
             else:
-                self.contents[well_id] = Pool(
+                contents_dict[well_id] = Pool(
                     description=f"Well {well_id}",
                     name=f"Well{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
                 ).id
-        self.contents = self.contents  # Ensure SQLModel recognizes the change
+        self.contents = json.dumps(contents_dict)
