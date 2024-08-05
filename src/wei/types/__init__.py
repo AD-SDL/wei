@@ -14,13 +14,14 @@ from .module_types import (
     ModuleStatus,
 )
 from .resource_types import (
-    Asset,
+    AssetBase,
+    AssetTable,
     Collection,
     Plate,
     Pool,
-    QueueResource,
-    ResourceContainer,
-    StackResource,
+    Queue,
+    ResourceContainerBase,
+    Stack,
 )
 from .step_types import Step, StepFileResponse, StepResponse, StepStatus
 from .workcell_types import Location, Workcell, WorkcellConfig
@@ -55,10 +56,11 @@ __all__ = [
     "Event",
     "Interface",
     "Pool",
-    "StackResource",
-    "QueueResource",
+    "Stack",
+    "Queue",
     "Collection",
     "Plate",
-    "Asset",
-    "ResourceContainer",
+    "AssetBase",
+    "AssetTable",
+    "ResourceContainerBase",
 ]
