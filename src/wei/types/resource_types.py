@@ -1,53 +1,88 @@
-"""Resource Data Classes"""
+"""Resources dataclasses in SQLModel"""
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import ulid
-from pydantic import BaseModel, Field
+from sqlmodel import Field, Relationship, SQLModel
 
 
-class Asset(BaseModel):
+class AssetBase(SQLModel):
     """
-    Represents an asset (microplate) used for bio/chemistry experiments.
+    Base class for assets with a unique ID and name.
 
     Attributes:
         id (str): Unique identifier for the asset.
         name (str): Name of the asset.
     """
 
-    id: str = Field(default_factory=lambda: str(ulid.new()))
-    name: str = ""
+    id: str = Field(default_factory=lambda: str(ulid.new()), primary_key=True)
+    name: str = Field(default="", index=True)
 
 
-class ResourceContainer(Asset):
+class AssetTable(AssetBase, table=True):
     """
-    Base class for all resource containers.
+    Table for storing assets.
+
+    Attributes:
+        stack_resource_id (Optional[str]): Foreign key to the stack resource.
+        queue_resource_id (Optional[str]): Foreign key to the queue resource.
+        collection_id (Optional[str]): Foreign key to the collection.
+        plate_id (Optional[str]): Foreign key to the plate.
+        stack_resource (Optional[Stack]): Relationship to Stack.
+        queue_resource (Optional[Queue]): Relationship to Queue.
+        collection (Optional[Collection]): Relationship to Collection.
+        plate (Optional[Plate]): Relationship to Plate.
+    """
+
+    stack_resource_id: Optional[str] = Field(default=None, foreign_key="stack.id")
+    stack_resource: Optional["Stack"] = Relationship(back_populates="assets")
+
+    queue_resource_id: Optional[str] = Field(default=None, foreign_key="queue.id")
+    queue_resource: Optional["Queue"] = Relationship(back_populates="assets")
+
+    pool_id: Optional[str] = Field(default=None, foreign_key="pool.id")
+    pool: Optional["Pool"] = Relationship(back_populates="assets")
+
+    collection_id: Optional[str] = Field(default=None, foreign_key="collection.id")
+    collection: Optional["Collection"] = Relationship(back_populates="assets")
+
+    plate_id: Optional[str] = Field(default=None, foreign_key="plate.id")
+    plate: Optional["Plate"] = Relationship(back_populates="assets")
+
+
+class ResourceContainerBase(AssetBase):
+    """
+    Base class for resource containers.
 
     Attributes:
         description (str): Information about the resource.
         capacity (Optional[Union[float, int]]): Capacity of the resource.
     """
 
-    description: str = ""
-    capacity: Optional[Union[float, int]] = None
+    description: str = Field(default="")
+    capacity: Optional[Union[float, int]] = Field(default=None, nullable=True)
 
 
-class Pool(ResourceContainer):
+class Pool(ResourceContainerBase, table=True):
     """
-    Class representing a continuous pool resource containing a single element.
+    Table for storing pool resources.
 
     Attributes:
         quantity (float): Current quantity of the resource.
     """
 
-    quantity: float = 0.0
+    quantity: float = Field(default=0.0)
+    assets: List[AssetTable] = Relationship(back_populates="pool")
 
     def increase(self, amount: float) -> None:
         """
-        Increases the quantity by a specified amount.
+        Increase the quantity by a specified amount.
 
         Args:
             amount (float): The amount to increase.
+
+        Raises:
+            ValueError: If the increase exceeds the capacity.
         """
         if not self.capacity or self.quantity + amount <= self.capacity:
             self.quantity += amount
@@ -56,10 +91,13 @@ class Pool(ResourceContainer):
 
     def decrease(self, amount: float) -> None:
         """
-        Decreases the quantity by a specified amount.
+        Decrease the quantity by a specified amount.
 
         Args:
             amount (float): The amount to decrease.
+
+        Raises:
+            ValueError: If the decrease results in a quantity below zero.
         """
         if not self.capacity or self.quantity - amount >= 0:
             self.quantity -= amount
@@ -67,14 +105,15 @@ class Pool(ResourceContainer):
             raise ValueError("Cannot decrease quantity below zero.")
 
     def empty(self) -> None:
-        """
-        Empty the pool by setting the quantity to zero.
-        """
+        """Empty the pool by setting the quantity to zero."""
         self.quantity = 0.0
 
     def fill(self) -> None:
         """
         Fill the pool to its capacity.
+
+        Raises:
+            ValueError: If the capacity is not defined.
         """
         if self.capacity:
             self.quantity = self.capacity
@@ -82,175 +121,167 @@ class Pool(ResourceContainer):
             raise ValueError("Cannot fill without a defined capacity.")
 
 
-class StackResource(ResourceContainer):
+class Stack(ResourceContainerBase, table=True):
     """
-    Class representing a stack resource.
+    Table for storing stack resources.
 
     Attributes:
-        contents (List[Asset]): List of items in the stack.
+        contents (List[str]): List of asset IDs in the stack.
+        assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: List[Asset] = Field(default_factory=list)
+    contents: List[str] = Field(default_factory=list)
+    assets: List[AssetTable] = Relationship(back_populates="stack")
 
-    @property
-    def quantity(self) -> int:
-        """Returns the number of assets in the stack resource container"""
-        return len(self.contents)
-
-    @quantity.setter
-    def quantity(self, value: int):
-        """Fill empty stack space with anonymous assets"""
-        while len(self.contents) < value:
-            self.push(Asset())
-
-    def push(self, instance: Any) -> int:
+    def push(self, asset_id: str) -> None:
         """
-        Adds an instance to the stack.
+        Add an asset to the stack.
 
         Args:
-            instance (Any): The instance to add.
+            asset_id (str): The ID of the asset to add.
 
-        Returns:
-            int: The position of the instance in the stack.
+        Raises:
+            ValueError: If the stack is full.
         """
-        if not self.capacity or len(self.contents) < int(self.capacity):
-            self.contents.append(instance)
+        if not self.capacity or len(self.contents) < self.capacity:
+            self.contents.append(asset_id)
         else:
-            raise ValueError(f"Resource {self.name} is full.")
-        return len(self.contents) - 1
+            raise ValueError("Stack is full.")
 
-    def pop(self) -> Any:
+    def pop(self) -> Optional[str]:
         """
-        Removes and returns the last instance from the stack.
+        Remove and return the last asset from the stack.
 
         Returns:
-            Any: The last instance in the stack.
+            str: The ID of the removed asset.
+
+        Raises:
+            ValueError: If the stack is empty.
         """
         if self.contents:
             return self.contents.pop()
         else:
-            raise ValueError(f"Resource {self.name} is empty.")
+            raise ValueError("Stack is empty.")
 
 
-class QueueResource(ResourceContainer):
+class Queue(ResourceContainerBase, table=True):
     """
-    Class representing a queue-style resource.
+    Table for storing queue resources.
 
     Attributes:
-        contents (List[Asset]): List of items in the queue.
+        contents (List[str]): List of asset IDs in the queue.
+        assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: List[Asset] = Field(default_factory=list)
+    contents: List[str] = Field(default_factory=list)
+    assets: List[AssetTable] = Relationship(back_populates="queue")
 
-    @property
-    def quantity(self) -> int:
-        """Returns the number of assets in the resource container"""
-        return len(self.contents)
-
-    @quantity.setter
-    def quantity(self, value: int):
-        """Fill empty queue space with anonymous assets"""
-        while len(self.contents) < value:
-            self.push(Asset())
-
-    def push(self, instance: Any) -> int:
+    def push(self, asset_id: str) -> None:
         """
-        Adds an instance to the queue.
+        Add an asset to the queue.
 
         Args:
-            instance (Any): The instance to add.
+            asset_id (str): The ID of the asset to add.
 
-        Returns:
-            int: The position of the instance in the queue.
+        Raises:
+            ValueError: If the queue is full.
         """
-        if not self.capacity or self.quantity < int(self.capacity):
-            self.contents.append(instance)
+        if not self.capacity or len(self.contents) < self.capacity:
+            self.contents.append(asset_id)
         else:
-            raise ValueError(f"Resource {self.name} is full.")
-        return len(self.contents) - 1
+            raise ValueError("Queue is full.")
 
-    def pop(self) -> Any:
+    def pop(self) -> Optional[str]:
         """
-        Removes and returns the first instance from the queue.
+        Remove and return the first asset from the queue.
 
         Returns:
-            Any: The first instance in the queue.
+            str: The ID of the removed asset.
+
+        Raises:
+            ValueError: If the queue is empty.
         """
         if self.contents:
             return self.contents.pop(0)
         else:
-            raise ValueError(f"Resource {self.name} is empty.")
+            raise ValueError("Queue is empty.")
 
 
-class Collection(ResourceContainer):
+class Collection(ResourceContainerBase, table=True):
     """
-    Class representing a resource container that allows random access.
+    Table for storing collections.
 
     Attributes:
-        contents (Dict[str, Any]): Dictionary of items in the collection.
+        contents (Dict[str, str]): Dictionary of location to asset ID.
+        assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: Dict[str, Any] = Field(default_factory=dict)
+    contents: Dict[str, str] = Field(default_factory=dict)
+    assets: List[AssetTable] = Relationship(back_populates="collection")
 
-    @property
-    def quantity(self) -> int:
-        """Returns the number of elements in the collection"""
-        return len(self.contents)
-
-    @quantity.setter
-    def quantity(self, value: int):
-        """Fill empty collection space with anonymous assets"""
-        raise ValueError(
-            "Collections do not support arbitrarily setting quantity. Please use the `insert` and `remove` methods instead."
-        )
-
-    def insert(self, location: str, instance: Any) -> None:
+    def insert(self, location: str, asset_id: str) -> None:
         """
-        Inserts an instance at a specific location.
+        Insert an asset into the collection at a specific location.
 
         Args:
-            location (str): The location to insert the instance.
-            instance (Any): The instance to insert.
+            location (str): The location to insert the asset.
+            asset_id (str): The ID of the asset to insert.
+
+        Raises:
+            ValueError: If the collection is full.
         """
-        if self.quantity < int(self.capacity):
-            self.contents[location] = instance
+        if len(self.contents) < self.capacity:
+            self.contents[location] = asset_id
         else:
             raise ValueError("Collection is full.")
 
-    def retrieve(self, location: str = None) -> Any:
+    def retrieve(self, location: str) -> Optional[str]:
         """
-        Removes and returns the instance from a specific location.
+        Remove and return an asset from a specific location in the collection.
 
         Args:
-            location (str): The location of the instance to retrieve.
+            location (str): The location of the asset to retrieve.
+
+        Returns:
+            str: The ID of the retrieved asset.
+
+        Raises:
+            ValueError: If the location is invalid.
         """
-        if location and location in self.contents:
+        if location in self.contents:
             return self.contents.pop(location)
         else:
             raise ValueError("Invalid location.")
 
 
-class Plate(Collection):
+class Plate(ResourceContainerBase, table=True):
     """
-    Class representing a multi-welled plate.
+    Table for storing multi-welled plates.
 
     Attributes:
-        wells (Dict[str, Pool]): List of pools representing wells in the plate.
+        contents (Dict[str, str]): Dictionary of well ID to asset ID.
         well_capacity (Optional[float]): Capacity of each well.
+        assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    wells: Dict[str, Pool] = Field(default_factory=dict)
-    well_capacity: Optional[float] = None
+    contents: Dict[str, str] = Field(default_factory=dict)
+    well_capacity: Optional[float] = Field(default=None)
+    assets: List[AssetTable] = Relationship(back_populates="plate")
 
-    def update_plate(self, new_contents: Dict[str, float]):
-        """Updates the whole plate content"""
+    def update_plate(self, new_contents: Dict[str, float]) -> None:
+        """
+        Update the contents of the plate.
+
+        Args:
+            new_contents (Dict[str, float]): The new contents to update.
+        """
         for well_id, quantity in new_contents.items():
-            if well_id in self.wells:
-                self.wells[well_id].quantity = quantity
+            if well_id in self.contents:
+                self.contents[well_id] = quantity
             else:
-                self.wells[well_id] = Pool(
+                self.contents[well_id] = Pool(
                     description=f"Well {well_id}",
                     name=f"Well{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
-                )
+                ).id
