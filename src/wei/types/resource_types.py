@@ -1,8 +1,9 @@
 """Resources dataclasses in SQLModel"""
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import ulid
+from sqlalchemy import Column, Text
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -26,12 +27,14 @@ class AssetTable(AssetBase, table=True):
     Attributes:
         stack_resource_id (Optional[str]): Foreign key to the stack resource.
         queue_resource_id (Optional[str]): Foreign key to the queue resource.
+        pool_id (Optional[str]): Foreign key to the pool.
         collection_id (Optional[str]): Foreign key to the collection.
         plate_id (Optional[str]): Foreign key to the plate.
-        stack_resource (Optional[Stack]): Relationship to Stack.
-        queue_resource (Optional[Queue]): Relationship to Queue.
-        collection (Optional[Collection]): Relationship to Collection.
-        plate (Optional[Plate]): Relationship to Plate.
+        stack_resource (Optional["Stack"]): Relationship to Stack.
+        queue_resource (Optional["Queue"]): Relationship to Queue.
+        pool (Optional["Pool"]): Relationship to Pool.
+        collection (Optional["Collection"]): Relationship to Collection.
+        plate (Optional["Plate"]): Relationship to Plate.
     """
 
     stack_resource_id: Optional[str] = Field(default=None, foreign_key="stack.id")
@@ -56,11 +59,11 @@ class ResourceContainerBase(AssetBase):
 
     Attributes:
         description (str): Information about the resource.
-        capacity (Optional[Union[float, int]]): Capacity of the resource.
+        capacity (Optional[float]): Capacity of the resource.
     """
 
     description: str = Field(default="")
-    capacity: Optional[Union[float, int]] = Field(default=None, nullable=True)
+    capacity: Optional[float] = Field(default=None, nullable=True)
 
 
 class Pool(ResourceContainerBase, table=True):
@@ -69,6 +72,7 @@ class Pool(ResourceContainerBase, table=True):
 
     Attributes:
         quantity (float): Current quantity of the resource.
+        assets (List[AssetTable]): Relationship to AssetTable.
     """
 
     quantity: float = Field(default=0.0)
@@ -130,7 +134,9 @@ class Stack(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: List[str] = Field(default_factory=list)
+    contents: List[str] = Field(
+        default_factory=list, sa_column=Column(Text, nullable=False)
+    )
     assets: List[AssetTable] = Relationship(back_populates="stack")
 
     def push(self, asset_id: str) -> None:
@@ -145,6 +151,7 @@ class Stack(ResourceContainerBase, table=True):
         """
         if not self.capacity or len(self.contents) < self.capacity:
             self.contents.append(asset_id)
+            self.contents = self.contents  # Ensure SQLModel recognizes the change
         else:
             raise ValueError("Stack is full.")
 
@@ -159,7 +166,9 @@ class Stack(ResourceContainerBase, table=True):
             ValueError: If the stack is empty.
         """
         if self.contents:
-            return self.contents.pop()
+            asset_id = self.contents.pop()
+            self.contents = self.contents  # Ensure SQLModel recognizes the change
+            return asset_id
         else:
             raise ValueError("Stack is empty.")
 
@@ -173,7 +182,9 @@ class Queue(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: List[str] = Field(default_factory=list)
+    contents: List[str] = Field(
+        default_factory=list, sa_column=Column(Text, nullable=False)
+    )
     assets: List[AssetTable] = Relationship(back_populates="queue")
 
     def push(self, asset_id: str) -> None:
@@ -188,6 +199,7 @@ class Queue(ResourceContainerBase, table=True):
         """
         if not self.capacity or len(self.contents) < self.capacity:
             self.contents.append(asset_id)
+            self.contents = self.contents  # Ensure SQLModel recognizes the change
         else:
             raise ValueError("Queue is full.")
 
@@ -202,7 +214,9 @@ class Queue(ResourceContainerBase, table=True):
             ValueError: If the queue is empty.
         """
         if self.contents:
-            return self.contents.pop(0)
+            asset_id = self.contents.pop(0)
+            self.contents = self.contents  # Ensure SQLModel recognizes the change
+            return asset_id
         else:
             raise ValueError("Queue is empty.")
 
@@ -216,7 +230,9 @@ class Collection(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: Dict[str, str] = Field(default_factory=dict)
+    contents: Dict[str, str] = Field(
+        default_factory=dict, sa_column=Column(Text, nullable=False)
+    )
     assets: List[AssetTable] = Relationship(back_populates="collection")
 
     def insert(self, location: str, asset_id: str) -> None:
@@ -232,6 +248,7 @@ class Collection(ResourceContainerBase, table=True):
         """
         if len(self.contents) < self.capacity:
             self.contents[location] = asset_id
+            self.contents = self.contents  # Ensure SQLModel recognizes the change
         else:
             raise ValueError("Collection is full.")
 
@@ -249,7 +266,9 @@ class Collection(ResourceContainerBase, table=True):
             ValueError: If the location is invalid.
         """
         if location in self.contents:
-            return self.contents.pop(location)
+            asset_id = self.contents.pop(location)
+            self.contents = self.contents  # Ensure SQLModel recognizes the change
+            return asset_id
         else:
             raise ValueError("Invalid location.")
 
@@ -264,7 +283,9 @@ class Plate(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: Dict[str, str] = Field(default_factory=dict)
+    contents: Dict[str, str] = Field(
+        default_factory=dict, sa_column=Column(Text, nullable=False)
+    )
     well_capacity: Optional[float] = Field(default=None)
     assets: List[AssetTable] = Relationship(back_populates="plate")
 
@@ -285,3 +306,4 @@ class Plate(ResourceContainerBase, table=True):
                     capacity=self.well_capacity,
                     quantity=quantity,
                 ).id
+        self.contents = self.contents  # Ensure SQLModel recognizes the change
