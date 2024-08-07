@@ -21,6 +21,7 @@ from wei.types.event_types import (
     LocalComputeEvent,
     LoopStartEvent,
 )
+from wei.types.exceptions import WorkflowFailedException
 from wei.types.experiment_types import Experiment, ExperimentDesign
 
 
@@ -256,7 +257,8 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
-    ) -> Dict[Any, Any]:
+        raise_on_failed: bool = True,
+    ) -> WorkflowRun:
         """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
         Parameters
@@ -269,6 +271,9 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
         simulate: bool
             Whether or not to use real robots
+
+        raise_on_failed: bool = True
+            Whether to raise an exception if the workflow fails.
 
         Returns
         -------
@@ -298,7 +303,10 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
         if not response.ok:
             response.raise_for_status()
         response_json = response.json()
-        if blocking:
+        if not blocking:
+            run_info = self.query_run(response_json["run_id"])
+            wf_run = WorkflowRun(**run_info)
+        else:
             prior_status = None
             prior_index = None
             while True:
@@ -332,10 +340,12 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                 prior_status = status
                 prior_index = step_index
 
-            return WorkflowRun(**run_info)
-        else:
-            run_info = self.query_run(response_json["run_id"])
-            return WorkflowRun(**run_info)
+            wf_run = WorkflowRun(**run_info)
+        if wf_run.status == WorkflowStatus.FAILED and raise_on_failed:
+            raise WorkflowFailedException(
+                f"Workflow {wf_run.name} ({wf_run.run_id}) failed."
+            )
+        return wf_run
 
     def await_runs(self, run_list: List[str]) -> Dict[Any, Any]:
         """

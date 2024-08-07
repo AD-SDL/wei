@@ -54,6 +54,12 @@ def state_handler(state: State) -> ModuleState:
 
 
 @test_rest_node.action()
+def fail(state: State, action: ActionRequest) -> StepResponse:
+    """Fails the current step"""
+    return StepResponse.step_failed("Oh no! This step failed!")
+
+
+@test_rest_node.action()
 def transfer(
     state: State,
     action: ActionRequest,

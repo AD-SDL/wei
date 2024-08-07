@@ -4,11 +4,6 @@ metadata:
   info: Example workflow for WEI
   version: 0.2
 
-modules:
-  - transfer
-  - synthesis
-  - measure
-
 flowdef:
   - name: Get plate
     module: transfer
