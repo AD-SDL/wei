@@ -60,7 +60,7 @@ const data_headers = [
 props.steps.forEach((step : any)=> { test.value[step.id] = {}; if(step.result.data)
   {Object.keys(step.result.data).forEach(async (key: string) =>   {
 
-    let val = await ((await fetch( "http://localhost:8000/runs/data/".concat(step.result.data[key]).concat("/info"))).json())
+    let val = await ((await fetch( "http://".concat(window.location.host).concat("/runs/data/").concat(step.result.data[key]).concat("/info"))).json())
     console.log(val)
     test.value[step.id][val.id] = val
 
@@ -79,7 +79,7 @@ const forceFileDownload = (val : any, title: any)  => {
 }
 
 async function trydownload(id: string, label: string) {
-    let val = await (await fetch('http://localhost:8000/runs/data/'.concat(id))).blob()
+    let val = await (await fetch("http://".concat(window.location.host).concat('/runs/data/').concat(id))).blob()
     forceFileDownload(val, label)
 
 
