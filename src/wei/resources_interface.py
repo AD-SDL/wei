@@ -1,7 +1,6 @@
 """Resources Interface"""
 
-import json
-from typing import Any, Dict, Optional, Type
+from typing import Dict, List, Optional, Type
 
 from sqlmodel import Session, SQLModel, create_engine, select
 
@@ -32,6 +31,21 @@ class ResourceInterface:
         """
         return Session(self.engine)
 
+    def get_all_resources(self, resource_type: Type[SQLModel]) -> List[SQLModel]:
+        """
+        Retrieve all resources from the database.
+
+        Args:
+            resource_type (Type[SQLModel]): The type of the resource to retrieve.
+
+        Returns:
+            List[SQLModel]: List of all resources of the specified type.
+        """
+        with self.get_session() as session:
+            statement = select(resource_type)
+            resources = session.exec(statement).all()
+        return resources
+
     def add_resource(self, resource: SQLModel) -> SQLModel:
         """
         Add a new resource to the database.
@@ -48,20 +62,6 @@ class ResourceInterface:
             session.refresh(resource)
         return resource
 
-    def get_all_resources(self, resource_type: Type[SQLModel]) -> list[SQLModel]:
-        """
-        Retrieve all resources from the database.
-
-        Args:
-            resource_type (Type[SQLModel]): The type of resource to retrieve.
-
-        Returns:
-            List[SQLModel]: List of all resources of the given type.
-        """
-        with self.get_session() as session:
-            resources = session.exec(select(resource_type)).all()
-        return resources
-
     def get_resource(
         self, resource_type: Type[SQLModel], resource_id: str
     ) -> Optional[SQLModel]:
@@ -69,36 +69,33 @@ class ResourceInterface:
         Retrieve a resource by its ID.
 
         Args:
-            resource_type (Type[SQLModel]): The type of resource to retrieve.
-            resource_id (str): The ID of the resource.
+            resource_type (Type[SQLModel]): The type of the resource.
+            resource_id (str): The ID of the resource to retrieve.
 
         Returns:
             SQLModel: The retrieved resource, or None if not found.
         """
         with self.get_session() as session:
-            resource = session.exec(
-                select(resource_type).where(resource_type.id == resource_id)
-            ).one_or_none()
+            statement = select(resource_type).where(resource_type.id == resource_id)
+            resource = session.exec(statement).one_or_none()
         return resource
 
     def update_resource(
-        self, resource_type: Type[SQLModel], resource_id: str, updates: Dict[str, Any]
+        self, resource_type: Type[SQLModel], resource_id: str, updates: Dict[str, any]
     ) -> Optional[SQLModel]:
         """
         Update a resource with new data.
 
         Args:
-            resource_type (Type[SQLModel]): The type of resource to update.
+            resource_type (Type[SQLModel]): The type of the resource.
             resource_id (str): The ID of the resource to update.
-            updates (Dict[str, Any]): A dictionary of updates to apply.
+            updates (dict): A dictionary of updates to apply.
 
         Returns:
             SQLModel: The updated resource, or None if not found.
         """
         with self.get_session() as session:
-            resource = session.exec(
-                select(resource_type).where(resource_type.id == resource_id)
-            ).one_or_none()
+            resource = self.get_resource(resource_type, resource_id)
             if resource:
                 for key, value in updates.items():
                     setattr(resource, key, value)
@@ -114,16 +111,14 @@ class ResourceInterface:
         Delete a resource from the database.
 
         Args:
-            resource_type (Type[SQLModel]): The type of resource to delete.
+            resource_type (Type[SQLModel]): The type of the resource.
             resource_id (str): The ID of the resource to delete.
 
         Returns:
             SQLModel: The deleted resource, or None if not found.
         """
         with self.get_session() as session:
-            resource = session.exec(
-                select(resource_type).where(resource_type.id == resource_id)
-            ).one_or_none()
+            resource = self.get_resource(resource_type, resource_id)
             if resource:
                 session.delete(resource)
                 session.commit()
@@ -143,16 +138,14 @@ class ResourceInterface:
         Returns:
             SQLModel: The updated resource, or None if not found.
         """
-        resource = self.get_resource(resource_type, resource_id)
-        if not resource:
-            return None
-
-        if isinstance(resource, Stack) or isinstance(resource, Queue):
-            resource.push(asset_id)
-            self.update_resource(
-                resource_type, resource_id, {"contents": resource.contents}
-            )
-            return resource
+        with self.get_session() as session:  # Noqa
+            resource = self.get_resource(resource_type, resource_id)
+            if resource and isinstance(resource, (Stack, Queue)):
+                resource.push(asset_id)
+                self.update_resource(
+                    resource_type, resource_id, {"contents": resource.contents}
+                )
+                return resource
         return None
 
     def pop_asset(
@@ -166,18 +159,16 @@ class ResourceInterface:
             resource_type (Type[SQLModel]): The type of the resource.
 
         Returns:
-            str: The popped asset ID, or None if the resource is not found or empty.
+            str: The ID of the popped asset, or None if not found.
         """
-        resource = self.get_resource(resource_type, resource_id)
-        if not resource:
-            return None
-
-        if isinstance(resource, Stack) or isinstance(resource, Queue):
-            asset_id = resource.pop()
-            self.update_resource(
-                resource_type, resource_id, {"contents": resource.contents}
-            )
-            return asset_id
+        with self.get_session() as session:  # Noqa
+            resource = self.get_resource(resource_type, resource_id)
+            if resource and isinstance(resource, (Stack, Queue)):
+                asset_id = resource.pop()
+                self.update_resource(
+                    resource_type, resource_id, {"contents": resource.contents}
+                )
+                return asset_id
         return None
 
     def increase_quantity(
@@ -342,17 +333,23 @@ class ResourceInterface:
             return None
 
         if isinstance(resource, Plate):
-            contents_dict = json.loads(resource.contents)
+            contents_dict = resource.contents  # Directly use the dictionary
             if well_id in contents_dict:
-                contents_dict[well_id] = quantity
+                pool_id = contents_dict[well_id]
+                pool = self.get_resource(Pool, pool_id)
+                if pool:
+                    pool.quantity = quantity
+                    self.update_resource(Pool, pool_id, {"quantity": quantity})
             else:
-                contents_dict[well_id] = Pool(
+                pool = Pool(
                     description=f"Well {well_id}",
                     name=f"Well{well_id}",
                     capacity=resource.well_capacity,
                     quantity=quantity,
-                ).id
-            resource.contents = json.dumps(contents_dict)
+                )
+                created_pool = self.add_resource(pool)
+                contents_dict[well_id] = created_pool.id
+            resource.contents = contents_dict  # Assign back the updated dictionary
             self.update_resource(
                 resource_type, resource_id, {"contents": resource.contents}
             )
@@ -360,77 +357,147 @@ class ResourceInterface:
         return None
 
 
-# Example Usage of ResourceInterface
 if __name__ == "__main__":
     resource_interface = ResourceInterface(database_url="sqlite:///:memory:")
 
-    # Create tables
-    SQLModel.metadata.create_all(resource_interface.engine)
+    # # Example usage: Create a Pool resource
+    # pool = Pool(name="Test Pool", description="A test pool", capacity=100.0, quantity=50.0)
+    # created_pool = resource_interface.add_resource(pool)
+    # print("Created Pool:", created_pool)
 
-    # Example usage: Create a Pool resource
-    pool = Pool(
-        name="Test Pool", description="A test pool", capacity=100.0, quantity=50.0
+    # # Example usage: Increase quantity in the Pool
+    # updated_pool = resource_interface.increase_quantity(created_pool.id, 25.0, Pool)
+    # print("Increased Pool Quantity:", updated_pool)
+
+    # # Example usage: Create a Stack resource
+    # stack = Stack(name="Test Stack", description="A test stack", capacity=10)
+    # created_stack = resource_interface.add_resource(stack)
+    # print("Created Stack:", created_stack)
+
+    # # Example usage: Push an asset to the Stack
+    # asset = AssetTable(name="Test Asset")
+    # created_asset = resource_interface.add_resource(asset)
+    # updated_stack = resource_interface.push_asset(created_stack.id, created_asset.id, Stack)
+    # print("Updated Stack with Pushed Asset:", updated_stack)
+
+    # # Example usage: Pop an asset from the Stack
+    # popped_asset_id = resource_interface.pop_asset(created_stack.id, Stack)
+    # print("Popped Asset ID from Stack:", popped_asset_id)
+
+    # # Example usage: Create a Queue resource
+    # queue = Queue(name="Test Queue", description="A test queue", capacity=10)
+    # created_queue = resource_interface.add_resource(queue)
+    # print("Created Queue:", created_queue)
+
+    # # Example usage: Create a Collection resource
+    # collection = Collection(name="Test Collection", description="A test collection", capacity=10)
+    # created_collection = resource_interface.add_resource(collection)
+    # print("Created Collection:", created_collection)
+
+    # # Example usage: Insert an asset into the Collection
+    # resource_interface.insert_asset(created_collection.id, "location1", created_asset.id, Collection)
+    # updated_collection = resource_interface.get_resource(Collection, created_collection.id)
+    # print("Updated Collection with Inserted Asset:", updated_collection)
+
+    # # Example usage: Retrieve an asset from the Collection
+    # retrieved_asset_id = resource_interface.retrieve_asset(created_collection.id, "location1", Collection)
+    # print("Retrieved Asset ID from Collection:", retrieved_asset_id)
+
+    # # Example usage: Create a Plate resource
+    # plate = Plate(name="Test Plate", description="A test plate", well_capacity=100.0)
+    # created_plate = resource_interface.add_resource(plate)
+    # print("Created Plate:", created_plate)
+
+    # # Example usage: Update the contents of the Plate
+    # resource_interface.update_plate(created_plate.id, {"A1": 75.0, "A2": 75.0, "A3": 75.0, "A4": 75.0}, Plate)
+    # updated_plate = resource_interface.get_resource(Plate, created_plate.id)
+    # print("Updated Plate Contents:", updated_plate)
+
+    # # Example usage: Update a specific well in the Plate
+    # resource_interface.update_plate_well(created_plate.id, "A1", 80.0, Plate)
+    # updated_plate = resource_interface.get_resource(Plate, created_plate.id)
+    # print("Updated Specific Well in Plate:", updated_plate)
+
+    # # Example usage: Get all resources of a specific type
+    # all_stacks = resource_interface.get_all_resources(Stack)
+    # print("All Stacks:", all_stacks)
+    # Add resources
+
+    # Add resources
+    stack1 = Stack(
+        description="Stack for transfer",
+        name="Stack1",
+        capacity=10,
     )
-    created_pool = resource_interface.add_resource(pool)
-    print("Created Pool:", created_pool)
+    created_stack1 = resource_interface.add_resource(stack1)
 
-    # Example usage: Increase quantity in the Pool
-    updated_pool = resource_interface.increase_quantity(created_pool.id, 25.0, Pool)
-    print("Increased Pool Quantity:", updated_pool)
+    for asset_name in ["Plate1", "Plate2", "Plate3"]:
+        asset = AssetTable(name=asset_name, stack_resource_id=created_stack1.id)
+        created_asset = resource_interface.add_resource(asset)
+        resource_interface.push_asset(created_stack1.id, created_asset.id, Stack)
 
-    # Example usage: Create a Stack resource
-    stack = Stack(name="Test Stack", description="A test stack", capacity=10)
-    created_stack = resource_interface.add_resource(stack)
-    print("Created Stack:", created_stack)
-
-    # Example usage: Push an asset to the Stack
-    asset = AssetTable(name="Test Asset")
-    created_asset = resource_interface.add_resource(asset)
-    updated_stack = resource_interface.push_asset(
-        created_stack.id, created_asset.id, Stack
+    stack2 = Stack(
+        description="Stack for transfer",
+        name="Stack2",
+        capacity=10,
     )
-    print("Updated Stack with Pushed Asset:", updated_stack)
+    resource_interface.add_resource(stack2)
 
-    # Example usage: Pop an asset from the Stack
-    popped_asset_id = resource_interface.pop_asset(created_stack.id, Stack)
-    print("Popped Asset ID from Stack:", popped_asset_id)
+    stack3 = Stack(
+        description="Stack for transfer",
+        name="Stack3",
+        capacity=1,
+    )
+    resource_interface.add_resource(stack3)
 
-    # Example usage: Create a Queue resource
-    queue = Queue(name="Test Queue", description="A test queue", capacity=10)
-    created_queue = resource_interface.add_resource(queue)
-    print("Created Queue:", created_queue)
+    trash_stack = Stack(
+        description="Trash",
+        name="Trash",
+        capacity=None,
+    )
+    resource_interface.add_resource(trash_stack)
 
-    # Example usage: Insert an asset into a Collection
+    plate_contents = {}
+    for row in "AB":
+        for col in range(1, 3):
+            pool = Pool(
+                description=f"Well {row}{col}",
+                name=f"Well{row}{col}",
+                capacity=100.0,
+                quantity=50.0,
+            )
+            created_pool = resource_interface.add_resource(pool)
+            plate_contents[f"{row}{col}"] = created_pool.id
+
+    plate = Plate(
+        name="Plate1",
+        contents=plate_contents,
+        description="A test plate",
+        well_capacity=100.0,
+    )
+    created_plate = resource_interface.add_resource(plate)
+
     collection = Collection(
-        name="Test Collection", description="A test collection", capacity=10
+        description="Collection for measurement",
+        name="CollectionResource",
+        capacity=5,
     )
     created_collection = resource_interface.add_resource(collection)
-    print("Created Collection:", created_collection)
-    updated_collection = resource_interface.insert_asset(
-        created_collection.id, "location1", created_asset.id, Collection
-    )
-    print("Updated Collection with Inserted Asset:", updated_collection)
+    for i in range(1, 3):
+        asset = AssetTable(name=f"Asset{i}", collection_id=created_collection.id)
+        created_asset = resource_interface.add_resource(asset)
+        resource_interface.insert_asset(
+            created_collection.id, str(i), created_asset.id, Collection
+        )
 
-    # Example usage: Retrieve an asset from a Collection
-    retrieved_asset_id = resource_interface.retrieve_asset(
-        created_collection.id, "location1", Collection
-    )
-    print("Retrieved Asset ID from Collection:", retrieved_asset_id)
+    # Example: Retrieve and print all stacks
+    all_stacks = resource_interface.get_all_resources(Stack)
+    print("All Stacks:", all_stacks)
 
-    # Example usage: Create a Plate resource
-    plate = Plate(name="Test Plate", description="A test plate", well_capacity=100.0)
-    created_plate = resource_interface.add_resource(plate)
-    print("Created Plate:", created_plate)
+    # # Example: Retrieve and print all plates
+    # all_plates = resource_interface.get_all_resources(Plate)
+    # print("All Plates:", all_plates)
 
-    # Example usage: Update a specific well in the Plate
-    updated_plate = resource_interface.update_plate_well(
-        created_plate.id, "A1", 80.0, Plate
-    )
-    print("Updated Plate Well A1 Quantity:", updated_plate)
-
-    # Example usage: Update the entire Plate
-    new_plate_contents = {"A1": 90.0, "A2": 70.0}
-    updated_plate = resource_interface.update_plate(
-        created_plate.id, new_plate_contents, Plate
-    )
-    print("Updated Plate Contents:", updated_plate)
+    # # Example: Retrieve and print all collections
+    # all_collections = resource_interface.get_all_resources(Collection)
+    # print("All Collections:", all_collections)
