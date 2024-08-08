@@ -138,14 +138,13 @@ class ResourceInterface:
         Returns:
             SQLModel: The updated resource, or None if not found.
         """
-        with self.get_session() as session:  # Noqa
-            resource = self.get_resource(resource_type, resource_id)
-            if resource and isinstance(resource, (Stack, Queue)):
-                resource.push(asset_id)
-                self.update_resource(
-                    resource_type, resource_id, {"contents": resource.contents}
-                )
-                return resource
+        resource = self.get_resource(resource_type, resource_id)
+        if resource and isinstance(resource, Stack):
+            resource.push(asset_id)
+            self.update_resource(
+                resource_type, resource_id, {"contents": resource.contents}
+            )
+            return resource
         return None
 
     def pop_asset(
@@ -458,8 +457,8 @@ if __name__ == "__main__":
     resource_interface.add_resource(trash_stack)
 
     plate_contents = {}
-    for row in "AB":
-        for col in range(1, 3):
+    for row in "ABCDEFGH":
+        for col in range(1, 13):
             pool = Pool(
                 description=f"Well {row}{col}",
                 name=f"Well{row}{col}",
@@ -490,9 +489,12 @@ if __name__ == "__main__":
             created_collection.id, str(i), created_asset.id, Collection
         )
 
-    # Example: Retrieve and print all stacks
+    # Example: Retrieve and print all stacks with asset details
     all_stacks = resource_interface.get_all_resources(Stack)
-    print("All Stacks:", all_stacks)
+    print(all_stacks)
+    for stack in all_stacks:
+        asset_details = stack.get_asset_details(resource_interface.get_session())
+        print(f"Stack {stack.name} Contents: {asset_details}")
 
     # # Example: Retrieve and print all plates
     # all_plates = resource_interface.get_all_resources(Plate)
