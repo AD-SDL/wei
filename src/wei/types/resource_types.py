@@ -1,10 +1,10 @@
-"""Resources dataclasses in SQLModel"""
+"""Resource Types"""
 
-import json
 from typing import Dict, List, Optional
 
 import ulid
-from sqlalchemy import Column, Text
+from sqlalchemy import Column
+from sqlalchemy.types import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -26,23 +26,23 @@ class AssetTable(AssetBase, table=True):
     Table for storing assets.
 
     Attributes:
-        stack_resource_id (Optional[str]): Foreign key to the stack resource.
-        queue_resource_id (Optional[str]): Foreign key to the queue resource.
-        pool_id (Optional[str]): Foreign key to the pool.
-        collection_id (Optional[str]): Foreign key to the collection.
-        plate_id (Optional[str]): Foreign key to the plate.
-        stack_resource (Optional["Stack"]): Relationship to Stack.
-        queue_resource (Optional["Queue"]): Relationship to Queue.
-        pool (Optional["Pool"]): Relationship to Pool.
-        collection (Optional["Collection"]): Relationship to Collection.
-        plate (Optional["Plate"]): Relationship to Plate.
+        stack_id (Optional[str]): Foreign key to the stack resource.
+        queue_id (Optional[str]): Foreign key to the queue resource.
+        pool_id (Optional[str]): Foreign key to the pool resource.
+        collection_id (Optional[str]): Foreign key to the collection resource.
+        plate_id (Optional[str]): Foreign key to the plate resource.
+        stack (Optional[Stack]): Relationship to Stack.
+        queue (Optional[Queue]): Relationship to Queue.
+        pool (Optional[Pool]): Relationship to Pool.
+        collection (Optional[Collection]): Relationship to Collection.
+        plate (Optional[Plate]): Relationship to Plate.
     """
 
-    stack_resource_id: Optional[str] = Field(default=None, foreign_key="stack.id")
-    stack_resource: Optional["Stack"] = Relationship(back_populates="assets")
+    stack_id: Optional[str] = Field(default=None, foreign_key="stack.id")
+    stack: Optional["Stack"] = Relationship(back_populates="assets")
 
-    queue_resource_id: Optional[str] = Field(default=None, foreign_key="queue.id")
-    queue_resource: Optional["Queue"] = Relationship(back_populates="assets")
+    queue_id: Optional[str] = Field(default=None, foreign_key="queue.id")
+    queue: Optional["Queue"] = Relationship(back_populates="assets")
 
     pool_id: Optional[str] = Field(default=None, foreign_key="pool.id")
     pool: Optional["Pool"] = Relationship(back_populates="assets")
@@ -135,8 +135,8 @@ class Stack(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: str = Field(default="[]", sa_column=Column(Text, nullable=False))
-    assets: List[AssetTable] = Relationship(back_populates="stack_resource")
+    contents: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    assets: List[AssetTable] = Relationship(back_populates="stack")
 
     def push(self, asset_id: str) -> None:
         """
@@ -148,10 +148,8 @@ class Stack(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the stack is full.
         """
-        contents_list = json.loads(self.contents)
-        if not self.capacity or len(contents_list) < self.capacity:
-            contents_list.append(asset_id)
-            self.contents = json.dumps(contents_list)
+        if not self.capacity or len(self.contents) < self.capacity:
+            self.contents.append(asset_id)
         else:
             raise ValueError("Stack is full.")
 
@@ -165,11 +163,8 @@ class Stack(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the stack is empty.
         """
-        contents_list = json.loads(self.contents)
-        if contents_list:
-            asset_id = contents_list.pop()
-            self.contents = json.dumps(contents_list)
-            return asset_id
+        if self.contents:
+            return self.contents.pop()
         else:
             raise ValueError("Stack is empty.")
 
@@ -183,8 +178,8 @@ class Queue(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: str = Field(default="[]", sa_column=Column(Text, nullable=False))
-    assets: List[AssetTable] = Relationship(back_populates="queue_resource")
+    contents: List[str] = Field(default_factory=list, sa_column=Column(JSON))
+    assets: List[AssetTable] = Relationship(back_populates="queue")
 
     def push(self, asset_id: str) -> None:
         """
@@ -196,10 +191,8 @@ class Queue(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the queue is full.
         """
-        contents_list = json.loads(self.contents)
-        if not self.capacity or len(contents_list) < self.capacity:
-            contents_list.append(asset_id)
-            self.contents = json.dumps(contents_list)
+        if not self.capacity or len(self.contents) < self.capacity:
+            self.contents.append(asset_id)
         else:
             raise ValueError("Queue is full.")
 
@@ -213,11 +206,8 @@ class Queue(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the queue is empty.
         """
-        contents_list = json.loads(self.contents)
-        if contents_list:
-            asset_id = contents_list.pop(0)
-            self.contents = json.dumps(contents_list)
-            return asset_id
+        if self.contents:
+            return self.contents.pop(0)
         else:
             raise ValueError("Queue is empty.")
 
@@ -231,7 +221,7 @@ class Collection(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: str = Field(default="{}", sa_column=Column(Text, nullable=False))
+    contents: Dict[str, str] = Field(default_factory=dict, sa_column=Column(JSON))
     assets: List[AssetTable] = Relationship(back_populates="collection")
 
     def insert(self, location: str, asset_id: str) -> None:
@@ -245,10 +235,8 @@ class Collection(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the collection is full.
         """
-        contents_dict = json.loads(self.contents)
-        if len(contents_dict) < self.capacity:
-            contents_dict[location] = asset_id
-            self.contents = json.dumps(contents_dict)
+        if len(self.contents) < self.capacity:
+            self.contents[location] = asset_id
         else:
             raise ValueError("Collection is full.")
 
@@ -265,11 +253,8 @@ class Collection(ResourceContainerBase, table=True):
         Raises:
             ValueError: If the location is invalid.
         """
-        contents_dict = json.loads(self.contents)
-        if location in contents_dict:
-            asset_id = contents_dict.pop(location)
-            self.contents = json.dumps(contents_dict)
-            return asset_id
+        if location in self.contents:
+            return self.contents.pop(location)
         else:
             raise ValueError("Invalid location.")
 
@@ -284,7 +269,7 @@ class Plate(ResourceContainerBase, table=True):
         assets (List[AssetTable]): Relationship to AssetTable.
     """
 
-    contents: str = Field(default="{}", sa_column=Column(Text, nullable=False))
+    contents: Dict[str, str] = Field(default_factory=dict, sa_column=Column(JSON))
     well_capacity: Optional[float] = Field(default=None)
     assets: List[AssetTable] = Relationship(back_populates="plate")
 
@@ -295,15 +280,13 @@ class Plate(ResourceContainerBase, table=True):
         Args:
             new_contents (Dict[str, float]): The new contents to update.
         """
-        contents_dict = json.loads(self.contents)
         for well_id, quantity in new_contents.items():
-            if well_id in contents_dict:
-                contents_dict[well_id] = quantity
+            if well_id in self.contents:
+                self.contents[well_id] = quantity
             else:
-                contents_dict[well_id] = Pool(
+                self.contents[well_id] = Pool(
                     description=f"Well {well_id}",
                     name=f"Well{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
                 ).id
-        self.contents = json.dumps(contents_dict)
