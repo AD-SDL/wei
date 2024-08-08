@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 import ulid
 from sqlalchemy import Column
 from sqlalchemy.types import JSON
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, Session, SQLModel
 
 
 class AssetBase(SQLModel):
@@ -167,6 +167,23 @@ class Stack(ResourceContainerBase, table=True):
             return self.contents.pop()
         else:
             raise ValueError("Stack is empty.")
+
+    def get_asset_details(self, session: Session) -> List[Dict[str, str]]:
+        """
+        Retrieve detailed information about the assets contained in the stack.
+
+        Args:
+            session (Session): The SQLAlchemy session to use for querying the database.
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries containing detailed information about each asset in the stack.
+        """
+        asset_details = []
+        for asset_id in self.contents:
+            asset = session.get(AssetTable, asset_id)
+            if asset:
+                asset_details.append({"id": asset.id, "name": asset.name})
+        return asset_details
 
 
 class Queue(ResourceContainerBase, table=True):
