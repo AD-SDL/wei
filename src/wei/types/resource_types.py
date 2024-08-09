@@ -1,309 +1,477 @@
-"""Resource Types"""
+"""Resources Data Classes"""
 
-from typing import Dict, List, Optional
+import json
+from typing import Any, Dict, List, Optional
 
 import ulid
-from sqlalchemy import Column
-from sqlalchemy.types import JSON
-from sqlmodel import Field, Relationship, Session, SQLModel
+from sqlalchemy import Column, Text
+from sqlmodel import Field as SQLField
+from sqlmodel import Relationship, Session, SQLModel
 
 
 class AssetBase(SQLModel):
     """
-    Base class for assets with a unique ID and name.
+    Base class for assets with a unique identifier and a name.
 
     Attributes:
-        id (str): Unique identifier for the asset.
-        name (str): Name of the asset.
+        id (str): The unique identifier for the asset, generated using ULID.
+        name (str): The name of the asset.
     """
 
-    id: str = Field(default_factory=lambda: str(ulid.new()), primary_key=True)
-    name: str = Field(default="", index=True)
+    id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
+    name: str = SQLField(default="")
 
 
 class AssetTable(AssetBase, table=True):
     """
-    Table for storing assets.
+    Represents an asset stored in the database, with potential relationships to various resource types.
 
     Attributes:
-        stack_id (Optional[str]): Foreign key to the stack resource.
-        queue_id (Optional[str]): Foreign key to the queue resource.
-        pool_id (Optional[str]): Foreign key to the pool resource.
-        collection_id (Optional[str]): Foreign key to the collection resource.
-        plate_id (Optional[str]): Foreign key to the plate resource.
-        stack (Optional[Stack]): Relationship to Stack.
-        queue (Optional[Queue]): Relationship to Queue.
-        pool (Optional[Pool]): Relationship to Pool.
-        collection (Optional[Collection]): Relationship to Collection.
-        plate (Optional[Plate]): Relationship to Plate.
+        stack_resource_id (Optional[str]): Foreign key linking to the Stack resource.
+        queue_resource_id (Optional[str]): Foreign key linking to the Queue resource.
+        pool_id (Optional[str]): Foreign key linking to the Pool resource.
+        collection_id (Optional[str]): Foreign key linking to the Collection resource.
+        plate_id (Optional[str]): Foreign key linking to the Plate resource.
     """
 
-    stack_id: Optional[str] = Field(default=None, foreign_key="stack.id")
-    stack: Optional["Stack"] = Relationship(back_populates="assets")
-
-    queue_id: Optional[str] = Field(default=None, foreign_key="queue.id")
-    queue: Optional["Queue"] = Relationship(back_populates="assets")
-
-    pool_id: Optional[str] = Field(default=None, foreign_key="pool.id")
-    pool: Optional["Pool"] = Relationship(back_populates="assets")
-
-    collection_id: Optional[str] = Field(default=None, foreign_key="collection.id")
-    collection: Optional["Collection"] = Relationship(back_populates="assets")
-
-    plate_id: Optional[str] = Field(default=None, foreign_key="plate.id")
-    plate: Optional["Plate"] = Relationship(back_populates="assets")
+    stack_resource_id: Optional[str] = SQLField(
+        default=None, foreign_key="stacktable.id"
+    )
+    queue_resource_id: Optional[str] = SQLField(
+        default=None, foreign_key="queuetable.id"
+    )
+    pool_id: Optional[str] = SQLField(default=None, foreign_key="pooltable.id")
+    collection_id: Optional[str] = SQLField(
+        default=None, foreign_key="collectiontable.id"
+    )
+    plate_id: Optional[str] = SQLField(default=None, foreign_key="platetable.id")
+    stack: Optional["StackTable"] = Relationship(back_populates="assets")
+    queue: Optional["QueueTable"] = Relationship(back_populates="assets")
+    pool: Optional["PoolTable"] = Relationship(back_populates="assets")
+    collection: Optional["CollectionTable"] = Relationship(back_populates="assets")
+    plate: Optional["PlateTable"] = Relationship(back_populates="assets")
 
 
 class ResourceContainerBase(AssetBase):
     """
-    Base class for resource containers.
+    Base class for resource containers that can hold assets.
 
     Attributes:
-        description (str): Information about the resource.
-        capacity (Optional[float]): Capacity of the resource.
+        description (str): A description of the resource.
+        capacity (Optional[float]): The capacity of the resource.
+        quantity (float): The current quantity of the resource.
     """
 
-    description: str = Field(default="")
-    capacity: Optional[float] = Field(default=None, nullable=True)
+    description: str = SQLField(default="")
+    capacity: Optional[float] = SQLField(default=None, nullable=True)
+    quantity: float = SQLField(default=0.0)
 
-
-class Pool(ResourceContainerBase, table=True):
-    """
-    Table for storing pool resources.
-
-    Attributes:
-        quantity (float): Current quantity of the resource.
-        assets (List[AssetTable]): Relationship to AssetTable.
-    """
-
-    quantity: float = Field(default=0.0)
-    assets: List[AssetTable] = Relationship(back_populates="pool")
-
-    def increase(self, amount: float) -> None:
+    def save(self, session: Session):
         """
-        Increase the quantity by a specified amount.
+        Save the current state of the resource container to the database.
 
         Args:
-            amount (float): The amount to increase.
+            session (Session): The SQLAlchemy session used to commit the changes.
+        """
+        session.add(self)
+        session.commit()
+        session.refresh(self)
+
+
+class PoolBase(ResourceContainerBase):
+    """
+    Base class for a pool resource that can hold a single continuous quantity.
+
+    Methods:
+        increase(amount: float, session: Session): Increase the pool's quantity by a specified amount.
+        decrease(amount: float, session: Session): Decrease the pool's quantity by a specified amount.
+    """
+
+    def increase(self, amount: float, session: Session) -> None:
+        """
+        Increase the pool's quantity by a specified amount.
+
+        Args:
+            amount (float): The amount to increase the pool's quantity by.
+            session (Session): The SQLAlchemy session used to commit the changes.
 
         Raises:
-            ValueError: If the increase exceeds the capacity.
+            ValueError: If the increase would exceed the pool's capacity.
         """
         if not self.capacity or self.quantity + amount <= self.capacity:
             self.quantity += amount
+            self.save(session)  # Save the updated state to the database
         else:
             raise ValueError("Exceeds capacity.")
 
-    def decrease(self, amount: float) -> None:
+    def decrease(self, amount: float, session: Session) -> None:
         """
-        Decrease the quantity by a specified amount.
+        Decrease the pool's quantity by a specified amount.
 
         Args:
-            amount (float): The amount to decrease.
+            amount (float): The amount to decrease the pool's quantity by.
+            session (Session): The SQLAlchemy session used to commit the changes.
 
         Raises:
-            ValueError: If the decrease results in a quantity below zero.
+            ValueError: If the decrease would result in a negative quantity.
         """
         if not self.capacity or self.quantity - amount >= 0:
             self.quantity -= amount
+            self.save(session)  # Save the updated state to the database
         else:
             raise ValueError("Cannot decrease quantity below zero.")
 
-    def empty(self) -> None:
-        """Empty the pool by setting the quantity to zero."""
-        self.quantity = 0.0
 
-    def fill(self) -> None:
-        """
-        Fill the pool to its capacity.
-
-        Raises:
-            ValueError: If the capacity is not defined.
-        """
-        if self.capacity:
-            self.quantity = self.capacity
-        else:
-            raise ValueError("Cannot fill without a defined capacity.")
-
-
-class Stack(ResourceContainerBase, table=True):
+class PoolTable(PoolBase, table=True):
     """
-    Table for storing stack resources.
+    Table representation of a pool resource.
+    """
+
+    assets: List["AssetTable"] = Relationship(back_populates="pool")
+
+
+class StackBase(ResourceContainerBase):
+    """
+    Base class for a stack resource that can hold multiple assets in a last-in, first-out (LIFO) manner.
 
     Attributes:
-        contents (List[str]): List of asset IDs in the stack.
-        assets (List[AssetTable]): Relationship to AssetTable.
+        stack_contents (str): JSON-encoded string representing the contents of the stack.
+
+    Methods:
+        push(instance: Any, session: Session): Add an asset to the top of the stack.
+        pop(session: Session): Remove and return the asset at the top of the stack.
     """
 
-    contents: List[str] = Field(default_factory=list, sa_column=Column(JSON))
-    assets: List[AssetTable] = Relationship(back_populates="stack")
+    stack_contents: str = SQLField(
+        sa_column=Column("stack_contents", Text, default="[]")
+    )
 
-    def push(self, asset_id: str) -> None:
+    @property
+    def contents_list(self) -> List[AssetBase]:
         """
-        Add an asset to the stack.
+        Returns the contents of the stack as a list of assets.
+
+        Returns:
+            List[AssetBase]: A list of assets in the stack.
+        """
+        return [AssetBase(**item) for item in json.loads(self.stack_contents)]
+
+    def push(self, instance: Any, session: Session) -> int:
+        """
+        Add an asset to the top of the stack.
 
         Args:
-            asset_id (str): The ID of the asset to add.
+            instance (Any): The asset to add to the stack.
+            session (Session): The SQLAlchemy session used to commit the changes.
+
+        Returns:
+            int: The new position of the asset in the stack.
 
         Raises:
             ValueError: If the stack is full.
         """
-        if not self.capacity or len(self.contents) < self.capacity:
-            self.contents.append(asset_id)
+        contents = self.contents_list
+        if not self.capacity or len(contents) < int(self.capacity):
+            contents.append(instance)
+            self.stack_contents = json.dumps([item.dict() for item in contents])
+            self.quantity = len(contents)  # Update quantity
+            self.save(session)  # Save the updated state to the database
         else:
-            raise ValueError("Stack is full.")
+            raise ValueError(f"Resource {self.name} is full.")
+        return len(contents) - 1
 
-    def pop(self) -> Optional[str]:
+    def pop(self, session: Session) -> Any:
         """
-        Remove and return the last asset from the stack.
+        Remove and return the asset at the top of the stack.
+
+        Args:
+            session (Session): The SQLAlchemy session used to commit the changes.
 
         Returns:
-            str: The ID of the removed asset.
+            Any: The asset that was at the top of the stack.
 
         Raises:
             ValueError: If the stack is empty.
         """
-        if self.contents:
-            return self.contents.pop()
+        contents = self.contents_list
+        if contents:
+            instance = contents.pop()
+            self.stack_contents = json.dumps([item.dict() for item in contents])
+            self.quantity = len(contents)  # Update quantity
+            self.save(session)  # Save the updated state to the database
+            return instance
         else:
-            raise ValueError("Stack is empty.")
-
-    def get_asset_details(self, session: Session) -> List[Dict[str, str]]:
-        """
-        Retrieve detailed information about the assets contained in the stack.
-
-        Args:
-            session (Session): The SQLAlchemy session to use for querying the database.
-
-        Returns:
-            List[Dict[str, Any]]: A list of dictionaries containing detailed information about each asset in the stack.
-        """
-        asset_details = []
-        for asset_id in self.contents:
-            asset = session.get(AssetTable, asset_id)
-            if asset:
-                asset_details.append({"id": asset.id, "name": asset.name})
-        return asset_details
+            raise ValueError(f"Resource {self.name} is empty.")
 
 
-class Queue(ResourceContainerBase, table=True):
+class StackTable(StackBase, table=True):
     """
-    Table for storing queue resources.
+    Table representation of a stack resource.
+    """
+
+    assets: List["AssetTable"] = Relationship(back_populates="stack")
+
+
+class QueueBase(ResourceContainerBase):
+    """
+    Base class for a queue resource that can hold multiple assets in a first-in, first-out (FIFO) manner.
 
     Attributes:
-        contents (List[str]): List of asset IDs in the queue.
-        assets (List[AssetTable]): Relationship to AssetTable.
+        queue_contents (str): JSON-encoded string representing the contents of the queue.
+
+    Methods:
+        push(instance: Any, session: Session): Add an asset to the end of the queue.
+        pop(session: Session): Remove and return the asset at the front of the queue.
     """
 
-    contents: List[str] = Field(default_factory=list, sa_column=Column(JSON))
-    assets: List[AssetTable] = Relationship(back_populates="queue")
+    queue_contents: str = SQLField(
+        sa_column=Column("queue_contents", Text, default="[]")
+    )
 
-    def push(self, asset_id: str) -> None:
+    @property
+    def contents_list(self) -> List[AssetBase]:
         """
-        Add an asset to the queue.
+        Returns the contents of the queue as a list of assets.
+
+        Returns:
+            List[AssetBase]: A list of assets in the queue.
+        """
+        return [AssetBase(**item) for item in json.loads(self.queue_contents)]
+
+    def push(self, instance: Any, session: Session) -> int:
+        """
+        Add an asset to the end of the queue.
 
         Args:
-            asset_id (str): The ID of the asset to add.
+            instance (Any): The asset to add to the queue.
+            session (Session): The SQLAlchemy session used to commit the changes.
+
+        Returns:
+            int: The new position of the asset in the queue.
 
         Raises:
             ValueError: If the queue is full.
         """
-        if not self.capacity or len(self.contents) < self.capacity:
-            self.contents.append(asset_id)
+        contents = self.contents_list
+        if not self.capacity or self.quantity < int(self.capacity):
+            contents.append(instance)
+            self.queue_contents = json.dumps([item.dict() for item in contents])
+            self.quantity = len(contents)  # Update quantity
+            self.save(session)  # Save the updated state to the database
         else:
-            raise ValueError("Queue is full.")
+            raise ValueError(f"Resource {self.name} is full.")
+        return len(contents) - 1
 
-    def pop(self) -> Optional[str]:
+    def pop(self, session: Session) -> Any:
         """
-        Remove and return the first asset from the queue.
+        Remove and return the asset at the front of the queue.
+
+        Args:
+            session (Session): The SQLAlchemy session used to commit the changes.
 
         Returns:
-            str: The ID of the removed asset.
+            Any: The asset that was at the front of the queue.
 
         Raises:
             ValueError: If the queue is empty.
         """
-        if self.contents:
-            return self.contents.pop(0)
+        contents = self.contents_list
+        if contents:
+            instance = contents.pop(0)
+            self.queue_contents = json.dumps([item.dict() for item in contents])
+            self.quantity = len(contents)  # Update quantity
+            self.save(session)  # Save the updated state to the database
+            return instance
         else:
-            raise ValueError("Queue is empty.")
+            raise ValueError(f"Resource {self.name} is empty.")
 
 
-class Collection(ResourceContainerBase, table=True):
+class QueueTable(QueueBase, table=True):
     """
-    Table for storing collections.
+    Table representation of a queue resource.
+    """
+
+    assets: List["AssetTable"] = Relationship(back_populates="queue")
+
+
+class CollectionBase(ResourceContainerBase):
+    """
+    Base class for a collection resource that allows random access to assets.
 
     Attributes:
-        contents (Dict[str, str]): Dictionary of location to asset ID.
-        assets (List[AssetTable]): Relationship to AssetTable.
+        collection_contents (str): JSON-encoded string representing the contents of the collection.
     """
 
-    contents: Dict[str, str] = Field(default_factory=dict, sa_column=Column(JSON))
-    assets: List[AssetTable] = Relationship(back_populates="collection")
+    collection_contents: str = SQLField(
+        sa_column=Column("collection_contents", Text, default="{}")
+    )
 
-    def insert(self, location: str, asset_id: str) -> None:
+    @property
+    def contents_dict(self) -> Dict[str, AssetBase]:
         """
-        Insert an asset into the collection at a specific location.
+        Returns the contents of the collection as a dictionary of assets.
+
+        Returns:
+            Dict[str, AssetBase]: A dictionary of assets in the collection.
+        """
+        return {
+            k: AssetBase(**v) for k, v in json.loads(self.collection_contents).items()
+        }
+
+    def insert(self, location: str, asset: AssetTable, session: Session) -> None:
+        """
+        Insert an asset at a specified location in the collection.
 
         Args:
             location (str): The location to insert the asset.
-            asset_id (str): The ID of the asset to insert.
+            asset (AssetTable): The asset to insert.
+            session (Session): The SQLAlchemy session used to commit the changes.
 
         Raises:
             ValueError: If the collection is full.
         """
-        if len(self.contents) < self.capacity:
-            self.contents[location] = asset_id
+        contents = self.contents_dict
+        if self.quantity < int(self.capacity):
+            # Convert AssetTable instance to a dictionary with only necessary fields
+            contents[location] = {"id": asset.id, "name": asset.name}
+            self.collection_contents = json.dumps(contents)
+            self.quantity = len(contents)  # Update quantity
+            self.save(session)  # Save the updated state to the database
         else:
             raise ValueError("Collection is full.")
 
-    def retrieve(self, location: str) -> Optional[str]:
+    def retrieve(self, location: str, session: Session) -> Optional[AssetTable]:
         """
-        Remove and return an asset from a specific location in the collection.
+        Retrieve and remove an asset from a specified location in the collection.
 
         Args:
             location (str): The location of the asset to retrieve.
+            session (Session): The SQLAlchemy session used to commit the changes.
 
         Returns:
-            str: The ID of the retrieved asset.
+            Optional[AssetTable]: The retrieved asset, or None if not found.
 
         Raises:
             ValueError: If the location is invalid.
         """
-        if location in self.contents:
-            return self.contents.pop(location)
+        contents = self.contents_dict
+        if location in contents:
+            asset_data = contents.pop(location)
+            print(
+                f"Debug: Asset data retrieved for location '{location}': {asset_data}"
+            )  # Debug line
+
+            self.collection_contents = json.dumps(contents)
+            self.quantity = len(contents)  # Update quantity
+            self.save(session)  # Save the updated state to the database
+
+            # Directly access the id attribute of asset_data
+            asset_id = asset_data.id
+            asset = session.get(AssetTable, asset_id)
+            if not asset:
+                raise ValueError(
+                    f"Asset with id '{asset_id}' not found in the database."
+                )
+
+            return asset
         else:
-            raise ValueError("Invalid location.")
+            raise ValueError(f"Invalid location: {location} not found in collection.")
 
 
-class Plate(ResourceContainerBase, table=True):
+class CollectionTable(CollectionBase, table=True):
     """
-    Table for storing multi-welled plates.
+    Table representation of a collection resource.
+    """
+
+    assets: List["AssetTable"] = Relationship(back_populates="collection")
+
+
+class PlateBase(ResourceContainerBase):
+    """
+    Base class for a multi-well plate resource that holds multiple pools.
 
     Attributes:
-        contents (Dict[str, str]): Dictionary of well ID to asset ID.
-        well_capacity (Optional[float]): Capacity of each well.
-        assets (List[AssetTable]): Relationship to AssetTable.
+        plate_contents (str): JSON-encoded string representing the contents of the plate.
+        well_capacity (Optional[float]): The capacity of each well in the plate.
+
+    Methods:
+        update_plate(new_contents: Dict[str, float], session: Session): Update the contents of the entire plate.
+        update_well(well_id: str, quantity: float, session: Session): Update the quantity in a specific well.
     """
 
-    contents: Dict[str, str] = Field(default_factory=dict, sa_column=Column(JSON))
-    well_capacity: Optional[float] = Field(default=None)
-    assets: List[AssetTable] = Relationship(back_populates="plate")
+    plate_contents: str = SQLField(
+        sa_column=Column("plate_contents", Text, default="{}")
+    )
+    well_capacity: Optional[float] = None
 
-    def update_plate(self, new_contents: Dict[str, float]) -> None:
+    @property
+    def wells(self) -> Dict[str, PoolTable]:
         """
-        Update the contents of the plate.
+        Returns the contents of the plate as a dictionary of wells (each well being a pool).
+
+        Returns:
+            Dict[str, PoolTable]: A dictionary of pools representing the wells.
+        """
+        return {k: PoolTable(**v) for k, v in json.loads(self.plate_contents).items()}
+
+    @wells.setter
+    def wells(self, value: Dict[str, PoolTable]):
+        """
+        Sets the contents of the plate using a dictionary of wells.
 
         Args:
-            new_contents (Dict[str, float]): The new contents to update.
+            value (Dict[str, PoolTable]): The new contents for the plate.
         """
+        self.plate_contents = json.dumps({k: v.dict() for k, v in value.items()})
+
+    def update_plate(self, new_contents: Dict[str, float], session: Session):
+        """
+        Update the contents of the entire plate.
+
+        Args:
+            new_contents (Dict[str, float]): A dictionary with well IDs as keys and quantities as values.
+            session (Session): The SQLAlchemy session used to commit the changes.
+        """
+        wells = self.wells
         for well_id, quantity in new_contents.items():
-            if well_id in self.contents:
-                self.contents[well_id] = quantity
+            if well_id in wells:
+                wells[well_id].quantity = quantity
             else:
-                self.contents[well_id] = Pool(
+                wells[well_id] = PoolTable(
                     description=f"Well {well_id}",
                     name=f"Well{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
-                ).id
+                )
+        self.wells = wells
+        self.save(session)  # Save the updated state to the database
+
+    def update_well(self, well_id: str, quantity: float, session: Session):
+        """
+        Update the quantity in a specific well.
+
+        Args:
+            well_id (str): The ID of the well to update.
+            quantity (float): The new quantity for the well.
+            session (Session): The SQLAlchemy session used to commit the changes.
+        """
+        wells = self.wells
+        if well_id in wells:
+            wells[well_id].quantity = quantity
+        else:
+            wells[well_id] = PoolTable(
+                description=f"Well {well_id}",
+                name=f"Well{well_id}",
+                capacity=self.well_capacity,
+                quantity=quantity,
+            )
+        self.wells = wells
+        self.save(session)  # Save the updated state to the database
+
+
+class PlateTable(PlateBase, table=True):
+    """
+    Table representation of a multi-well plate resource.
+    """
+
+    assets: List["AssetTable"] = Relationship(back_populates="plate")
