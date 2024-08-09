@@ -121,6 +121,23 @@ class PoolBase(ResourceContainerBase):
         else:
             raise ValueError("Cannot decrease quantity below zero.")
 
+    def empty(self, session: Session) -> None:
+        """
+        Empty the pool by setting the quantity to zero.
+        """
+        self.quantity = 0.0
+        self.save(session)
+
+    def fill(self, session: Session) -> None:
+        """
+        Fill the pool by setting the quantity to its capacity.
+        """
+        if self.capacity:
+            self.quantity = self.capacity
+            self.save(session)
+        else:
+            raise ValueError("Cannot fill without a defined capacity.")
+
 
 class PoolTable(PoolBase, table=True):
     """
