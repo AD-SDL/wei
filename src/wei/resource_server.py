@@ -13,6 +13,7 @@ from wei.types.resource_types import (
     PlateTable,
     PoolTable,
     QueueTable,
+    ResourceContainerBase,
     StackTable,
 )
 
@@ -68,7 +69,9 @@ def is_server_up() -> Dict[str, bool]:
 
 
 @app.get("/resources/{resource_type}")
-def get_all_resources(resource_type: str):
+def get_all_resources(
+    resource_type: str,
+):  # TODO: Make this get resources by type & create a new function for get all resources
     """
     Retrieve all resources of a specific type from the database.
 
@@ -103,7 +106,9 @@ def get_all_assets() -> List[AssetTable]:
 
 
 @app.get("/resource/{resource_type}/{resource_id}")
-def get_resource_by_id(resource_type: str, resource_id: str):
+def get_resource_by_id(
+    resource_type: str, resource_id: str
+):  # TODO: don't use resource type
     """
     Get a resource by its ID and type.
     """
@@ -131,67 +136,129 @@ def get_asset_by_id(asset_id: str) -> AssetTable:
     return resource_interface.get_resource(AssetTable, asset_id)
 
 
-@app.post("/resource")
-def create_resource(resource):
+@app.post("/resource/{resource_type}")
+def create_resource(
+    resource_type: str, resource: ResourceContainerBase
+):  # TODO: resource needs to be updated
     """
-    Create a new resource
+    Create a new resource of a specific type.
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.create_resource(resource)
+    resource_map = {
+        "pools": PoolTable,
+        "stacks": StackTable,
+        "queues": QueueTable,
+        "plates": PlateTable,
+        "collections": CollectionTable,
+    }
+    resource_class = resource_map.get(resource_type.lower())
+    if resource_class:
+        return resource_interface.add_resource(resource)
+    else:
+        return {"error": f"Invalid resource type: {resource_type}"}
 
 
 @app.post("/asset")
-def create_asset(asset):
+def create_asset(asset: AssetTable) -> AssetTable:
     """
     Create a new asset
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.create_asset(asset)
+    return resource_interface.add_resource(asset)
 
 
 @app.put("/asset/{asset_id}")
-def update_asset(asset_id: str, asset):
+def update_asset(asset_id: str, asset: AssetTable) -> AssetTable:
     """
     Update an asset
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.update_asset(asset_id, asset)
+    return resource_interface.update_resource(AssetTable, asset_id, asset.dict())
 
 
-@app.delete("/resource/{resource_id}")
-def delete_resource(resource_id: str):
+@app.put("/resource/{resource_type}/{resource_id}")
+def update_resource(resource_type: str, resource_id: str, updates: Dict[str, any]):
     """
-    Delete a resource
+    Update a resource by its ID and type.
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.delete_resource(resource_id)
+    resource_map = {
+        "pools": PoolTable,
+        "stacks": StackTable,
+        "queues": QueueTable,
+        "plates": PlateTable,
+        "collections": CollectionTable,
+    }
+    resource_class = resource_map.get(resource_type.lower())
+    if resource_class:
+        return resource_interface.update_resource(resource_class, resource_id, updates)
+    else:
+        return {"error": f"Invalid resource type: {resource_type}"}
+
+
+@app.delete("/resource/{resource_type}/{resource_id}")
+def delete_resource(resource_type: str, resource_id: str):
+    """
+    Delete a resource by its ID and type.
+    """
+    resource_interface: ResourceInterface = app.state.resource_interface
+    resource_map = {
+        "pools": PoolTable,
+        "stacks": StackTable,
+        "queues": QueueTable,
+        "plates": PlateTable,
+        "collections": CollectionTable,
+    }
+    resource_class = resource_map.get(resource_type.lower())
+    if resource_class:
+        return {
+            "deleted": resource_interface.delete_resource(resource_class, resource_id)
+        }
+    else:
+        return {"error": f"Invalid resource type: {resource_type}"}
 
 
 @app.delete("/asset/{asset_id}")
-def delete_asset(asset_id: str):
+def delete_asset(asset_id: str) -> AssetTable:
     """
     Delete an asset
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.delete_asset(asset_id)
+    return {"deleted": resource_interface.delete_resource(AssetTable, asset_id)}
 
 
 @app.put("/resources/{resource_id}/push")
-def push_asset_to_resource(resource_id: str, asset) -> int:
+def push_asset_to_resource(resource_id: str, asset: AssetTable) -> int:
     """
-    Push an asset to a stack resource
+    Push an asset to a stack or queue resource
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.push_asset_to_resource(resource_id, asset)
+    resource_type = resource_interface.get_resource_type(resource_id)
+    if resource_type == "StackTable":
+        stack = resource_interface.get_resource(StackTable, resource_id)
+        return resource_interface.push_to_stack(stack, asset)
+    elif resource_type == "QueueTable":
+        queue = resource_interface.get_resource(QueueTable, resource_id)
+        return resource_interface.push_to_queue(queue, asset)
+    else:
+        return {"error": f"Invalid resource type for push operation: {resource_type}"}
 
 
 @app.put("/resources/{resource_id}/pop")
-def pop_asset_from_resource(resource_id: str):
+def pop_asset_from_resource(resource_id: str) -> AssetTable:
     """
-    Pop an asset from a stack resource
+    Pop an asset from a stack or queue resource
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.pop_asset_from_resource(resource_id)
+    resource_type = resource_interface.get_resource_type(resource_id)
+    if resource_type == "StackTable":
+        stack = resource_interface.get_resource(StackTable, resource_id)
+        return resource_interface.pop_from_stack(stack)
+    elif resource_type == "QueueTable":
+        queue = resource_interface.get_resource(QueueTable, resource_id)
+        return resource_interface.pop_from_queue(queue)
+    else:
+        return {"error": f"Invalid resource type for pop operation: {resource_type}"}
 
 
 @app.put("/resources/{resource_id}/increase")
@@ -200,7 +267,9 @@ def increase_resource_quantity(resource_id: str, quantity: float) -> float:
     Increase the quantity in a Pool resource
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.increase_resource_quantity(resource_id, quantity)
+    pool = resource_interface.get_resource(PoolTable, resource_id)
+    resource_interface.increase_pool_quantity(pool, quantity)
+    return pool.quantity
 
 
 @app.put("/resources/{resource_id}/decrease")
@@ -209,9 +278,36 @@ def decrease_resource_quantity(resource_id: str, quantity: float) -> float:
     Decrease the quantity in a Pool resource
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.decrease_resource_quantity(resource_id, quantity)
+    pool = resource_interface.get_resource(PoolTable, resource_id)
+    resource_interface.decrease_pool_quantity(pool, quantity)
+    return pool.quantity
 
 
+@app.put("/resources/{resource_id}/insert")
+def insert_asset_into_resource(
+    resource_id: str, location: str, asset: AssetTable
+) -> int:
+    """
+    Insert an asset into a Collection resource
+    """
+    resource_interface: ResourceInterface = app.state.resource_interface
+    collection = resource_interface.get_resource(CollectionTable, resource_id)
+    resource_interface.insert_into_collection(collection, location, asset)
+    return len(collection.contents_dict)
+
+
+@app.put("/resources/{resource_id}/retrieve")
+def remove_asset_from_resource(resource_id: str, location: str) -> Dict[str, str]:
+    """
+    Retrieve an asset from a Collection resource
+    """
+    resource_interface: ResourceInterface = app.state.resource_interface
+    collection = resource_interface.get_resource(CollectionTable, resource_id)
+    asset = resource_interface.retrieve_from_collection(collection, location)
+    return {"id": asset.id, "name": asset.name}
+
+
+# -----------
 @app.put("/resources/{resource_id}/fill")
 def fill_pool_resource(resource_id: str) -> float:
     """
@@ -228,24 +324,6 @@ def empty_pool_resource(resource_id: str) -> float:
     """
     resource_interface: ResourceInterface = app.state.resource_interface
     return resource_interface.empty_pool_resource(resource_id)
-
-
-@app.put("/resources/{resource_id}/insert")
-def insert_asset_into_resource(resource_id: str, asset) -> int:
-    """
-    Insert an asset into a Collection resource
-    """
-    resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.insert_asset_into_resource(resource_id, asset)
-
-
-@app.put("/resources/{resource_id}/retrieve")
-def remove_asset_from_resource(resource_id: str, asset_id: str):
-    """
-    Retrieve an asset from a Collection resource
-    """
-    resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.remove_asset_from_resource(resource_id, asset_id)
 
 
 if __name__ == "__main__":
