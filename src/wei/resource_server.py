@@ -307,23 +307,38 @@ def remove_asset_from_resource(resource_id: str, location: str) -> Dict[str, str
     return {"id": asset.id, "name": asset.name}
 
 
-# -----------
-@app.put("/resources/{resource_id}/fill")
-def fill_pool_resource(resource_id: str) -> float:
-    """
-    Fill a Pool resource to its capacity
-    """
-    resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.fill_pool_resource(resource_id)
-
-
 @app.put("/resources/{resource_id}/empty")
 def empty_pool_resource(resource_id: str) -> float:
     """
-    Empty a Pool resource
+    Empty a Pool resource by setting its quantity to zero.
+
+    Args:
+        resource_id (str): The ID of the pool resource to empty.
+
+    Returns:
+        float: The new quantity of the pool (which should be 0).
     """
     resource_interface: ResourceInterface = app.state.resource_interface
-    return resource_interface.empty_pool_resource(resource_id)
+    pool = resource_interface.get_resource(PoolTable, resource_id)
+    resource_interface.empty_pool(pool)
+    return pool.quantity
+
+
+@app.put("/resources/{resource_id}/fill")
+def fill_pool_resource(resource_id: str) -> float:
+    """
+    Fill a Pool resource by setting its quantity to its capacity.
+
+    Args:
+        resource_id (str): The ID of the pool resource to fill.
+
+    Returns:
+        float: The new quantity of the pool (which should be its capacity).
+    """
+    resource_interface: ResourceInterface = app.state.resource_interface
+    pool = resource_interface.get_resource(PoolTable, resource_id)
+    resource_interface.fill_pool(pool)
+    return pool.quantity
 
 
 if __name__ == "__main__":
