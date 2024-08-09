@@ -425,7 +425,7 @@ class PlateBase(ResourceContainerBase):
         Args:
             value (Dict[str, PoolTable]): The new contents for the plate.
         """
-        self.plate_contents = json.dumps({k: v.dict() for k, v in value.items()})
+        self.plate_contents = json.dumps({k: v.model_dump() for k, v in value.items()})
 
     def update_plate(self, new_contents: Dict[str, float], session: Session):
         """
