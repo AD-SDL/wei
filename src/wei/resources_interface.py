@@ -159,6 +159,28 @@ class ResourceInterface:
             session.add(pool)  # Re-attach pool to the session
             pool.decrease(amount, session)
 
+    def empty_pool(self, pool: PoolTable) -> None:
+        """
+        Empty the pool by setting the quantity to zero.
+
+        Args:
+            pool (PoolTable): The pool resource to empty.
+        """
+        with self.session as session:
+            session.add(pool)  # Re-attach pool to the session
+            pool.empty(session)
+
+    def fill_pool(self, pool: PoolTable) -> None:
+        """
+        Fill the pool by setting the quantity to its capacity.
+
+        Args:
+            pool (PoolTable): The pool resource to fill.
+        """
+        with self.session as session:
+            session.add(pool)  # Re-attach pool to the session
+            pool.fill(session)
+
     def push_to_stack(self, stack: StackTable, asset: AssetTable) -> None:
         """
         Push an asset to the stack. Automatically adds the asset to the database if it's not already there.
