@@ -172,8 +172,10 @@ class StackBase(ResourceContainerBase):
         """
         contents = self.contents_list
         if not self.capacity or len(contents) < int(self.capacity):
-            contents.append(instance)
-            self.stack_contents = json.dumps([item.dict() for item in contents])
+            # Only include the relevant fields when serializing the asset
+            serialized_instance = {"id": instance.id, "name": instance.name}
+            contents.append(serialized_instance)
+            self.stack_contents = json.dumps(contents)
             self.quantity = len(contents)  # Update quantity
             self.save(session)  # Save the updated state to the database
         else:
@@ -196,7 +198,7 @@ class StackBase(ResourceContainerBase):
         contents = self.contents_list
         if contents:
             instance = contents.pop()
-            self.stack_contents = json.dumps([item.dict() for item in contents])
+            self.stack_contents = json.dumps(contents)
             self.quantity = len(contents)  # Update quantity
             self.save(session)  # Save the updated state to the database
             return instance
@@ -254,8 +256,10 @@ class QueueBase(ResourceContainerBase):
         """
         contents = self.contents_list
         if not self.capacity or self.quantity < int(self.capacity):
-            contents.append(instance)
-            self.queue_contents = json.dumps([item.dict() for item in contents])
+            # Only include the relevant fields when serializing the asset
+            serialized_instance = {"id": instance.id, "name": instance.name}
+            contents.append(serialized_instance)
+            self.queue_contents = json.dumps(contents)
             self.quantity = len(contents)  # Update quantity
             self.save(session)  # Save the updated state to the database
         else:
@@ -278,7 +282,7 @@ class QueueBase(ResourceContainerBase):
         contents = self.contents_list
         if contents:
             instance = contents.pop(0)
-            self.queue_contents = json.dumps([item.dict() for item in contents])
+            self.queue_contents = json.dumps(contents)
             self.quantity = len(contents)  # Update quantity
             self.save(session)  # Save the updated state to the database
             return instance
@@ -332,15 +336,16 @@ class CollectionBase(ResourceContainerBase):
         """
         contents = self.contents_dict
         if self.quantity < int(self.capacity):
-            # Convert AssetTable instance to a dictionary with only necessary fields
-            contents[location] = {"id": asset.id, "name": asset.name}
+            # Only include the relevant fields when serializing the asset
+            serialized_asset = {"id": asset.id, "name": asset.name}
+            contents[location] = serialized_asset
             self.collection_contents = json.dumps(contents)
             self.quantity = len(contents)  # Update quantity
             self.save(session)  # Save the updated state to the database
         else:
             raise ValueError("Collection is full.")
 
-    def retrieve(self, location: str, session: Session) -> Optional[AssetTable]:
+    def retrieve(self, location: str, session: Session) -> Optional[Dict[str, Any]]:
         """
         Retrieve and remove an asset from a specified location in the collection.
 
@@ -349,7 +354,7 @@ class CollectionBase(ResourceContainerBase):
             session (Session): The SQLAlchemy session used to commit the changes.
 
         Returns:
-            Optional[AssetTable]: The retrieved asset, or None if not found.
+            Optional[Dict[str, Any]]: A dictionary containing the retrieved asset's id and name, or None if not found.
 
         Raises:
             ValueError: If the location is invalid.
@@ -357,23 +362,21 @@ class CollectionBase(ResourceContainerBase):
         contents = self.contents_dict
         if location in contents:
             asset_data = contents.pop(location)
-            print(
-                f"Debug: Asset data retrieved for location '{location}': {asset_data}"
-            )  # Debug line
+            # print(f"Debug: Asset data retrieved for location '{location}': {asset_data}")  # Debug line
 
             self.collection_contents = json.dumps(contents)
             self.quantity = len(contents)  # Update quantity
             self.save(session)  # Save the updated state to the database
 
-            # Directly access the id attribute of asset_data
-            asset_id = asset_data.id
-            asset = session.get(AssetTable, asset_id)
+            # Directly access the id and name attributes of asset_data
+            asset = session.get(AssetTable, asset_data.id)
             if not asset:
                 raise ValueError(
-                    f"Asset with id '{asset_id}' not found in the database."
+                    f"Asset with id '{asset_data.id}' not found in the database."
                 )
 
-            return asset
+            # Return only the id and name in a dictionary format
+            return {"id": asset.id, "name": asset.name}
         else:
             raise ValueError(f"Invalid location: {location} not found in collection.")
 
@@ -444,6 +447,7 @@ class PlateBase(ResourceContainerBase):
                     quantity=quantity,
                 )
         self.wells = wells
+        self.quantity = len(wells)  # Update the quantity to reflect the number of wells
         self.save(session)  # Save the updated state to the database
 
     def update_well(self, well_id: str, quantity: float, session: Session):
@@ -466,6 +470,7 @@ class PlateBase(ResourceContainerBase):
                 quantity=quantity,
             )
         self.wells = wells
+        self.quantity = len(wells)  # Update the quantity to reflect the number of wells
         self.save(session)  # Save the updated state to the database
 
 
