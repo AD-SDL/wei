@@ -422,3 +422,6 @@ if __name__ == "__main__":
 
     all_plates = resource_interface.get_all_resources(PlateTable)
     print("\nAll Plates after modification:", all_plates)
+
+    all_asset = resource_interface.get_all_resources(AssetTable)
+    print("\n Asset Table", all_asset)
