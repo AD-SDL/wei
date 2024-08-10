@@ -3,7 +3,6 @@
 from typing import Dict, List, Optional, Type
 
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from wei.types.resource_types import (
@@ -361,23 +360,6 @@ class ResourceInterface:
         with self.session as session:
             session.add(plate)  # Re-attach plate to the session
             plate.update_plate(new_contents, session)
-
-    def get_all_assets_with_relations(self) -> List[AssetTable]:
-        """
-        Retrieve all assets, with relationships to other resources loaded.
-
-        Returns:
-            List[AssetTable]: A list of all assets with their relationships.
-        """
-        with self.session as session:
-            statement = select(AssetTable).options(
-                selectinload(AssetTable.stack),
-                selectinload(AssetTable.queue),
-                selectinload(AssetTable.pool),
-                selectinload(AssetTable.collection),
-                selectinload(AssetTable.plate),
-            )
-            return session.exec(statement).all()
 
 
 # Sample main function for testing
