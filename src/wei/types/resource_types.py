@@ -45,6 +45,8 @@ class AssetTable(AssetBase, table=True):
         default=None, foreign_key="collectiontable.id"
     )
     plate_id: Optional[str] = SQLField(default=None, foreign_key="platetable.id")
+
+    # Define relationships to each table
     stack: Optional["StackTable"] = Relationship(back_populates="assets")
     queue: Optional["QueueTable"] = Relationship(back_populates="assets")
     pool: Optional["PoolTable"] = Relationship(back_populates="assets")
