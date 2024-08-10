@@ -3,6 +3,7 @@
 from typing import Dict, List, Optional, Type
 
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from wei.types.resource_types import (
@@ -37,7 +38,7 @@ class ResourceInterface:
 
     def add_resource(self, resource: SQLModel) -> SQLModel:
         """
-        Add a resource to the database.
+        Add a resource to the database and link it to the AssetTable.
 
         Args:
             resource (SQLModel): The resource to add.
@@ -49,6 +50,36 @@ class ResourceInterface:
             session.add(resource)
             session.commit()
             session.refresh(resource)
+
+            # Automatically create and link an AssetTable entry
+            if isinstance(resource, StackTable):
+                asset = AssetTable(
+                    name=f"Asset for {resource.name}", stack_resource_id=resource.id
+                )
+            elif isinstance(resource, PoolTable):
+                asset = AssetTable(
+                    name=f"Asset for {resource.name}", pool_id=resource.id
+                )
+            elif isinstance(resource, QueueTable):
+                asset = AssetTable(
+                    name=f"Asset for {resource.name}", queue_resource_id=resource.id
+                )
+            elif isinstance(resource, PlateTable):
+                asset = AssetTable(
+                    name=f"Asset for {resource.name}", plate_id=resource.id
+                )
+            elif isinstance(resource, CollectionTable):
+                asset = AssetTable(
+                    name=f"Asset for {resource.name}", collection_id=resource.id
+                )
+            else:
+                asset = None
+
+            if asset:
+                session.add(asset)
+                session.commit()
+                session.refresh(asset)
+
             return resource
 
     def get_resource(
@@ -331,6 +362,23 @@ class ResourceInterface:
             session.add(plate)  # Re-attach plate to the session
             plate.update_plate(new_contents, session)
 
+    def get_all_assets_with_relations(self) -> List[AssetTable]:
+        """
+        Retrieve all assets, with relationships to other resources loaded.
+
+        Returns:
+            List[AssetTable]: A list of all assets with their relationships.
+        """
+        with self.session as session:
+            statement = select(AssetTable).options(
+                selectinload(AssetTable.stack),
+                selectinload(AssetTable.queue),
+                selectinload(AssetTable.pool),
+                selectinload(AssetTable.collection),
+                selectinload(AssetTable.plate),
+            )
+            return session.exec(statement).all()
+
 
 # Sample main function for testing
 if __name__ == "__main__":
@@ -425,3 +473,5 @@ if __name__ == "__main__":
 
     all_asset = resource_interface.get_all_resources(AssetTable)
     print("\n Asset Table", all_asset)
+
+    # print(resource_interface.get_all_assets_with_relations())
