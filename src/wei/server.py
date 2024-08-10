@@ -16,6 +16,7 @@ from wei.routers import (
     experiment_routes,
     location_routes,
     module_routes,
+    resource_routes,
     workcell_routes,
     workflow_routes,
 )
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     app.include_router(module_routes.router, prefix="/modules")
     app.include_router(workcell_routes.router, prefix="/workcells")
     app.include_router(workcell_routes.router, prefix="/wc")
+    app.include_router(resource_routes.router, prefix="/resources")
     app.mount("/", StaticFiles(directory="wei/src/ui/dist", html=True))
     EventHandler.initialize_diaspora()
 
