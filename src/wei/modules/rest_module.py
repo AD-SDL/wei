@@ -516,6 +516,7 @@ class RESTModule:
         @self.router.post("/admin/resume")
         async def resume(request: Request):
             state = request.app.state
+            state.status = ModuleStatus.BUSY  # TODO: Is there a better way to do this? NOTE: If I don't put this there, it resumes with status PAUSED
             if self._resume:
                 return self._resume(state)
             else:

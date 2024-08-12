@@ -4,6 +4,8 @@
       <v-tab :value="1">Workcells</v-tab>
       <v-tab :value="2">Workflows</v-tab>
       <v-tab :value="3">Experiments</v-tab>
+      <!-- <v-tab :value="4">Admin</v-tab> -->
+      <!-- <v-tab :value="4">Admin</v-tab> -->
       <!-- <v-tab :value="4">Events</v-tab>
           <v-tab :value="5">Admin</v-tab>
           <v-tab :value="6">Resources</v-tab> -->
@@ -28,8 +30,8 @@
                   </v-col>
                 </v-row>
               </v-container>
-
             </v-card-text>
+
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-dialog max-width="800">
@@ -55,8 +57,8 @@
           </v-card>
         </v-container>
         <v-container v-else>
-                <p>No WC info yet</p>
-              </v-container>
+          <p>No WC info yet</p>
+        </v-container>
       </v-window-item>
       <v-window-item :key="2" :value="2">
         <h2> All Workflows </h2>
@@ -69,6 +71,18 @@
 
         </v-row>
       </v-window-item>
+      <!-- <v-window-item :key="4" :value="4">
+        <v-row class="pa-1 ma-1 justify-center">
+          <Admin title="ADMIN"/>
+        </v-row>
+      </v-window-item> -->
+   
+
+      <!-- <v-window-item :key="4" :value="4">
+        <h2> Admin Actions </h2>
+        <AdminActionsTable title="Admin Actions" :wc_state=wc_state :wfs="wfs" start_open=true />
+      </v-window-item> -->
+
       <!-- <v-window-item :key="4" :value="4">
               <p>test3</p>
             </v-window-item>
@@ -101,6 +115,7 @@ const wc_info = ref()
 const experiment_keys = ref()
 const experiment_objects: any = ref([])
 main_url.value = "http://".concat(window.location.host) //.concat("/server")
+
 class Experimentval {
   experiment_id?: string;
   experiment_workflows: any;
@@ -108,9 +123,6 @@ class Experimentval {
   num_wfs?: any;
   num_events? : any;
   events?: any
-
-
-
 }
 async function get_events(experiment_id: string) {
   var test = await ((await fetch(main_url.value.concat("/experiments/".concat(experiment_id).concat("/log"))))).json() ;
@@ -128,11 +140,8 @@ watchEffect(async () => {
   experiments_url.value = main_url.value.concat("/experiments/all")
   workcell_info_url.value = main_url.value.concat("/wc/")
 
-
-
   watchEffect(async () => wc_state.value = await (await fetch(state_url.value)).json())
   watchEffect(async () => wc_info.value = await (await fetch(workcell_info_url.value)).json())
-
 
   //wc_state.value = { modules: { "test": { state: "test" } } }
   var old_len: any = 0;
@@ -150,18 +159,19 @@ watchEffect(async () => {
     experiment_keys.value = Object.keys(experiments.value).sort()
     i = 0;
     experiment_keys.value.forEach(async function (value: any) {
-    i = i+1
-    if (i > old_len) {
-    var experiment: Experimentval = new Experimentval();
-    experiment.experiment_id = value;
-    var events = await get_events(value)
+      
+      i = i+1
+      if (i > old_len) {
+        var experiment: Experimentval = new Experimentval();
+        experiment.experiment_id = value;
+        var events = await get_events(value)
 
-    experiment.experiment_name = experiments.value[value].experiment_name;
-    experiment.experiment_workflows = wfs.value.filter((key: any) => wc_state.value.workflows[key].experiment_id === value);
-    experiment.events = events;
-    experiment.num_wfs = experiment.experiment_workflows.length;
-    experiment.num_events = experiment.events.length;
-    experiment_objects.value.splice(0, 0, experiment)
+        experiment.experiment_name = experiments.value[value].experiment_name;
+        experiment.experiment_workflows = wfs.value.filter((key: any) => wc_state.value.workflows[key].experiment_id === value);
+        experiment.events = events;
+        experiment.num_wfs = experiment.experiment_workflows.length;
+        experiment.num_events = experiment.events.length;
+        experiment_objects.value.splice(0, 0, experiment)
     }
 
 });
@@ -193,6 +203,10 @@ export default {
 
   .BUSY {
     background-color: blue;
+  }
+
+  .PAUSED {
+    background-color: orange;
   }
 
   .ERROR {

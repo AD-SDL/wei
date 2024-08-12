@@ -5,6 +5,12 @@
       <v-card-title>
         <h1 class="title py-3 my-3">Module: {{ modal_title }}</h1>
       </v-card-title>
+
+      <v-card-actions>
+        <PauseResumeButton :main_url="main_url" :module="modal_title" />
+      </v-card-actions>
+
+
       <v-card-text class="subheading grey--text">
         <div>
           <p>{{ modal_text.description }}</p>
@@ -77,6 +83,8 @@ import { assertCompletionStatement } from '@babel/types';
 import { info } from 'console';
 import { json } from 'stream/consumers';
 import { ref } from 'vue';
+import PauseResumeButton from './PauseResumeButton.vue';
+
 const props = defineProps(['modal_title', 'modal_text', 'main_url', 'wc_state'])
 const arg_headers = [
   { title: 'Name', key: 'name' },
@@ -94,6 +102,10 @@ const file_headers = [
 console.log(props.wc_state.locations)
 const text = ref()
 const json_text = ref()
+
+// Testing
+
+
 function set_text(action: any) {
   text.value = "- name : ".concat(action.name).concat("\n\t").concat(
    "module : ").concat(props.modal_text.name).concat("\n\t").concat(

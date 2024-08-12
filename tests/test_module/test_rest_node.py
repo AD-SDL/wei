@@ -3,6 +3,7 @@ REST-based node that interfaces with WEI and provides various fake actions for t
 """
 
 from typing import Annotated
+import time
 
 from fastapi import UploadFile
 from fastapi.datastructures import State
@@ -10,6 +11,7 @@ from wei.modules.rest_module import RESTModule
 from wei.types import StepFileResponse, StepResponse, StepStatus
 from wei.types.module_types import Location, ModuleState
 from wei.types.step_types import ActionRequest
+
 
 # * Test predefined action functions
 
@@ -40,6 +42,7 @@ test_rest_node.arg_parser.add_argument(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
+    state.action_paused = False
 
 
 @test_rest_node.state_handler()
@@ -84,6 +87,57 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     with open("test.txt", "w") as f:
         f.write("test")
     return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
+
+@test_rest_node.action(name="run_action")
+def run_action(state: State, action: ActionRequest) -> StepResponse:
+
+    print("THIS METHOD WAS CALLED")
+    print(test_rest_node._pause)
+    """Tests the pause action functionality"""
+
+    action_timer = 0
+
+    while action_timer <= 30:  # only allow action to be active for 30 seconds
+        # check that the action is not paused every second
+        print(test_rest_node._pause)
+
+        if state.action_paused == False:
+            print("ACTION RUNNING")
+            action_timer += 1
+        else: 
+            print("ACTION PAUSED")
+        time.sleep(1)
+    
+    return StepResponse.step_succeeded("Entire action complete")
+
+@test_rest_node.pause()
+def pause_action(state: State):
+    """Pauses the module action"""
+
+    print("PAUSED!!!!!!!!!!!")
+    state.action_paused = True
+
+@test_rest_node.resume()
+def resume_action(state: State): 
+    """Resumes the module action"""
+
+    print("RESUMED!!!!!!!!!!!")
+    state.action_paused = False
+
+    
+    # return StepResponse.step_succeeded("Run action PAUSED")
+
+# @test_rest_node.action(name="play_action")
+# def play_action(state: State, action: ActionRequest): 
+#     """Presses play on the run action"""
+
+#     state.action_paused = False
+
+#     return StepResponse.step_succeeded("Run action RESUMED")
+    
+
+
+    
 
 
 if __name__ == "__main__":

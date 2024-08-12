@@ -7,12 +7,14 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    Admin: typeof import('./src/ui/src/components/Admin.vue')['default']
     Dashboard: typeof import('./src/components/Dashboard.vue')['default']
     Event: typeof import('./src/components/Event.vue')['default']
     Experiments: typeof import('./src/components/Experiments.vue')['default']
     LocationsColumn: typeof import('./src/components/LocationsColumn.vue')['default']
     ModuleColumn: typeof import('./src/components/ModuleColumn.vue')['default']
     ModuleModal: typeof import('./src/components/ModuleModal.vue')['default']
+    PauseResumeButton: typeof import('./src/components/PauseResumeButton.vue')['default']
     Workflow: typeof import('./src/components/Workflow.vue')['default']
     WorkflowModal: typeof import('./src/components/WorkflowModal.vue')['default']
     WorkflowsColumn: typeof import('./src/components/WorkflowsColumn.vue')['default']
