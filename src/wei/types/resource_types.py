@@ -46,6 +46,13 @@ class AssetTable(AssetBase, table=True):
     )
     plate_id: Optional[str] = SQLField(default=None, foreign_key="platetable.id")
 
+    # Content fields
+    stack_content: Optional[str] = SQLField(default=None)
+    queue_content: Optional[str] = SQLField(default=None)
+    pool_content: Optional[str] = SQLField(default=None)
+    collection_content: Optional[str] = SQLField(default=None)
+    plate_content: Optional[str] = SQLField(default=None)
+
     # Define relationships to each table
     stack: Optional["StackTable"] = Relationship(back_populates="assets")
     queue: Optional["QueueTable"] = Relationship(back_populates="assets")
