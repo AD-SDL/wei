@@ -546,7 +546,7 @@ class RESTModule:
             else:
                 try:
                     state._shutdown_handler(state)
-                    self._startup_runner(state)
+                    self._startup_handler(state)
                     return {"message": "Module reset"}
                 except Exception as e:
                     state.exception_handler(
