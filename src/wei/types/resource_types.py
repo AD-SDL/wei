@@ -53,6 +53,33 @@ class AssetTable(AssetBase, table=True):
     collection: Optional["CollectionTable"] = Relationship(back_populates="assets")
     plate: Optional["PlateTable"] = Relationship(back_populates="assets")
 
+    def __repr__(self):
+        """
+        Provide a string representation of the AssetTable object.
+
+        This method returns a string that includes the asset's ID, name, and any
+        non-null related resource IDs (such as stack, pool, queue, collection, or plate),
+        along with their respective content fields.
+
+        Returns:
+            str: A string representation of the AssetTable instance, showing only the
+            non-null fields, including resource IDs and their contents.
+        """
+        attrs = [f"id='{self.id}'", f"name='{self.name}'"]
+
+        if self.stack_resource_id:
+            attrs.append(f"stack_resource_id='{self.stack_resource_id}'")
+        if self.pool_id:
+            attrs.append(f"pool_id='{self.pool_id}'")
+        if self.queue_resource_id:
+            attrs.append(f"queue_resource_id='{self.queue_resource_id}'")
+        if self.collection_id:
+            attrs.append(f"collection_id='{self.collection_id}'")
+        if self.plate_id:
+            attrs.append(f"plate_id='{self.plate_id}'")
+
+        return f"AssetTable({', '.join(attrs)})"
+
 
 class ResourceContainerBase(AssetBase):
     """
