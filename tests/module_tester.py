@@ -13,4 +13,8 @@ def test_module(action: str, args: Any, url: str):
         name="test", interface="wei_rest_node", config={"rest_node_address": url}
     )
     step = Step(name="test", module="test", action=action, args=args)
-    RestInterface.send_action(step, mod, run_dir=".")
+    status, data, error, files = RestInterface.send_action(step, mod, run_dir=".")
+    print(f"status: {status}")
+    print(f"data: {data}")
+    print(f"error: {error}")
+    print(f"files: {files}")

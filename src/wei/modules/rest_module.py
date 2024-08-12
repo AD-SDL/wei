@@ -22,6 +22,7 @@ from fastapi import (
     status,
 )
 from fastapi.datastructures import State
+from nicegui import ui
 from typing_extensions import Annotated, get_type_hints
 
 from wei.types import ModuleStatus
@@ -622,6 +623,30 @@ class RESTModule:
         # * Include the router in the main app
         self.app.include_router(self.router)
 
+    def _configure_gui(self):
+        """Configure the GUI for the REST module"""
+
+        @ui.page("/")
+        def homepage(request: Request):
+            ui.html(f"<h1>Module: {self.name}</h1>")
+            ui.markdown(f"{self.description}")
+
+            with ui.grid(columns=2):
+                with ui.card():
+                    ui.markdown("### Module Status")
+                    ui.code()
+                with ui.card():
+                    ui.markdown("### Module Actions")
+                with ui.card():
+                    ui.markdown("### Module About")
+                with ui.card():
+                    ui.markdown("### Resources")
+
+        ui.run_with(
+            self.app,
+            title=self.name,
+        )
+
     def start(self):
         """Starts the REST server-based module"""
         import uvicorn
@@ -641,6 +666,7 @@ class RESTModule:
             ):  # * Don't override already set attributes with None's
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
         self._configure_routes()
+        self._configure_gui()
 
         # * Enforce a name
         if not self.state.name:

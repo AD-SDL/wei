@@ -3,7 +3,7 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 from zipfile import ZipFile
 
 import requests
@@ -40,7 +40,9 @@ class RestInterface(Interface):
     @staticmethod
     def send_action(
         step: Step, module: Module, **kwargs: Any
-    ) -> Tuple[StepStatus, str, str]:
+    ) -> Tuple[
+        StepStatus, Optional[Dict[str, Any]], Optional[str], Optional[Dict[str, Any]]
+    ]:
         """Executes a single step from a workflow using a REST API
 
         Parameters
