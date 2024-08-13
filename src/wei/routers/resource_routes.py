@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter
 
+from wei.config import Config
 from wei.core.state_manager import StateManager
 from wei.resources_interface import ResourceInterface
 from wei.types.resource_types import (
@@ -17,7 +18,7 @@ from wei.types.resource_types import (
 
 router = APIRouter()
 state_manager = StateManager()
-state_manager.resource_interface = ResourceInterface("sqlite:///database.db")
+state_manager.resource_interface = ResourceInterface(Config.resource_database_url)
 
 
 @router.get("/up")
