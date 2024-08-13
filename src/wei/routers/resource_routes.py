@@ -1,9 +1,10 @@
 """API server for the Resource Manager"""
 
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from fastapi import APIRouter
 
+from wei.core.state_manager import StateManager
 from wei.resources_interface import ResourceInterface
 from wei.types.resource_types import (
     AssetTable,
@@ -11,22 +12,12 @@ from wei.types.resource_types import (
     PlateTable,
     PoolTable,
     QueueTable,
-    ResourceContainerBase,
     StackTable,
 )
 
 router = APIRouter()
-database_url = "sqlite:///database.db"
-
-
-def get_resource_interface() -> ResourceInterface:
-    """
-    Dependency function to get the ResourceInterface.
-
-    Returns:
-        ResourceInterface: The resource interface with the default database URL.
-    """
-    return ResourceInterface(database_url)
+state_manager = StateManager()
+state_manager.resource_interface = ResourceInterface("sqlite:///database.db")
 
 
 @router.get("/up")
@@ -40,7 +31,7 @@ def is_server_up() -> Dict[str, bool]:
 @router.get("/resources/{resource_type}")
 def get_all_resources(
     resource_type: str,
-):  # TODO: Make this get resources by type & create a new function for get all resources
+):
     """
     Retrieve all resources of a specific type from the database.
 
@@ -50,7 +41,6 @@ def get_all_resources(
     Returns:
         List[ResourceContainer]: List of all resources of the specified type.
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
     resource_map = {
         "pool": PoolTable,
         "stack": StackTable,
@@ -60,7 +50,7 @@ def get_all_resources(
     }
     resource_class = resource_map.get(resource_type.lower())
     if resource_class:
-        return resource_interface.get_all_resources(resource_class)
+        return state_manager.resource_interface.get_all_resources(resource_class)
     else:
         return {"error": f"Invalid resource type: {resource_type}"}
 
@@ -70,18 +60,14 @@ def get_all_assets() -> List[AssetTable]:
     """
     Get all available assets
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    return resource_interface.get_all_resources(AssetTable)
+    return state_manager.resource_interface.get_all_resources(AssetTable)
 
 
 @router.get("/resource/{resource_type}/{resource_id}")
-def get_resource_by_id(
-    resource_type: str, resource_id: str
-):  # TODO: don't use resource type
+def get_resource_by_id(resource_type: str, resource_id: str):
     """
     Get a resource by its ID and type.
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
     resource_map = {
         "pools": PoolTable,
         "stacks": StackTable,
@@ -91,7 +77,9 @@ def get_resource_by_id(
     }
     resource_class = resource_map.get(resource_type.lower())
     if resource_class:
-        return resource_interface.get_resource(resource_class, resource_id)
+        return state_manager.resource_interface.get_resource(
+            resource_class, resource_id
+        )
     else:
         return {"error": f"Invalid resource type: {resource_type}"}
 
@@ -101,18 +89,14 @@ def get_asset_by_id(asset_id: str) -> AssetTable:
     """
     Get an asset by its ID
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    return resource_interface.get_resource(AssetTable, asset_id)
+    return state_manager.resource_interface.get_resource(AssetTable, asset_id)
 
 
 @router.post("/resource/{resource_type}")
-def create_resource(
-    resource_type: str, resource: ResourceContainerBase
-):  # TODO: resource needs to be updated
+def create_resource(resource_type: str, resource) -> Any:
     """
     Create a new resource of a specific type.
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
     resource_map = {
         "pools": PoolTable,
         "stacks": StackTable,
@@ -122,7 +106,7 @@ def create_resource(
     }
     resource_class = resource_map.get(resource_type.lower())
     if resource_class:
-        return resource_interface.add_resource(resource)
+        return state_manager.resource_interface.add_resource(resource)
     else:
         return {"error": f"Invalid resource type: {resource_type}"}
 
@@ -132,8 +116,7 @@ def create_asset(asset: AssetTable) -> AssetTable:
     """
     Create a new asset
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    return resource_interface.add_resource(asset)
+    return state_manager.resource_interface.add_resource(asset)
 
 
 @router.put("/asset/{asset_id}")
@@ -141,16 +124,18 @@ def update_asset(asset_id: str, asset: AssetTable) -> AssetTable:
     """
     Update an asset
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    return resource_interface.update_resource(AssetTable, asset_id, asset.dict())
+    return state_manager.resource_interface.update_resource(
+        AssetTable, asset_id, asset.model_dump()
+    )
 
 
 @router.put("/resource/{resource_type}/{resource_id}")
-def update_resource(resource_type: str, resource_id: str, updates: Dict[str, any]):
+def update_resource(
+    resource_type: str, resource_id: str, updates: Dict[str, Any]
+) -> Any:
     """
     Update a resource by its ID and type.
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
     resource_map = {
         "pools": PoolTable,
         "stacks": StackTable,
@@ -160,17 +145,18 @@ def update_resource(resource_type: str, resource_id: str, updates: Dict[str, any
     }
     resource_class = resource_map.get(resource_type.lower())
     if resource_class:
-        return resource_interface.update_resource(resource_class, resource_id, updates)
+        return state_manager.resource_interface.update_resource(
+            resource_class, resource_id, updates
+        )
     else:
         return {"error": f"Invalid resource type: {resource_type}"}
 
 
 @router.delete("/resource/{resource_type}/{resource_id}")
-def delete_resource(resource_type: str, resource_id: str):
+def delete_resource(resource_type: str, resource_id: str) -> Dict[str, Any]:
     """
     Delete a resource by its ID and type.
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
     resource_map = {
         "pools": PoolTable,
         "stacks": StackTable,
@@ -181,19 +167,24 @@ def delete_resource(resource_type: str, resource_id: str):
     resource_class = resource_map.get(resource_type.lower())
     if resource_class:
         return {
-            "deleted": resource_interface.delete_resource(resource_class, resource_id)
+            "deleted": state_manager.resource_interface.delete_resource(
+                resource_class, resource_id
+            )
         }
     else:
         return {"error": f"Invalid resource type: {resource_type}"}
 
 
 @router.delete("/asset/{asset_id}")
-def delete_asset(asset_id: str) -> AssetTable:
+def delete_asset(asset_id: str) -> Dict[str, Any]:
     """
     Delete an asset
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    return {"deleted": resource_interface.delete_resource(AssetTable, asset_id)}
+    return {
+        "deleted": state_manager.resource_interface.delete_resource(
+            AssetTable, asset_id
+        )
+    }
 
 
 @router.put("/resources/{resource_id}/push")
@@ -201,31 +192,29 @@ def push_asset_to_resource(resource_id: str, asset: AssetTable) -> int:
     """
     Push an asset to a stack or queue resource
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    resource_type = resource_interface.get_resource_type(resource_id)
+    resource_type = state_manager.resource_interface.get_resource_type(resource_id)
     if resource_type == "StackTable":
-        stack = resource_interface.get_resource(StackTable, resource_id)
-        return resource_interface.push_to_stack(stack, asset)
+        stack = state_manager.resource_interface.get_resource(StackTable, resource_id)
+        return state_manager.resource_interface.push_to_stack(stack, asset)
     elif resource_type == "QueueTable":
-        queue = resource_interface.get_resource(QueueTable, resource_id)
-        return resource_interface.push_to_queue(queue, asset)
+        queue = state_manager.resource_interface.get_resource(QueueTable, resource_id)
+        return state_manager.resource_interface.push_to_queue(queue, asset)
     else:
         return {"error": f"Invalid resource type for push operation: {resource_type}"}
 
 
 @router.put("/resources/{resource_id}/pop")
-def pop_asset_from_resource(resource_id: str) -> AssetTable:
+def pop_asset_from_resource(resource_id: str) -> Any:
     """
     Pop an asset from a stack or queue resource
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    resource_type = resource_interface.get_resource_type(resource_id)
+    resource_type = state_manager.resource_interface.get_resource_type(resource_id)
     if resource_type == "StackTable":
-        stack = resource_interface.get_resource(StackTable, resource_id)
-        return resource_interface.pop_from_stack(stack)
+        stack = state_manager.resource_interface.get_resource(StackTable, resource_id)
+        return state_manager.resource_interface.pop_from_stack(stack)
     elif resource_type == "QueueTable":
-        queue = resource_interface.get_resource(QueueTable, resource_id)
-        return resource_interface.pop_from_queue(queue)
+        queue = state_manager.resource_interface.get_resource(QueueTable, resource_id)
+        return state_manager.resource_interface.pop_from_queue(queue)
     else:
         return {"error": f"Invalid resource type for pop operation: {resource_type}"}
 
@@ -235,9 +224,8 @@ def increase_resource_quantity(resource_id: str, quantity: float) -> float:
     """
     Increase the quantity in a Pool resource
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    pool = resource_interface.get_resource(PoolTable, resource_id)
-    resource_interface.increase_pool_quantity(pool, quantity)
+    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
+    state_manager.resource_interface.increase_pool_quantity(pool, quantity)
     return pool.quantity
 
 
@@ -246,9 +234,8 @@ def decrease_resource_quantity(resource_id: str, quantity: float) -> float:
     """
     Decrease the quantity in a Pool resource
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    pool = resource_interface.get_resource(PoolTable, resource_id)
-    resource_interface.decrease_pool_quantity(pool, quantity)
+    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
+    state_manager.resource_interface.decrease_pool_quantity(pool, quantity)
     return pool.quantity
 
 
@@ -259,9 +246,10 @@ def insert_asset_into_resource(
     """
     Insert an asset into a Collection resource
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    collection = resource_interface.get_resource(CollectionTable, resource_id)
-    resource_interface.insert_into_collection(collection, location, asset)
+    collection = state_manager.resource_interface.get_resource(
+        CollectionTable, resource_id
+    )
+    state_manager.resource_interface.insert_into_collection(collection, location, asset)
     return len(collection.contents_dict)
 
 
@@ -270,9 +258,12 @@ def remove_asset_from_resource(resource_id: str, location: str) -> Dict[str, str
     """
     Retrieve an asset from a Collection resource
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    collection = resource_interface.get_resource(CollectionTable, resource_id)
-    asset = resource_interface.retrieve_from_collection(collection, location)
+    collection = state_manager.resource_interface.get_resource(
+        CollectionTable, resource_id
+    )
+    asset = state_manager.resource_interface.retrieve_from_collection(
+        collection, location
+    )
     return {"id": asset.id, "name": asset.name}
 
 
@@ -287,9 +278,8 @@ def empty_pool_resource(resource_id: str) -> float:
     Returns:
         float: The new quantity of the pool (which should be 0).
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    pool = resource_interface.get_resource(PoolTable, resource_id)
-    resource_interface.empty_pool(pool)
+    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
+    state_manager.resource_interface.empty_pool(pool)
     return pool.quantity
 
 
@@ -304,7 +294,6 @@ def fill_pool_resource(resource_id: str) -> float:
     Returns:
         float: The new quantity of the pool (which should be its capacity).
     """
-    resource_interface: ResourceInterface = router.state.resource_interface
-    pool = resource_interface.get_resource(PoolTable, resource_id)
-    resource_interface.fill_pool(pool)
+    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
+    state_manager.resource_interface.fill_pool(pool)
     return pool.quantity
