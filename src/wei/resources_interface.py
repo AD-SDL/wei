@@ -103,6 +103,33 @@ class ResourceInterface:
             except NoResultFound:
                 return None
 
+    def get_resource_type(self, resource_id: str) -> Optional[str]:
+        """
+        Determine the resource type name based on the provided resource_id.
+
+        Args:
+            resource_id (str): The ID of the resource.
+
+        Returns:
+            str or None: The name of the resource type if found, otherwise None.
+        """
+        resource_types = {
+            "StackTable": StackTable,
+            "PoolTable": PoolTable,
+            "QueueTable": QueueTable,
+            "CollectionTable": CollectionTable,
+            "PlateTable": PlateTable,
+        }
+
+        with self.session as session:
+            for type_name, resource_type in resource_types.items():
+                statement = select(resource_type).where(resource_type.id == resource_id)
+                result = session.exec(statement).first()
+                if result:
+                    return type_name
+
+        return None
+
     def update_resource(
         self, resource_type: Type[SQLModel], resource_id: str, updates: Dict
     ) -> Optional[SQLModel]:
@@ -465,5 +492,7 @@ if __name__ == "__main__":
 
     all_asset = resource_interface.get_all_resources(AssetTable)
     print("\n Asset Table", all_asset)
+
+    print(resource_interface.get_resource_type(stack.id))
 
     # print(resource_interface.get_all_assets_with_relations())
