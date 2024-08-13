@@ -3,6 +3,7 @@
 from typing import Dict, List, Optional, Type
 
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from wei.types.resource_types import (
@@ -161,6 +162,15 @@ class ResourceInterface:
         """
         with self.session as session:
             statement = select(resource_type)
+            # If the resource type is AssetTable, load all relationships
+            if resource_type is AssetTable:
+                statement = statement.options(
+                    selectinload(AssetTable.stack),
+                    selectinload(AssetTable.queue),
+                    selectinload(AssetTable.pool),
+                    selectinload(AssetTable.collection),
+                    selectinload(AssetTable.plate),
+                )
             resources = session.exec(statement).all()
             return resources
 
