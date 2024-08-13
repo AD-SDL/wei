@@ -46,19 +46,38 @@ class AssetTable(AssetBase, table=True):
     )
     plate_id: Optional[str] = SQLField(default=None, foreign_key="platetable.id")
 
-    # Content fields
-    stack_content: Optional[str] = SQLField(default=None)
-    queue_content: Optional[str] = SQLField(default=None)
-    pool_content: Optional[str] = SQLField(default=None)
-    collection_content: Optional[str] = SQLField(default=None)
-    plate_content: Optional[str] = SQLField(default=None)
-
     # Define relationships to each table
     stack: Optional["StackTable"] = Relationship(back_populates="assets")
     queue: Optional["QueueTable"] = Relationship(back_populates="assets")
     pool: Optional["PoolTable"] = Relationship(back_populates="assets")
     collection: Optional["CollectionTable"] = Relationship(back_populates="assets")
     plate: Optional["PlateTable"] = Relationship(back_populates="assets")
+
+    # Dynamic properties for content
+    @property
+    def stack_content(self) -> Optional[str]:
+        "Content property"
+        return self.stack.stack_contents if self.stack else None
+
+    @property
+    def queue_content(self) -> Optional[str]:
+        "Content property"
+        return self.queue.queue_contents if self.queue else None
+
+    @property
+    def pool_content(self) -> Optional[str]:
+        "Content property"
+        return f"Quantity: {self.pool.quantity}" if self.pool else None
+
+    @property
+    def collection_content(self) -> Optional[str]:
+        "Content property"
+        return self.collection.collection_contents if self.collection else None
+
+    @property
+    def plate_content(self) -> Optional[str]:
+        "Content property"
+        return self.plate.plate_contents if self.plate else None
 
     def __repr__(self):
         """
@@ -74,18 +93,29 @@ class AssetTable(AssetBase, table=True):
         """
         attrs = [f"id='{self.id}'", f"name='{self.name}'"]
 
+        # Only add non-None resource IDs and contents
         if self.stack_resource_id:
-            attrs.append(f"stack_resource_id='{self.stack_resource_id}'")
+            attrs.append(
+                f"stack_resource_id='{self.stack_resource_id}', stack_content='{self.stack_content}'"
+            )
         if self.pool_id:
-            attrs.append(f"pool_id='{self.pool_id}'")
+            attrs.append(
+                f"pool_id='{self.pool_id}', pool_content='{self.pool_content}'"
+            )
         if self.queue_resource_id:
-            attrs.append(f"queue_resource_id='{self.queue_resource_id}'")
+            attrs.append(
+                f"queue_resource_id='{self.queue_resource_id}', queue_content='{self.queue_content}'"
+            )
         if self.collection_id:
-            attrs.append(f"collection_id='{self.collection_id}'")
+            attrs.append(
+                f"collection_id='{self.collection_id}', collection_content='{self.collection_content}'"
+            )
         if self.plate_id:
-            attrs.append(f"plate_id='{self.plate_id}'")
+            attrs.append(
+                f"plate_id='{self.plate_id}', plate_content='{self.plate_content}'"
+            )
 
-        return f"AssetTable({', '.join(attrs)})"
+        return f"({', '.join(attrs)})"
 
 
 class ResourceContainerBase(AssetBase):
