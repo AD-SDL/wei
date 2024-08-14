@@ -1,35 +1,44 @@
 <template>
     <div>
-    
-        <!-- <p>PAUSE URL: {{ pause_url }}</p>
-        <p v-if="module">MODULE: {{ module }}</p>
-        <p v-else>No module provided</p> -->
-        <!-- <p v-if="module">Module: {{ module }}</p> -->
-
-
-        <!-- <p>Pause URL: {{ pause_url}}</p> -->
-      <v-btn @click="togglePauseResume" 
-      :color="isPaused ? 'green darken-3' : 'red darken-3'" 
-      dark 
-      elevation="5" >
+        <v-btn @click="togglePauseResume" 
+        :color="isPaused ? 'green darken-3' : 'red darken-3'" 
+        dark 
+        elevation="5"
+        :disabled="!allowButton" >
         {{ isPaused ? 'RESUME MODULE' : 'PAUSE MODULE' }}
       </v-btn>
     </div>
   </template>
   
 <script lang="ts" setup>
-    import {defineProps, defineComponent, ref, computed} from 'vue';
+    import {defineProps, ref, watchEffect} from 'vue';
 
-    const props = defineProps(['main_url', 'module'])
+    const props = defineProps(['main_url', 'module', 'module_status'])
     const pause_url = ref()
     const resume_url = ref()
+    const isPaused = ref(false);
+    const allowButton = ref(false)
 
     // Format pause and resume urls
     pause_url.value = props.main_url.concat('/admin/pause/'.concat(props.module))
     resume_url.value = props.main_url.concat('/admin/resume/'.concat(props.module))
 
-    // Local reactive state TODO: Change this depending on the state of the module!!
-    const isPaused = ref(false);
+    // TODO: Change this depending on the state of the module!!
+    watchEffect(() => {
+        // Determine if pause/resume button should appear
+        if (props.module_status == "BUSY" || props.module_status == "PAUSED") {
+            allowButton.value = true
+        } else {
+            allowButton.value = false
+        }
+
+        // Determine if the module is already paused 
+        if (props.module_status == 'PAUSED') {
+            isPaused.value = true
+        } else {
+            isPaused.value = false
+        }
+    })
 
     // Function to toggle pause/resume
     const togglePauseResume = async () => {
@@ -74,9 +83,7 @@
         console.error('Error resuming module:', error);
         }
     };
-
 </script>
-
   
 <style scoped>
     button {

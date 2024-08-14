@@ -10,7 +10,6 @@
                 :class="value.state.status">
                 <v-card-text>
                   <h4 >{{ module_name }}</h4>
-
                   <p class="text-caption">
                    status: {{ value.state.status }}
                   </p>

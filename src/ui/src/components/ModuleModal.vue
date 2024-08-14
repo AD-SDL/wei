@@ -7,9 +7,8 @@
       </v-card-title>
 
       <v-card-actions>
-        <PauseResumeButton :main_url="main_url" :module="modal_title" />
+        <PauseResumeButton :main_url="main_url" :module="modal_title" :module_status="wc_state.modules[modal_title].state.status" />
       </v-card-actions>
-
 
       <v-card-text class="subheading grey--text">
         <div>
@@ -103,9 +102,6 @@ console.log(props.wc_state.locations)
 const text = ref()
 const json_text = ref()
 
-// Testing
-
-
 function set_text(action: any) {
   text.value = "- name : ".concat(action.name).concat("\n\t").concat(
    "module : ").concat(props.modal_text.name).concat("\n\t").concat(
@@ -119,10 +115,6 @@ function set_text(action: any) {
     else {
       args[arg.name] = arg.value
     }
-
-
-
-
   }
   )
   json_text.value = {"name": action.name,
@@ -175,9 +167,6 @@ async function send_wf(action:any) {
                  "checks": null,
                  "comment": "Test",
                  "files": files
-
-
-
   }]
 
   formData.append("workflow", JSON.stringify(wf))

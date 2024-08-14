@@ -4,8 +4,6 @@
       <v-tab :value="1">Workcells</v-tab>
       <v-tab :value="2">Workflows</v-tab>
       <v-tab :value="3">Experiments</v-tab>
-      <!-- <v-tab :value="4">Admin</v-tab> -->
-      <!-- <v-tab :value="4">Admin</v-tab> -->
       <!-- <v-tab :value="4">Events</v-tab>
           <v-tab :value="5">Admin</v-tab>
           <v-tab :value="6">Resources</v-tab> -->
@@ -71,18 +69,6 @@
 
         </v-row>
       </v-window-item>
-      <!-- <v-window-item :key="4" :value="4">
-        <v-row class="pa-1 ma-1 justify-center">
-          <Admin title="ADMIN"/>
-        </v-row>
-      </v-window-item> -->
-   
-
-      <!-- <v-window-item :key="4" :value="4">
-        <h2> Admin Actions </h2>
-        <AdminActionsTable title="Admin Actions" :wc_state=wc_state :wfs="wfs" start_open=true />
-      </v-window-item> -->
-
       <!-- <v-window-item :key="4" :value="4">
               <p>test3</p>
             </v-window-item>
