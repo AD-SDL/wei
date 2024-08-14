@@ -1,0 +1,11 @@
+name: Test_Workflow_Failure
+metadata:
+  author: Ryan D. Lewis
+  info: Example workflow that fails for WEI
+  version: 0.2
+
+flowdef:
+  - name: Fail step
+    module: transfer
+    action: fail
+    comment: Guarantee a failed step

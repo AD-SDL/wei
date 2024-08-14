@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from wei.config import Config
 from wei.core.events import EventHandler
 from wei.core.storage import initialize_storage
+from wei.engine import Engine
 from wei.routers import (
     admin_routes,
     event_routes,
@@ -45,6 +46,10 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     app.include_router(workcell_routes.router, prefix="/wc")
     app.mount("/", StaticFiles(directory="wei/src/ui/dist", html=True))
     EventHandler.initialize_diaspora()
+
+    if Config.autostart_engine:
+        engine = Engine()
+        engine.start_engine_thread()
 
     # Yield control to the application
     yield

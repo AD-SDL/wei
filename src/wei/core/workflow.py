@@ -5,13 +5,11 @@ from typing import Any, Dict, List, Optional
 from fastapi import UploadFile
 
 from wei.core.module import validate_module_names
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.step import validate_step
 from wei.core.storage import get_workflow_run_directory
 from wei.types import Step, Workcell, Workflow, WorkflowRun
 from wei.types.workflow_types import WorkflowStatus
-
-state_manager = StateManager()
 
 
 def create_run(

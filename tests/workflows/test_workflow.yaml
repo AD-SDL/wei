@@ -4,11 +4,6 @@ metadata:
   info: Example workflow for WEI
   version: 0.2
 
-modules:
-  - transfer
-  - synthesis
-  - measure
-
 flowdef:
   - name: Get plate
     module: transfer
@@ -46,6 +41,8 @@ flowdef:
     module: measure
     action: measure
     comment: Measure the amount of foobar in the sample
+    data_labels:
+      test_file: test_label
 
   - name: Discard sample
     module: transfer

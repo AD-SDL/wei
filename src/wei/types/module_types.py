@@ -10,7 +10,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing_extensions import Self
+from typing_extensions import Literal, Self
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
@@ -91,6 +91,31 @@ class ModuleActionFile(BaseModel):
     """Description of the file"""
 
 
+class ModuleActionResult(BaseModel):
+    """Defines a result for a module action"""
+
+    label: str
+    """Label of the result"""
+    description: str = ""
+    """ Description of the result"""
+    type: str = ""
+    """type of the datapoint returnted"""
+
+
+class LocalFileModuleActionResult(ModuleActionResult):
+    """Defines a file for a module action"""
+
+    type: Literal["local_file"] = "local_file"
+    """type of the datapoint returned"""
+
+
+class ValueModuleActionResult(ModuleActionResult):
+    """Defines a file for a module action"""
+
+    type: Literal["value"] = "value"
+    """type of the datapoint returned"""
+
+
 class ModuleAction(BaseModel):
     """Defines an action that a module can perform."""
 
@@ -102,6 +127,8 @@ class ModuleAction(BaseModel):
     """A description of the action"""
     files: List[ModuleActionFile] = []
     """Files to be sent along with the action"""
+    results: List[ModuleActionResult] = []
+    """Datapoints resulting from action"""
     function: Optional[Any] = Field(default=None, exclude=True)
     """Function to be called when the action is executed. This must be a callable."""
 

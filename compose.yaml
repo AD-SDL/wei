@@ -30,7 +30,7 @@ services:
   #####################
   # WEI Core Services #
   #####################
-  wei_server:
+  test_wei_server:
     image: ${IMAGE}
     build:
       context: .
@@ -38,40 +38,23 @@ services:
       tags:
         - ${IMAGE}:latest
         - ${IMAGE}:dev
-    container_name: wei_server
+    container_name: test_wei_server
     ports:
       - 8000:8000
     volumes:
       - diaspora_config:/home/app/.diaspora
       - ./tests/workcells:/workcell_defs
       - ~/.wei:/home/app/.wei
-
     environment:
       - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
       - USER_ID=${USER_ID:-1000}
       - GROUP_ID=${GROUP_ID:-1000}
     command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
-      - wei_redis
-  wei_engine:
-    image: ${IMAGE}
-    container_name: wei_engine
-    volumes:
-      - diaspora_config:/home/app/.diaspora
-      - ./tests/workcells:/workcell_defs
-      - ~/.wei:/home/app/.wei
-      - ./:/home/app/wei # for development only
-    environment:
-      - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
-      - USER_ID=${USER_ID:-1000}
-      - GROUP_ID=${GROUP_ID:-1000}
-    command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME}
-    depends_on:
-      - wei_redis
-      - wei_server
-  wei_redis:
+      - test_wei_redis
+  test_wei_redis:
     image: redis
-    container_name: wei_redis
+    container_name: test_wei_redis
     ports:
       - 6379:6379
     volumes:

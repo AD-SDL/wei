@@ -6,13 +6,11 @@ import traceback
 import warnings
 from typing import Union
 
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.workcell import find_step_module
 from wei.types import Module, ModuleAbout, Workcell, Workflow, WorkflowStatus
 from wei.types.interface_types import InterfaceMap
 from wei.types.module_types import LegacyModuleState, ModuleState, ModuleStatus
-
-state_manager = StateManager()
 
 
 def initialize_workcell_modules() -> None:
@@ -61,7 +59,7 @@ def update_module(module_name: str, module: Module) -> None:
                     )
             except Exception as e:
                 warnings.warn(
-                    message=f"Error getting state for module {module.name}: {e}",
+                    message=f"Error getting state for module {module.name}.",
                     category=UserWarning,
                     stacklevel=1,
                 )
@@ -92,7 +90,11 @@ def update_module(module_name: str, module: Module) -> None:
                     clear_module_reservation(module)
     except Exception:
         traceback.print_exc()
-        print(f"Unable to update module {module_name}")
+        warnings.warn(
+            message=f"Unable to update module {module_name}",
+            category=UserWarning,
+            stacklevel=1,
+        )
 
 
 def validate_module_names(workflow: Workflow, workcell: Workcell) -> None:
@@ -114,7 +116,11 @@ def get_module_about(module: Module) -> Union[ModuleAbout, None]:
             try:
                 about = ModuleAbout(**interface.get_about(module))
             except Exception:
-                print(f"Unable to parse about information for Module {module_name}")
+                warnings.warn(
+                    message=f"Unable to parse about information for Module {module_name}",
+                    category=UserWarning,
+                    stacklevel=1,
+                )
                 about = None
             return about
         except Exception:
