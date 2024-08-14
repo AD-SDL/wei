@@ -1,16 +1,33 @@
 <template>
     <div>
-        <v-btn @click="togglePauseResume" 
+        <!-- <v-btn @click="togglePauseResume" 
         :color="isPaused ? 'green darken-3' : 'red darken-3'" 
         dark 
         elevation="5"
         :disabled="!allowButton" >
         {{ isPaused ? 'RESUME MODULE' : 'PAUSE MODULE' }}
+      </v-btn> -->
+
+      <v-btn @click="togglePauseResume" 
+        :color="isPaused ? 'green darken-3' : 'red darken-3'" 
+        dark 
+        elevation="5"
+        :disabled="!allowButton" >
+        <v-icon>
+        {{ isPaused ? 'mdi-play' : 'mdi-pause' }}
+      </v-icon>
       </v-btn>
+      
     </div>
   </template>
   
 <script lang="ts" setup>
+    // TODO: only let pause/resume button appear if module is allowed those admin actions
+    // TODO: Change the status of the workflow from running to paused as well
+    // TODO: Change the location of the pause button
+    // TODO: Change to be a pause and play image instead of text?? With text that says "Pause module" and "resume module" if cursor hovers. 
+    // TODO: Add pause button for entire workcell (change module prop to optional)
+
     import {defineProps, ref, watchEffect} from 'vue';
 
     const props = defineProps(['main_url', 'module', 'module_status'])
