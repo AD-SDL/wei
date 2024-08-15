@@ -559,7 +559,7 @@ class RESTModule:
             state = request.app.state
             # * If the module is in INIT, return without calling custom state handler
             if state.status in [ModuleStatus.INIT, ModuleStatus.ERROR]:
-                return ModuleState(status=ModuleStatus.INIT, error=state.error)
+                return ModuleState(status=state.status, error=state.error)
             return self._state_handler(state=state)
 
         @self.router.get("/resources")

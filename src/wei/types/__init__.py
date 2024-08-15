@@ -1,12 +1,11 @@
 """Dataclasses and Enums for WEI"""
 
+# * Note: The following imports are to make backcompat with wei.core.dataclasses
+# * a little easier
+
 from .base_types import BaseModel, PathLike, ulid_factory
 from .event_types import Event
-from .experiment_types import (
-    Campaign,
-    Experiment,
-    ExperimentDesign,
-)
+from .experiment_types import Campaign, Experiment, ExperimentDesign
 from .module_types import (
     AdminCommands,
     Interface,
