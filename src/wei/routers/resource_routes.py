@@ -16,10 +16,11 @@ from wei.types.resource_types import (
     StackTable,
 )
 
-url = Config.resource_database_url
 router = APIRouter()
 state_manager = StateManager()
-state_manager.resource_interface = ResourceInterface()
+state_manager.resource_interface = ResourceInterface(
+    database_url=Config.resource_database_url
+)
 
 
 @router.get("/up")
