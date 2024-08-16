@@ -83,20 +83,34 @@ class ResourceInterface:
             return resource
 
     def get_resource(
-        self, resource_type: Type[SQLModel], resource_id: str
+        self,
+        resource_type: Type[SQLModel],
+        resource_id: Optional[str] = None,
+        resource_name: Optional[str] = None,
     ) -> Optional[SQLModel]:
         """
-        Retrieve a resource from the database by ID.
+        Retrieve a resource from the database by ID or name.
 
         Args:
             resource_type (Type[SQLModel]): The type of the resource.
-            resource_id (str): The ID of the resource.
+            resource_id (str, optional): The ID of the resource.
+            resource_name (str, optional): The name of the resource.
 
         Returns:
             SQLModel: The retrieved resource, or None if not found.
         """
         with self.session as session:
-            statement = select(resource_type).where(resource_type.id == resource_id)
+            if resource_id:
+                statement = select(resource_type).where(resource_type.id == resource_id)
+            elif resource_name:
+                statement = select(resource_type).where(
+                    resource_type.name == resource_name
+                )
+            else:
+                raise ValueError(
+                    "Either resource_id or resource_name must be provided."
+                )
+
             try:
                 resource = session.exec(statement).one()
                 return resource
