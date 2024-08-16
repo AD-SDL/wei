@@ -2,7 +2,6 @@
 
 import argparse
 import inspect
-import json
 import os
 import signal
 import sys
@@ -10,9 +9,8 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
-from pathlib import Path
 from threading import Thread
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import List, Optional, Set, Union
 
 from fastapi import (
     APIRouter,
@@ -35,7 +33,6 @@ from wei.types.module_types import (
     ModuleActionFile,
     ModuleState,
 )
-from wei.types.resource_types import Asset, Collection, Plate, Pool
 from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
 
 
@@ -61,8 +58,6 @@ class RESTModule:
     """The interface used by the module."""
     actions: List[ModuleAction] = []
     """A list of actions that the module can perform."""
-    resources: Dict[str, Any] = {}
-    """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
 
@@ -85,8 +80,6 @@ class RESTModule:
         model: Optional[str] = None,
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
-        resources: Optional[Dict[str, Any]] = None,
-        resources_path: Optional[str] = None,
         admin_commands: Optional[Set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
@@ -109,8 +102,6 @@ class RESTModule:
         self.model = model
         self.interface = interface
         self.actions = actions if actions else []
-        self.resources = resources if resources else {}
-        self.resources_path = resources_path
         self.admin_commands = admin_commands if admin_commands else set()
         self.admin_commands.add(AdminCommands.SHUTDOWN)
 
@@ -143,12 +134,6 @@ class RESTModule:
                 type=str,
                 default=self.name,
                 help="A unique name for this particular instance of this module",
-            )
-            self.arg_parser.add_argument(
-                "--resources_path",
-                type=str,
-                default=self.resources_path,
-                help="Path to the initial resources JSON file",
             )
 
     # * Module and Application Lifecycle Functions
@@ -270,54 +255,6 @@ class RESTModule:
             return function
 
         return decorator
-
-    def load_resources_from_file(self, file_path: str):
-        """Loads a resources file from the file_path"""
-        with open(file_path, "r") as f:
-            self.resources = json.load(f)
-
-    def write_resources_to_file(self, file_path: Optional[str] = None):
-        """Writes the resources dictionary to a file with a timestamp."""
-
-        if file_path is None:
-            resources_directory = Path("~/.wei/resource")
-        else:
-            resources_directory = Path(file_path) / ".resources"
-
-        if not resources_directory.exists():
-            resources_directory.mkdir(parents=True)
-
-        file_name = "resources.json"
-        full_file_path = resources_directory / file_name
-
-        resources_dict = {
-            key: resource.model_dump() for key, resource in self.state.resources.items()
-        }
-
-        with open(full_file_path, "w") as f:
-            json.dump(resources_dict, f, indent=4)
-
-        return str(full_file_path)
-
-    def add_resource(self, resource: Optional[Any] = None):
-        """Add a resource to the resources list"""
-        self.resources[resource.name] = resource
-
-    @staticmethod
-    def _resource_handler(state: State) -> List[Any]:
-        "Returns resources list"
-        return state.resources
-
-    def resource_handler(self):
-        "Resource handler decorator"
-
-        def decorator(function):
-            self._resource_handler = function
-            return function
-
-        return decorator
-
-    # * Module Action Handling Functions
 
     def action(self, **kwargs):
         """Decorator to add an action to the module.
@@ -551,18 +488,6 @@ class RESTModule:
 
         return decorator
 
-    def _find_resource_key_by_id(self, resource_id: str):
-        for key, resource in self.app.state.resources.items():
-            if resource.id == resource_id:
-                return key
-        return None
-
-    def _find_plate_resource_well_by_id(self, plate: Plate, pool_id: str) -> Pool:
-        for well in plate.wells.values():
-            if well.id == pool_id:
-                return well
-        return None
-
     def _configure_routes(self):
         """Configure the API endpoints for the REST module"""
 
@@ -637,157 +562,6 @@ class RESTModule:
                 return ModuleState(status=ModuleStatus.INIT, error=state.error)
             return self._state_handler(state=state)
 
-        @self.router.get("/resources")
-        async def resources(request: Request):
-            state = request.app.state
-            return self._resource_handler(state)
-
-        @self.router.post("/resources/{resource_id}/push")
-        async def resource_stack_push(request: Request, resource_id: str, asset: Asset):
-            state = request.app.state
-            resource_key = self._find_resource_key_by_id(resource_id)
-            if resource_key:
-                state.resources[resource_key].push(asset)
-                return {"message": f"Asset pushed to {resource_key}."}
-            else:
-                return {"message": f"Resource {resource_id} not found."}
-
-        @self.router.post("/resources/{resource_id}/pop")
-        async def resource_stack_pop(request: Request, resource_id: str):
-            state = request.app.state
-            resource_key = self._find_resource_key_by_id(resource_id)
-            if resource_key:
-                asset = state.resources[resource_key].pop()
-                return {
-                    "message": f"Asset removed from {resource_key}.",
-                    "asset": asset,
-                }
-            else:
-                return {"message": f"Resource {resource_id} not found."}
-
-        @self.router.post("/resources/{plate_id}/pools/{pool_id}/increase")
-        async def increase_pool_amount(
-            request: Request, plate_id: str, pool_id: str, amount: float
-        ):
-            resource_key = self._find_resource_key_by_id(plate_id)
-            if resource_key and isinstance(self.state.resources[resource_key], Plate):
-                well = self._find_plate_resource_well_by_id(
-                    self.state.resources[resource_key], pool_id
-                )
-                if well:
-                    try:
-                        well.increase(amount)
-                        return {
-                            "message": f"Pool {pool_id} in plate {plate_id} increased by {amount}."
-                        }
-                    except ValueError as e:
-                        return {"message": str(e)}
-            return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
-
-        @self.router.post("/resources/{plate_id}/pools/{pool_id}/decrease")
-        async def decrease_pool_amount(
-            request: Request, plate_id: str, pool_id: str, amount: float
-        ):
-            resource_key = self._find_resource_key_by_id(plate_id)
-            if resource_key and isinstance(self.state.resources[resource_key], Plate):
-                well = self._find_plate_resource_well_by_id(
-                    self.state.resources[resource_key], pool_id
-                )
-                if well:
-                    try:
-                        well.decrease(amount)
-                        return {
-                            "message": f"Pool {pool_id} in plate {plate_id} decreased by {amount}."
-                        }
-                    except ValueError as e:
-                        return {"message": str(e)}
-            return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
-
-        @self.router.post("/resources/{plate_id}/pools/{pool_id}/fill")
-        async def fill_pool(request: Request, plate_id: str, pool_id: str):
-            resource_key = self._find_resource_key_by_id(plate_id)
-            if resource_key and isinstance(self.state.resources[resource_key], Plate):
-                well = self._find_plate_resource_well_by_id(
-                    self.state.resources[resource_key], pool_id
-                )
-                if well:
-                    try:
-                        well.fill()
-                        return {
-                            "message": f"Pool {pool_id} in plate {plate_id} filled."
-                        }
-                    except ValueError as e:
-                        return {"message": str(e)}
-            return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
-
-        @self.router.post("/resources/{plate_id}/pools/{pool_id}/empty")
-        async def empty_pool(request: Request, plate_id: str, pool_id: str):
-            resource_key = self._find_resource_key_by_id(plate_id)
-            if resource_key and isinstance(self.state.resources[resource_key], Plate):
-                well = self._find_plate_resource_well_by_id(
-                    self.state.resources[resource_key], pool_id
-                )
-                if well:
-                    try:
-                        well.empty()
-                        return {
-                            "message": f"Pool {pool_id} in plate {plate_id} emptied."
-                        }
-                    except ValueError as e:
-                        return {"message": str(e)}
-            return {"message": f"Resource {plate_id} or pool {pool_id} not found."}
-
-        @self.router.put("/resources/{plate_id}/update_plate")
-        async def update_plate(
-            request: Request, plate_id: str, new_contents: Dict[str, float]
-        ):
-            resource_key = self._find_resource_key_by_id(plate_id)
-            if resource_key and isinstance(self.state.resources[resource_key], Plate):
-                self.state.resources[resource_key].update_plate(new_contents)
-                return {"message": f"Plate {plate_id} updated."}
-            return {"message": f"Plate {plate_id} not found."}
-
-        @self.router.post("/resources/{collection_id}/insert")
-        async def insert_collection(
-            request: Request, collection_id: str, location: str, asset: Asset
-        ):
-            resource_key = self._find_resource_key_by_id(collection_id)
-            if resource_key and isinstance(
-                self.state.resources[resource_key], Collection
-            ):
-                try:
-                    self.state.resources[resource_key].insert(location, asset)
-                    return {
-                        "message": f"Asset inserted at {location} in collection {collection_id}."
-                    }
-                except ValueError as e:
-                    return {"message": str(e)}
-            return {"message": f"Collection {collection_id} not found."}
-
-        @self.router.post("/resources/{collection_id}/retrieve")
-        async def retrieve_collection(
-            request: Request, collection_id: str, location: str
-        ):
-            resource_key = self._find_resource_key_by_id(collection_id)
-            if resource_key and isinstance(
-                self.state.resources[resource_key], Collection
-            ):
-                try:
-                    asset = self.state.resources[resource_key].retrieve(location)
-                    return {
-                        "message": f"Asset retrieved from {location} in collection {collection_id}.",
-                        "asset": asset,
-                    }
-                except ValueError as e:
-                    return {"message": str(e)}
-            return {"message": f"Collection {collection_id} not found."}
-
-        @self.router.post("/resources/save")
-        async def save_resources_to_file(request: Request):
-            state = request.app.state
-            file_path = state.write_resources_to_file()
-            return {"message": f"Resources written to {file_path}"}
-
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
             state = request.app.state
@@ -861,10 +635,6 @@ class RESTModule:
                 getattr(args, arg_name) is not None
             ):  # * Don't override already set attributes with None's
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
-
-        # Load resources from the specified JSON file if provided
-        if self.state.resources_path:
-            self.load_resources_from_file(self.state.resources_path)
 
         self._configure_routes()
 
