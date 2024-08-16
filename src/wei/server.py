@@ -10,16 +10,6 @@ from fastapi.staticfiles import StaticFiles
 from wei.config import Config
 from wei.core.events import EventHandler
 from wei.core.storage import initialize_storage
-from wei.routers import (
-    admin_routes,
-    event_routes,
-    experiment_routes,
-    location_routes,
-    module_routes,
-    resource_routes,
-    workcell_routes,
-    workflow_routes,
-)
 from wei.utils import parse_args
 
 
@@ -36,6 +26,17 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     -------
     None
     """
+    from wei.routers import (
+        admin_routes,
+        event_routes,
+        experiment_routes,
+        location_routes,
+        module_routes,
+        resource_routes,
+        workcell_routes,
+        workflow_routes,
+    )
+
     app.include_router(admin_routes.router, prefix="/admin")
     app.include_router(workflow_routes.router, prefix="/runs")
     app.include_router(experiment_routes.router, prefix="/experiments")
