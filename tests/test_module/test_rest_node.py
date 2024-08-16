@@ -51,7 +51,7 @@ test_rest_node.arg_parser.add_argument(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
-    state.resource_interface = ResourceInterface()  # "sqlite:///test_resources.db"
+    state.resource_interface = ResourceInterface("sqlite:///test_resources.db")
 
     # Example: Create resources using ResourceInterface
     stack1 = StackTable(name="Stack1", description="Stack for transfer", capacity=10)
@@ -67,25 +67,12 @@ def test_node_startup(state: State):
     state.resource_interface.add_resource(trash)
 
     # Add two PlateTable resources per stack (except Trash)
-    stacks = [stack1, stack2, stack3]
-    for stack in stacks:
-        plate1 = PlateTable(
-            name=f"{stack.name} Plate1",
-            description=f"Plate1 in {stack.name}",
-            well_capacity=100.0,
-        )
-        plate2 = PlateTable(
-            name=f"{stack.name} Plate2",
-            description=f"Plate2 in {stack.name}",
-            well_capacity=100.0,
-        )
+    asset = AssetTable(name="Test Asset")
+    state.resource_interface.add_resource(asset)
 
-        state.resource_interface.add_resource(plate1)
-        state.resource_interface.add_resource(plate2)
-
-        # Push these plates to the stack
-        state.resource_interface.push_to_stack(stack, plate1)
-        state.resource_interface.push_to_stack(stack, plate2)
+    # Push assets to stacks
+    state.resource_interface.push_to_stack(stack1, asset)
+    state.resource_interface.push_to_stack(stack2, asset)
 
     plate0 = PlateTable(
         name="Plate0",
@@ -114,10 +101,15 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
-
+    all_stacks = state.resource_interface.get_all_resources(StackTable)
+    print("\nAll Stacks after modification:", all_stacks)
     if source != "":
-        source_stack = state.resource_interface.get_resource(StackTable, source)
-        target_stack = state.resource_interface.get_resource(StackTable, target)
+        source_stack = state.resource_interface.get_resource(
+            StackTable, resource_name=source
+        )
+        target_stack = state.resource_interface.get_resource(
+            StackTable, resource_name=target
+        )
 
         if source_stack and target_stack:
             asset = state.resource_interface.pop_from_stack(source_stack)
@@ -127,11 +119,12 @@ def transfer(
             return StepResponse.step_failed(
                 f"Invalid source ({source}) or target ({target}) stack"
             )
-
-    # If no source is provided, create a new Asset and push it into the target stack
     else:
         example_plate = AssetTable(name="TestPlate")
-        target_stack = state.resource_interface.get_resource(StackTable, target)
+        state.resource_interface.add_resource(example_plate)
+        target_stack = state.resource_interface.get_resource(
+            StackTable, resource_name=target
+        )
 
         if target_stack:
             state.resource_interface.push_to_stack(target_stack, example_plate)
