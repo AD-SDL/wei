@@ -16,7 +16,7 @@ from wei.types.resource_types import (
 )
 
 
-class ResourceInterface:
+class ResourcesInterface:
     """
     Interface for managing various types of resources.
 
@@ -25,7 +25,9 @@ class ResourceInterface:
         session (sqlalchemy.orm.Session): SQLAlchemy session for database operations.
     """
 
-    def __init__(self, database_url: str = "sqlite:///:memory:"):
+    def __init__(
+        self, database_url: str = "postgresql://postgres:rpl@localhost:5432/resources"
+    ):
         """
         Initialize the ResourceInterface with a database URL.
 
@@ -35,6 +37,7 @@ class ResourceInterface:
         self.engine = create_engine(database_url)
         self.session = Session(self.engine)
         SQLModel.metadata.create_all(self.engine)
+        print(f"Resources Database started on: {database_url}")
 
     def add_resource(self, resource: SQLModel) -> SQLModel:
         """
@@ -415,15 +418,16 @@ class ResourceInterface:
 
 # Sample main function for testing
 if __name__ == "__main__":
-    resource_interface = ResourceInterface()
+    resource_interface = ResourcesInterface()
 
     # Example usage: Create a Pool resource
     pool = PoolTable(
         name="Test Pool", description="A test pool", capacity=100.0, quantity=50.0
     )
     resource_interface.add_resource(pool)
-    print("\nCreated Pool:", pool)
-
+    # print("\nCreated Pool:", pool)
+    all_pools = resource_interface.get_all_resources(PoolTable)
+    print("\nAll Pools after modification:", all_pools)
     # Increase quantity in the Pool
     resource_interface.increase_pool_quantity(pool, 25.0)
     # print("Increased Pool Quantity:", pool)
@@ -446,7 +450,7 @@ if __name__ == "__main__":
     print("\nAll Stacks after modification:", all_stacks)
 
     # Pop an asset from the Stack
-    popped_asset = resource_interface.pop_from_stack(stack)
+    # popped_asset = resource_interface.pop_from_stack(stack)
     # print("Popped Asset from Stack:", popped_asset)
     all_stacks = resource_interface.get_all_resources(StackTable)
     print("\nAll Stacks after modification:", all_stacks)
@@ -463,8 +467,8 @@ if __name__ == "__main__":
     print("\nAll Queues after modification:", all_queues)
 
     # Pop an asset from the Queue
-    popped_asset = resource_interface.pop_from_queue(queue)
-    print("\nPopped Asset from Queue:", popped_asset)
+    popped_asset_q = resource_interface.pop_from_queue(queue)
+    print("\nPopped Asset from Queue:", popped_asset_q)
     all_queues = resource_interface.get_all_resources(QueueTable)
     print("\nAll Queues after modification:", all_queues)
     # Create a Collection resource
@@ -507,6 +511,6 @@ if __name__ == "__main__":
     all_asset = resource_interface.get_all_resources(AssetTable)
     print("\n Asset Table", all_asset)
 
-    print(resource_interface.get_resource_type(stack.id))
+    # print(resource_interface.get_resource_type(stack.id))
 
     # print(resource_interface.get_all_assets_with_relations())
