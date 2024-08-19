@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from wei.config import Config
 from wei.core.state_manager import StateManager
-from wei.resources_interface import ResourceInterface
+from wei.resources_interface import ResourcesInterface
 from wei.types.resource_types import (
     AssetTable,
     CollectionTable,
@@ -18,7 +18,7 @@ from wei.types.resource_types import (
 
 router = APIRouter()
 state_manager = StateManager()
-state_manager.resource_interface = ResourceInterface(
+state_manager.resource_interface = ResourcesInterface(
     database_url=Config.resource_database_url
 )
 
