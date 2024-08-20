@@ -110,23 +110,37 @@ class WorkflowRun(Workflow):
     duration: Optional[timedelta] = None
     """Duration of the workflow's run"""
 
-    def get_step_by_name(self, name: str):
-        """return the step object by its name"""
+    def get_step_by_name(self, name: str) -> Step:
+        """Return the step object by its name"""
         for step in self.steps:
-            print(step)
             if step.name == name:
                 return step
+        raise KeyError(f"Step {name} not found in workflow run {self.run_id}")
 
-    def get_step_by_id(self, id: str):
-        """return the step object indexed by its id"""
+    def get_step_by_id(self, id: str) -> Step:
+        """Return the step object indexed by its id"""
         for step in self.steps:
             if step.id == id:
                 return step
+        raise KeyError(f"Step {id} not found in workflow run {self.run_id}")
 
-    def get_datapoint_id_by_label(self, label: str):
-        """return the id of a datapoint based on its label"""
+    def get_datapoint_id_by_label(self, label: str) -> str:
+        """Return the ID of the first datapoint with the given label in a workflow run"""
         for step in self.steps:
             if step.result.data:
                 for key in step.result.data:
                     if key == label:
                         return step.result.data[key]
+        raise KeyError(f"Label {label} not found in workflow run {self.run_id}")
+
+    def get_all_datapoint_ids_by_label(self, label: str) -> List[str]:
+        """Return the IDs of all datapoints with the given label in a workflow run"""
+        ids = []
+        for step in self.steps:
+            if step.result.data:
+                for key in step.result.data:
+                    if key == label:
+                        ids.append(step.result.data[key])
+        if not ids:
+            raise KeyError(f"Label {label} not found in workflow run {self.run_id}")
+        return ids

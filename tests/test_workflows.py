@@ -1,5 +1,7 @@
 """Tests WEI workflow functionality"""
 
+from pathlib import Path
+
 import pytest
 from wei.types import WorkflowStatus
 from wei.types.exceptions import WorkflowFailedException
@@ -12,7 +14,6 @@ class TestWEI_Workflows(TestWEI_Base):
 
     def test_workflow_run(self):
         """Test Running a simple workflow"""
-        from pathlib import Path
 
         workflow_path = Path(__file__).parent / "workflows" / "test_workflow.yaml"
 
@@ -24,10 +25,20 @@ class TestWEI_Workflows(TestWEI_Base):
         )
 
         assert run_info.status == WorkflowStatus.COMPLETED
+        assert self.experiment.get_datapoint_value(
+            run_info.get_datapoint_id_by_label("test_label")
+        )
+        print(run_info.get_step_by_name("Measure foobar").result)
+        assert self.experiment.get_datapoint_value(
+            run_info.get_step_by_name("Measure foobar").result.data["test"]
+        )
+        with pytest.raises(KeyError):
+            self.experiment.get_datapoint_value(
+                run_info.get_datapoint_id_by_label("non_existent_label")
+            )
 
     def test_workflow_failed(self):
         """Test Running a simple workflow"""
-        from pathlib import Path
 
         workflow_path = (
             Path(__file__).parent / "workflows" / "test_workflow_failure.yaml"

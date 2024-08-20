@@ -35,9 +35,9 @@ class StepResponse(BaseModel):
     """Whether the step succeeded or failed"""
     error: Optional[str] = None
     """Error message resulting from the action"""
-    data: Optional[dict] = None
+    data: Optional[Dict[str, Any]] = None
     """Key value dict of data returned from step"""
-    files: Optional[dict] = None
+    files: Optional[Dict[str, Any]] = None
     """Key value dict of file labels and file names from step"""
 
     def to_headers(self) -> Dict[str, str]:

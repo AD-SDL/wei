@@ -28,6 +28,7 @@ from wei.types.event_types import (
     WorkflowStepEvent,
 )
 from wei.types.interface_types import InterfaceMap
+from wei.utils import threaded_daemon
 
 
 def validate_step(step: Step) -> Tuple[bool, str]:
@@ -91,14 +92,19 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
                 return False
     module = state_manager.get_module(step.module)
     if module.state.status != ModuleStatus.IDLE:
-        print(f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle")
+        print(
+            f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle. Module status: {module.state.status}"
+        )
         return False
     if module.reserved and module.reserved != run_id:
-        print(f"Can't run '{run_id}.{step.name}', module '{step.module}' is reserved")
+        print(
+            f"Can't run '{run_id}.{step.name}', module '{step.module}' is reserved by workflow '{module.reserved}'"
+        )
         return False
     return True
 
 
+@threaded_daemon
 def run_step(
     wf_run: WorkflowRun,
     module: Module,
@@ -114,14 +120,14 @@ def run_step(
 
     try:
         step.start_time = datetime.now()
-        status, data, error, files = InterfaceMap.interfaces[interface].send_action(
+        status, data_key, error, files = InterfaceMap.interfaces[interface].send_action(
             step=step,
             module=module,
             run_dir=get_workflow_run_directory(wf_run.run_id),
         )
         step_response = StepResponse(
             status=status,
-            data=data,
+            data=data_key,
             error=error,
             files=files,
         )
@@ -140,43 +146,43 @@ def run_step(
     step.end_time = datetime.now()
     step.duration = step.end_time - step.start_time
 
-    new_data = None
+    labeled_data = None
     if step_response.data:
-        new_data = {}
-        for data in step_response.data:
-            if step.data_labels is not None and data in step.data_labels:
-                label = step.data_labels[data]
+        labeled_data = {}
+        for data_key in step_response.data:
+            if step.data_labels is not None and data_key in step.data_labels:
+                label = step.data_labels[data_key]
             else:
-                label = module.name + "_" + data
+                label = data_key
             datapoint = ValueDataPoint(
                 label=label,
                 step_id=step.id,
                 workflow_id=wf_run.run_id,
                 experiment_id=wf_run.experiment_id,
-                value=step_response.data[data],
+                value=step_response.data[data_key],
             )
             state_manager.set_datapoint(datapoint)
-            new_data[label] = datapoint.id
+            labeled_data[label] = datapoint.id
     if step_response.files:
-        if not new_data:
-            new_data = {}
-        for file in step_response.files:
-            if step.data_labels is not None and file in step.data_labels:
-                label = step.data_labels[file]
+        if not labeled_data:
+            labeled_data = {}
+        for file_key in step_response.files:
+            if step.data_labels is not None and file_key in step.data_labels:
+                label = step.data_labels[file_key]
             else:
-                label = file
+                label = file_key
             datapoint = LocalFileDataPoint(
                 step_id=step.id,
                 workflow_id=wf_run.run_id,
                 experiment_id=wf_run.experiment_id,
                 label=label,
-                path=str(step_response.files[file]),
+                path=str(step_response.files[file_key]),
             )
             state_manager.set_datapoint(datapoint)
-            new_data[label] = datapoint.id
+            labeled_data[label] = datapoint.id
 
     send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
-    step_response.data = new_data
+    step_response.data = labeled_data
     step.result = step_response
     if step_response.status == StepStatus.FAILED:
         logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")

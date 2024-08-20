@@ -27,7 +27,7 @@ class TestWEI_Base(unittest.TestCase):
             server_port=self.server_port,
             experiment_name="Test_Experiment",
             working_dir=Path(__file__).resolve().parent,
-            email_addresses=["ryan.lewis@anl.gov"],
+            # email_addresses=["ryan.lewis@anl.gov"],
         )
         self.url = f"http://{self.server_host}:{self.server_port}"
         self.redis_host = self.workcell.config.redis_host
