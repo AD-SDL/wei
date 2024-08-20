@@ -440,19 +440,13 @@ if __name__ == "__main__":
     resource_interface.push_to_stack(stack, asset)
     resource_interface.push_to_stack(stack, asset3)
 
-    # resource_interface.push_to_stack(stack, asset)
-    # resource_interface.push_to_stack(stack, asset)
-
-    # print("Updated Stack with Pushed Asset:", stack)
-
     all_stacks = resource_interface.get_all_resources(StackTable)
     print("\nAll Stacks after modification:", all_stacks)
 
     # Pop an asset from the Stack
-    # popped_asset = resource_interface.pop_from_stack(stack)
-    # print("Popped Asset from Stack:", popped_asset)
-    # all_stacks = resource_interface.get_all_resources(StackTable)
-    # print("\nAll Stacks after modification:", all_stacks)
+    popped_asset = resource_interface.pop_from_stack(stack)
+    all_stacks = resource_interface.get_all_resources(StackTable)
+    print("\nAll Stacks after modification:", all_stacks)
 
     # Create a Queue resource
     queue = QueueTable(name="Test Queue", description="A test queue", capacity=10)
@@ -469,8 +463,8 @@ if __name__ == "__main__":
     print("\nAll Queues after modification:", all_queues)
 
     # Pop an asset from the Queue
-    # popped_asset_q = resource_interface.pop_from_queue(queue)
-    # print("\nPopped Asset from Queue:", popped_asset_q)
+    popped_asset_q = resource_interface.pop_from_queue(queue)
+    print("\nPopped Asset from Queue:", popped_asset_q)
     all_queues = resource_interface.get_all_resources(QueueTable)
     print("\nAll Queues after modification:", all_queues)
     # Create a Collection resource
@@ -480,7 +474,7 @@ if __name__ == "__main__":
     resource_interface.add_resource(collection)
 
     # Insert an asset into the Collection
-    resource_interface.insert_into_collection(collection, "location1", asset)
+    resource_interface.insert_into_collection(collection, "location1", asset3)
 
     # Retrieve an asset from the Collection
     retrieved_asset = resource_interface.retrieve_from_collection(

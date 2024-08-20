@@ -4,7 +4,7 @@ import copy
 from typing import Any, Dict, List, Optional
 
 import ulid
-from sqlalchemy import Column, UniqueConstraint
+from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field as SQLField
 from sqlmodel import Relationship, Session, SQLModel
@@ -109,19 +109,20 @@ class AssetTable(AssetBase, table=True):
             ValueError: If the asset is already allocated to a different resource.
         """
         existing_allocation = (
-            session.query(AssetAllocation)
-            .filter_by(resource_type=resource_type, resource_id=resource_id)
-            .first()
+            session.query(AssetAllocation).filter_by(asset_id=self.id).first()
         )
 
         if existing_allocation:
-            if existing_allocation.asset_id == self.id:
+            if (
+                existing_allocation.resource_type == resource_type
+                and existing_allocation.resource_id == resource_id
+            ):
                 # The asset is already allocated to this resource, no need to do anything.
                 return
             else:
-                # The resource is already allocated to a different asset.
+                # The asset is already allocated to a different resource.
                 raise ValueError(
-                    f"Resource {resource_id} is already allocated to a different asset."
+                    f"Asset {self.id} is already allocated to a different resource."
                 )
 
         # If no existing allocation, create a new one
@@ -176,10 +177,6 @@ class AssetAllocation(SQLModel, table=True):
     )
     resource_type: str = SQLField(nullable=False)
     resource_id: str = SQLField(nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint("resource_id", "resource_type", name="uq_resource_allocation"),
-    )
 
 
 class ResourceContainerBase(AssetBase):
