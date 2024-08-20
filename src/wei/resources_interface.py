@@ -462,7 +462,7 @@ if __name__ == "__main__":
     asset2 = AssetTable(name="Test Asset2")
 
     resource_interface.push_to_queue(queue, asset2)
-    resource_interface.push_to_queue(queue, asset)
+    # resource_interface.push_to_queue(queue, asset)
 
     # print("Updated Queue with Pushed Asset:", queue)
     all_queues = resource_interface.get_all_resources(QueueTable)

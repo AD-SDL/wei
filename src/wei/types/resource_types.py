@@ -4,7 +4,7 @@ import copy
 from typing import Any, Dict, List, Optional
 
 import ulid
-from sqlalchemy import Column
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field as SQLField
 from sqlmodel import Relationship, Session, SQLModel
@@ -93,6 +93,93 @@ class AssetTable(AssetBase, table=True):
             )
 
         return f"({', '.join(attrs)})"
+
+    def allocate_to_resource(
+        self, resource_type: str, resource_id: str, session: Session
+    ):
+        """
+        Allocate this asset to a specific resource.
+
+        Args:
+            resource_type (str): The type of the resource ('stack', 'queue', etc.).
+            resource_id (str): The ID of the resource.
+            session (Session): SQLAlchemy session to use for saving.
+
+        Raises:
+            ValueError: If the asset is already allocated to a different resource.
+        """
+        existing_allocation = (
+            session.query(AssetAllocation)
+            .filter_by(resource_type=resource_type, resource_id=resource_id)
+            .first()
+        )
+
+        if existing_allocation:
+            if existing_allocation.asset_id == self.id:
+                # The asset is already allocated to this resource, no need to do anything.
+                return
+            else:
+                # The resource is already allocated to a different asset.
+                raise ValueError(
+                    f"Resource {resource_id} is already allocated to a different asset."
+                )
+
+        # If no existing allocation, create a new one
+        new_allocation = AssetAllocation(
+            asset_id=self.id, resource_type=resource_type, resource_id=resource_id
+        )
+        session.add(new_allocation)
+        session.commit()
+
+    def deallocate(self, session: Session):
+        """
+        Deallocate this asset from its current resource.
+
+        Args:
+            session (Session): SQLAlchemy session to use for saving.
+
+        Raises:
+            ValueError: If the asset is not allocated to any resource.
+        """
+        allocation = session.query(AssetAllocation).filter_by(asset_id=self.id).first()
+
+        if allocation is None:
+            raise ValueError(f"Asset {self.id} is not allocated to any resource.")
+
+        session.delete(allocation)
+        session.commit()
+
+    @staticmethod
+    def handle_asset_deletion(session: Session):
+        """
+        Trigger function to remove an asset from a resource's contents when the asset is deleted.
+
+        Args:
+            session (Session): SQLAlchemy session to use for handling the deletion.
+        """
+        # Implementation depends on setting up triggers in your PostgreSQL database.
+        pass
+
+
+class AssetAllocation(SQLModel, table=True):
+    """
+    Table that tracks which asset is allocated to which resource.
+
+    Attributes:
+        asset_id (str): Foreign key referencing the AssetTable.
+        resource_type (str): Type of resource (e.g., 'stack', 'queue').
+        resource_id (str): ID of the resource to which the asset is allocated.
+    """
+
+    asset_id: str = SQLField(
+        primary_key=True, foreign_key="assettable.id", nullable=False
+    )
+    resource_type: str = SQLField(nullable=False)
+    resource_id: str = SQLField(nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("resource_id", "resource_type", name="uq_resource_allocation"),
+    )
 
 
 class ResourceContainerBase(AssetBase):
@@ -220,7 +307,7 @@ class StackBase(ResourceContainerBase):
         """
         return copy.deepcopy(self.contents)
 
-    def push(self, instance: Any, session: Session) -> int:
+    def push(self, instance: AssetTable, session: Session) -> int:
         """
         Return a deep copy of the stack's contents.
 
@@ -236,6 +323,7 @@ class StackBase(ResourceContainerBase):
             self.quantity = len(contents)
             self.save(session)
             session.commit()  # Explicitly commit the session
+            instance.allocate_to_resource("stack", self.id, session)
         else:
             raise ValueError(f"Resource {self.name} is full.")
 
@@ -265,6 +353,7 @@ class StackBase(ResourceContainerBase):
 
             instance = session.get(AssetTable, instance_data["id"])
             if instance:
+                instance.deallocate(session)  # Deallocate asset from this stack
                 return instance
             else:
                 raise ValueError(f"Asset with id '{instance_data['id']}' not found.")
@@ -328,6 +417,8 @@ class QueueBase(ResourceContainerBase):
             self.quantity = len(contents)
             self.save(session)
             session.commit()  # Explicitly commit the session
+            # Allocate asset to this queue
+            instance.allocate_to_resource("queue", self.id, session)
         else:
             raise ValueError(f"Resource {self.name} is full.")
 
@@ -356,6 +447,7 @@ class QueueBase(ResourceContainerBase):
             session.commit()  # Explicitly commit the session
             instance = session.get(AssetTable, instance_data["id"])
             if instance:
+                instance.deallocate(session)
                 return instance
             else:
                 raise ValueError(f"Asset with id '{instance_data['id']}' not found.")
@@ -415,6 +507,8 @@ class CollectionBase(ResourceContainerBase):
             self.contents = contents
             self.quantity = len(contents)
             self.save(session)
+            # Allocate asset to this collection
+            asset.allocate_to_resource("collection", self.id, session)
         else:
             raise ValueError("Collection is full.")
 
@@ -440,11 +534,13 @@ class CollectionBase(ResourceContainerBase):
             self.save(session)
 
             asset = session.get(AssetTable, asset_data.id)
-            if not asset:
+            if asset:
+                asset.deallocate(session)
+                return {"id": asset.id, "name": asset.name}
+            else:
                 raise ValueError(
                     f"Asset with id '{asset_data.id}' not found in the database."
                 )
-            return {"id": asset.id, "name": asset.name}
         else:
             raise ValueError(f"Invalid location: {location} not found in collection.")
 
