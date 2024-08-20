@@ -8,7 +8,7 @@ from fastapi import UploadFile
 from fastapi.datastructures import State
 
 from wei.modules.rest_module import RESTModule
-from wei.resources_interface import ResourceInterface
+from wei.resources_interface import ResourcesInterface
 from wei.types import (
     StepFileResponse,
     StepResponse,
@@ -51,7 +51,7 @@ test_rest_node.arg_parser.add_argument(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
-    state.resource_interface = ResourceInterface("sqlite:///test_resources.db")
+    state.resource_interface = ResourcesInterface("sqlite:///test_resources.db")
 
     # Example: Create resources using ResourceInterface
     stack1 = StackTable(name="Stack1", description="Stack for transfer", capacity=10)
@@ -71,8 +71,8 @@ def test_node_startup(state: State):
     state.resource_interface.add_resource(asset)
 
     # Push assets to stacks
-    state.resource_interface.push_to_stack(stack1, asset)
-    state.resource_interface.push_to_stack(stack2, asset)
+    # state.resource_interface.push_to_stack(stack1, asset)
+    # state.resource_interface.push_to_stack(stack2, asset)
 
     plate0 = PlateTable(
         name="Plate0",
@@ -120,13 +120,14 @@ def transfer(
                 f"Invalid source ({source}) or target ({target}) stack"
             )
     else:
-        example_plate = AssetTable(name="TestPlate")
-        state.resource_interface.add_resource(example_plate)
         target_stack = state.resource_interface.get_resource(
             StackTable, resource_name=target
         )
-
         if target_stack:
+            example_plate = AssetTable(name="TestPlate")
+            print(example_plate)
+            print(target_stack)
+            state.resource_interface.add_resource(example_plate)
             state.resource_interface.push_to_stack(target_stack, example_plate)
             return StepResponse.step_succeeded(
                 f"Created and moved 'TestPlate' to {target}"
