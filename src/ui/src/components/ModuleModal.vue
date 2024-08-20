@@ -1,13 +1,13 @@
 <template>
   <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1000">
     <v-card>
+      
       <v-card-title>
-        <h1 class="title py-3 my-3">Module: {{ modal_title }}</h1>
+        <div class="d-flex align-center w-100">
+          <h1 class="title py-3 my-3">Module: {{ modal_title }}</h1>
+          <PauseResumeModuleButton :main_url="main_url" :module="modal_title" :module_status="wc_state.modules[modal_title].state.status" />
+        </div>
       </v-card-title>
-
-      <v-card-actions>
-        <PauseResumeButton :main_url="main_url" :module="modal_title" :module_status="wc_state.modules[modal_title].state.status" />
-      </v-card-actions>
 
       <v-card-text class="subheading grey--text">
         <div>
@@ -229,3 +229,9 @@ function copyAction(test: any) {
   alert("Copied!")
 }
 </script>
+
+<style>
+  .title {
+    margin-right: 30px; 
+  }
+</style>

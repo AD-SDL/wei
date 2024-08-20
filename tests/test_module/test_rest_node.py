@@ -116,53 +116,31 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
 @test_rest_node.action(name="run_action")
 def run_action(state: State, action: ActionRequest) -> StepResponse:
 
-    print("THIS METHOD WAS CALLED")
-    print(test_rest_node._pause)
     """Tests the pause action functionality"""
 
     action_timer = 0
 
     while action_timer <= 30:  # only allow action to be active for 30 seconds
-        # check that the action is not paused every second
-        print(test_rest_node._pause)
 
+        # check that the action is not paused every second
         if state.action_paused == False:
-            print("ACTION RUNNING")
             action_timer += 1
-        else: 
-            print("ACTION PAUSED")
         time.sleep(1)
     
-    return StepResponse.step_succeeded("Entire action complete")
+    return StepResponse.step_succeeded()
 
 @test_rest_node.pause()
 def pause_action(state: State):
     """Pauses the module action"""
 
-    print("PAUSED!!!!!!!!!!!")
     state.action_paused = True
 
 @test_rest_node.resume()
 def resume_action(state: State): 
     """Resumes the module action"""
 
-    print("RESUMED!!!!!!!!!!!")
     state.action_paused = False
 
-    
-    # return StepResponse.step_succeeded("Run action PAUSED")
-
-# @test_rest_node.action(name="play_action")
-# def play_action(state: State, action: ActionRequest): 
-#     """Presses play on the run action"""
-
-#     state.action_paused = False
-
-#     return StepResponse.step_succeeded("Run action RESUMED")
-    
-
-
-    
 
 
 if __name__ == "__main__":

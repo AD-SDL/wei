@@ -179,10 +179,6 @@ export default {
   background-color: red;
 }
 
-.module_status_PAUSED {
-  background-color: orange;
-}
-
 .module_status_UNKNOWN {
   background-color: darkgrey;
   color: black;

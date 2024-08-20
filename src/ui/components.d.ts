@@ -13,7 +13,7 @@ declare module 'vue' {
     LocationsPanel: typeof import('./src/components/LocationsPanel.vue')['default']
     ModulesPanel: typeof import('./src/components/ModulesPanel.vue')['default']
     ModuleModal: typeof import('./src/components/ModuleModal.vue')['default']
-    PauseResumeButton: typeof import('./src/components/PauseResumeButton.vue')['default']
+    PauseResumeModuleButton: typeof import('./src/components/PauseResumeModuleButton.vue')['default']
     Workflow: typeof import('./src/components/Workflow.vue')['default']
     WorkflowModal: typeof import('./src/components/WorkflowModal.vue')['default']
     WorkflowsPanel: typeof import('./src/components/WorkflowsPanel.vue')['default']

@@ -1,36 +1,33 @@
 <template>
     <div>
-        <!-- <v-btn @click="togglePauseResume" 
-        :color="isPaused ? 'green darken-3' : 'red darken-3'" 
-        dark 
-        elevation="5"
-        :disabled="!allowButton" >
-        {{ isPaused ? 'RESUME MODULE' : 'PAUSE MODULE' }}
-      </v-btn> -->
-
-      <v-btn @click="togglePauseResume" 
-        :color="isPaused ? 'green darken-3' : 'red darken-3'" 
-        dark 
-        elevation="5"
-        :disabled="!allowButton" >
-        <v-icon>
-        {{ isPaused ? 'mdi-play' : 'mdi-pause' }}
-      </v-icon>
-      </v-btn>
-      
+      <v-tooltip location="bottom">
+        <template v-slot:activator="{ props }">
+            <div v-bind="props">
+            <v-btn 
+                @click="togglePauseResume" 
+                :color="isPaused ? 'green darken-3' : 'red darken-3'" 
+                dark 
+                elevation="5"
+                :disabled="!allowButton" >
+                <v-icon>
+                    {{ isPaused ? 'mdi-play' : 'mdi-pause' }}
+                </v-icon>
+            </v-btn>
+            </div>
+        </template>
+         <span>
+            {{ allowButton ? (isPaused ? 'Resume module' : 'Pause module') 
+                       : (isPaused ? 'Resume module (unavailable)' : 'Pause module (unavailable)') }}
+        </span>
+      </v-tooltip>
     </div>
   </template>
-  
-<script lang="ts" setup>
-    // TODO: only let pause/resume button appear if module is allowed those admin actions
-    // TODO: Change the status of the workflow from running to paused as well
-    // TODO: Change the location of the pause button
-    // TODO: Change to be a pause and play image instead of text?? With text that says "Pause module" and "resume module" if cursor hovers. 
-    // TODO: Add pause button for entire workcell (change module prop to optional)
 
+<script lang="ts" setup>
     import {defineProps, ref, watchEffect} from 'vue';
 
     const props = defineProps(['main_url', 'module', 'module_status'])
+    
     const pause_url = ref()
     const resume_url = ref()
     const isPaused = ref(false);
@@ -40,7 +37,6 @@
     pause_url.value = props.main_url.concat('/admin/pause/'.concat(props.module))
     resume_url.value = props.main_url.concat('/admin/resume/'.concat(props.module))
 
-    // TODO: Change this depending on the state of the module!!
     watchEffect(() => {
         // Determine if pause/resume button should appear
         if (props.module_status == "BUSY" || props.module_status == "PAUSED") {
