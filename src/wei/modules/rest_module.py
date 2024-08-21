@@ -24,6 +24,7 @@ from fastapi import (
 from fastapi.datastructures import State
 from typing_extensions import Annotated, get_type_hints
 
+from wei import __version__
 from wei.types import ModuleStatus
 from wei.types.module_types import (
     AdminCommands,
@@ -34,6 +35,7 @@ from wei.types.module_types import (
     ModuleState,
 )
 from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
+from wei.utils import pretty_type_repr
 
 
 class RESTModule:
@@ -45,7 +47,9 @@ class RESTModule:
     arg_parser: Optional[argparse.ArgumentParser] = None
     """An argparse.ArgumentParser object that can be used to parse command line arguments. If not set in the constructor, a default will be used."""
     about: Optional[ModuleAbout] = None
-    """A ModuleAbout object that describes the module. This is used to provide information about the module to user's and WEI."""
+    """A ModuleAbout object that describes the module.
+    This is used to provide information about the module to user's and WEI.
+    Will be generated from attributes if not set."""
     description: str = ""
     """A description of the module and the devices/resources it controls."""
     status: ModuleStatus = ModuleStatus.INIT
@@ -62,6 +66,8 @@ class RESTModule:
     """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
+    wei_version: Optional[str] = __version__
+    """The version of WEI that this module is compatible with."""
 
     # * Admin command function placeholders
     _safety_stop = None
@@ -143,11 +149,11 @@ class RESTModule:
     # * Module and Application Lifecycle Functions
 
     @staticmethod
-    def startup_handler(state: State):
+    def _startup_handler(state: State):
         """This function is called when the module needs to startup any devices or resources.
         It should be overridden by the developer to do any necessary setup for the module."""
         warnings.warn(
-            message="No module-specific startup defined, use the @<class RestModule>.startup decorator or override `startup_handler` to define.",
+            message="No module-specific startup defined, use the @<class RestModule>.startup decorator or override `_startup_handler` to define.",
             category=UserWarning,
             stacklevel=1,
         )
@@ -160,17 +166,17 @@ class RESTModule:
                 raise Exception(
                     "Startup handler cannot be a coroutine. Use a regular function (i.e. make sure you don't have a yield statement)."
                 )
-            self.startup_handler = function
+            self._startup_handler = function
             return function
 
         return decorator
 
     @staticmethod
-    def shutdown_handler(state: State):
+    def _shutdown_handler(state: State):
         """This function is called when the module needs to teardown any devices or resources.
         It should be overridden by the developer to do any necessary teardown for the module."""
         warnings.warn(
-            message="No module-specific shutdown defined, override `shutdown_handler` to define.",
+            message="No module-specific shutdown defined, override `_shutdown_handler` to define.",
             category=UserWarning,
             stacklevel=1,
         )
@@ -179,7 +185,7 @@ class RESTModule:
         """Decorator to add a shutdown_handler to the module"""
 
         def decorator(function):
-            self.shutdown_handler = function
+            self._shutdown_handler = function
             return function
 
         return decorator
@@ -205,7 +211,7 @@ class RESTModule:
             """Runs the startup function for the module in a non-blocking thread, with error handling"""
             try:
                 # * Call the module's startup function
-                state.startup_handler(state=state)
+                state._startup_handler(state=state)
             except Exception as exception:
                 # * If an exception occurs during startup, handle it and put the module in an error state
                 state.exception_handler(state, exception, "Error during startup")
@@ -230,7 +236,7 @@ class RESTModule:
 
         try:
             # * Call any shutdown logic
-            app.state.shutdown_handler(app.state)
+            app.state._shutdown_handler(app.state)
         except Exception as exception:
             # * If an exception occurs during shutdown, handle it so we at least see the error in logs/terminal
             app.state.exception_handler(app.state, exception, "Error during shutdown")
@@ -292,16 +298,16 @@ class RESTModule:
                         and parameter_name != "return"
                     ):
                         if sys.version_info >= (3, 9):
-                            type_hint = parameter_type.__name__
+                            type_hint = parameter_type
                         else:
-                            type_hint = type(parameter_type).__name__
+                            type_hint = type(parameter_type)
                         description = ""
                         # * If the type hint is an Annotated type, extract the type and description
                         # * Description here means the first string metadata in the Annotated type
-                        if type_hint == "Annotated":
+                        if type_hint.__name__ == "Annotated":
                             type_hint = get_type_hints(function, include_extras=False)[
                                 parameter_name
-                            ].__name__
+                            ]
                             description = next(
                                 (
                                     metadata
@@ -310,7 +316,7 @@ class RESTModule:
                                 ),
                                 "",
                             )
-                        if type_hint == "UploadFile":
+                        if type_hint.__name__ == "UploadFile":
                             # * Add a file parameter to the action
                             action.files.append(
                                 ModuleActionFile(
@@ -327,10 +333,11 @@ class RESTModule:
                                 if parameter_info.default == inspect.Parameter.empty
                                 else parameter_info.default
                             )
+
                             action.args.append(
                                 ModuleActionArg(
                                     name=parameter_name,
-                                    type=type_hint,
+                                    type=pretty_type_repr(type_hint),
                                     default=default,
                                     required=True if default is None else False,
                                     description=description,
@@ -358,15 +365,14 @@ class RESTModule:
                 stacklevel=1,
             )
             return StepResponse.step_failed(
-                action_msg=f"action: {action.name}, args: {action.args}",
-                action_log=f"action: {action.name}, args: {action.args}",
+                error=f"action: {action.name}, args: {action.args}",
             )
         else:
             for module_action in state.actions:
                 if module_action.name == action.name:
                     if not module_action.function:
                         return StepResponse.step_failed(
-                            "Action is defined, but not implemented. Please define a `function` for the action, or use the `@<class RestModule>.action` decorator."
+                            error="Action is defined, but not implemented. Please define a `function` for the action, or use the `@<class RestModule>.action` decorator."
                         )
 
                     # * Prepare arguments for the action function.
@@ -400,7 +406,7 @@ class RESTModule:
                         if arg.name not in action.args:
                             if arg.required:
                                 return StepResponse.step_failed(
-                                    action_log=f"Missing required argument '{arg.name}'"
+                                    error=f"Missing required argument '{arg.name}'"
                                 )
                     for file in module_action.files:
                         if not any(
@@ -408,15 +414,12 @@ class RESTModule:
                         ):
                             if file.required:
                                 return StepResponse.step_failed(
-                                    action_log=f"Missing required file '{file.name}'"
+                                    error=f"Missing required file '{file.name}'"
                                 )
 
                     # * Perform the action here and return result
                     return module_action.function(**arg_dict)
-            return StepResponse.step_failed(
-                action_msg=f"Action '{action.name}' not found",
-                action_log=f"Action '{action.name}' not found",
-            )
+            return StepResponse.step_failed(error=f"Action '{action.name}' not found")
 
     @staticmethod
     def get_action_lock(state: State, action: ActionRequest):
@@ -549,8 +552,8 @@ class RESTModule:
                 self._reset(state)
             else:
                 try:
-                    state.shutdown_handler(state)
-                    self._startup_runner(state)
+                    state._shutdown_handler(state)
+                    self._startup_handler(state)
                     return {"message": "Module reset"}
                 except Exception as e:
                     state.exception_handler(
@@ -563,7 +566,7 @@ class RESTModule:
             state = request.app.state
             # * If the module is in INIT, return without calling custom state handler
             if state.status in [ModuleStatus.INIT, ModuleStatus.ERROR]:
-                return ModuleState(status=ModuleStatus.INIT, error=state.error)
+                return ModuleState(status=state.status, error=state.error)
             return self._state_handler(state=state)
 
         @self.router.get("/resources")
@@ -607,7 +610,7 @@ class RESTModule:
                 error_message = f"Module is not ready to accept actions. Module Status: {state.status}"
                 print(error_message)
                 response.status_code = status.HTTP_409_CONFLICT
-                return StepResponse.step_failed(action_log=error_message)
+                return StepResponse.step_failed(error=error_message)
 
             # * Try to run the action_handler for this module
             try:
@@ -618,7 +621,7 @@ class RESTModule:
                 # * which should put the module in the ERROR state
                 state.exception_handler(state, e)
                 step_result = StepResponse.step_failed(
-                    action_log=f"An exception occurred while processing the action request '{action_request.name}' with arguments '{action_request.args}: {e}"
+                    error=f"An exception occurred while processing the action request '{action_request.name}' with arguments '{action_request.args}: {e}"
                 )
             print(step_result)
             return step_result
@@ -632,8 +635,8 @@ class RESTModule:
 
         # * Initialize the state object with all non-private attributes
         for attr in dir(self):
-            if attr.startswith("_") or attr in ["start", "state", "app", "router"]:
-                # * Skip private attributes and wrapper- or server-only methods/attributes
+            if attr in ["start", "state", "app", "router"]:
+                # * Skip wrapper- or server-only methods/attributes
                 continue
             self.state.__setattr__(attr, getattr(self, attr))
 
@@ -679,8 +682,7 @@ if __name__ == "__main__":
     def fail_action(state: State, action: ActionRequest) -> StepResponse:
         """Function to handle the "fail" action. Always fails."""
         return StepResponse.step_failed(
-            action_msg="Oh no! The action failed!",
-            action_log=f"Failed: {time.time()}",
+            error=f"Failed: {time.time()}",
         )
 
     @rest_module.action(

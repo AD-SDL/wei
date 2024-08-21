@@ -7,12 +7,10 @@ from typing import Union
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.types.workcell_types import Location
 
 router = APIRouter()
-
-state_manager = StateManager()
 
 
 @router.get("/states")

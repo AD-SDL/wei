@@ -6,14 +6,12 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from wei.config import Config
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.workcell import set_config_from_workcell
 from wei.types import Workcell, WorkflowStatus
 from wei.utils import initialize_state
 
 router = APIRouter()
-
-state_manager = StateManager()
 
 
 @router.post("/", response_class=JSONResponse)

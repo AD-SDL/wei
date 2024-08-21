@@ -5,7 +5,8 @@ from pathlib import Path
 
 from wei.utils import extract_version
 
-__version__ = extract_version(Path(__file__).parent.parent / "pyproject.toml")
+# __version__ = extract_version(Path(__file__).parent.parent / "pyproject.toml")
+__version__ = "0.6.0"
 
 # Alias "ExperimentClient" -> "Experiment" for backwards compatibility
 from wei.experiment_client import ExperimentClient

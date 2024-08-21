@@ -3,13 +3,15 @@
 import json
 from datetime import datetime, timedelta
 from enum import Enum
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Dict, List, Optional
+from zipfile import ZipFile
 
 import yaml
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from pydantic import AliasChoices, Field, ValidationInfo, field_validator, validator
+from typing_extensions import Literal
 
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
 
@@ -29,19 +31,22 @@ class StepResponse(BaseModel):
     in response to action requests
     """
 
-    action_response: StepStatus = StepStatus.SUCCEEDED
-    """Whether the action succeeded, failed, is running, or is idle"""
-    action_msg: str = ""
-    """Any result from the action. If the result is a file, this should be the file name"""
-    action_log: str = ""
-    """Error or log messages resulting from the action"""
+    status: StepStatus = StepStatus.SUCCEEDED
+    """Whether the step succeeded or failed"""
+    error: Optional[str] = None
+    """Error message resulting from the action"""
+    data: Optional[Dict[str, Any]] = None
+    """Key value dict of data returned from step"""
+    files: Optional[Dict[str, Any]] = None
+    """Key value dict of file labels and file names from step"""
 
     def to_headers(self) -> Dict[str, str]:
         """Converts the response to a dictionary of headers"""
         return {
-            "x-wei-action_response": str(self.action_response),
-            "x-wei-action_msg": self.action_msg,
-            "x-wei-action_log": self.action_log,
+            "x-wei-status": str(self.status),
+            "x-wei-data": json.dumps(self.data),
+            "x-wei-error": json.dumps(self.error),
+            "x-wei-files": json.dumps(self.files),
         }
 
     @classmethod
@@ -49,28 +54,35 @@ class StepResponse(BaseModel):
         """Creates a StepResponse from the headers of a file response"""
 
         return cls(
-            action_response=StepStatus(headers["x-wei-action_response"]),
-            action_msg=headers["x-wei-action_msg"],
-            action_log=headers["x-wei-action_log"],
+            status=StepStatus(headers["x-wei-status"]),
+            error=json.loads(headers["x-wei-error"]),
+            files=json.loads(headers["x-wei-files"]),
+            data=json.loads(headers["x-wei-data"]),
         )
 
     @classmethod
-    def step_succeeded(cls, action_msg: str, action_log: str = "") -> "StepResponse":
+    def step_succeeded(
+        cls, files: Dict[str, str] = None, data: Dict[str, str] = None
+    ) -> "StepResponse":
         """Returns a StepResponse for a successful step"""
-        return cls(
-            action_response=StepStatus.SUCCEEDED,
-            action_msg=action_msg,
-            action_log=action_log,
-        )
+        return cls(status=StepStatus.SUCCEEDED, files=files, data=data)
 
     @classmethod
-    def step_failed(cls, action_log: str, action_msg: str = "") -> "StepResponse":
+    def step_failed(cls, error: str) -> "StepResponse":
         """Returns a StepResponse for a failed step"""
-        return cls(
-            action_response=StepStatus.FAILED,
-            action_msg=action_msg,
-            action_log=action_log,
-        )
+        return cls(status=StepStatus.FAILED, error=error)
+
+
+class StepSucceeded(StepResponse):
+    """A StepResponse for a successful step"""
+
+    status: Literal[StepStatus.SUCCEEDED] = StepStatus.SUCCEEDED
+
+
+class StepFailed(StepResponse):
+    """A StepResponse for a failed step"""
+
+    status: Literal[StepStatus.FAILED] = StepStatus.FAILED
 
 
 class StepFileResponse(FileResponse):
@@ -81,17 +93,31 @@ class StepFileResponse(FileResponse):
     - The StepResponse parameters as custom headers, prefixed with "x-wei-"
     """
 
-    def __init__(self, action_response: StepStatus, action_log: str, path: PathLike):
+    def __init__(
+        self,
+        status: StepStatus,
+        files: Dict[str, str],
+        data: Dict[str, str] = None,
+    ):
         """
-        Returns a FileResponse with the given path as the response content
+        Returns a FileResponse with the given files as the response content
         """
+        if len(files) == 1:
+            return super().__init__(
+                path=list(files.values())[0],
+                headers=StepResponse(
+                    status=status, files=files, data=data
+                ).to_headers(),
+            )
+
+        temp = ZipFile("temp.zip", "w")
+        for file in files:
+            temp.write(files[file])
+            files[file] = str(PureWindowsPath(files[file]).name)
+
         return super().__init__(
-            path=path,
-            headers=StepResponse(
-                action_response=action_response,
-                action_msg=str(path),
-                action_log=action_log,
-            ).to_headers(),
+            path="temp.zip",
+            headers=StepResponse(status=status, files=files, data=data).to_headers(),
         )
 
 
@@ -122,7 +148,8 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """ID of step"""
     comment: Optional[str] = None
     """Notes about step"""
-
+    data_labels: Optional[Dict[str, str]] = None
+    """Dictionary of user provided data labels"""
     start_time: Optional[datetime] = None
     """Time the step started running"""
     end_time: Optional[datetime] = None

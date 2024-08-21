@@ -2,12 +2,7 @@ name: Test_Workflow
 metadata:
   author: Tobias Ginsburg, Kyle Hippe, Ryan D. Lewis
   info: Example workflow for WEI
-  version: 0.2
-
-modules:
-  - transfer
-  - synthesis
-  - measure
+  version: 0.3
 
 flowdef:
   - name: Get plate
@@ -46,6 +41,8 @@ flowdef:
     module: measure
     action: measure
     comment: Measure the amount of foobar in the sample
+    data_labels:
+      test_file: test_label
 
   - name: Discard sample
     module: transfer

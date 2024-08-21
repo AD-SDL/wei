@@ -8,7 +8,12 @@ from fastapi import UploadFile
 from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
 from wei.types import StepFileResponse, StepResponse, StepStatus
-from wei.types.module_types import Location, ModuleState
+from wei.types.module_types import (
+    LocalFileModuleActionResult,
+    Location,
+    ModuleState,
+    ValueModuleActionResult,
+)
 from wei.types.step_types import ActionRequest
 
 # * Test predefined action functions
@@ -49,6 +54,12 @@ def state_handler(state: State) -> ModuleState:
 
 
 @test_rest_node.action()
+def fail(state: State, action: ActionRequest) -> StepResponse:
+    """Fails the current step"""
+    return StepResponse.step_failed("Oh no! This step failed!")
+
+
+@test_rest_node.action()
 def transfer(
     state: State,
     action: ActionRequest,
@@ -56,9 +67,7 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
-    if source == "":
-        return StepResponse.step_succeeded(f"Moved new plate to {target}")
-    return StepResponse.step_succeeded(f"Moved sample from {source} to {target}")
+    return StepResponse.step_succeeded()
 
 
 @test_rest_node.action()
@@ -75,15 +84,31 @@ def synthesize(
 
     state.foobar = foo + bar
 
-    return StepResponse.step_succeeded("Synthesized sample {foo} + {bar}")
+    return StepResponse.step_succeeded()
 
 
-@test_rest_node.action(name="measure")
+@test_rest_node.action(
+    name="measure",
+    results=[
+        LocalFileModuleActionResult(label="test_file", description="a test file"),
+        LocalFileModuleActionResult(
+            label="test2_file", description="a second test file"
+        ),
+        ValueModuleActionResult(label="test", description="a test value result"),
+    ],
+)
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
     with open("test.txt", "w") as f:
         f.write("test")
-    return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
+    with open("test2.txt", "w") as f:
+        f.write("test")
+
+    return StepFileResponse(
+        StepStatus.SUCCEEDED,
+        files={"test_file": "test.txt", "test2_file": "test2.txt"},
+        data={"test": {"test": "test"}},
+    )
 
 
 if __name__ == "__main__":
