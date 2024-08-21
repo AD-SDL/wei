@@ -14,6 +14,7 @@ declare module 'vue' {
     ModulesPanel: typeof import('./src/components/ModulesPanel.vue')['default']
     ModuleModal: typeof import('./src/components/ModuleModal.vue')['default']
     PauseResumeModuleButton: typeof import('./src/components/PauseResumeModuleButton.vue')['default']
+    PauseResumeWorkcellButton: typeof import('./src/components/PauseResumeWorkcellButton.vue')['default']
     Workflow: typeof import('./src/components/Workflow.vue')['default']
     WorkflowModal: typeof import('./src/components/WorkflowModal.vue')['default']
     WorkflowsPanel: typeof import('./src/components/WorkflowsPanel.vue')['default']

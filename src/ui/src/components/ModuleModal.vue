@@ -10,7 +10,7 @@
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('pause') && wc_state.modules[modal_title].about.admin_commands.includes('resume')">
             <PauseResumeModuleButton :main_url="main_url" :module="modal_title" :module_status="wc_state.modules[modal_title].state.status" />
           </template>
-          
+
         </div>
       </v-card-title>
 
@@ -96,7 +96,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import PauseResumeButton from './PauseResumeButton.vue';
+
 
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';

@@ -18,9 +18,10 @@
       <v-window-item :key="1" :value="1">
         <v-container v-if="wc_state">
           <v-card class="pa-1">
-            <v-card-title class="text-center">
-              <h2>{{ wc_info.name }}</h2>
-            </v-card-title>
+              <v-card-title class="text-center">
+                <h2>{{ wc_info.name }}</h2>
+                <PauseResumeWorkcellButton :main_url="main_url" />
+              </v-card-title>
             <v-card-text>
               <v-container class="pa-1">
                 <v-row dense wrap justify-content="space-evenly">
@@ -92,6 +93,7 @@
 import { ref, watchEffect } from 'vue';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
+import PauseResumeWorkcellButton from './PauseResumeWorkcellButton.vue';
 const main_url = ref()
 const state_url = ref()
 const workcell_info_url = ref()
