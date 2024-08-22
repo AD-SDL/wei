@@ -27,6 +27,7 @@ dependencies = [
     "websockets>=12.0",
     "secure-smtplib>=0.1.1",
     "sqlmodel>=0.0.21",
+    "psycopg2>=2.9.9",
 ]
 
 [project.optional-dependencies]
