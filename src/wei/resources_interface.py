@@ -1,8 +1,7 @@
 """Resources Interface"""
 
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type, Union
 
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
 
@@ -41,15 +40,27 @@ class ResourcesInterface:
 
     def add_resource(self, resource: SQLModel) -> SQLModel:
         """
-        Add a resource to the database and link it to the AssetTable.
+        Add a resource to the database if it doesn't already exist,
+        and link it to the AssetTable.
 
         Args:
             resource (SQLModel): The resource to add.
 
         Returns:
-            SQLModel: The added resource.
+            SQLModel: The existing or newly added resource.
         """
         with self.session as session:
+            # Check if the resource already exists by name
+            resource_class = type(resource)
+            existing_resource = session.exec(
+                select(resource_class).where(resource_class.name == resource.name)
+            ).one_or_none()
+
+            if existing_resource:
+                print(f"Using existing resource: {existing_resource.name}")
+                return existing_resource  # Return the existing resource if found
+
+            # Add the new resource since it doesn't exist
             session.add(resource)
             session.commit()
             session.refresh(resource)
@@ -83,41 +94,47 @@ class ResourcesInterface:
                 session.commit()
                 session.refresh(asset)
 
+            print(f"Added new resource: {resource.name}")
             return resource
 
     def get_resource(
-        self,
-        resource_type: Type[SQLModel],
-        resource_id: Optional[str] = None,
-        resource_name: Optional[str] = None,
-    ) -> Optional[SQLModel]:
+        self, resource_type: str, resource_name: str
+    ) -> Optional[
+        Union["StackTable", "QueueTable", "PoolTable", "CollectionTable", "PlateTable"]
+    ]:
         """
-        Retrieve a resource from the database by ID or name.
+        Retrieve a resource by type and name.
 
         Args:
-            resource_type (Type[SQLModel]): The type of the resource.
-            resource_id (str, optional): The ID of the resource.
-            resource_name (str, optional): The name of the resource.
+            resource_type (str): The type of the resource ('stack', 'queue', etc.).
+            resource_name (str): The name of the resource to retrieve.
 
         Returns:
-            SQLModel: The retrieved resource, or None if not found.
+            Optional[Union[StackTable, QueueTable, PoolTable, CollectionTable, PlateTable]]:
+            The resource if found, otherwise None.
         """
-        with self.session as session:
-            if resource_id:
-                statement = select(resource_type).where(resource_type.id == resource_id)
-            elif resource_name:
-                statement = select(resource_type).where(
-                    resource_type.name == resource_name
-                )
+        with Session(self.engine) as session:
+            if resource_type == "stack":
+                return session.exec(
+                    select(StackTable).where(StackTable.name == resource_name)
+                ).one_or_none()
+            elif resource_type == "queue":
+                return session.exec(
+                    select(QueueTable).where(QueueTable.name == resource_name)
+                ).one_or_none()
+            elif resource_type == "pool":
+                return session.exec(
+                    select(PoolTable).where(PoolTable.name == resource_name)
+                ).one_or_none()
+            elif resource_type == "collection":
+                return session.exec(
+                    select(CollectionTable).where(CollectionTable.name == resource_name)
+                ).one_or_none()
+            elif resource_type == "plate":
+                return session.exec(
+                    select(PlateTable).where(PlateTable.name == resource_name)
+                ).one_or_none()
             else:
-                raise ValueError(
-                    "Either resource_id or resource_name must be provided."
-                )
-
-            try:
-                resource = session.exec(statement).one()
-                return resource
-            except NoResultFound:
                 return None
 
     def get_resource_type(self, resource_id: str) -> Optional[str]:
@@ -418,12 +435,12 @@ if __name__ == "__main__":
     pool = PoolTable(
         name="Test Pool", description="A test pool", capacity=100.0, quantity=50.0
     )
-    resource_interface.add_resource(pool)
+    pool = resource_interface.add_resource(pool)
     # print("\nCreated Pool:", pool)
     all_pools = resource_interface.get_all_resources(PoolTable)
     print("\nAll Pools after modification:", all_pools)
     # Increase quantity in the Pool
-    resource_interface.increase_pool_quantity(pool, 25.0)
+    resource_interface.decrease_pool_quantity(pool, 25.0)
     # print("Increased Pool Quantity:", pool)
 
     # Get all pools after modification
@@ -431,8 +448,11 @@ if __name__ == "__main__":
     print("\nAll Pools after modification:", all_pools)
     # Create a Stack resource
     stack = StackTable(name="Test Stack", description="A test stack", capacity=10)
-    resource_interface.add_resource(stack)
-
+    stack = resource_interface.add_resource(stack)
+    retrieved_stack = resource_interface.get_resource(
+        "stack", resource_name="Test Stack"
+    )
+    print("Retreived_STACK:", retrieved_stack)
     # Push an asset to the Stack
     asset = AssetTable(name="Test Asset")
     asset3 = AssetTable(name="Test Asset3")
@@ -450,7 +470,7 @@ if __name__ == "__main__":
 
     # Create a Queue resource
     queue = QueueTable(name="Test Queue", description="A test queue", capacity=10)
-    resource_interface.add_resource(queue)
+    queue = resource_interface.add_resource(queue)
 
     # Push an asset to the Queue
     asset2 = AssetTable(name="Test Asset2")
@@ -471,7 +491,7 @@ if __name__ == "__main__":
     collection = CollectionTable(
         name="Test Collection", description="A test collection", capacity=10
     )
-    resource_interface.add_resource(collection)
+    collection = resource_interface.add_resource(collection)
 
     # Insert an asset into the Collection
     resource_interface.insert_into_collection(collection, "location1", asset3)
@@ -486,7 +506,7 @@ if __name__ == "__main__":
     plate = PlateTable(
         name="Test Plate", description="A test plate", well_capacity=100.0
     )
-    resource_interface.add_resource(plate)
+    plate = resource_interface.add_resource(plate)
 
     # Update the contents of the Plate
     resource_interface.update_plate_contents(
