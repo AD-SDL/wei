@@ -4,7 +4,7 @@ import copy
 from typing import Any, Dict, List, Optional
 
 import ulid
-from sqlalchemy import Column
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field as SQLField
 from sqlmodel import Relationship, Session, SQLModel
@@ -20,7 +20,7 @@ class AssetBase(SQLModel):
     """
 
     id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
-    name: str = SQLField(default="")
+    name: str = SQLField(default="", nullable=False)
 
 
 class AssetTable(AssetBase, table=True):
@@ -279,6 +279,9 @@ class PoolTable(PoolBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
+    __tablename__ = "pooltable"
+    __table_args__ = (UniqueConstraint("name", name="uix_pool_name"),)
+
     assets: List["AssetTable"] = Relationship(back_populates="pool")
 
 
@@ -365,6 +368,9 @@ class StackTable(StackBase, table=True):
     Attributes:
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
+
+    __tablename__ = "stacktable"
+    __table_args__ = (UniqueConstraint("name", name="uix_stack_name"),)
 
     assets: List["AssetTable"] = Relationship(back_populates="stack")
 
@@ -460,6 +466,9 @@ class QueueTable(QueueBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
+    __tablename__ = "queuetable"
+    __table_args__ = (UniqueConstraint("name", name="uix_queue_name"),)
+
     assets: List["AssetTable"] = Relationship(back_populates="queue")
 
 
@@ -549,6 +558,9 @@ class CollectionTable(CollectionBase, table=True):
     Attributes:
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
+
+    __tablename__ = "collectiontable"
+    __table_args__ = (UniqueConstraint("name", name="uix_collection_name"),)
 
     assets: List["AssetTable"] = Relationship(back_populates="collection")
 
@@ -642,5 +654,8 @@ class PlateTable(PlateBase, table=True):
     Attributes:
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
+
+    __tablename__ = "platetable"
+    __table_args__ = (UniqueConstraint("name", name="uix_plate_name"),)
 
     assets: List["AssetTable"] = Relationship(back_populates="plate")
