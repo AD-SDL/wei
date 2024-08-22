@@ -50,9 +50,11 @@ services:
       - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
       - USER_ID=${USER_ID:-1000}
       - GROUP_ID=${GROUP_ID:-1000}
+      - DATABASE_URL=postgresql://rpl:rpl@wei_postgres:5432/resources
     command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
+      - wei_postgres
   wei_engine:
     image: ${IMAGE}
     container_name: wei_engine
@@ -65,10 +67,12 @@ services:
       - PYTHONUNBUFFERED=1 # Fix weird bug with empty logging
       - USER_ID=${USER_ID:-1000}
       - GROUP_ID=${GROUP_ID:-1000}
+      - DATABASE_URL=postgresql://rpl:rpl@wei_postgres:5432/resources
     command: python3 -m wei.engine --workcell /workcell_defs/${WORKCELL_FILENAME}
     depends_on:
       - wei_redis
       - wei_server
+      - wei_postgres
   wei_redis:
     image: redis
     container_name: wei_redis
@@ -81,9 +85,26 @@ services:
       --loglevel warning
       --appendonly yes'
 
+####################
+# PostgreSQL Setup #
+####################
+  wei_postgres:
+    image: postgres:13
+    container_name: wei_postgres
+    environment:
+      POSTGRES_USER: rpl
+      POSTGRES_PASSWORD: rpl
+      POSTGRES_DB: resources
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
 ################
 # Data Storage #
 ################
 volumes:
   diaspora_config:
+    driver: local
+  pgdata:
     driver: local
