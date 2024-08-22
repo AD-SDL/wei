@@ -93,7 +93,8 @@ class WorkcellConfig(BaseModel, extra="allow"):
     )
     smtp_port: int = Field(default=25, description="Port number for the SMTP server")
     resource_database_url: str = Field(
-        default="sqlite:///:memory:", description="URL for resource PostgreSql database"
+        default="postgresql://rpl:rpl@wei_postgres:5432/resources",
+        description="URL for resource PostgreSql database",
     )
 
     # Validators

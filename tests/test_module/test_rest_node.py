@@ -51,7 +51,9 @@ test_rest_node.arg_parser.add_argument(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
-    state.resource_interface = ResourcesInterface("sqlite:///test_resources.db")
+    state.resource_interface = ResourcesInterface(
+        "postgresql://rpl:rpl@wei_postgres:5432/resources"
+    )
 
     # Example: Create resources using ResourceInterface
     stack1 = StackTable(name="Stack1", description="Stack for transfer", capacity=10)
