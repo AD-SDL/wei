@@ -54,38 +54,47 @@ def test_node_startup(state: State):
     state.resource_interface = ResourcesInterface(
         "postgresql://rpl:rpl@wei_postgres:5432/resources"
     )
+    try:
+        # Example: Create resources using ResourceInterface
+        stack1 = StackTable(
+            name="Stack1", description="Stack for transfer", capacity=10
+        )
+        state.resource_interface.add_resource(stack1)
 
-    # Example: Create resources using ResourceInterface
-    stack1 = StackTable(name="Stack331", description="Stack for transfer", capacity=10)
-    state.resource_interface.add_resource(stack1)
+        stack2 = StackTable(
+            name="Stack2", description="Stack for transfer", capacity=10
+        )
+        state.resource_interface.add_resource(stack2)
 
-    stack2 = StackTable(name="Stack332", description="Stack for transfer", capacity=10)
-    state.resource_interface.add_resource(stack2)
+        stack3 = StackTable(name="Stack3", description="Stack for transfer", capacity=4)
+        state.resource_interface.add_resource(stack3)
 
-    stack3 = StackTable(name="Stack333", description="Stack for transfer", capacity=4)
-    state.resource_interface.add_resource(stack3)
+        trash = StackTable(name="Trash", description="Trash", capacity=None)
+        state.resource_interface.add_resource(trash)
 
-    trash = StackTable(name="Trash", description="Trash", capacity=None)
-    state.resource_interface.add_resource(trash)
+        # Add two PlateTable resources per stack (except Trash)
+        asset = AssetTable(name="Initial Asset")
 
-    # Add two PlateTable resources per stack (except Trash)
-    asset = AssetTable(name="Initial Asset")
+        # Push assets to stacks
+        state.resource_interface.push_to_stack(stack1, asset)
+        # state.resource_interface.push_to_stack(stack2, asset)
 
-    # Push assets to stacks
-    state.resource_interface.push_to_stack(stack1, asset)
-    # state.resource_interface.push_to_stack(stack2, asset)
+        plate0 = PlateTable(
+            name="Plate0",
+            description="Test plate",
+            well_capacity=100.0,
+        )
+        state.resource_interface.add_resource(plate0)
 
-    plate0 = PlateTable(
-        name="Plate0",
-        description="Test plate",
-        well_capacity=100.0,
-    )
-    state.resource_interface.add_resource(plate0)
+        collection = CollectionTable(
+            name="CollectionResource",
+            description="Collection for measurement",
+            capacity=5,
+        )
+        state.resource_interface.add_resource(collection)
 
-    collection = CollectionTable(
-        name="CollectionResource", description="Collection for measurement", capacity=5
-    )
-    state.resource_interface.add_resource(collection)
+    except Exception as err:
+        print(err)
 
 
 @test_rest_node.state_handler()
@@ -104,36 +113,35 @@ def transfer(
     """Transfers a sample from source to target"""
     all_stacks = state.resource_interface.get_all_resources(StackTable)
     print("\nAll Stacks after modification:", all_stacks)
-    if source != "":
-        source_stack = state.resource_interface.get_resource(
-            StackTable, resource_name=source
-        )
-        target_stack = state.resource_interface.get_resource(
-            StackTable, resource_name=target
-        )
 
-        if source_stack and target_stack:
+    # Retrieve the target stack first
+    target_stack = state.resource_interface.get_resource("stack", resource_name=target)
+    if not target_stack:
+        return StepResponse.step_failed(f"Invalid target stack ({target})")
+
+    if source:  # If a source is provided, transfer the asset from source to target
+        source_stack = state.resource_interface.get_resource(
+            "stack", resource_name=source
+        )
+        if not source_stack:
+            return StepResponse.step_failed(f"Invalid source stack ({source})")
+
+        try:
             asset = state.resource_interface.pop_from_stack(source_stack)
             state.resource_interface.push_to_stack(target_stack, asset)
             return StepResponse.step_succeeded(f"Moved asset from {source} to {target}")
-        else:
-            return StepResponse.step_failed(
-                f"Invalid source ({source}) or target ({target}) stack"
-            )
-    else:
-        target_stack = state.resource_interface.get_resource(
-            StackTable, resource_name=target
-        )
-        if target_stack:
+        except ValueError as e:
+            return StepResponse.step_failed(str(e))
+    else:  # If no source is provided, create a new asset and add it to the target
+        try:
             example_plate = AssetTable(name="ExamplePlate")
             print(example_plate)
-            print(target_stack)
             state.resource_interface.push_to_stack(target_stack, example_plate)
             return StepResponse.step_succeeded(
                 f"Created and moved 'ExamplePlate' to {target}"
             )
-        else:
-            return StepResponse.step_failed(f"Invalid target stack ({target})")
+        except ValueError as e:
+            return StepResponse.step_failed(str(e))
 
 
 @test_rest_node.action()
