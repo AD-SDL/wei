@@ -211,6 +211,16 @@ class ResourcesInterface:
             session.commit()
             return True
 
+    def delete_all_tables(self):
+        """
+        Drop all tables associated with the SQLModel metadata from the database.
+        """
+        try:
+            SQLModel.metadata.drop_all(self.engine)
+            print("All tables have been deleted.")
+        except Exception as e:
+            print(f"An error occurred while deleting tables: {e}")
+
     def get_all_resources(self, resource_type: Type[SQLModel]) -> List[SQLModel]:
         """
         Retrieve all resources of a specific type from the database.
@@ -440,7 +450,7 @@ if __name__ == "__main__":
     all_pools = resource_interface.get_all_resources(PoolTable)
     print("\nAll Pools after modification:", all_pools)
     # Increase quantity in the Pool
-    resource_interface.decrease_pool_quantity(pool, 25.0)
+    resource_interface.increase_pool_quantity(pool, 25.0)
     # print("Increased Pool Quantity:", pool)
 
     # Get all pools after modification
