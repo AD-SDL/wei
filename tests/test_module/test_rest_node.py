@@ -56,24 +56,23 @@ def test_node_startup(state: State):
     )
 
     # Example: Create resources using ResourceInterface
-    stack1 = StackTable(name="Stack1", description="Stack for transfer", capacity=10)
+    stack1 = StackTable(name="Stack331", description="Stack for transfer", capacity=10)
     state.resource_interface.add_resource(stack1)
 
-    stack2 = StackTable(name="Stack2", description="Stack for transfer", capacity=10)
+    stack2 = StackTable(name="Stack332", description="Stack for transfer", capacity=10)
     state.resource_interface.add_resource(stack2)
 
-    stack3 = StackTable(name="Stack3", description="Stack for transfer", capacity=4)
+    stack3 = StackTable(name="Stack333", description="Stack for transfer", capacity=4)
     state.resource_interface.add_resource(stack3)
 
     trash = StackTable(name="Trash", description="Trash", capacity=None)
     state.resource_interface.add_resource(trash)
 
     # Add two PlateTable resources per stack (except Trash)
-    asset = AssetTable(name="Test Asset")
-    state.resource_interface.add_resource(asset)
+    asset = AssetTable(name="Initial Asset")
 
     # Push assets to stacks
-    # state.resource_interface.push_to_stack(stack1, asset)
+    state.resource_interface.push_to_stack(stack1, asset)
     # state.resource_interface.push_to_stack(stack2, asset)
 
     plate0 = PlateTable(
@@ -126,13 +125,12 @@ def transfer(
             StackTable, resource_name=target
         )
         if target_stack:
-            example_plate = AssetTable(name="TestPlate")
+            example_plate = AssetTable(name="ExamplePlate")
             print(example_plate)
             print(target_stack)
-            state.resource_interface.add_resource(example_plate)
             state.resource_interface.push_to_stack(target_stack, example_plate)
             return StepResponse.step_succeeded(
-                f"Created and moved 'TestPlate' to {target}"
+                f"Created and moved 'ExamplePlate' to {target}"
             )
         else:
             return StepResponse.step_failed(f"Invalid target stack ({target})")
