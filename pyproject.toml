@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-dynamic = ["version"]
+version = "0.6.1"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -72,8 +72,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"wei" = "src/wei"}
-[tool.setuptools.dynamic]
-version = {attr = "wei.__version__"}
 
 #####################
 # Development Tools #

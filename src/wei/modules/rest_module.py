@@ -1,6 +1,7 @@
 """REST Module Convenience Class"""
 
 import argparse
+import importlib.metadata
 import inspect
 import os
 import signal
@@ -24,7 +25,6 @@ from fastapi import (
 from fastapi.datastructures import State
 from typing_extensions import Annotated, get_type_hints
 
-from wei import __version__
 from wei.types import ModuleStatus
 from wei.types.module_types import (
     AdminCommands,
@@ -66,7 +66,7 @@ class RESTModule:
     """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
-    wei_version: Optional[str] = __version__
+    wei_version: Optional[str] = importlib.metadata.version("ad_sdl.wei")
     """The version of WEI that this module is compatible with."""
 
     # * Admin command function placeholders

@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.12
 
 LABEL org.opencontainers.image.source=https://github.com/AD-SDL/wei
 LABEL org.opencontainers.image.description="The Workflow Execution Interface (WEI)"
@@ -28,6 +28,7 @@ RUN mkdir -p .diaspora
 COPY requirements/requirements.txt wei/requirements/requirements.txt
 COPY requirements/dev.txt wei/requirements/dev.txt
 RUN --mount=type=cache,target=/root/.cache \
+	pip install --upgrade setuptools wheel pip && \
     pip install -r wei/requirements/requirements.txt
 
 # Install Node Dependencies first, for caching purposes
@@ -43,7 +44,7 @@ COPY scripts wei/scripts
 
 # Install dependencies and wei
 RUN --mount=type=cache,target=/root/.cache \
-    pip install -e wei
+    pip install ./wei
 
 COPY wei-entrypoint.sh /wei-entrypoint.sh
 RUN chmod +x /wei-entrypoint.sh
