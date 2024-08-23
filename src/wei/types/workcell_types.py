@@ -96,6 +96,10 @@ class WorkcellConfig(BaseModel, extra="allow"):
         default="postgresql://rpl:rpl@wei_postgres:5432/resources",
         description="URL for resource PostgreSql database",
     )
+    autostart_engine: bool = Field(
+        default=False,
+        description="Whether or not to start the engine and scheduler for the workcell from the server process (set to False if you want/need to run the engine as a separate process/container). This will default to True in the future.",
+    )
 
     # Validators
     @field_validator("data_directory")

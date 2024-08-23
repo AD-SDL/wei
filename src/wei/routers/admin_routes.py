@@ -14,13 +14,11 @@ from wei.core.admin import (
     send_safety_stop,
     send_shutdown,
 )
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.workflow import cancel_active_workflow_runs
 from wei.utils import initialize_state
 
 router = APIRouter()
-
-state_manager = StateManager()
 
 
 @router.api_route("/safety_stop", methods=["POST"])

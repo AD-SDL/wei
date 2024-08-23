@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-from wei.types import Workflow, WorkflowStatus
+from wei.types import Workflow, WorkflowRun, WorkflowStatus
 from wei.types.base_types import PathLike
 from wei.types.event_types import (
     CommentEvent,
@@ -21,6 +21,7 @@ from wei.types.event_types import (
     LocalComputeEvent,
     LoopStartEvent,
 )
+from wei.types.exceptions import WorkflowFailedException
 from wei.types.experiment_types import Experiment, ExperimentDesign
 
 
@@ -78,6 +79,13 @@ class ExperimentClient:
             description=description,
             email_addresses=email_addresses,
         )
+        print(f"""
+server_host: {self.server_host}
+server_port: {self.server_port}
+url: {self.url}
+experiment_design: {self.experiment_design.model_dump_json(indent=2)}
+              """)
+        self.experiment_info = None
 
         if working_dir is None:
             self.working_dir = Path.cwd()
@@ -92,12 +100,17 @@ class ExperimentClient:
                     self._register_experiment()
                 else:
                     self._continue_experiment(experiment_id)
+                waiting = False
                 break
             except requests.exceptions.ConnectionError:
                 if not waiting:
                     waiting = True
                     print("Waiting to connect to server...")
                 time.sleep(1)
+        if waiting:
+            raise Exception(
+                "Timed out while attempting to connect with WEI server. Check that your server is running and the server_host and server_port are correct."
+            )
 
     def _register_experiment(self) -> None:
         """Registers a new experiment with the server
@@ -197,18 +210,22 @@ class ExperimentClient:
                     if str(path).startswith("payload."):
                         try:
                             try:
-                                files[file] = payload[str(path).split(".")[1]]
+                                files[f"{step.id}_{file}"] = payload[
+                                    str(path).split(".")[1]
+                                ]
                             except KeyError:
-                                files[file] = payload[path]
+                                files[f"{step.id}_{file}"] = payload[path]
                         except KeyError as e:
                             raise KeyError(
                                 f"File '{file}' looks like a payload entry, but payload does not contain {path}"
                             ) from e
                     else:
-                        files[file] = path
-                    if not Path(files[file]).is_absolute():
-                        files[file] = self.working_dir / files[file]
-                    step.files[file] = Path(files[file]).name
+                        files[f"{step.id}_{file}"] = path
+                    if not Path(files[f"{step.id}_{file}"]).is_absolute():
+                        files[f"{step.id}_{file}"] = (
+                            self.working_dir / files[f"{step.id}_{file}"]
+                        )
+                    step.files[file] = Path(files[f"{step.id}_{file}"]).name
         return files
 
     def _log_event(
@@ -244,7 +261,8 @@ class ExperimentClient:
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
-    ) -> Dict[Any, Any]:
+        raise_on_failed: bool = True,
+    ) -> WorkflowRun:
         """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
         Parameters
@@ -257,6 +275,9 @@ class ExperimentClient:
 
         simulate: bool
             Whether or not to use real robots
+
+        raise_on_failed: bool = True
+            Whether to raise an exception if the workflow fails.
 
         Returns
         -------
@@ -286,7 +307,10 @@ class ExperimentClient:
         if not response.ok:
             response.raise_for_status()
         response_json = response.json()
-        if blocking:
+        if not blocking:
+            run_info = self.query_run(response_json["run_id"])
+            wf_run = WorkflowRun(**run_info)
+        else:
             prior_status = None
             prior_index = None
             while True:
@@ -319,10 +343,13 @@ class ExperimentClient:
                     break
                 prior_status = status
                 prior_index = step_index
-            return run_info
-        else:
-            run_info = self.query_run(response_json["run_id"])
-            return run_info
+
+            wf_run = WorkflowRun(**run_info)
+        if wf_run.status == WorkflowStatus.FAILED and raise_on_failed:
+            raise WorkflowFailedException(
+                f"Workflow {wf_run.name} ({wf_run.run_id}) failed."
+            )
+        return wf_run
 
     def await_runs(self, run_list: List[str]) -> Dict[Any, Any]:
         """
@@ -408,6 +435,56 @@ class ExperimentClient:
             return response.json()
         else:
             response.raise_for_status()
+
+    def get_datapoint_value(self, datapoint_id: str) -> Dict[Any, Any]:
+        """Returns the datapoint for the given id
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           figuring it out"""
+        url = f"{self.url}/runs/data/" + datapoint_id
+        response = requests.get(url)
+        if response.ok:
+            try:
+                return response.json()
+            except Exception:
+                return response.content
+        response.raise_for_status()
+
+    def save_datapoint_value(
+        self, datapoint_id: str, output_filepath: str
+    ) -> Dict[Any, Any]:
+        """Returns the datapoint for the given id
+
+        Parameters
+        ----------
+
+        None
+
+        Returns
+        -------
+
+        response: Dict
+           figuring it out"""
+        url = f"{self.url}/runs/data/" + datapoint_id
+        response = requests.get(url)
+        if response.ok:
+            try:
+                with open(output_filepath, "w") as f:
+                    f.write(str(response.json()["value"]))
+
+            except Exception:
+                Path(output_filepath).parent.mkdir(parents=True, exist_ok=True)
+                with open(output_filepath, "wb") as f:
+                    f.write(response.content)
+        response.raise_for_status()
 
     def log_experiment_end(self) -> Event:
         """Logs the end of the experiment in the experiment log

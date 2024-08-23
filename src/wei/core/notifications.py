@@ -7,12 +7,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from wei.config import Config
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.types import Step
 from wei.types.workflow_types import WorkflowRun
 from wei.utils import threaded_task
-
-state_manager = StateManager()
 
 
 @threaded_task

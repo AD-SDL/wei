@@ -1,18 +1,15 @@
 """Handles scheduling workflows and executing steps on the workcell."""
 
-import multiprocessing as mpr
 from datetime import datetime
 
 from wei.core.events import send_event
 from wei.core.location import reserve_source_and_target
 from wei.core.module import reserve_module
-from wei.core.state_manager import StateManager
+from wei.core.state_manager import state_manager
 from wei.core.step import check_step, run_step
 from wei.core.workcell import find_step_module
 from wei.types import WorkflowStatus
 from wei.types.event_types import WorkflowQueuedEvent, WorkflowStartEvent
-
-state_manager = StateManager()
 
 
 class Scheduler:
@@ -58,8 +55,4 @@ class Scheduler:
                         if wf_run.step_index == 0:
                             wf_run.start_time = datetime.now()
                         state_manager.set_workflow_run(wf_run)
-                        step_process = mpr.Process(
-                            target=run_step,
-                            args=(wf_run, module),
-                        )
-                        step_process.start()
+                        run_step(wf_run=wf_run, module=module)

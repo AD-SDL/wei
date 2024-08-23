@@ -14,7 +14,12 @@ from wei.types import (
     StepResponse,
     StepStatus,
 )
-from wei.types.module_types import Location, ModuleState
+from wei.types.module_types import (
+    LocalFileModuleActionResult,
+    Location,
+    ModuleState,
+    ValueModuleActionResult,
+)
 from wei.types.resource_types import (
     AssetTable,
     CollectionTable,
@@ -104,6 +109,12 @@ def state_handler(state: State) -> ModuleState:
 
 
 @test_rest_node.action()
+def fail(state: State, action: ActionRequest) -> StepResponse:
+    """Fails the current step"""
+    return StepResponse.step_failed("Oh no! This step failed!")
+
+
+@test_rest_node.action()
 def transfer(
     state: State,
     action: ActionRequest,
@@ -173,7 +184,16 @@ def synthesize(
     return StepResponse.step_succeeded(f"Synthesized sample {foo} + {bar}")
 
 
-@test_rest_node.action(name="measure")
+@test_rest_node.action(
+    name="measure",
+    results=[
+        LocalFileModuleActionResult(label="test_file", description="a test file"),
+        LocalFileModuleActionResult(
+            label="test2_file", description="a second test file"
+        ),
+        ValueModuleActionResult(label="test", description="a test value result"),
+    ],
+)
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
     collection = state.resource_interface.get_resource(
@@ -192,6 +212,18 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
     else:
         return StepResponse.step_failed("Collection resource not found")
+
+    ## Incoming fix
+    with open("test.txt", "w") as f:
+        f.write("test")
+    with open("test2.txt", "w") as f:
+        f.write("test")
+
+    return StepFileResponse(
+        StepStatus.SUCCEEDED,
+        files={"test_file": "test.txt", "test2_file": "test2.txt"},
+        data={"test": {"test": "test"}},
+    )
 
 
 if __name__ == "__main__":
