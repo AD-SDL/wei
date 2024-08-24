@@ -51,6 +51,13 @@ test_rest_node.arg_parser.add_argument(
     default=0.0,
 )
 
+test_rest_node.arg_parser.add_argument(
+    "--module_name",
+    type=str,
+    help="The starting amount of bar",
+    default="test",
+)
+
 
 @test_rest_node.startup()
 def test_node_startup(state: State):
@@ -60,21 +67,39 @@ def test_node_startup(state: State):
         "postgresql://rpl:rpl@wei_postgres:5432/resources"
     )
     try:
+        # state.resource_interface.delete_all_tables()
+        # sleep(5)
         # Example: Create resources using ResourceInterface
         stack1 = StackTable(
-            name="Stack1", description="Stack for transfer", capacity=10
+            name="Stack1",
+            description="Stack for transfer",
+            capacity=10,
+            module_name=state.module_name,
         )
         state.resource_interface.add_resource(stack1)
 
         stack2 = StackTable(
-            name="Stack2", description="Stack for transfer", capacity=10
+            name="Stack2",
+            description="Stack for transfer",
+            capacity=10,
+            module_name=state.module_name,
         )
         state.resource_interface.add_resource(stack2)
 
-        stack3 = StackTable(name="Stack3", description="Stack for transfer", capacity=4)
+        stack3 = StackTable(
+            name="Stack3",
+            description="Stack for transfer",
+            capacity=4,
+            module_name=state.module_name,
+        )
         state.resource_interface.add_resource(stack3)
 
-        trash = StackTable(name="Trash", description="Trash", capacity=None)
+        trash = StackTable(
+            name="Trash",
+            description="Trash",
+            capacity=None,
+            module_name=state.module_name,
+        )
         state.resource_interface.add_resource(trash)
 
         # Add two PlateTable resources per stack (except Trash)
@@ -88,6 +113,7 @@ def test_node_startup(state: State):
             name="Plate0",
             description="Test plate",
             well_capacity=100.0,
+            module_name=state.module_name,
         )
         state.resource_interface.add_resource(plate0)
 
@@ -95,6 +121,7 @@ def test_node_startup(state: State):
             name="CollectionResource",
             description="Collection for measurement",
             capacity=5,
+            module_name=state.module_name,
         )
         state.resource_interface.add_resource(collection)
 
@@ -123,16 +150,17 @@ def transfer(
 ) -> StepResponse:
     """Transfers a sample from source to target"""
     all_stacks = state.resource_interface.get_all_resources(StackTable)
-    print("\nAll Stacks after modification:", all_stacks)
+    print("\nAll Stacks:", all_stacks)
 
-    # Retrieve the target stack first
-    target_stack = state.resource_interface.get_resource("stack", resource_name=target)
+    target_stack = state.resource_interface.get_resource(
+        resource_name=target, module_name=state.module_name
+    )
     if not target_stack:
         return StepResponse.step_failed(f"Invalid target stack ({target})")
 
-    if source:  # If a source is provided, transfer the asset from source to target
+    if source:
         source_stack = state.resource_interface.get_resource(
-            "stack", resource_name=source
+            resource_name=source, module_name=state.module_name
         )
         if not source_stack:
             return StepResponse.step_failed(f"Invalid source stack ({source})")
@@ -140,17 +168,14 @@ def transfer(
         try:
             asset = state.resource_interface.pop_from_stack(source_stack)
             state.resource_interface.push_to_stack(target_stack, asset)
-            return StepResponse.step_succeeded(f"Moved asset from {source} to {target}")
+            return StepResponse.step_succeeded()
         except ValueError as e:
             return StepResponse.step_failed(str(e))
-    else:  # If no source is provided, create a new asset and add it to the target
+    else:
         try:
             example_plate = AssetTable(name="ExamplePlate")
-            print(example_plate)
             state.resource_interface.push_to_stack(target_stack, example_plate)
-            return StepResponse.step_succeeded(
-                f"Created and moved 'ExamplePlate' to {target}"
-            )
+            return StepResponse.step_succeeded()
         except ValueError as e:
             return StepResponse.step_failed(str(e))
 
@@ -167,7 +192,9 @@ def synthesize(
     protocol = protocol.file.read().decode("utf-8")
     print(protocol)
 
-    plate = state.resource_interface.get_resource(PlateTable, "Plate0")
+    plate = state.resource_interface.get_resource(
+        resource_name="Plate0", module_name=state.module_name
+    )
 
     if plate:
         state.resource_interface.update_plate_well(
@@ -181,7 +208,7 @@ def synthesize(
         )
         state.resource_interface.update_plate_well(plate, "D1", 0.0)
 
-    return StepResponse.step_succeeded(f"Synthesized sample {foo} + {bar}")
+    return StepResponse.step_succeeded()
 
 
 @test_rest_node.action(
@@ -197,7 +224,7 @@ def synthesize(
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
     collection = state.resource_interface.get_resource(
-        CollectionTable, "CollectionResource"
+        resource_name="CollectionResource", module_name=state.module_name
     )
 
     if collection:
@@ -209,21 +236,16 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
 
         with open("test.txt", "w") as f:
             f.write("test")
-        return StepFileResponse(StepStatus.SUCCEEDED, "test", "test.txt")
+        with open("test2.txt", "w") as f:
+            f.write("test")
+
+        return StepFileResponse(
+            StepStatus.SUCCEEDED,
+            files={"test_file": "test.txt", "test2_file": "test2.txt"},
+            data={"test": {"test": "test"}},
+        )
     else:
         return StepResponse.step_failed("Collection resource not found")
-
-    ## Incoming fix
-    with open("test.txt", "w") as f:
-        f.write("test")
-    with open("test2.txt", "w") as f:
-        f.write("test")
-
-    return StepFileResponse(
-        StepStatus.SUCCEEDED,
-        files={"test_file": "test.txt", "test2_file": "test2.txt"},
-        data={"test": {"test": "test"}},
-    )
 
 
 if __name__ == "__main__":
