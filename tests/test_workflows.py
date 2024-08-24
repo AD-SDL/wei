@@ -64,3 +64,8 @@ class TestWEI_Workflows(TestWEI_Base):
         )
 
         assert run_info.status == WorkflowStatus.FAILED
+
+
+if __name__ == "__main__":
+    test = TestWEI_Workflows()
+    test.test_workflow_run()
