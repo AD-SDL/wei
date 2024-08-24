@@ -21,6 +21,7 @@ class AssetBase(SQLModel):
 
     id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
     name: str = SQLField(default="", nullable=False)
+    module_name: str = SQLField(default="", nullable=False)
 
 
 class AssetTable(AssetBase, table=True):
@@ -279,10 +280,11 @@ class PoolTable(PoolBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    __tablename__ = "pooltable"
-    __table_args__ = (UniqueConstraint("name", name="uix_pool_name"),)
-
     assets: List["AssetTable"] = Relationship(back_populates="pool")
+
+    __table_args__ = (
+        UniqueConstraint("name", "module_name", name="uix_name_module_name_pool"),
+    )
 
 
 class StackBase(ResourceContainerBase):
@@ -369,10 +371,10 @@ class StackTable(StackBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    __tablename__ = "stacktable"
-    __table_args__ = (UniqueConstraint("name", name="uix_stack_name"),)
-
     assets: List["AssetTable"] = Relationship(back_populates="stack")
+    __table_args__ = (
+        UniqueConstraint("name", "module_name", name="uix_name_module_name_stack"),
+    )
 
 
 class QueueBase(ResourceContainerBase):
@@ -466,10 +468,10 @@ class QueueTable(QueueBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    __tablename__ = "queuetable"
-    __table_args__ = (UniqueConstraint("name", name="uix_queue_name"),)
-
     assets: List["AssetTable"] = Relationship(back_populates="queue")
+    __table_args__ = (
+        UniqueConstraint("name", "module_name", name="uix_name_module_name_queue"),
+    )
 
 
 class CollectionBase(ResourceContainerBase):
@@ -559,10 +561,11 @@ class CollectionTable(CollectionBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    __tablename__ = "collectiontable"
-    __table_args__ = (UniqueConstraint("name", name="uix_collection_name"),)
-
     assets: List["AssetTable"] = Relationship(back_populates="collection")
+
+    __table_args__ = (
+        UniqueConstraint("name", "module_name", name="uix_name_module_name_collection"),
+    )
 
 
 class PlateBase(ResourceContainerBase):
@@ -655,7 +658,7 @@ class PlateTable(PlateBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    __tablename__ = "platetable"
-    __table_args__ = (UniqueConstraint("name", name="uix_plate_name"),)
-
     assets: List["AssetTable"] = Relationship(back_populates="plate")
+    __table_args__ = (
+        UniqueConstraint("name", "module_name", name="uix_name_module_name_plate"),
+    )
