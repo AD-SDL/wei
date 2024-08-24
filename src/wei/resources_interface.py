@@ -1,6 +1,6 @@
 """Resources Interface"""
 
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Type
 
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
@@ -50,10 +50,13 @@ class ResourcesInterface:
             SQLModel: The existing or newly added resource.
         """
         with self.session as session:
-            # Check if the resource already exists by name
+            # Check if the resource already exists by name and module_name
             resource_class = type(resource)
             existing_resource = session.exec(
-                select(resource_class).where(resource_class.name == resource.name)
+                select(resource_class).where(
+                    resource_class.name == resource.name,
+                    resource_class.module_name == resource.module_name,
+                )
             ).one_or_none()
 
             if existing_resource:
@@ -97,45 +100,44 @@ class ResourcesInterface:
             print(f"Added new resource: {resource.name}")
             return resource
 
-    def get_resource(
-        self, resource_type: str, resource_name: str
-    ) -> Optional[
-        Union["StackTable", "QueueTable", "PoolTable", "CollectionTable", "PlateTable"]
-    ]:
+    def get_resource(self, resource_name: str, module_name: str) -> Optional[SQLModel]:
         """
-        Retrieve a resource by type and name.
+        Retrieve a resource from the database by its name and module_name across all resource types.
 
         Args:
-            resource_type (str): The type of the resource ('stack', 'queue', etc.).
             resource_name (str): The name of the resource to retrieve.
+            module_name (str): The module name associated with the resource.
 
         Returns:
-            Optional[Union[StackTable, QueueTable, PoolTable, CollectionTable, PlateTable]]:
-            The resource if found, otherwise None.
+            Optional[SQLModel]: The resource if found, otherwise None.
         """
-        with Session(self.engine) as session:
-            if resource_type == "stack":
-                return session.exec(
-                    select(StackTable).where(StackTable.name == resource_name)
+        with self.session as session:
+            resource_classes = [
+                StackTable,
+                QueueTable,
+                CollectionTable,
+                PoolTable,
+                PlateTable,
+            ]
+
+            for resource_class in resource_classes:
+                resource = session.exec(
+                    select(resource_class).where(
+                        resource_class.name == resource_name,
+                        resource_class.module_name == module_name,
+                    )
                 ).one_or_none()
-            elif resource_type == "queue":
-                return session.exec(
-                    select(QueueTable).where(QueueTable.name == resource_name)
-                ).one_or_none()
-            elif resource_type == "pool":
-                return session.exec(
-                    select(PoolTable).where(PoolTable.name == resource_name)
-                ).one_or_none()
-            elif resource_type == "collection":
-                return session.exec(
-                    select(CollectionTable).where(CollectionTable.name == resource_name)
-                ).one_or_none()
-            elif resource_type == "plate":
-                return session.exec(
-                    select(PlateTable).where(PlateTable.name == resource_name)
-                ).one_or_none()
-            else:
-                return None
+
+                if resource:
+                    print(
+                        f"Resource found: {resource.name} in module {resource.module_name} (Type: {resource_class.__name__})"
+                    )
+                    return resource
+
+            print(
+                f"No resource found with name '{resource_name}' in module '{module_name}'"
+            )
+            return None
 
     def get_resource_type(self, resource_id: str) -> Optional[str]:
         """
@@ -221,6 +223,20 @@ class ResourcesInterface:
         except Exception as e:
             print(f"An error occurred while deleting tables: {e}")
 
+    def clear_all_table_records(self):
+        """
+        Delete all records from all tables associated with the SQLModel metadata.
+        """
+        with self.session as session:
+            try:
+                for table in reversed(SQLModel.metadata.sorted_tables):
+                    session.exec(table.delete())
+                session.commit()
+                print("All table records have been cleared.")
+            except Exception as e:
+                session.rollback()
+                print(f"An error occurred while clearing table records: {e}")
+
     def get_all_resources(self, resource_type: Type[SQLModel]) -> List[SQLModel]:
         """
         Retrieve all resources of a specific type from the database.
@@ -301,20 +317,11 @@ class ResourcesInterface:
             asset (AssetTable): The asset to push onto the stack.
         """
         with self.session as session:
-            session.add(stack)  # Re-attach stack to the session
+            # Ensure both stack and asset are attached to the current session
+            stack = session.merge(stack)
+            asset = session.merge(asset)
 
-            # Check if asset exists in the database
-            existing_asset = session.get(AssetTable, asset.id)
-            if not existing_asset:
-                session.add(asset)
-                session.commit()
-                session.refresh(asset)
-            else:
-                session.add(
-                    existing_asset
-                )  # Re-attach the existing asset to the session
-
-            # Now push the asset onto the stack
+            # Push the asset onto the stack and commit the transaction
             stack.push(asset, session)
             session.commit()
 
@@ -329,8 +336,17 @@ class ResourcesInterface:
             AssetTable: The popped asset.
         """
         with self.session as session:
-            session.add(stack)  # Re-attach stack to the session
-            return stack.pop(session)
+            # Ensure the stack is attached to the current session
+            stack = session.merge(stack)
+
+            # Pop the asset from the stack and commit the transaction
+            asset = stack.pop(session)
+            session.commit()
+
+            if asset:
+                return asset
+            else:
+                raise ValueError("The stack is empty or the asset does not exist.")
 
     def push_to_queue(self, queue: QueueTable, asset: AssetTable) -> None:
         """
@@ -440,10 +456,15 @@ class ResourcesInterface:
 # Sample main function for testing
 if __name__ == "__main__":
     resource_interface = ResourcesInterface()
-
+    print(resource_interface.get_resource("Test Stack", "test2"))
+    # resource_interface.clear_all_table_records()
     # Example usage: Create a Pool resource
     pool = PoolTable(
-        name="Test Pool", description="A test pool", capacity=100.0, quantity=50.0
+        name="Test Pool",
+        description="A test pool",
+        capacity=100.0,
+        quantity=50.0,
+        module_name="test1",
     )
     pool = resource_interface.add_resource(pool)
     # print("\nCreated Pool:", pool)
@@ -457,7 +478,9 @@ if __name__ == "__main__":
     all_pools = resource_interface.get_all_resources(PoolTable)
     print("\nAll Pools after modification:", all_pools)
     # Create a Stack resource
-    stack = StackTable(name="Test Stack", description="A test stack", capacity=10)
+    stack = StackTable(
+        name="Test Stack", description="A test stack", capacity=10, module_name="test2"
+    )
     stack = resource_interface.add_resource(stack)
     retrieved_stack = resource_interface.get_resource(
         "stack", resource_name="Test Stack"
@@ -479,7 +502,9 @@ if __name__ == "__main__":
     print("\nAll Stacks after modification:", all_stacks)
 
     # Create a Queue resource
-    queue = QueueTable(name="Test Queue", description="A test queue", capacity=10)
+    queue = QueueTable(
+        name="Test Queue", description="A test queue", capacity=10, module_name="test3"
+    )
     queue = resource_interface.add_resource(queue)
 
     # Push an asset to the Queue
@@ -499,7 +524,10 @@ if __name__ == "__main__":
     print("\nAll Queues after modification:", all_queues)
     # Create a Collection resource
     collection = CollectionTable(
-        name="Test Collection", description="A test collection", capacity=10
+        name="Test Collection",
+        description="A test collection",
+        capacity=10,
+        module_name="test4",
     )
     collection = resource_interface.add_resource(collection)
 
@@ -514,7 +542,10 @@ if __name__ == "__main__":
 
     # Create a Plate resource
     plate = PlateTable(
-        name="Test Plate", description="A test plate", well_capacity=100.0
+        name="Test Plate",
+        description="A test plate",
+        well_capacity=100.0,
+        module_name="test5",
     )
     plate = resource_interface.add_resource(plate)
 
