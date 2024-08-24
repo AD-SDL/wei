@@ -26,6 +26,7 @@ from .resource_types import (
     PoolBase,
     PoolTable,
     QueueBase,
+    QueueTable,
     ResourceContainerBase,
     StackBase,
     StackTable,

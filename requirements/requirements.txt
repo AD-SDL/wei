@@ -26,6 +26,7 @@ executing==2.0.1
 fastapi==0.112.1
 filelock==3.15.4
 globus-sdk==3.44.0
+greenlet==3.0.3; (platform_machine == "win32" or platform_machine == "WIN32" or platform_machine == "AMD64" or platform_machine == "amd64" or platform_machine == "x86_64" or platform_machine == "ppc64le" or platform_machine == "aarch64") and python_version < "3.13"
 h11==0.14.0
 httptools==0.6.1
 identify==2.6.0
@@ -46,6 +47,7 @@ platformdirs==4.2.2
 pluggy==1.5.0
 pottery==3.0.0
 pre-commit==3.5.0
+psycopg2==2.9.9
 pycparser==2.22; implementation_name == "pypy" or platform_python_implementation != "PyPy"
 pydantic==2.8.2
 pydantic-core==2.20.1
@@ -76,6 +78,8 @@ sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
+sqlalchemy==2.0.32
+sqlmodel==0.0.21
 starlette==0.38.2
 tomli==2.0.1; python_version < "3.11"
 types-aiofiles==24.1.0.20240626
