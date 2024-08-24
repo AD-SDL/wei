@@ -7,7 +7,7 @@ services:
     container_name: synthesis
     ports:
       - 2000:2000
-    command: 'python3 wei/tests/test_module/test_rest_node.py
+    command: 'python3 wei/tests/test_module/test_rest_node.py --module_name synthesis
       --port 2000
       --alias synthesis'
   transfer:
@@ -15,7 +15,7 @@ services:
     container_name: transfer
     ports:
       - 2001:2001
-    command: 'python3 wei/tests/test_module/test_rest_node.py
+    command: 'python3 wei/tests/test_module/test_rest_node.py --module_name transfer
       --port 2001
       --alias transfer'
   measure:
@@ -23,7 +23,7 @@ services:
     container_name: measure
     ports:
       - 2002:2002
-    command: 'python3 wei/tests/test_module/test_rest_node.py
+    command: 'python3 wei/tests/test_module/test_rest_node.py --module_name measure
       --port 2002
       --alias measure'
 
