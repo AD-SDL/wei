@@ -7,12 +7,12 @@ WEI Workflows define a sequence of steps that can be executed in a :doc:`./workc
 The Workflow File
 ==================
 
-Workflows can be defined declaratively using a YAML file, which should conform with the :class:`wei.types.Workflow`.
+Workflows can be defined declaratively using a YAML file, which should conform with the :class:`wei.types.workflow_types.Workflow`.
 
 In general, a workflow file consists of 3 parts:
 
 - Metadata: defines information about the workflow as a whole
-- Modules: lists the modules used in the workflow
+- Modules (Optional): lists the modules used in the workflow
 - Flowdef: a sequence of steps to execute
 
 As an example, consider the following Workflow file:

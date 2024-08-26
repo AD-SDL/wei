@@ -13,6 +13,7 @@ from wei.core.storage import initialize_storage
 from wei.engine import Engine
 from wei.routers import (
     admin_routes,
+    data_routes,
     event_routes,
     experiment_routes,
     location_routes,
@@ -37,6 +38,7 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     None
     """
     app.include_router(admin_routes.router, prefix="/admin")
+    app.include_router(data_routes.router, prefix="/data")
     app.include_router(workflow_routes.router, prefix="/runs")
     app.include_router(experiment_routes.router, prefix="/experiments")
     app.include_router(event_routes.router, prefix="/events")

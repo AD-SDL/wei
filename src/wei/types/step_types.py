@@ -124,6 +124,8 @@ class StepFileResponse(FileResponse):
 class Step(BaseModel, arbitrary_types_allowed=True):
     """Container for a single step"""
 
+    """Step Definition"""
+
     name: str
     """Name of step"""
     module: str
@@ -144,12 +146,15 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """Other steps required to be done before this can start"""
     priority: Optional[int] = None
     """For scheduling"""
-    id: str = Field(default_factory=ulid_factory)
-    """ID of step"""
     comment: Optional[str] = None
     """Notes about step"""
     data_labels: Optional[Dict[str, str]] = None
     """Dictionary of user provided data labels"""
+
+    """Runtime information"""
+
+    id: str = Field(default_factory=ulid_factory)
+    """ID of step"""
     start_time: Optional[datetime] = None
     """Time the step started running"""
     end_time: Optional[datetime] = None

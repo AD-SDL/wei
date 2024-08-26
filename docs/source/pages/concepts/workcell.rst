@@ -11,7 +11,7 @@ Modules
 
 Modules are the individual components that make up a Workcell. These can be anything from a robot arm to a camera to a PCR machine. Each Module has a number of properties, including a name, a model, an interface, and a configuration.
 
-The name of a module in the Workcell is also used in the Workflow file to specify which module should take an action for a given step.
+The name of a module in the Workcell is also used in Workflow definitions to specify which module should take an action for a given step.
 
 Locations
 ==========

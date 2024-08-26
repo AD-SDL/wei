@@ -7,7 +7,7 @@ This guide provides instructions for deploying a bare-metal WEI workcell. It ass
 Installing the WEI Python Package
 =================================
 
-Note on platforms: WEI is primarily developed for and tested on Linux. While we have tried to write it to be platform-agnostic, we do not target or test natively on Windows or Mac. If you are using Windows, we recommend using the `Windows Subsystem for Linux (WSL) <https://learn.microsoft.com/en-us/windows/wsl/install>`_.
+Note on platforms: WEI is primarily developed for and tested on Linux. While we have tried to write it to be platform-agnostic, we do not target or test natively on Windows or Mac. If you are using Windows, one options is using the `Windows Subsystem for Linux (WSL) <https://learn.microsoft.com/en-us/windows/wsl/install>`_.
 
 Installing from PyPi
 ---------------------
@@ -41,6 +41,12 @@ The WEI engine is responsible for the scheduling and execution of workflows and 
 
 This will start the engine and load the workcell configuration from the specified YAML file. The engine will begin scheduling and executing workflows and other operations as they are queued via the WEI Server.
 
+Alternatively, you can start the engine automatically as a spin-off thread from the server, via the ``autostart_engine`` configuration option in the workcell YAML file or command line arguments, e.g.:
+
+``python -m wei.server --workcell <path/to/workcell.yaml> --autostart_engine True``
+
+This will start the engine automatically when the server starts, and will become the default behavior in a future release.
+
 Running Redis
 =============
 
@@ -53,4 +59,4 @@ There are two methods for configuring the WEI Engine and Server that work in tan
 
 The only required argument for the WEI Engine and Server is the path to the workcell YAML file.
 
-For a complete breakdown of configuration options, see :class:`wei.types.WorkcellConfig`.
+For a complete breakdown of configuration options, see :class:`wei.types.workcell_types.WorkcellConfig`.
