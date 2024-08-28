@@ -5,7 +5,7 @@
 groups = ["default", "dev", "diaspora", "docs", "zmq"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:313da0d3141f4a5fecd2cb0d09746c99c5995f4f981f9062171aa077ac8279aa"
+content_hash = "sha256:f7e3a21a96aa78d09b748042d216ef934197f505d0e52f2cb74de941542e6d3d"
 
 [[metadata.targets]]
 requires_python = ">=3.8.1"
@@ -893,6 +893,15 @@ groups = ["dev", "docs"]
 files = [
     {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
     {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
+]
+
+[[package]]
+name = "pause"
+version = "0.3"
+summary = "A timestamp-based sleep function for Python."
+groups = ["default"]
+files = [
+    {file = "pause-0.3.tar.gz", hash = "sha256:82284ec6213376f718a86a51cf1df04eaa77ce85e349bff63c0071e7db33daba"},
 ]
 
 [[package]]

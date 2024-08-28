@@ -1,4 +1,4 @@
-wei.routers.data\_routes
+﻿wei.routers.data\_routes
 ========================
 
 .. automodule:: wei.routers.data_routes
@@ -13,6 +13,7 @@ wei.routers.data\_routes
 
    .. autosummary::
    
+      create_datapoint
       get_datapoint
       get_datapoint_info
    

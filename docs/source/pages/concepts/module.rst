@@ -54,4 +54,7 @@ Resources
 
 The Resources method is called by WEI to query the Module for information about the resources it controls. This method is not yet standardized, and is currently under active development.
 
+Next Steps
+==========
+
 To learn how to develop your own Modules, consult the :doc:`/pages/how-to/module` guide.

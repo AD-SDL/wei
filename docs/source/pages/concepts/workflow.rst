@@ -13,7 +13,7 @@ In general, a workflow file consists of 3 parts:
 
 - Metadata: defines information about the workflow as a whole
 - Modules (Optional): lists the modules used in the workflow
-- Flowdef: a sequence of steps to execute
+- Flowdef: a sequence of Steps to execute
 
 As an example, consider the following Workflow file:
 
@@ -42,6 +42,16 @@ As an example, consider the following Workflow file:
         args:
             file_name: "experiment_result.jgp"
 
+Steps
+=====
+
+Each step in a Workflow is a dictionary that specifies, at the very least, the name of the step, the action to be performed, and the module on which the action should be performed. The step may also include a comment, which is a human-readable description of the step.
+
+Each module supports a specific set of actions. You can find the list of supported actions for each module in the module's ``/about`` interface, on the Dashboard, or in the documentation.
+
+Many actions have arguments (``args``) that must be provided in order to execute the action. These arguments are specified as key-value pairs in the step dictionary. The value of each argument can be a string, a number, or a reference to a value in the payload (see below).
+
+In addition, some actions may accept files as arguments. These arguments are specified as filepaths in a separate ``files`` dictionary within the step, and are automatically uploaded to the WEI server when the workflow is submitted. The filepaths in the dictionary must either be absolute paths, or relative paths to the ``working_dir`` of your ExperimentClient.
 
 Payloads
 ========

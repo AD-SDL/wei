@@ -9,6 +9,7 @@ from wei.config import Config
 from wei.core.state_manager import state_manager
 from wei.core.workcell import set_config_from_workcell
 from wei.types import Workcell, WorkflowStatus
+from wei.types.module_types import ModuleDefinition
 from wei.utils import initialize_state
 
 router = APIRouter()
@@ -30,6 +31,16 @@ def set_workcell(workcell: Workcell) -> JSONResponse:
        the state of the workcell
     """
     with state_manager.wc_state_lock():
+        if not any(module.name == "workcell" for module in workcell.modules):
+            workcell.modules.append(
+                ModuleDefinition(
+                    name="workcell",
+                    model="WEI Workcell",
+                    config={
+                        "rest_node_address": f"http://{Config.server_host}:{Config.server_port}"
+                    },
+                )
+            )
         state_manager.set_workcell(workcell)
         set_config_from_workcell(workcell)
         return JSONResponse(

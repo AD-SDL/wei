@@ -9,6 +9,7 @@ import requests
 
 from wei.types import Workflow, WorkflowRun, WorkflowStatus
 from wei.types.base_types import PathLike
+from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import (
     CommentEvent,
     DecisionEvent,
@@ -455,6 +456,50 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
             return response.json()
         else:
             response.raise_for_status()
+
+    def create_datapoint(self, datapoint: DataPoint):
+        """Creates a new datapoint attached to the experiment"""
+
+        if datapoint.experiment_id is None:
+            datapoint.experiment_id = self.experiment_info.experiment_id
+        if datapoint.campaign_id is None:
+            datapoint.campaign_id = self.experiment_info.campaign_id
+        url = f"{self.url}/data/"
+        if datapoint.type == "local_file":
+            with open(datapoint.path, "rb") as f:
+                response = requests.post(
+                    url,
+                    files={"file": (datapoint.path, f)},
+                    data={"datapoint": datapoint.model_dump_json()},
+                )
+        else:
+            response = requests.post(
+                url, data={"datapoint": datapoint.model_dump_json()}
+            )
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
+
+    def get_datapoint_info(self, datapoint_id: str) -> DataPoint:
+        """Returns the metadata for the datapoint for the given id
+
+        Parameters
+        ----------
+
+        datapoint_id : str
+            The id of the datapoint to get
+
+        Returns
+        -------
+
+        response: DataPoint
+           The metadata for the requested datapoint"""
+        url = f"{self.url}/data/" + datapoint_id + "/info"
+        response = requests.get(url)
+        if response.ok:
+            return DataPoint.model_validate(response.json())
+        response.raise_for_status()
 
     def get_datapoint_value(self, datapoint_id: str) -> Dict[str, Any] | bytes:
         """Returns the value of the datapoint for the given id

@@ -2,10 +2,11 @@
 
 import json
 from pathlib import Path
-from typing import Type, TypeVar, Union
+from typing import Optional, Type, TypeVar, Union
 
 import ulid
 import yaml
+from pydantic import AliasChoices, Field
 from pydantic import BaseModel as _BaseModel
 
 _T = TypeVar("_T")
@@ -47,3 +48,16 @@ class BaseModel(_BaseModel, use_enum_values=True):
         with open(path) as fp:
             raw_data = yaml.safe_load(fp)
         return cls(**raw_data)
+
+
+class Metadata(BaseModel, extra="allow"):
+    """Metadata container"""
+
+    author: Optional[str] = None
+    """Who authored this workflow"""
+    description: Optional[str] = Field(
+        default=None, alias=AliasChoices("description", "info")
+    )
+    """Long description"""
+    version: float = 0.1
+    """Version of interface used"""
