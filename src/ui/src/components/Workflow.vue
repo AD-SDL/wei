@@ -57,7 +57,7 @@ const data_headers = [
 
 
 ]
-props.steps.forEach((step : any)=> { test.value[step.id] = {}; if(step.result.data)
+props.steps.forEach((step : any)=> { test.value[step.id] = {}; if(step.result && step.result.data)
   {Object.keys(step.result.data).forEach(async (key: string) =>   {
 
     let val = await ((await fetch( "http://".concat(window.location.host).concat("/runs/data/").concat(step.result.data[key]).concat("/info"))).json())
