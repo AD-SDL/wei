@@ -11,7 +11,7 @@ cffi==1.17.0; implementation_name == "pypy" or platform_python_implementation !=
 cfgv==3.4.0
 charset-normalizer==3.3.2
 click==8.1.7
-colorama==0.4.6; sys_platform == "win32" or os_name == "nt" or platform_system == "Windows"
+colorama==0.4.6
 cryptography==43.0.0
 devtools==0.12.2
 distlib==0.3.8

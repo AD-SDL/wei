@@ -11,7 +11,7 @@ babel==2.16.0
 certifi==2024.7.4
 charset-normalizer==3.3.2
 click==8.1.7
-colorama==0.4.6; sys_platform == "win32" or os_name == "nt" or platform_system == "Windows"
+colorama==0.4.6
 devtools==0.12.2
 docutils==0.20.1
 exceptiongroup==1.2.2; python_version < "3.11"

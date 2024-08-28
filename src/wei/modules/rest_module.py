@@ -652,6 +652,9 @@ class RESTModule:
         # * Enforce a name
         if not self.state.name:
             raise Exception("A unique --name is required")
+        import colorama
+
+        colorama.just_fix_windows_console()
         uvicorn.run(self.app, host=self.state.host, port=self.state.port)
 
 
