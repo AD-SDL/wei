@@ -2,6 +2,7 @@
 
 import json
 import time
+import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -24,6 +25,7 @@ from wei.types.event_types import (
 )
 from wei.types.exceptions import WorkflowFailedException
 from wei.types.experiment_types import Experiment, ExperimentDesign
+from wei.utils import threaded_daemon
 
 
 class ExperimentClient:
@@ -33,7 +35,7 @@ class ExperimentClient:
         self,
         server_host: str,
         server_port: str,
-        experiment_name: str,
+        experiment_name: Optional[str] = None,
         experiment_id: Optional[str] = None,
         campaign_id: Optional[str] = None,
         description: Optional[str] = None,
@@ -64,7 +66,7 @@ class ExperimentClient:
             List of email addresses to send notifications at the end of the experiment
 
         log_experiment_end_on_exit: bool
-            Whether to log the end of the experiment when exiting the experiment application context (only relevant if using the Experiment as a context manager)
+            Whether to log the end of the experiment when cleaning up the experiment
         """
 
         self.server_host = server_host
@@ -117,6 +119,27 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
             raise Exception(
                 "Timed out while attempting to connect with WEI server. Check that your server is running and the server_host and server_port are correct."
             )
+        self.check_in()
+
+    @threaded_daemon
+    def check_in(self):
+        """Checks in with the server to let it know the experiment is still running"""
+        while True:
+            time.sleep(10)
+            try:
+                response = requests.post(
+                    f"http://{self.server_host}:{self.server_port}/experiments/{self.experiment_id}/check_in"
+                )
+                if not response.ok:
+                    response.raise_for_status()
+            except Exception:
+                traceback.print_exc()
+                pass
+
+    def __del__(self):
+        """Logs the end of the experiment when cleaning up the experiment, if log_experiment_end_on_exit is True"""
+        if self.log_experiment_end_on_exit:
+            self.log_experiment_end()
 
     def __enter__(self):
         """Creates the experiment application context"""
@@ -124,8 +147,7 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Logs the end of the experiment when exiting the experiment application context, if log_experiment_end_on_exit is True"""
-        if self.log_experiment_end_on_exit:
-            self.log_experiment_end()
+        pass
 
     def _register_experiment(self) -> None:
         """Registers a new experiment with the server
