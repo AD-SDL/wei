@@ -48,6 +48,7 @@ def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
     state.action_paused = False
+    state.action_stopped_or_canceled = False
 
 
 @test_rest_node.state_handler()
@@ -113,33 +114,78 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         data={"test": {"test": "test"}},
     )
 
-@test_rest_node.action(name="run_action")
+@test_rest_node.action(name="admin_actions_test")
 def run_action(state: State, action: ActionRequest) -> StepResponse:
 
-    """Tests the pause action functionality"""
+    """Allows testing of the admin action functionality"""
 
     action_timer = 0
 
     while action_timer <= 30:  # only allow action to be active for 30 seconds
+        print("ACTION IS RUNNING")
 
+        # check if the action has been safety stopped
+        if state.action_stopped_or_canceled == True: 
+            print("ACTION HAS BEEN STOPPED")
+            break 
         # check that the action is not paused every second
-        if state.action_paused == False:
+        elif state.action_paused == False:
             action_timer += 1
-        time.sleep(1)
-    
-    return StepResponse.step_succeeded()
 
+        time.sleep(1)
+
+    if state.action_stopped_or_canceled == True: 
+        return StepResponse.step_failed()
+    else: 
+        return StepResponse.step_succeeded()
+
+# PAUSE admin action
 @test_rest_node.pause()
 def pause_action(state: State):
     """Pauses the module action"""
 
     state.action_paused = True
 
+# RESUME admin action
 @test_rest_node.resume()
 def resume_action(state: State): 
     """Resumes the module action"""
 
     state.action_paused = False
+
+# STOP admin action
+@test_rest_node.safety_stop()
+def stop_action(state: State): 
+    """Stops the module action"""
+
+    state.action_stopped_or_canceled = True
+
+# CANCEL admin action DOESN'T WORK RIGHT NOW
+@test_rest_node.cancel()
+def cancel_action(state: State):
+    """Cancels the module action"""
+    
+    state.action_stopped_or_canceled = True
+
+# RESET admin action
+@test_rest_node.reset()
+def reset_action(state: State):
+    """Resets the module"""
+
+    # TODO: Add reset functionality
+    pass
+
+    
+    
+
+
+
+    
+
+
+
+
+
 
 
 

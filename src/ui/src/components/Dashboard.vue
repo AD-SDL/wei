@@ -20,7 +20,14 @@
           <v-card class="pa-1">
               <v-card-title class="text-center">
                 <h2>{{ wc_info.name }}</h2>
-                <PauseResumeWorkcellButton :main_url="main_url" />
+                <div class="d-flex justify-center">
+                  <PauseResumeButton :main_url="main_url" class="ml-2"/>
+                  <CancelButton :main_url="main_url" class="ml-2" />
+                  <ResetButton :main_url="main_url" class="ml-2" />
+                  <LockUnlockButton :main_url="main_url" class="ml-2"/>
+                  <ShutdownButton :main_url="main_url" class="ml-2" />
+                  <SafetyStopButton :main_url="main_url" class="ml-2"/>
+                </div>
               </v-card-title>
             <v-card-text>
               <v-container class="pa-1">
@@ -93,7 +100,12 @@
 import { ref, watchEffect } from 'vue';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
-import PauseResumeWorkcellButton from './PauseResumeWorkcellButton.vue';
+import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
+import SafetyStopButton from './AdminButtons/SafetyStopButton.vue';
+import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
+import ShutdownButton from './AdminButtons/ShutdownButton.vue';
+import CancelButton from './AdminButtons/CancelButton.vue';
+import ResetButton from './AdminButtons/ResetButton.vue';
 const main_url = ref()
 const state_url = ref()
 const workcell_info_url = ref()

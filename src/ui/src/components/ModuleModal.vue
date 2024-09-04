@@ -8,9 +8,54 @@
 
           <!-- Display pause/resume button only if module has 'pause' and 'resume' admin actions -->
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('pause') && wc_state.modules[modal_title].about.admin_commands.includes('resume')">
-            <PauseResumeModuleButton :main_url="main_url" :module="modal_title" :module_status="wc_state.modules[modal_title].state.status" />
+            <PauseResumeButton 
+              :main_url="main_url" 
+              :module="modal_title" 
+              :module_status="wc_state.modules[modal_title].state.status" 
+              class="ml-2" /> 
           </template>
 
+          <CancelButton 
+            :main_url="main_url" 
+            :module="modal_title" 
+            :module_status="wc_state.modules[modal_title].state.status" 
+            class="ml-2" />
+
+          <ResetButton 
+            :main_url="main_url" 
+            :module="modal_title" 
+            :module_status="wc_state.modules[modal_title].state.status" 
+            class="ml-2" />
+
+          <LockUnlockButton 
+            :main_url="main_url" 
+            :module="modal_title" 
+            :module_status="wc_state.modules[modal_title].state.status" 
+            class="ml-2" />
+
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('shutdown')">
+            <ShutdownButton 
+              :main_url="main_url" 
+              :module="modal_title" 
+              :module_status="wc_state.modules[modal_title].state.status" 
+              class="ml-2"/>
+          </template>
+
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('estop')">
+            <SafetyStopButton 
+              :main_url="main_url" 
+              :module="modal_title" 
+              :module_status="wc_state.modules[modal_title].state.status" 
+              class="ml-2"/>
+          </template>
+
+
+
+
+
+
+          
+          
         </div>
       </v-card-title>
 
@@ -100,6 +145,8 @@ import { ref } from 'vue';
 
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
+import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
+import ShutdownButton from './AdminButtons/ShutdownButton.vue';
 const props = defineProps(['modal_title', 'modal_text', 'main_url', 'wc_state'])
 const arg_headers = [
   { title: 'Name', key: 'name' },
@@ -240,3 +287,5 @@ function copyAction(test: any) {
     margin-right: 30px; 
   }
 </style>
+
+  
