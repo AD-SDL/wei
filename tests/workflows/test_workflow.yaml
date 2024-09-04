@@ -2,7 +2,7 @@ name: Test_Workflow
 metadata:
   author: Tobias Ginsburg, Kyle Hippe, Ryan D. Lewis
   info: Example workflow for WEI
-  version: 0.2
+  version: 0.3
 
 flowdef:
   - name: Get plate

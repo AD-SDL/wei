@@ -11,6 +11,7 @@ import yaml
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from pydantic import AliasChoices, Field, ValidationInfo, field_validator, validator
+from typing_extensions import Literal
 
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
 
@@ -34,9 +35,9 @@ class StepResponse(BaseModel):
     """Whether the step succeeded or failed"""
     error: Optional[str] = None
     """Error message resulting from the action"""
-    data: Optional[dict] = None
+    data: Optional[Dict[str, Any]] = None
     """Key value dict of data returned from step"""
-    files: Optional[dict] = None
+    files: Optional[Dict[str, Any]] = None
     """Key value dict of file labels and file names from step"""
 
     def to_headers(self) -> Dict[str, str]:
@@ -72,6 +73,18 @@ class StepResponse(BaseModel):
         return cls(status=StepStatus.FAILED, error=error)
 
 
+class StepSucceeded(StepResponse):
+    """A StepResponse for a successful step"""
+
+    status: Literal[StepStatus.SUCCEEDED] = StepStatus.SUCCEEDED
+
+
+class StepFailed(StepResponse):
+    """A StepResponse for a failed step"""
+
+    status: Literal[StepStatus.FAILED] = StepStatus.FAILED
+
+
 class StepFileResponse(FileResponse):
     """
     Convenience wrapper for FastAPI's FileResponse class
@@ -84,11 +97,10 @@ class StepFileResponse(FileResponse):
         self,
         status: StepStatus,
         files: Dict[str, str],
-        path: PathLike = None,
         data: Dict[str, str] = None,
     ):
         """
-        Returns a FileResponse with the given path as the response content
+        Returns a FileResponse with the given files as the response content
         """
         if len(files) == 1:
             return super().__init__(

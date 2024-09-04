@@ -149,3 +149,16 @@ def threaded_daemon(func):
         return thread
 
     return wrapper
+
+
+def pretty_type_repr(type_hint):
+    """Returns a pretty string representation of a type hint, including subtypes."""
+    type_name = type_hint.__name__
+    if (
+        "__args__" in dir(type_hint) and type_hint.__args__
+    ):  # * If the type has subtype info
+        type_name += "["
+        for subtype in type_hint.__args__:
+            type_name += pretty_type_repr(subtype)
+        type_name += "]"
+    return type_name

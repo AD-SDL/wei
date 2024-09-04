@@ -170,6 +170,8 @@ class ModuleAbout(BaseModel, extra="ignore"):
     """Interface used by the module"""
     version: Optional[str] = None
     """Version of the module"""
+    wei_version: Optional[str] = None
+    """Compatible version of WEI"""
     description: Optional[str] = None
     """Description of the module"""
     actions: List[ModuleAction]

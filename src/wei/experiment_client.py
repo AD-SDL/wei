@@ -210,18 +210,22 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                     if str(path).startswith("payload."):
                         try:
                             try:
-                                files[file] = payload[str(path).split(".")[1]]
+                                files[f"{step.id}_{file}"] = payload[
+                                    str(path).split(".")[1]
+                                ]
                             except KeyError:
-                                files[file] = payload[path]
+                                files[f"{step.id}_{file}"] = payload[path]
                         except KeyError as e:
                             raise KeyError(
                                 f"File '{file}' looks like a payload entry, but payload does not contain {path}"
                             ) from e
                     else:
-                        files[file] = path
-                    if not Path(files[file]).is_absolute():
-                        files[file] = self.working_dir / files[file]
-                    step.files[file] = Path(files[file]).name
+                        files[f"{step.id}_{file}"] = path
+                    if not Path(files[f"{step.id}_{file}"]).is_absolute():
+                        files[f"{step.id}_{file}"] = (
+                            self.working_dir / files[f"{step.id}_{file}"]
+                        )
+                    step.files[file] = Path(files[f"{step.id}_{file}"]).name
         return files
 
     def _log_event(

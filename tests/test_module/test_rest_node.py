@@ -2,6 +2,7 @@
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
 
+import time
 from typing import Annotated
 import time
 
@@ -71,6 +72,7 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
+    time.sleep(5)
     return StepResponse.step_succeeded()
 
 
@@ -87,7 +89,7 @@ def synthesize(
     print(protocol)
 
     state.foobar = foo + bar
-
+    time.sleep(5)
     return StepResponse.step_succeeded()
 
 
@@ -107,7 +109,7 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         f.write("test")
     with open("test2.txt", "w") as f:
         f.write("test")
-
+    time.sleep(5)
     return StepFileResponse(
         StepStatus.SUCCEEDED,
         files={"test_file": "test.txt", "test2_file": "test2.txt"},

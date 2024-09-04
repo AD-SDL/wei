@@ -1,6 +1,7 @@
 """REST Module Convenience Class"""
 
 import argparse
+import importlib.metadata
 import inspect
 import os
 import signal
@@ -34,6 +35,7 @@ from wei.types.module_types import (
     ModuleState,
 )
 from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
+from wei.utils import pretty_type_repr
 
 
 class RESTModule:
@@ -45,7 +47,9 @@ class RESTModule:
     arg_parser: Optional[argparse.ArgumentParser] = None
     """An argparse.ArgumentParser object that can be used to parse command line arguments. If not set in the constructor, a default will be used."""
     about: Optional[ModuleAbout] = None
-    """A ModuleAbout object that describes the module. This is used to provide information about the module to user's and WEI."""
+    """A ModuleAbout object that describes the module.
+    This is used to provide information about the module to user's and WEI.
+    Will be generated from attributes if not set."""
     description: str = ""
     """A description of the module and the devices/resources it controls."""
     status: ModuleStatus = ModuleStatus.INIT
@@ -62,6 +66,8 @@ class RESTModule:
     """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
+    wei_version: Optional[str] = importlib.metadata.version("ad_sdl.wei")
+    """The version of WEI that this module is compatible with."""
 
     # * Admin command function placeholders
     _safety_stop = None
@@ -292,16 +298,16 @@ class RESTModule:
                         and parameter_name != "return"
                     ):
                         if sys.version_info >= (3, 9):
-                            type_hint = parameter_type.__name__
+                            type_hint = parameter_type
                         else:
-                            type_hint = type(parameter_type).__name__
+                            type_hint = type(parameter_type)
                         description = ""
                         # * If the type hint is an Annotated type, extract the type and description
                         # * Description here means the first string metadata in the Annotated type
-                        if type_hint == "Annotated":
+                        if type_hint.__name__ == "Annotated":
                             type_hint = get_type_hints(function, include_extras=False)[
                                 parameter_name
-                            ].__name__
+                            ]
                             description = next(
                                 (
                                     metadata
@@ -310,7 +316,7 @@ class RESTModule:
                                 ),
                                 "",
                             )
-                        if type_hint == "UploadFile":
+                        if type_hint.__name__ == "UploadFile":
                             # * Add a file parameter to the action
                             action.files.append(
                                 ModuleActionFile(
@@ -327,10 +333,11 @@ class RESTModule:
                                 if parameter_info.default == inspect.Parameter.empty
                                 else parameter_info.default
                             )
+
                             action.args.append(
                                 ModuleActionArg(
                                     name=parameter_name,
-                                    type=type_hint,
+                                    type=pretty_type_repr(type_hint),
                                     default=default,
                                     required=True if default is None else False,
                                     description=description,
@@ -562,7 +569,7 @@ class RESTModule:
             state = request.app.state
             # * If the module is in INIT, return without calling custom state handler
             if state.status in [ModuleStatus.INIT, ModuleStatus.ERROR]:
-                return ModuleState(status=ModuleStatus.INIT, error=state.error)
+                return ModuleState(status=state.status, error=state.error)
             return self._state_handler(state=state)
 
         @self.router.get("/resources")
