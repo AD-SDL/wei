@@ -68,7 +68,7 @@ class StepResponse(BaseModel):
         return cls(status=StepStatus.SUCCEEDED, files=files, data=data)
 
     @classmethod
-    def step_failed(cls, error: str) -> "StepResponse":
+    def step_failed(cls, error: str = "") -> "StepResponse":
         """Returns a StepResponse for a failed step"""
         return cls(status=StepStatus.FAILED, error=error)
 

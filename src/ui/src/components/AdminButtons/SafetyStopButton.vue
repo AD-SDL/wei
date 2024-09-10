@@ -25,8 +25,8 @@
 
     const props = defineProps<{
         main_url: string;
-        module?: string; 
-        module_status?: string; 
+        module?: string;
+        module_status?: string;
     }>();
 
     const safetyStop_url = ref()
@@ -59,5 +59,3 @@
     };
 
 </script>
-
-  

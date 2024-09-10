@@ -26,8 +26,8 @@
 
     const props = defineProps<{
         main_url: string;
-        module?: string; 
-        module_status?: string; 
+        module?: string;
+        module_status?: string;
     }>();
 
     const shutdown_url = ref()
@@ -43,7 +43,7 @@
         shutdown_url.value = props.main_url.concat('/admin/shutdown')
         hoverText.value = "Shutdown WEI Server and Dashboard"
     }
-        
+
     watchEffect(() => {
         // Determine if the module is already shutdown
         if (props.module_status == 'UNKNOWN') {

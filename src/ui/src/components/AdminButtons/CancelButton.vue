@@ -21,13 +21,13 @@
 
 </template>
 
-<script lang="ts" setup>
-    import {defineProps, ref, watchEffect} from 'vue';
+<script setup lang="ts">
+    import { defineProps, ref, watchEffect } from 'vue';
 
     const props = defineProps<{
         main_url: string;
-        module?: string; 
-        module_status?: string; 
+        module?: string;
+        module_status?: string;
     }>();
 
     const cancel_url = ref()
@@ -41,9 +41,9 @@
     }
     else {
         cancel_url.value = props.main_url.concat('/admin/cancel')
-        hoverText.value = "Cancel Workflow"
+        hoverText.value = "Cancel All Workflows"
     }
-        
+
     watchEffect(() => {
         // Determine if the module is cancelable (if actively running something)
         if (props.module) {
@@ -56,8 +56,8 @@
         }
         else {
             // TODO: Allow cancel if there's an actively running workflow
-            // TODO: It might be better to allow cancel when there is a running experiment 
-                // canceling a workflow might not cancel the rest of the experiment correctly 
+            // TODO: It might be better to allow cancel when there is a running experiment
+                // canceling a workflow might not cancel the rest of the experiment correctly
             canCancel.value = true
         }
 
@@ -78,5 +78,4 @@
             console.error('Error in cancel:', error);
         }
     };
-
 </script>

@@ -3,10 +3,10 @@
       <v-tooltip location="bottom">
         <template v-slot:activator="{ props }">
             <div v-bind="props">
-            <v-btn 
-                @click="togglePauseResume" 
-                :color="isPaused ? 'green-darken-3' : 'orange-darken-1'" 
-                dark 
+            <v-btn
+                @click="togglePauseResume"
+                :color="isPaused ? 'green-darken-3' : 'orange-darken-1'"
+                dark
                 elevation="5"
                 :disabled="!allowButton" >
                 <v-icon>
@@ -16,7 +16,7 @@
             </div>
         </template>
          <span>
-            {{ allowButton ? (isPaused ? 'Resume ' + hoverText : 'Pause ' + hoverText) 
+            {{ allowButton ? (isPaused ? 'Resume ' + hoverText : 'Pause ' + hoverText)
                        : (isPaused ? 'Resume ' + hoverText + ' (unavailable)' : 'Pause ' + hoverText + ' (unavailable)') }}
         </span>
       </v-tooltip>
@@ -28,10 +28,10 @@
 
     const props = defineProps<{
         main_url: string;
-        module?: string; 
-        module_status?: string; 
+        module?: string;
+        module_status?: string;
     }>();
-    
+
     const pause_url = ref()
     const resume_url = ref()
     const isPaused = ref(false);
@@ -47,7 +47,7 @@
     else {
         pause_url.value = props.main_url.concat('/admin/pause')
         resume_url.value = props.main_url.concat('/admin/resume')
-        hoverText.value = "Workcell"  
+        hoverText.value = "Workcell"
     }
 
     if (props.module) {
@@ -59,7 +59,7 @@
             allowButton.value = false
         }
 
-        // Determine if the module is already paused 
+        // Determine if the module is already paused
         if (props.module_status == 'PAUSED') {
             isPaused.value = true
         } else {
@@ -68,7 +68,7 @@
     })
     }
     else {
-        allowButton.value = true 
+        allowButton.value = true
     }
 
     // Function to toggle pause/resume
@@ -103,7 +103,7 @@
             const response = await fetch(resume_url.value, {
                 method: 'POST',
             });
-        
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -115,4 +115,3 @@
         }
     };
 </script>
-  

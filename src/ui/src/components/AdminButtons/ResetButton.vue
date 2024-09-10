@@ -26,8 +26,8 @@
 
     const props = defineProps<{
         main_url: string;
-        module?: string; 
-        module_status?: string; 
+        module?: string;
+        module_status?: string;
     }>();
 
     const reset_url = ref()
@@ -43,12 +43,12 @@
         reset_url.value = props.main_url.concat('/admin/reset')
         hoverText.value = "Reset Workcell"
     }
-        
+
     watchEffect(() => {
-        
+
         if (props.module) {
             // Determine if the module is able to be reset (if actively running something)
-            if (props.module_status == 'BUSY') {   
+            if (props.module_status == 'BUSY') {
                 canReset.value = false
                 //user should pause or stop running action before resetting
             }

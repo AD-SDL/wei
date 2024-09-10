@@ -509,7 +509,6 @@ class RESTModule:
 
         @self.router.post("/admin/pause")
         async def pause(request: Request):
-            
             state = request.app.state
             state.pre_paused_status = state.status
             state.status = ModuleStatus.PAUSED
@@ -521,7 +520,7 @@ class RESTModule:
         @self.router.post("/admin/resume")
         async def resume(request: Request):
             state = request.app.state
-            state.status = state.pre_paused_status  
+            state.status = state.pre_paused_status
             if self._resume:
                 return self._resume(state)
             else:

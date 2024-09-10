@@ -8,44 +8,44 @@
 
           <!-- Display pause/resume button only if module has 'pause' and 'resume' admin actions -->
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('pause') && wc_state.modules[modal_title].about.admin_commands.includes('resume')">
-            <PauseResumeButton 
-              :main_url="main_url" 
-              :module="modal_title" 
-              :module_status="wc_state.modules[modal_title].state.status" 
-              class="ml-2" /> 
+            <PauseResumeButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
+              class="ml-2" />
           </template>
 
-          <CancelButton 
-            :main_url="main_url" 
-            :module="modal_title" 
-            :module_status="wc_state.modules[modal_title].state.status" 
+          <CancelButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
             class="ml-2" />
 
-          <ResetButton 
-            :main_url="main_url" 
-            :module="modal_title" 
-            :module_status="wc_state.modules[modal_title].state.status" 
+          <ResetButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
             class="ml-2" />
 
-          <LockUnlockButton 
-            :main_url="main_url" 
-            :module="modal_title" 
-            :module_status="wc_state.modules[modal_title].state.status" 
+          <LockUnlockButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
             class="ml-2" />
 
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('shutdown')">
-            <ShutdownButton 
-              :main_url="main_url" 
-              :module="modal_title" 
-              :module_status="wc_state.modules[modal_title].state.status" 
+            <ShutdownButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
               class="ml-2"/>
           </template>
 
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('estop')">
-            <SafetyStopButton 
-              :main_url="main_url" 
-              :module="modal_title" 
-              :module_status="wc_state.modules[modal_title].state.status" 
+            <SafetyStopButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
               class="ml-2"/>
           </template>
 
@@ -54,8 +54,8 @@
 
 
 
-          
-          
+
+
         </div>
       </v-card-title>
 
@@ -284,8 +284,6 @@ function copyAction(test: any) {
 
 <style>
   .title {
-    margin-right: 30px; 
+    margin-right: 30px;
   }
 </style>
-
-  

@@ -3,10 +3,10 @@
       <v-tooltip location="bottom">
         <template v-slot:activator="{ props }">
             <div v-bind="props">
-            <v-btn 
-                @click="toggleLockUnlock" 
-                :color="isLocked ? 'grey-darken-3' : 'grey-lighten-1'" 
-                dark 
+            <v-btn
+                @click="toggleLockUnlock"
+                :color="isLocked ? 'grey-darken-3' : 'grey-lighten-1'"
+                dark
                 elevation="5" >
                 <v-icon>
                     {{ isLocked ? 'mdi-lock-open' : 'mdi-lock' }}
@@ -26,10 +26,10 @@
 
     const props = defineProps<{
         main_url: string;
-        module?: string; 
-        module_status?: string; 
+        module?: string;
+        module_status?: string;
     }>();
-    
+
     const lock_url = ref()
     const unlock_url = ref()
     const isLocked = ref(false);
@@ -89,7 +89,7 @@
     //         const response = await fetch(unlock_url.value, {
     //             method: 'POST',
     //         });
-        
+
     //         if (!response.ok) {
     //             throw new Error(`HTTP error! status: ${response.status}`);
     //         }
@@ -101,4 +101,3 @@
     //     }
     // };
 </script>
-  
