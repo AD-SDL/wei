@@ -9,6 +9,7 @@ import requests
 
 from wei.types import Workflow, WorkflowRun, WorkflowStatus
 from wei.types.base_types import PathLike
+from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import (
     CommentEvent,
     DecisionEvent,
@@ -458,21 +459,8 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                 return response.content
         response.raise_for_status()
 
-    def save_datapoint_value(
-        self, datapoint_id: str, output_filepath: str
-    ) -> Dict[Any, Any]:
-        """Returns the datapoint for the given id
-
-        Parameters
-        ----------
-
-        None
-
-        Returns
-        -------
-
-        response: Dict
-           figuring it out"""
+    def save_datapoint_value(self, datapoint_id: str, output_filepath: str):
+        """Saves the value of the given datapoint to the specified filepath"""
         url = f"{self.url}/runs/data/" + datapoint_id
         response = requests.get(url)
         if response.ok:
@@ -485,6 +473,15 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                 with open(output_filepath, "wb") as f:
                     f.write(response.content)
         response.raise_for_status()
+
+    def get_experiment_datapoints(self) -> Dict[str, DataPoint]:
+        """
+        returns a dictionary of the datapoints for this experiment.
+        """
+        url = f"{self.url}/{self.experiment_id}/data"
+        response = requests.get(url)
+        if response.ok:
+            return response.json()
 
     def log_experiment_end(self) -> Event:
         """Logs the end of the experiment in the experiment log
