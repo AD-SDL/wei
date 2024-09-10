@@ -459,21 +459,8 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                 return response.content
         response.raise_for_status()
 
-    def save_datapoint_value(
-        self, datapoint_id: str, output_filepath: str
-    ) -> Dict[Any, Any]:
-        """Returns the datapoint for the given id
-
-        Parameters
-        ----------
-
-        None
-
-        Returns
-        -------
-
-        response: Dict
-           writes the funct"""
+    def save_datapoint_value(self, datapoint_id: str, output_filepath: str):
+        """Saves the value of the given datapoint to the specified filepath"""
         url = f"{self.url}/runs/data/" + datapoint_id
         response = requests.get(url)
         if response.ok:
