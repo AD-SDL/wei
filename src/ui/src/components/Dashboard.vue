@@ -21,12 +21,12 @@
               <v-card-title class="text-center">
                 <h2>{{ wc_info.name }}</h2>
                 <div class="d-flex justify-center">
-                  <PauseResumeButton :main_url="main_url" class="ml-2"/>
-                  <CancelButton :main_url="main_url" class="ml-2" />
-                  <ResetButton :main_url="main_url" class="ml-2" />
-                  <LockUnlockButton :main_url="main_url" class="ml-2"/>
-                  <ShutdownButton :main_url="main_url" class="ml-2" />
-                  <SafetyStopButton :main_url="main_url" class="ml-2"/>
+                  <PauseResumeButton :main_url="main_url" :wc_state=wc_state class="ml-2"/>
+                  <CancelButton :main_url="main_url" :wc_state=wc_state class="ml-2" />
+                  <ResetButton :main_url="main_url" :wc_state=wc_state class="ml-2" />
+                  <LockUnlockButton :main_url="main_url" :wc_state=wc_state class="ml-2"/>
+                  <ShutdownButton :main_url="main_url" :wc_state=wc_state class="ml-2" />
+                  <SafetyStopButton :main_url="main_url" :wc_state=wc_state class="ml-2"/>
                 </div>
               </v-card-title>
             <v-card-text>

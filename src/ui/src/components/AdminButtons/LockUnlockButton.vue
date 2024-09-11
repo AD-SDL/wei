@@ -27,6 +27,7 @@
     const props = defineProps<{
         main_url: string;
         module?: string;
+        wc_state?: any;
         module_status?: string;
     }>();
 
@@ -53,8 +54,16 @@
         if (props.module_status == 'LOCKED') {
             isLocked.value = true
         } else {
+            if (props.wc_state) {
+                if (props.wc_state.locked) {
+                    isLocked.value = true
+                } else {
+                    isLocked.value = false
+                }
+            } else {
             isLocked.value = false
         }
+    }
     })
     }
 

@@ -28,6 +28,7 @@
         main_url: string;
         module?: string;
         module_status?: string;
+        wc_state?: any;
     }>();
 
     const cancel_url = ref()
