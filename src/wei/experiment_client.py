@@ -572,6 +572,15 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                     f.write(response.content)
         response.raise_for_status()
 
+    def get_experiment_datapoints(self) -> Dict[str, DataPoint]:
+        """
+        returns a dictionary of the datapoints for this experiment.
+        """
+        url = f"{self.url}/{self.experiment_id}/data"
+        response = requests.get(url)
+        if response.ok:
+            return response.json()
+
     def log_experiment_end(self) -> Event:
         """Logs the end of the experiment in the experiment log
 

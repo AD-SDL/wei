@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from wei.core.experiment import get_experiment, register_new_experiment
 from wei.core.state_manager import state_manager
 from wei.core.storage import get_experiment_log_file
+from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
 
@@ -37,6 +38,16 @@ async def check_in(experiment_id: str) -> None:
         state_manager.set_experiment(experiment)
 
     return
+
+@router.get("/{experiment_id}/data")
+async def data_return(experiment_id: str) -> Dict[str, DataPoint]:
+    """Returns all of the data points related to an experiment"""
+    datapoints = {}
+    for datapoint_id, datapoint in state_manager.get_all_datapoints().items():
+        if datapoint.experiment_id == experiment_id:
+            datapoints[datapoint_id] = datapoint
+    return datapoints
+
 
 
 @router.get("/{experiment_id}/log")
