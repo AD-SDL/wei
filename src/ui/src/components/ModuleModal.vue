@@ -182,7 +182,11 @@ function set_text(action: any) {
       args[arg.name] = arg.default
     }
     else {
-      args[arg.name] = arg.value
+      try {
+        args[arg.name] = JSON.parse(arg.value)
+      } catch (e) {
+        args[arg.name] = arg.value
+      }
     }
   }
   )
@@ -213,7 +217,11 @@ async function send_wf(action: any) {
       args[arg.name] = arg.default
     }
     else {
-      args[arg.name] = arg.value
+      try {
+        args[arg.name] = JSON.parse(arg.value)
+      } catch (e) {
+        args[arg.name] = arg.value
+      }
     }
 
   })
