@@ -39,6 +39,7 @@ async def check_in(experiment_id: str) -> None:
 
     return
 
+
 @router.get("/{experiment_id}/data")
 async def data_return(experiment_id: str) -> Dict[str, DataPoint]:
     """Returns all of the data points related to an experiment"""
@@ -47,7 +48,6 @@ async def data_return(experiment_id: str) -> Dict[str, DataPoint]:
         if datapoint.experiment_id == experiment_id:
             datapoints[datapoint_id] = datapoint
     return datapoints
-
 
 
 @router.get("/{experiment_id}/log")
