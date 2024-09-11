@@ -3,6 +3,7 @@ Router for the "experiments"/"exp" endpoints
 """
 
 import json
+from datetime import datetime
 from typing import Dict
 
 from fastapi import APIRouter
@@ -26,6 +27,17 @@ async def event_return(experiment_id: str) -> Dict[str, Event]:
         if event.experiment_id == experiment_id:
             events[event_id] = event
     return events
+
+
+@router.post("/{experiment_id}/check_in")
+async def check_in(experiment_id: str) -> None:
+    """Returns a simple pong response"""
+    experiment = state_manager.get_experiment(experiment_id)
+    experiment.check_in_timestamp = datetime.now()
+    with state_manager.wc_state_lock():
+        state_manager.set_experiment(experiment)
+
+    return
 
 
 @router.get("/{experiment_id}/data")

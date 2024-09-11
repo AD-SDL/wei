@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.6.2"
+version = "0.6.3"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -26,6 +26,9 @@ dependencies = [
     'uvicorn[standard]>=0.21',
     "websockets>=12.0",
     "secure-smtplib>=0.1.1",
+    "aenum>=3.1.15",
+    "colorama>=0.4.6",
+    "pause>=0.3",
 ]
 
 [project.optional-dependencies]

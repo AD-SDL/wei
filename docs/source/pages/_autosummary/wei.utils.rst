@@ -1,4 +1,4 @@
-wei.utils
+﻿wei.utils
 =========
 
 .. automodule:: wei.utils
@@ -18,7 +18,10 @@ wei.utils
       initialize_state
       json_to_csv
       parse_args
+      pretty_type_repr
       string_to_bool
+      threaded_daemon
+      threaded_task
    
    
 

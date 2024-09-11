@@ -54,12 +54,12 @@ def initialize_state(workcell=None) -> None:
     from wei.core.location import initialize_workcell_locations
     from wei.core.module import initialize_workcell_modules
     from wei.core.state_manager import state_manager
-    from wei.types import Workcell
+    from wei.types import ModuleStatus, Workcell
 
-    if workcell:
-        state_manager.set_workcell(workcell)
-    else:
-        state_manager.set_workcell(Workcell.from_yaml(Config.workcell_file))
+    if not workcell:
+        workcell = Workcell.from_yaml(Config.workcell_file)
+    state_manager.set_workcell(workcell)
+    state_manager.wc_status = ModuleStatus.IDLE
     initialize_workcell_modules()
     initialize_workcell_locations()
 
@@ -162,3 +162,15 @@ def pretty_type_repr(type_hint):
             type_name += pretty_type_repr(subtype)
         type_name += "]"
     return type_name
+
+
+class classproperty:
+    """Provides a simple class property decorator for class-level getter properties. Credit: https://stackoverflow.com/a/76301341"""
+
+    def __init__(self, func):
+        """Initialize the classproperty with the getter function."""
+        self.fget = func
+
+    def __get__(self, instance, owner):
+        """Return the result of the getter function."""
+        return self.fget(owner)

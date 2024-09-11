@@ -18,9 +18,17 @@
       <v-window-item :key="1" :value="1">
         <v-container v-if="wc_state">
           <v-card class="pa-1">
-            <v-card-title class="text-center">
-              <h2>{{ wc_info.name }}</h2>
-            </v-card-title>
+              <v-card-title class="text-center">
+                <h2>{{ wc_info.name }}</h2>
+                <div class="d-flex justify-center">
+                  <PauseResumeButton :main_url="main_url" class="ml-2"/>
+                  <CancelButton :main_url="main_url" class="ml-2" />
+                  <ResetButton :main_url="main_url" class="ml-2" />
+                  <LockUnlockButton :main_url="main_url" class="ml-2"/>
+                  <ShutdownButton :main_url="main_url" class="ml-2" />
+                  <SafetyStopButton :main_url="main_url" class="ml-2"/>
+                </div>
+              </v-card-title>
             <v-card-text>
               <v-container class="pa-1">
                 <v-row dense wrap justify-content="space-evenly">
@@ -35,6 +43,7 @@
                 </v-row>
               </v-container>
             </v-card-text>
+
             <v-card-actions>
               <v-spacer />
               <v-dialog max-width="800">
@@ -91,6 +100,12 @@
 import { ref, watchEffect } from 'vue';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
+import CancelButton from './AdminButtons/CancelButton.vue';
+import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
+import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
+import ResetButton from './AdminButtons/ResetButton.vue';
+import SafetyStopButton from './AdminButtons/SafetyStopButton.vue';
+import ShutdownButton from './AdminButtons/ShutdownButton.vue';
 const main_url = ref()
 const state_url = ref()
 const workcell_info_url = ref()
@@ -128,13 +143,13 @@ watchEffect(async () => {
   var new_experiment_keys = [];
   experiment_keys.value = [];
   setInterval(updateDashboard, 1000)
+  setInterval(updateExperiments, 10000)
 
-  async function updateDashboard() {
-    wc_state.value = await (await fetch(state_url.value)).json();
-    wfs.value = Object.keys(wc_state.value.workflows).sort().reverse();
+  async function updateExperiments() {
     experiments.value = await ((await fetch(experiments_url.value)).json());
     new_experiment_keys = Object.keys(experiments.value).sort();
     let difference = new_experiment_keys.filter(x => !experiment_keys.value.includes(x));
+    experiment_keys.value = Object.keys(experiments.value).sort();
     difference.forEach(async function (value: any) {
       var experiment: ExperimentInfo = new ExperimentInfo();
       experiment.experiment_id = value;
@@ -147,7 +162,11 @@ watchEffect(async () => {
       experiment.num_events = experiment.events.length;
       experiment_objects.value.splice(0, 0, experiment);
     });
-    experiment_keys.value = Object.keys(experiments.value).sort();
+  }
+
+  async function updateDashboard() {
+    wc_state.value = await (await fetch(state_url.value)).json();
+    wfs.value = Object.keys(wc_state.value.workflows).sort().reverse();
   }
 }
 )
@@ -166,30 +185,54 @@ export default {
     padding: 3px;
   }
 
-.module_status_IDLE {
+.wf_status_completed,
+.module_status_IDLE,
+.module_status_READY {
   background-color: green;
 }
 
+.wf_status_running,
 .module_status_BUSY {
   background-color: blue;
 }
 
+.wf_status_failed,
 .module_status_ERROR {
   background-color: red;
 }
 
+.wf_status_unknown,
 .module_status_UNKNOWN {
-  background-color: darkgrey;
+  background-color: darkslategray;
+}
+
+.wf_status_new,
+.module_status_INIT {
+  background-color: aquamarine;
   color: black;
 }
 
-
-.module_status_INIT {
-  background-color: purple;
-}
-
+.wf_status_queued,
+.wf_status_paused,
+.wf_status_in_progress,
 .module_status_PAUSED {
   background-color: gold;
+  color: black;
+}
+
+.wf_status_in_progress {
+  background-color: darkblue;
+  color: black;
+}
+
+.module_status_LOCKED {
+  background-color: darkgoldenrod;
+  color: white;
+}
+
+.wf_status_cancelled,
+.module_status_CANCELLED {
+  background-color: darkorange;
   color: black;
 }
 
@@ -198,30 +241,5 @@ export default {
   height: 10px;
   border-radius: 5px;
   margin-left: 10px;
-}
-
-.wf_status_queued,
-.wf_status_new,
-.wf_status_paused {
-  background-color: gold;
-  color: black;
-}
-
-.wf_status_running,
-.wf_status_in_progress {
-  background-color: blue;
-}
-
-.wf_status_completed {
-  background-color: green;
-}
-
-.wf_status_failed,
-.wf_status_cancelled {
-  background-color: red;
-}
-
-.wf_status_unknown {
-  background-color: darkgray;
 }
 </style>

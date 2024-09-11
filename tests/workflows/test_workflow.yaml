@@ -44,6 +44,12 @@ flowdef:
     data_labels:
       test_file: test_label
 
+  - name: Wait for 5 seconds
+    module: utilities
+    action: delay
+    args:
+      seconds: 1.25
+
   - name: Discard sample
     module: transfer
     action: transfer

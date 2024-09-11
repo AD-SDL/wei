@@ -44,6 +44,10 @@ class TestWEI_Base(unittest.TestCase):
             if time.time() - start_time > 60:
                 raise TimeoutError("Server did not start in 60 seconds")
 
+    def __del__(self):
+        """Basic cleanup for WEI's pytest tests"""
+        self.experiment.log_experiment_end()
+
 
 class TestPackaging(TestWEI_Base):
     """Test Basic Packaging"""

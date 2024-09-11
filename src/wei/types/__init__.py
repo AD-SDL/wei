@@ -3,7 +3,7 @@
 # * Note: The following imports are to make backcompat with wei.core.dataclasses
 # * a little easier
 
-from .base_types import BaseModel, PathLike, ulid_factory
+from .base_types import BaseModel, Metadata, PathLike, ulid_factory
 from .event_types import Event
 from .experiment_types import Campaign, Experiment, ExperimentDesign
 from .module_types import (
@@ -18,7 +18,7 @@ from .module_types import (
 )
 from .step_types import Step, StepFileResponse, StepResponse, StepStatus
 from .workcell_types import Location, Workcell, WorkcellConfig
-from .workflow_types import Metadata, Workflow, WorkflowRun, WorkflowStatus
+from .workflow_types import Workflow, WorkflowRun, WorkflowStatus
 
 __all__ = [
     "BaseModel",

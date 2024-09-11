@@ -6,10 +6,10 @@ A WEI Module is a combination of software and a (typically) physical device (e.g
 
 Modules are designed to be:
 
-- **Independent**: each module can act without relying on any other module.
-- **Self-contained**: everything needed to integrate a single device is contained within that module
-- **Composable**: multiple modules can be easily combined to create Workcells.
-- **Portable and Reusable**: so they can be used in different workcells, or repeatedly in the same workcell to control multiple instances of a device.
+- *Independent*: each module can act without relying on any other module.
+- *Self-contained*: everything needed to integrate a single device is contained within that module
+- *Composable*: multiple modules can be easily combined to create Workcells.
+- *Portable and Reusable*: so they can be used in different workcells, or repeatedly in the same workcell to control multiple instances of a device.
 
 .. figure:: /assets/module_logic.png
 
@@ -29,15 +29,18 @@ The Action method is called by WEI to trigger a specified Action on the device o
 
 The Action method should accept the following parameters:
 
-- `action_handle`: The name of the specific action to be performed.
-- `action_vars`: A json-serializable dictionary of variables specific to the action in question. The keys and values of the dictionary correspond to the names and values of the variables, respectively.
+- ``name``: The name of the specific action to be performed.
+- ``args``: A json-serializable dictionary of variables specific to the action in question. The keys and values of the dictionary correspond to the names and values of the variables, respectively.
 
 State
 -----
 
-The State method is called by WEI to query the current state of the device or instrument controlled by the Module. It should return a dictionary of the current state of the device or instrument.
+The State method is called by WEI to query the current state of the device or instrument controlled by the Module. It should return a dictionary of the current state of the module that conforms to :class:`wei.types.module_types.ModuleState`.
 
-The status returned by this method should conform to the :class:`wei.types.ModuleStatus` enum.
+It should, at the very least, return the following keys:
+
+- ``status``: the status of the module, must be included in the :class:`wei.types.ModuleStatus` enum.
+- ``error``: a string describing any error that has occurred, or an empty string if no error has occurred.
 
 About
 -----
@@ -50,5 +53,8 @@ Resources
 ---------
 
 The Resources method is called by WEI to query the Module for information about the resources it controls. This method is not yet standardized, and is currently under active development.
+
+Next Steps
+==========
 
 To learn how to develop your own Modules, consult the :doc:`/pages/how-to/module` guide.

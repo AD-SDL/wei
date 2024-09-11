@@ -9,3 +9,4 @@ Core Concepts
     workcell
     workflow
     experiment
+    datapoints

@@ -1,9 +1,64 @@
 <template>
   <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1000">
     <v-card>
+
       <v-card-title>
-        <h1 class="title py-3 my-3">Module: {{ modal_title }}</h1>
+        <div class="d-flex align-center w-100">
+          <h1 class="title py-3 my-3">Module: {{ modal_title }}</h1>
+
+          <!-- Display pause/resume button only if module has 'pause' and 'resume' admin actions -->
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('pause') && wc_state.modules[modal_title].about.admin_commands.includes('resume')">
+            <PauseResumeButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
+              class="ml-2" />
+          </template>
+
+          <CancelButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
+            class="ml-2" />
+
+          <ResetButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
+            class="ml-2" />
+
+          <LockUnlockButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
+            class="ml-2" />
+
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('shutdown')">
+            <ShutdownButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
+              class="ml-2"/>
+          </template>
+
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('safety_stop')">
+            <SafetyStopButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
+              class="ml-2"/>
+          </template>
+
+
+
+
+
+
+
+
+        </div>
       </v-card-title>
+
       <v-card-text class="subheading grey--text">
         <div>
           <p>{{ modal_text.description }}</p>
@@ -86,8 +141,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
+
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
+import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
+import ShutdownButton from './AdminButtons/ShutdownButton.vue';
 const props = defineProps(['modal_title', 'modal_text', 'main_url', 'wc_state'])
 const arg_headers = [
   { title: 'Name', key: 'name' },
@@ -110,6 +169,7 @@ const result_headers = [
 ]
 const text = ref()
 const json_text = ref()
+
 function set_text(action: any) {
   text.value = "- name : ".concat(action.name).concat("\n\t").concat(
     "module : ").concat(props.modal_text.name).concat("\n\t").concat(
@@ -122,7 +182,11 @@ function set_text(action: any) {
       args[arg.name] = arg.default
     }
     else {
-      args[arg.name] = arg.value
+      try {
+        args[arg.name] = JSON.parse(arg.value)
+      } catch (e) {
+        args[arg.name] = arg.value
+      }
     }
   }
   )
@@ -153,7 +217,11 @@ async function send_wf(action: any) {
       args[arg.name] = arg.default
     }
     else {
-      args[arg.name] = arg.value
+      try {
+        args[arg.name] = JSON.parse(arg.value)
+      } catch (e) {
+        args[arg.name] = arg.value
+      }
     }
 
   })
@@ -221,3 +289,9 @@ function copyAction(test: any) {
   alert("Copied!")
 }
 </script>
+
+<style>
+  .title {
+    margin-right: 30px;
+  }
+</style>
