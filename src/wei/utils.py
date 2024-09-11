@@ -7,8 +7,6 @@ from argparse import Namespace
 from pathlib import Path
 from typing import Optional, Union
 
-from wei.types.module_types import ModuleDefinition
-
 
 def extract_version(pyproject_path: Optional[Union[Path, str]]) -> str:
     """Returns either the version of the installed package or the one
@@ -60,16 +58,6 @@ def initialize_state(workcell=None) -> None:
 
     if not workcell:
         workcell = Workcell.from_yaml(Config.workcell_file)
-    if not any(module.name == "workcell" for module in workcell.modules):
-        workcell.modules.append(
-            ModuleDefinition(
-                name="workcell",
-                model="WEI Workcell",
-                config={
-                    "rest_node_address": f"http://{Config.server_host}:{Config.server_port}"
-                },
-            )
-        )
     state_manager.set_workcell(workcell)
     state_manager.wc_status = ModuleStatus.IDLE
     initialize_workcell_modules()

@@ -45,10 +45,10 @@ flowdef:
       test_file: test_label
 
   - name: Wait for 5 seconds
-    module: workcell
+    module: utilities
     action: delay
     args:
-      seconds: 5
+      seconds: 1.25
 
   - name: Discard sample
     module: transfer
