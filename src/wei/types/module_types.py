@@ -66,6 +66,13 @@ class ModuleState(BaseModel, extra="allow"):
     error: Optional[str] = None
     """Error message if the module is in an error state"""
 
+    @field_validator("status", mode="before")
+    def validate_status(cls, v: Any) -> Any:
+        """Validate the status field of the ModuleState"""
+        if isinstance(v, str):
+            return ModuleStatus(v)
+        return v
+
 
 class LegacyModuleState(BaseModel, extra="allow"):
     """Legacy model for the state of a Module"""
