@@ -5,10 +5,20 @@
 groups = ["default", "dev", "diaspora", "docs", "zmq"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:1c27d23a4316010e71a7874ead5b91e9890e80490132dcff6fe9985d2d4c5b15"
+content_hash = "sha256:2baca2953d4d015c15dfe3a7ccde97ae578dd35fb06592b61d2965283b808b94"
 
 [[metadata.targets]]
 requires_python = ">=3.8.1"
+
+[[package]]
+name = "aenum"
+version = "3.1.15"
+summary = "Advanced Enumerations (compatible with Python's stdlib Enum), NamedTuples, and NamedConstants"
+groups = ["default"]
+files = [
+    {file = "aenum-3.1.15-py3-none-any.whl", hash = "sha256:e0dfaeea4c2bd362144b87377e2c61d91958c5ed0b4daf89cb6f45ae23af6288"},
+    {file = "aenum-3.1.15.tar.gz", hash = "sha256:8cbd76cd18c4f870ff39b24284d3ea028fbe8731a58df3aa581e434c575b9559"},
+]
 
 [[package]]
 name = "alabaster"

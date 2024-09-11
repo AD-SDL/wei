@@ -10,9 +10,11 @@ from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
 from wei.types import StepFileResponse, StepResponse, StepStatus
 from wei.types.module_types import (
+    AdminCommands,
     LocalFileModuleActionResult,
     Location,
     ModuleState,
+    ModuleStatus,
     ValueModuleActionResult,
 )
 from wei.types.step_types import ActionRequest
@@ -27,6 +29,7 @@ test_rest_node = RESTModule(
     resource_pools=[],
     model="test_module",
     actions=[],
+    admin_commands=set([admin_command for admin_command in AdminCommands]),
 )
 test_rest_node.arg_parser.add_argument(
     "--foo",
@@ -46,8 +49,6 @@ test_rest_node.arg_parser.add_argument(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
-    state.action_paused = False
-    state.action_stopped_or_canceled = False
 
 
 @test_rest_node.state_handler()
@@ -62,6 +63,18 @@ def fail(state: State, action: ActionRequest) -> StepResponse:
     return StepResponse.step_failed("Oh no! This step failed!")
 
 
+def sleep_with_signals(seconds: int, state: State):
+    """Sleeps for `seconds` seconds, checking for state changes every second"""
+    for i in range(seconds):
+        print(i)
+        time.sleep(1)
+        while state.status == ModuleStatus.PAUSED:
+            time.sleep(1)
+        if state.status == ModuleStatus.CANCELLED:
+            return False
+    return True
+
+
 @test_rest_node.action()
 def transfer(
     state: State,
@@ -70,8 +83,10 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
-    time.sleep(5)
-    return StepResponse.step_succeeded()
+    if sleep_with_signals(5, state):
+        return StepResponse.step_succeeded()
+    else:
+        return StepResponse.step_failed("Transfer was cancelled or e-stopped.")
 
 
 @test_rest_node.action()
@@ -83,12 +98,16 @@ def synthesize(
     protocol: Annotated[UploadFile, "Python Protocol File"],
 ) -> StepResponse:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
+    if not sleep_with_signals(2, state):
+        return StepResponse.step_failed("Synthesis was cancelled or e-stopped.")
     protocol = protocol.file.read().decode("utf-8")
     print(protocol)
 
     state.foobar = foo + bar
-    time.sleep(5)
-    return StepResponse.step_succeeded()
+    if sleep_with_signals(2, state):
+        return StepResponse.step_succeeded()
+    else:
+        return StepResponse.step_failed("Synthesis was cancelled or e-stopped.")
 
 
 @test_rest_node.action(
@@ -103,16 +122,23 @@ def synthesize(
 )
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
+    if not sleep_with_signals(2, state):
+        return StepResponse.step_failed("Measure was cancelled or e-stopped.")
     with open("test.txt", "w") as f:
         f.write("test")
     with open("test2.txt", "w") as f:
         f.write("test")
-    time.sleep(5)
-    return StepFileResponse(
-        StepStatus.SUCCEEDED,
-        files={"test_file": "test.txt", "test2_file": "test2.txt"},
-        data={"test": {"test": "test"}},
-    )
+    start = time.time()
+    while time.time() - start < 5 and state.status == ModuleStatus.BUSY:
+        time.sleep(0.1)
+    if sleep_with_signals(2, state):
+        return StepFileResponse(
+            StepStatus.SUCCEEDED,
+            files={"test_file": "test.txt", "test2_file": "test2.txt"},
+            data={"test": {"test": "test"}},
+        )
+    else:
+        return StepResponse.step_failed("Measure was cancelled or e-stopped.")
 
 
 @test_rest_node.action(name="admin_actions_test")
@@ -123,62 +149,22 @@ def run_action(state: State, action: ActionRequest) -> StepResponse:
 
     while action_timer <= 30:  # only allow action to be active for 30 seconds
         print("ACTION IS RUNNING")
+        print(state.status)
 
         # check if the action has been safety stopped
-        if state.action_stopped_or_canceled is True:
+        if state.status == ModuleStatus.CANCELLED:
             print("ACTION HAS BEEN STOPPED")
             break
         # check that the action is not paused every second
-        elif state.action_paused is False:
+        elif state.status == ModuleStatus.PAUSED:
             action_timer += 1
 
         time.sleep(1)
 
-    if state.action_stopped_or_canceled is True:
+    if state.status == ModuleStatus.CANCELLED:
         return StepResponse.step_failed()
     else:
         return StepResponse.step_succeeded()
-
-
-# PAUSE admin action
-@test_rest_node.pause()
-def pause_action(state: State):
-    """Pauses the module action"""
-
-    state.action_paused = True
-
-
-# RESUME admin action
-@test_rest_node.resume()
-def resume_action(state: State):
-    """Resumes the module action"""
-
-    state.action_paused = False
-
-
-# STOP admin action
-@test_rest_node.safety_stop()
-def stop_action(state: State):
-    """Stops the module action"""
-
-    state.action_stopped_or_canceled = True
-
-
-# CANCEL admin action DOESN'T WORK RIGHT NOW
-@test_rest_node.cancel()
-def cancel_action(state: State):
-    """Cancels the module action"""
-
-    state.action_stopped_or_canceled = True
-
-
-# RESET admin action
-@test_rest_node.reset()
-def reset_action(state: State):
-    """Resets the module"""
-
-    # TODO: Add reset functionality
-    pass
 
 
 if __name__ == "__main__":

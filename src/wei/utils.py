@@ -162,3 +162,15 @@ def pretty_type_repr(type_hint):
             type_name += pretty_type_repr(subtype)
         type_name += "]"
     return type_name
+
+
+class classproperty:
+    """Provides a simple class property decorator for class-level getter properties. Credit: https://stackoverflow.com/a/76301341"""
+
+    def __init__(self, func):
+        """Initialize the classproperty with the getter function."""
+        self.fget = func
+
+    def __get__(self, instance, owner):
+        """Return the result of the getter function."""
+        return self.fget(owner)

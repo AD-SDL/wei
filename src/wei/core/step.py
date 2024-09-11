@@ -91,7 +91,7 @@ def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
                 print(f"Can't run {run_id}.{step.name}, source is reserved")
                 return False
     module = state_manager.get_module(step.module)
-    if module.state.status != ModuleStatus.IDLE:
+    if ModuleStatus(module.state.status) != ModuleStatus.READY:
         print(
             f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle. Module status: {module.state.status}"
         )

@@ -22,7 +22,7 @@
   </template>
 
 <script lang="ts" setup>
-    import {defineProps, ref, watchEffect} from 'vue';
+    import { defineProps, ref, watchEffect } from 'vue';
 
     const props = defineProps<{
         main_url: string;
@@ -37,18 +37,19 @@
 
     // Format pause and resume urls
     if (props.module) {
-        // TODO: Module lock and unlock urls
+        lock_url.value = props.main_url.concat('/admin/lock/'.concat(props.module))
+        unlock_url.value = props.main_url.concat('/admin/unlock/'.concat(props.module))
         hoverText.value = "Module"
     }
     else {
-        // TODO: Workcell lock and unlock urls
+        lock_url.value = props.main_url.concat('/admin/lock')
+        unlock_url.value = props.main_url.concat('/admin/unlock')
         hoverText.value = "Workcell"
     }
 
     if (props.module) {
         watchEffect(() => {
         // Determine if the module is already locked
-        // TODO: Implement 'LOCKED' status
         if (props.module_status == 'LOCKED') {
             isLocked.value = true
         } else {
@@ -59,45 +60,45 @@
 
     // Function to toggle lock/unlock
     const toggleLockUnlock = async () => {
-        // if (isLocked.value) {
-        //     await sendUnlockCommand();
-        // } else {
-        //     await sendLockCommand();
-        // }
+        if (isLocked.value) {
+            await sendUnlockCommand();
+        } else {
+            await sendLockCommand();
+        }
         isLocked.value = !isLocked.value;
     };
 
-    // // Function to send lock command
-    // const sendLockCommand = async () => {
-    //     try {
-    //         const response = await fetch(lock_url.value, {
-    //             method: 'POST',
-    //         });
-    //         if (!response.ok) {
-    //             throw new Error(`HTTP error! status: ${response.status}`);
-    //         }
-    //         console.log('Locked');
+    // Function to send lock command
+    const sendLockCommand = async () => {
+        try {
+            const response = await fetch(lock_url.value, {
+                method: 'POST',
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log('Locked');
 
-    //     } catch (error) {
-    //         console.error('Error locking:', error);
-    //     }
-    // };
+        } catch (error) {
+            console.error('Error locking:', error);
+        }
+    };
 
-    // // Function to send unlock command
-    // const sendUnlockCommand = async () => {
-    //     try {
-    //         const response = await fetch(unlock_url.value, {
-    //             method: 'POST',
-    //         });
+    // Function to send unlock command
+    const sendUnlockCommand = async () => {
+        try {
+            const response = await fetch(unlock_url.value, {
+                method: 'POST',
+            });
 
-    //         if (!response.ok) {
-    //             throw new Error(`HTTP error! status: ${response.status}`);
-    //         }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-    //         console.log('Unlocked');
+            console.log('Unlocked');
 
-    //     } catch (error) {
-    //     console.error('Error unlocking:', error);
-    //     }
-    // };
+        } catch (error) {
+        console.error('Error unlocking:', error);
+        }
+    };
 </script>

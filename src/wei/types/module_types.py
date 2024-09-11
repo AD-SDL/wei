@@ -3,6 +3,7 @@
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
+from aenum import MultiValueEnum, nonmember
 from pydantic import (
     AliasChoices,
     Field,
@@ -14,6 +15,7 @@ from typing_extensions import Literal, Self
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.step_types import Step
+from wei.utils import classproperty
 
 T = TypeVar("T")
 
@@ -33,17 +35,27 @@ class AdminCommands(str, Enum):
     RESUME = "resume"
     CANCEL = "cancel"
     SHUTDOWN = "shutdown"
+    LOCK = "lock"
+    UNLOCK = "unlock"
 
 
-class ModuleStatus(str, Enum):
+class ModuleStatus(str, MultiValueEnum):
     """Status for the state of a Module"""
 
-    INIT = "INIT"
-    IDLE = "IDLE"
-    BUSY = "BUSY"
+    READY = "READY", "IDLE", "OK"
+    BUSY = "BUSY", "RUNNING"
+    INIT = "INIT", "STARTING"
     ERROR = "ERROR"
     UNKNOWN = "UNKNOWN"
     PAUSED = "PAUSED"
+    CANCELLED = "CANCELLED"
+    LOCKED = "LOCKED"
+
+    @nonmember
+    @classproperty
+    def IDLE(cls) -> "ModuleStatus":
+        """Alias for READY"""
+        return ModuleStatus.READY
 
 
 class ModuleState(BaseModel, extra="allow"):
@@ -131,6 +143,8 @@ class ModuleAction(BaseModel):
     """Datapoints resulting from action"""
     function: Optional[Any] = Field(default=None, exclude=True)
     """Function to be called when the action is executed. This must be a callable."""
+    blocking: bool = True
+    """Whether or not the action is blocking"""
 
     @field_validator("function", mode="after")
     @classmethod

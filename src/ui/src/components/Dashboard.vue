@@ -100,12 +100,12 @@
 import { ref, watchEffect } from 'vue';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
-import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
-import SafetyStopButton from './AdminButtons/SafetyStopButton.vue';
-import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
-import ShutdownButton from './AdminButtons/ShutdownButton.vue';
 import CancelButton from './AdminButtons/CancelButton.vue';
+import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
+import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
 import ResetButton from './AdminButtons/ResetButton.vue';
+import SafetyStopButton from './AdminButtons/SafetyStopButton.vue';
+import ShutdownButton from './AdminButtons/ShutdownButton.vue';
 const main_url = ref()
 const state_url = ref()
 const workcell_info_url = ref()
@@ -181,30 +181,54 @@ export default {
     padding: 3px;
   }
 
-.module_status_IDLE {
+.wf_status_completed,
+.module_status_IDLE,
+.module_status_READY {
   background-color: green;
 }
 
+.wf_status_running,
 .module_status_BUSY {
   background-color: blue;
 }
 
+.wf_status_failed,
 .module_status_ERROR {
   background-color: red;
 }
 
+.wf_status_unknown,
 .module_status_UNKNOWN {
-  background-color: darkgrey;
+  background-color: darkslategray;
+}
+
+.wf_status_new,
+.module_status_INIT {
+  background-color: aquamarine;
   color: black;
 }
 
-
-.module_status_INIT {
-  background-color: purple;
-}
-
+.wf_status_queued,
+.wf_status_paused,
+.wf_status_in_progress,
 .module_status_PAUSED {
   background-color: gold;
+  color: black;
+}
+
+.wf_status_in_progress {
+  background-color: darkblue;
+  color: black;
+}
+
+.module_status_LOCKED {
+  background-color: darkgoldenrod;
+  color: white;
+}
+
+.wf_status_cancelled,
+.module_status_CANCELLED {
+  background-color: darkorange;
   color: black;
 }
 
@@ -213,30 +237,5 @@ export default {
   height: 10px;
   border-radius: 5px;
   margin-left: 10px;
-}
-
-.wf_status_queued,
-.wf_status_new,
-.wf_status_paused {
-  background-color: gold;
-  color: black;
-}
-
-.wf_status_running,
-.wf_status_in_progress {
-  background-color: blue;
-}
-
-.wf_status_completed {
-  background-color: green;
-}
-
-.wf_status_failed,
-.wf_status_cancelled {
-  background-color: red;
-}
-
-.wf_status_unknown {
-  background-color: darkgray;
 }
 </style>

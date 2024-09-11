@@ -70,3 +70,25 @@ def send_shutdown(module: Module) -> None:
         print(f"Module {module.name} has been shut down.")
     else:
         print(f"Module {module.name} does not support shutting down.")
+
+
+def send_lock(module: Module) -> None:
+    """Locks a module"""
+    if AdminCommands.LOCK in module.about.admin_commands:
+        InterfaceMap.interfaces[module.interface].send_admin_command(
+            module, AdminCommands.LOCK
+        )
+        print(f"Module {module.name} has been locked.")
+    else:
+        print(f"Module {module.name} does not support locking.")
+
+
+def send_unlock(module: Module) -> None:
+    """Unlocks a module"""
+    if AdminCommands.UNLOCK in module.about.admin_commands:
+        InterfaceMap.interfaces[module.interface].send_admin_command(
+            module, AdminCommands.UNLOCK
+        )
+        print(f"Module {module.name} has been unlocked.")
+    else:
+        print(f"Module {module.name} does not support unlocking.")
