@@ -29,7 +29,7 @@ class Location(Generic[T]):
 class AdminCommands(str, Enum):
     """Valid Admin Commands to send to a Module"""
 
-    SAFETY_STOP = "estop"
+    SAFETY_STOP = "safety_stop"
     RESET = "reset"
     PAUSE = "pause"
     RESUME = "resume"
@@ -188,7 +188,7 @@ class ModuleAbout(BaseModel, extra="ignore"):
     """Compatible version of WEI"""
     description: Optional[str] = None
     """Description of the module"""
-    actions: List[ModuleAction]
+    actions: List[ModuleAction] = []
     """List of actions supported by the module"""
     resource_pools: List[Any] = Field(
         alias=AliasChoices("resources", "resource_pools"), alias_priority=2, default=[]
@@ -196,6 +196,8 @@ class ModuleAbout(BaseModel, extra="ignore"):
     """List of resource pools used by the module"""
     admin_commands: List[AdminCommands] = []
     """List of admin commands supported by the module"""
+    additional_info: Optional[Any] = None
+    """Any additional information about the module"""
 
 
 class ModuleDefinition(BaseModel):

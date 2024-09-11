@@ -143,13 +143,13 @@ watchEffect(async () => {
   var new_experiment_keys = [];
   experiment_keys.value = [];
   setInterval(updateDashboard, 1000)
+  setInterval(updateExperiments, 10000)
 
-  async function updateDashboard() {
-    wc_state.value = await (await fetch(state_url.value)).json();
-    wfs.value = Object.keys(wc_state.value.workflows).sort().reverse();
+  async function updateExperiments() {
     experiments.value = await ((await fetch(experiments_url.value)).json());
     new_experiment_keys = Object.keys(experiments.value).sort();
     let difference = new_experiment_keys.filter(x => !experiment_keys.value.includes(x));
+    experiment_keys.value = Object.keys(experiments.value).sort();
     difference.forEach(async function (value: any) {
       var experiment: ExperimentInfo = new ExperimentInfo();
       experiment.experiment_id = value;
@@ -162,7 +162,11 @@ watchEffect(async () => {
       experiment.num_events = experiment.events.length;
       experiment_objects.value.splice(0, 0, experiment);
     });
-    experiment_keys.value = Object.keys(experiments.value).sort();
+  }
+
+  async function updateDashboard() {
+    wc_state.value = await (await fetch(state_url.value)).json();
+    wfs.value = Object.keys(wc_state.value.workflows).sort().reverse();
   }
 }
 )

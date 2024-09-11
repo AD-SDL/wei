@@ -54,12 +54,12 @@ def initialize_state(workcell=None) -> None:
     from wei.core.location import initialize_workcell_locations
     from wei.core.module import initialize_workcell_modules
     from wei.core.state_manager import state_manager
-    from wei.types import Workcell
+    from wei.types import ModuleStatus, Workcell
 
-    if workcell:
-        state_manager.set_workcell(workcell)
-    else:
-        state_manager.set_workcell(Workcell.from_yaml(Config.workcell_file))
+    if not workcell:
+        workcell = Workcell.from_yaml(Config.workcell_file)
+    state_manager.set_workcell(workcell)
+    state_manager.wc_status = ModuleStatus.IDLE
     initialize_workcell_modules()
     initialize_workcell_locations()
 

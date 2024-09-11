@@ -41,7 +41,7 @@
               class="ml-2"/>
           </template>
 
-          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('estop')">
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('safety_stop')">
             <SafetyStopButton
               :main_url="main_url"
               :module="modal_title"

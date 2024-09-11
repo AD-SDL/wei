@@ -14,7 +14,7 @@ from wei.types.base_types import ulid_factory
 from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment
-from wei.types.module_types import ModuleDefinition
+from wei.types.module_types import ModuleDefinition, ModuleStatus
 from wei.types.workcell_types import Location
 
 
@@ -161,11 +161,37 @@ class StateManager:
         Return a dict containing the current state of the workcell.
         """
         return {
+            "status": self.wc_status,
+            "error": self.error,
             "locations": self._locations.to_dict(),
             "modules": self._modules.to_dict(),
             "workflows": self._workflow_runs.to_dict(),
             "workcell": self._workcell.to_dict(),
         }
+
+    @property
+    def wc_status(self) -> ModuleStatus:
+        """The current status of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:status")
+
+    @wc_status.setter
+    def wc_status(self, value: ModuleStatus) -> None:
+        """Set the status of the workcell"""
+        if self.wc_status != value:
+            self.mark_state_changed()
+        self._redis_client.set(f"{self._workcell_prefix}:status", value)
+
+    @property
+    def error(self) -> str:
+        """Latest error on the server"""
+        return self._redis_client.get(f"{self._workcell_prefix}:error")
+
+    @error.setter
+    def error(self, value: str) -> None:
+        """Add an error to the workcell's error deque"""
+        if self.error != value:
+            self.mark_state_changed()
+        return self._redis_client.set(f"{self._workcell_prefix}:error", value)
 
     def clear_state(
         self, reset_locations: bool = True, clear_workflow_runs: bool = False

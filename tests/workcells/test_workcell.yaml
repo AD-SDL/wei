@@ -8,9 +8,14 @@ config:
   server_port: 8000
   use_diaspora: False
   autostart_engine: True
+  update_interval: 1
 
 #List of all components accessible in this workcell
 modules:
+  - name: utilities
+    model: utility_module
+    config:
+      rest_node_address: "http://utilities:8001"
   - name: synthesis
     model: test_module
     interface: wei_rest_node

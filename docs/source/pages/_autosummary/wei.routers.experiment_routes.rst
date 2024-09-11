@@ -13,6 +13,7 @@ wei.routers.experiment\_routes
 
    .. autosummary::
    
+      event_return
       get_all_experiments
       get_campaign
       get_experiment_endpoint

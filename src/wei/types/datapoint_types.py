@@ -12,16 +12,16 @@ class DataPoint(BaseModel, extra="allow"):
 
     label: str
     """label of this data point"""
-    step_id: Optional[str]
+    step_id: Optional[str] = None
     """step that generated the data point"""
-    workflow_id: Optional[str]
+    workflow_id: Optional[str] = None
     """workflow that generated the data point"""
-    experiment_id: Optional[str]
+    experiment_id: Optional[str] = None
     """experiment that generated the data point"""
-    type: str
-    """type of the datapoint, inherited from class"""
     campaign_id: Optional[str] = None
     """campaign of the data point"""
+    type: str
+    """type of the datapoint, inherited from class"""
     id: str = Field(default_factory=ulid_factory)
     """specific id for this data point"""
 

@@ -197,35 +197,36 @@ class RESTModule:
         state.status = ModuleStatus.ERROR
         state.error = str(exception)
 
+    @staticmethod
+    def startup_thread(state: State):
+        """Runs the startup function for the module in a non-blocking thread, with error handling"""
+        try:
+            # * Call the module's startup function
+            state._startup_handler(state=state)
+        except Exception as exception:
+            # * If an exception occurs during startup, handle it and put the module in an error state
+            state.exception_handler(state, exception, "Error during startup")
+            state.status = (
+                ModuleStatus.ERROR
+            )  # * Make extra sure the status is set to ERROR
+        else:
+            # * If everything goes well, set the module status to IDLE
+            if state.status == ModuleStatus.INIT:
+                state.status = ModuleStatus.READY
+                print(
+                    "Startup completed successfully. Module is now ready to accept actions."
+                )
+            elif state.status == ModuleStatus.ERROR:
+                print("Startup completed with errors.")
+
     @asynccontextmanager
     @staticmethod
     async def _lifespan(app: FastAPI):
         """Initializes the module, doing any instrument startup and starting the REST app."""
 
-        def startup_thread(state: State):
-            """Runs the startup function for the module in a non-blocking thread, with error handling"""
-            try:
-                # * Call the module's startup function
-                state._startup_handler(state=state)
-            except Exception as exception:
-                # * If an exception occurs during startup, handle it and put the module in an error state
-                state.exception_handler(state, exception, "Error during startup")
-                state.status = (
-                    ModuleStatus.ERROR
-                )  # * Make extra sure the status is set to ERROR
-            else:
-                # * If everything goes well, set the module status to IDLE
-                if state.status == ModuleStatus.INIT:
-                    state.status = ModuleStatus.READY
-                    print(
-                        "Startup completed successfully. Module is now ready to accept actions."
-                    )
-                elif state.status == ModuleStatus.ERROR:
-                    print("Startup completed with errors.")
-
         # * Run startup on a separate thread so it doesn't block the rest server from starting
         # * (module won't accept actions until startup is complete)
-        Thread(target=startup_thread, args=[app.state]).start()
+        Thread(target=RESTModule.startup_thread, args=[app.state]).start()
 
         yield
 
@@ -523,7 +524,7 @@ class RESTModule:
         state.status = ModuleStatus.INIT
         try:
             state._shutdown_handler(state)
-            state._startup_handler(state)
+            Thread(target=RESTModule.startup_thread, args=[state]).start()
             return {"message": "Module reset"}
         except Exception as e:
             state.exception_handler(
@@ -691,6 +692,9 @@ class RESTModule:
         # * Enforce a name
         if not self.state.name:
             raise Exception("A unique --name is required")
+        import colorama
+
+        colorama.just_fix_windows_console()
         uvicorn.run(self.app, host=self.state.host, port=self.state.port)
 
 
