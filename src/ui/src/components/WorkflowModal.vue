@@ -1,41 +1,27 @@
 <template>
-  <v-dialog v-slot:default="{ isActive }" max-width="800">
-    <v-btn slot="activator" primary dark></v-btn>
+  <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1000">
     <v-card>
+      <v-card-title>
+        <h2 class="title">Workflow: {{ modal_title }}</h2>
+        {{modal_text.run_id}}
+        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'wf_status_' + modal_text.status">{{ modal_text.status }}</v-sheet>
+      </v-card-title>
       <v-card-text>
-        <h2 class="title">{{ modal_title }}</h2>
-        <v-list>
-          <v-list-item><b>Run ID:</b> {{ modal_text.run_id }}<br></v-list-item>
-          <v-list-item v-if="modal_text.start_time">
-            <b>Start Time</b> {{ modal_text.start_time }}
-          </v-list-item>
-          <v-list-item v-if="modal_text.end_time">
-            <b>End Time</b> {{ modal_text.end_time }}
-          </v-list-item>
-          <v-list-item v-if="modal_text.duration">
-            <b>Duration</b> {{ modal_text.duration }}
-          </v-list-item>
-        </v-list>
-        <div>
-          <v-switch label="Toggle Payload Values" v-model="flowdef"></v-switch>
-          <div v-if="flowdef">
-            <Workflow :steps="modal_text.flowdef" />
-          </div>
-          <div v-else>
-            <Workflow :steps="modal_text.steps" />
-          </div>
-        </div>
+        <h3>Details</h3>
+        <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
+        <Workflow :steps="modal_text.steps" />
       </v-card-text>
-      <v-card-row actions>
+      <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn flat @click="isActive.value = false" class="primary--text">close</v-btn>
-      </v-card-row>
+      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import VueJsonPretty from 'vue-json-pretty';
 const props = defineProps(['modal_title', 'modal_text'])
 const flowdef = ref(false)
 </script>

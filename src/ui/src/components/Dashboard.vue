@@ -226,7 +226,7 @@ export default {
 }
 
 .module_status_LOCKED {
-  background-color: darkgoldenrod;
+  background-color: darkslategray;
   color: white;
 }
 
