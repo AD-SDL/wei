@@ -130,12 +130,12 @@ class ResourcesInterface:
 
                 if resource:
                     print(
-                        f"Resource found: {resource.name} in module {resource.module_name} (Type: {resource_class.__name__})"
+                        f"Resource found: {resource.name} in Module: {resource.module_name} (Type: {resource_class.__name__})"
                     )
                     return resource
 
             print(
-                f"No resource found with name '{resource_name}' in module '{module_name}'"
+                f"No resource found with name '{resource_name}' in Module: '{module_name}'"
             )
             return None
 
@@ -273,6 +273,7 @@ class ResourcesInterface:
         with self.session as session:
             session.add(pool)  # Re-attach pool to the session
             pool.increase(amount, session)
+            session.refresh(pool)
 
     def decrease_pool_quantity(self, pool: PoolTable, amount: float) -> None:
         """
@@ -285,6 +286,7 @@ class ResourcesInterface:
         with self.session as session:
             session.add(pool)  # Re-attach pool to the session
             pool.decrease(amount, session)
+            session.refresh(pool)
 
     def empty_pool(self, pool: PoolTable) -> None:
         """
@@ -296,6 +298,7 @@ class ResourcesInterface:
         with self.session as session:
             session.add(pool)  # Re-attach pool to the session
             pool.empty(session)
+            session.refresh(pool)
 
     def fill_pool(self, pool: PoolTable) -> None:
         """
@@ -307,6 +310,7 @@ class ResourcesInterface:
         with self.session as session:
             session.add(pool)  # Re-attach pool to the session
             pool.fill(session)
+            session.refresh(pool)
 
     def push_to_stack(self, stack: StackTable, asset: AssetTable) -> None:
         """
@@ -324,6 +328,7 @@ class ResourcesInterface:
             # Push the asset onto the stack and commit the transaction
             stack.push(asset, session)
             session.commit()
+            session.refresh(stack)
 
     def pop_from_stack(self, stack: StackTable) -> AssetTable:
         """
@@ -342,6 +347,7 @@ class ResourcesInterface:
             # Pop the asset from the stack and commit the transaction
             asset = stack.pop(session)
             session.commit()
+            session.refresh(stack)
 
             if asset:
                 return asset
@@ -372,6 +378,7 @@ class ResourcesInterface:
             # Now push the asset onto the queue
             queue.push(asset, session)
             session.commit()
+            session.refresh(queue)
 
     def pop_from_queue(self, queue: QueueTable) -> AssetTable:
         """
@@ -399,10 +406,14 @@ class ResourcesInterface:
             asset (AssetTable): The asset to insert.
         """
         with self.session as session:
-            session.add(collection)  # Re-attach collection to the session
-            session.add(asset)  # Re-attach asset to the session
+            # Ensure the collection and asset are attached to the session
+            collection = session.merge(collection)
+            asset = session.merge(asset)
+
+            # Insert the asset into the collection at the specified location
             collection.insert(location, asset, session)
             session.commit()
+            session.refresh(collection)
 
     def retrieve_from_collection(
         self, collection: CollectionTable, location: str
@@ -418,7 +429,9 @@ class ResourcesInterface:
             AssetTable: The retrieved asset.
         """
         with self.session as session:
-            session.add(collection)  # Re-attach collection to the session
+            collection = session.merge(
+                collection
+            )  # Re-attach collection to the session
             return collection.retrieve(
                 location, session
             )  # Ensure the correct order of arguments
@@ -437,6 +450,7 @@ class ResourcesInterface:
         with self.session as session:
             session.add(plate)  # Re-attach plate to the session
             plate.update_well(well_id, quantity, session)
+            session.refresh(plate)
 
     def update_plate_contents(
         self, plate: PlateTable, new_contents: Dict[str, float]
@@ -451,6 +465,32 @@ class ResourcesInterface:
         with self.session as session:
             session.add(plate)  # Re-attach plate to the session
             plate.update_plate(new_contents, session)
+            session.refresh(plate)
+
+    def get_well_quantity(self, plate: PlateTable, well_id: str) -> Optional[float]:
+        """
+        Retrieve the quantity in a specific well of a plate resource.
+
+        Args:
+            plate (PlateTable): The plate resource to query.
+            well_id (str): The ID of the well to retrieve the quantity for.
+
+        Returns:
+            Optional[float]: The quantity in the well, or None if the well does not exist.
+        """
+        with self.session as session:
+            # Ensure the plate is attached to the current session
+            plate = session.merge(plate)
+
+            # Access the wells dictionary to get the specific well
+            wells = plate.wells
+            well = wells.get(well_id)
+
+            if well is not None:
+                return well.quantity  # Return the quantity of the well
+            else:
+                print(f"Well {well_id} not found in plate {plate.name}")
+                return None
 
 
 # Sample main function for testing
