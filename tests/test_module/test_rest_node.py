@@ -2,6 +2,7 @@
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
 
+from time import sleep
 from typing import Annotated
 
 from fastapi import UploadFile
@@ -10,9 +11,7 @@ from fastapi.datastructures import State
 from wei.modules.rest_module import RESTModule
 from wei.resources_interface import ResourcesInterface
 from wei.types import (
-    StepFileResponse,
     StepResponse,
-    StepStatus,
 )
 from wei.types.module_types import (
     LocalFileModuleActionResult,
@@ -67,8 +66,8 @@ def test_node_startup(state: State):
         "postgresql://rpl:rpl@wei_postgres:5432/resources"
     )
     try:
-        # state.resource_interface.delete_all_tables()
-        # sleep(5)
+        state.resource_interface.delete_all_tables()
+        sleep(7)
         # Example: Create resources using ResourceInterface
         stack1 = StackTable(
             name="Stack1",
@@ -116,9 +115,11 @@ def test_node_startup(state: State):
             module_name=state.module_name,
         )
         state.resource_interface.add_resource(plate0)
-
+        state.resource_interface.update_plate_contents(
+            plate0, {"A1": 50.0, "B1": 25.0, "C1": 75.0, "D1": 45.0}
+        )
         collection = CollectionTable(
-            name="CollectionResource",
+            name="Collection1",
             description="Collection for measurement",
             capacity=5,
             module_name=state.module_name,
@@ -150,7 +151,7 @@ def transfer(
 ) -> StepResponse:
     """Transfers a sample from source to target"""
     all_stacks = state.resource_interface.get_all_resources(StackTable)
-    print("\nAll Stacks:", all_stacks)
+    print("All Stacks:", all_stacks)
 
     target_stack = state.resource_interface.get_resource(
         resource_name=target, module_name=state.module_name
@@ -189,26 +190,42 @@ def synthesize(
     protocol: Annotated[UploadFile, "Python Protocol File"],
 ) -> StepResponse:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
-    protocol = protocol.file.read().decode("utf-8")
-    print(protocol)
 
+    # Read the uploaded protocol file content (not used further in this example)
+    protocol_content = protocol.file.read().decode("utf-8")
+    print(protocol_content)
+
+    # Retrieve the plate resource
     plate = state.resource_interface.get_resource(
         resource_name="Plate0", module_name=state.module_name
     )
 
-    if plate:
+    if not plate:
+        return StepResponse.step_failed("Plate0 resource not found")
+
+    try:
+        # Update specific wells
+        state.resource_interface.update_plate_well(plate, "A1", 80.0)  # Set A1 to 80
+        # Safely retrieve well 'B1' quantity before modification
+        well_B1_quantity = state.resource_interface.get_well_quantity(plate, "B1")
         state.resource_interface.update_plate_well(
-            plate, "A1", plate.wells.get("A1").quantity + foo
-        )
-        state.resource_interface.update_plate_well(
-            plate, "B1", plate.wells.get("B1").quantity - bar
-        )
+            plate, "B1", well_B1_quantity - 1
+        )  # Decrease B1 by 'bar'
+
+        # Update the entire contents of wells, setting C1 to well capacity
         state.resource_interface.update_plate_contents(
             plate, {"C1": plate.well_capacity}
         )
+
+        # Set D1 well to zero
         state.resource_interface.update_plate_well(plate, "D1", 0.0)
 
-    return StepResponse.step_succeeded()
+        all_plates = state.resource_interface.get_all_resources(PlateTable)
+        print("All Plates in the database:", all_plates)
+        return StepResponse.step_succeeded()
+
+    except Exception as e:
+        return StepResponse.step_failed(f"Failed to synthesize: {e}")
 
 
 @test_rest_node.action(
@@ -223,27 +240,40 @@ def synthesize(
 )
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
+    # Retrieve the collection resource
     collection = state.resource_interface.get_resource(
-        resource_name="CollectionResource", module_name=state.module_name
+        resource_name="Collection1", module_name=state.module_name
     )
 
     if collection:
         print(collection.quantity)
-        location = f"location_{collection.quantity + 1}"
-        instance = AssetTable(name=f"Measurement at {location}")
-        state.resource_interface.insert_into_collection(collection, location, instance)
-        print(collection.quantity)
 
+        # Create a new location for the measurement
+        location = f"location_{collection.quantity + 1}"
+
+        # Create a new AssetTable instance
+        instance = AssetTable(name=f"Measurement at {location}")
+
+        # Insert the new asset into the collection
+        state.resource_interface.insert_into_collection(collection, location, instance)
+
+        print(f"Updated quantity: {collection.quantity}")
+
+        # Create and write test files
         with open("test.txt", "w") as f:
             f.write("test")
         with open("test2.txt", "w") as f:
             f.write("test")
 
-        return StepFileResponse(
-            StepStatus.SUCCEEDED,
-            files={"test_file": "test.txt", "test2_file": "test2.txt"},
-            data={"test": {"test": "test"}},
-        )
+        all_collections = state.resource_interface.get_all_resources(CollectionTable)
+        print("All Collections in the database:", all_collections)
+        # Return the success response with the generated files
+        # return StepResponse.step_succeeded(
+        #     files={"test_file": "test.txt", "test2_file": "test2.txt"},
+        #     data={"test": {"test": "test"}},
+        # )
+        return StepResponse.step_succeeded()
+
     else:
         return StepResponse.step_failed("Collection resource not found")
 
