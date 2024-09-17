@@ -14,7 +14,7 @@ from wei.core.state_manager import state_manager
 from wei.core.storage import get_experiment_log_file
 from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import Event
-from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
+from wei.types.experiment_types import Experiment, ExperimentDesign
 
 router = APIRouter()
 
@@ -93,27 +93,3 @@ def register_experiment(
 ) -> Experiment:
     """Creates a new experiment, optionally associating it with a campaign"""
     return register_new_experiment(experiment_design)
-
-
-@router.post("/campaign")
-def register_campaign(campaign_name: str) -> Campaign:
-    """Creates a new campaign
-
-    Parameters
-    ----------
-    campaign_name: str
-        The human readable name of the campaign
-    Returns
-    -------
-    response: Campaign
-    """
-
-    campaign = Campaign(campaign_name=campaign_name)
-    state_manager.set_campaign(campaign)
-    return campaign
-
-
-@router.get("/campaign/{campaign_id}")
-def get_campaign(campaign_id: str) -> Campaign:
-    """Returns the details of a campaign"""
-    return state_manager.get_campaign(campaign_id)

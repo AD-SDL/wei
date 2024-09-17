@@ -1,4 +1,4 @@
-﻿wei.routers.experiment\_routes
+wei.routers.experiment\_routes
 ==============================
 
 .. automodule:: wei.routers.experiment_routes

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+
 from wei.types import WorkflowStatus
 from wei.types.exceptions import WorkflowFailedException
 
@@ -17,7 +18,7 @@ class TestWEI_Workflows(TestWEI_Base):
 
         workflow_path = Path(__file__).parent / "workflows" / "test_workflow.yaml"
 
-        run_info = self.experiment.start_run(
+        run_info = self.experiment_client.start_run(
             workflow=workflow_path,
             payload={"wait_time": 5},
             blocking=True,
@@ -25,15 +26,15 @@ class TestWEI_Workflows(TestWEI_Base):
         )
 
         assert run_info.status == WorkflowStatus.COMPLETED
-        assert self.experiment.get_datapoint_value(
+        assert self.experiment_client.get_datapoint_value(
             run_info.get_datapoint_id_by_label("test_label")
         )
         print(run_info.get_step_by_name("Measure foobar").result)
-        assert self.experiment.get_datapoint_value(
+        assert self.experiment_client.get_datapoint_value(
             run_info.get_step_by_name("Measure foobar").result.data["test"]
         )
         with pytest.raises(KeyError):
-            self.experiment.get_datapoint_value(
+            self.experiment_client.get_datapoint_value(
                 run_info.get_datapoint_id_by_label("non_existent_label")
             )
 
@@ -45,7 +46,7 @@ class TestWEI_Workflows(TestWEI_Base):
         )
 
         with pytest.raises(WorkflowFailedException):
-            run_info = self.experiment.start_run(
+            run_info = self.experiment_client.start_run(
                 workflow=workflow_path,
                 payload={"wait_time": 5, "fail": True},
                 blocking=True,
@@ -53,7 +54,7 @@ class TestWEI_Workflows(TestWEI_Base):
                 raise_on_failed=True,
             )
 
-        run_info = self.experiment.start_run(
+        run_info = self.experiment_client.start_run(
             workflow=workflow_path,
             payload={"wait_time": 5, "fail": True},
             blocking=True,

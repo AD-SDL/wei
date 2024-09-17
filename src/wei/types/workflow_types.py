@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field, field_validator
+from pydantic_extra_types.ulid import ULID
 
 from wei.types.base_types import BaseModel, Metadata, ulid_factory
 from wei.types.module_types import SimpleModule
@@ -32,6 +33,17 @@ class WorkflowStatus(str, Enum):
     """Workflow run status is unknown"""
     CANCELLED = "cancelled"
     """Workflow run has been cancelled"""
+
+    @property
+    def is_active(self) -> bool:
+        """Whether or not the workflow run is active"""
+        return self in [
+            WorkflowStatus.NEW,
+            WorkflowStatus.QUEUED,
+            WorkflowStatus.RUNNING,
+            WorkflowStatus.IN_PROGRESS,
+            WorkflowStatus.PAUSED,
+        ]
 
 
 class Workflow(BaseModel):
@@ -76,7 +88,7 @@ class WorkflowRun(Workflow):
 
     label: Optional[str] = None
     """Label for the workflow run"""
-    run_id: str = Field(default_factory=ulid_factory)
+    run_id: ULID = Field(default_factory=ulid_factory)
     """ID of the workflow run"""
     payload: Dict[str, Any] = {}
     """input information for a given workflow run"""
@@ -86,7 +98,7 @@ class WorkflowRun(Workflow):
     """WEI Processed Steps of the flow"""
     hist: Dict[str, Any] = Field(default={})
     """history of the workflow"""
-    experiment_id: str = ""
+    experiment_id: ULID
     """ID of the experiment this workflow is a part of"""
     step_index: int = 0
     """Index of the current step"""
@@ -106,7 +118,7 @@ class WorkflowRun(Workflow):
                 return step
         raise KeyError(f"Step {name} not found in workflow run {self.run_id}")
 
-    def get_step_by_id(self, id: str) -> Step:
+    def get_step_by_id(self, id: ULID) -> Step:
         """Return the step object indexed by its id"""
         for step in self.steps:
             if step.id == id:

@@ -54,3 +54,25 @@ For instance, to retrieve the data point labeled "experiment_result" from the ex
     value = experiment_client.get_datapoint_value(datapoint_id)
 
     print(value)
+
+You can retrieve all data points from a workflow with a specific label using the following code:
+
+.. code-block:: python
+
+    datapoint_ids = wf_run.get_all_datapoint_ids_by_label("experiment_result")
+
+    # Retrieve the data points using the ExperimentClient
+    values = [experiment_client.get_datapoint_value(datapoint_id) for datapoint_id in datapoint_ids]
+
+    print(values)
+
+
+You can retrieve all data points for an experiment using the following code:
+
+.. code-block:: python
+
+    datapoints = experiment_client.get_experiment_datapoints()
+
+    values = [experiment_client.get_datapoint_value(datapoint_id) for datapoint_id in datapoints]
+
+    print(values)

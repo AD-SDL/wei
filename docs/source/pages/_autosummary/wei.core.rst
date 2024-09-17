@@ -1,4 +1,4 @@
-﻿wei.core
+wei.core
 ========
 
 .. automodule:: wei.core

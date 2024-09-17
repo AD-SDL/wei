@@ -1,4 +1,4 @@
-﻿wei.types.exceptions
+wei.types.exceptions
 ====================
 
 .. automodule:: wei.types.exceptions

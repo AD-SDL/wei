@@ -1,4 +1,4 @@
-﻿wei.modules
+wei.modules
 ===========
 
 .. automodule:: wei.modules

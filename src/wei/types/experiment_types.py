@@ -4,16 +4,24 @@ from datetime import datetime
 from typing import List, Optional
 
 from pydantic import AliasChoices, Field
+from pydantic_extra_types.ulid import ULID
 
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
 
 
-class Campaign(BaseModel):
-    """A campaign is a collection of related experiments"""
+class CampaignDesign(BaseModel):
+    """Design of a campaign"""
 
     campaign_name: str
     """Name of the campaign"""
-    campaign_id: str = Field(default_factory=ulid_factory)
+    description: Optional[str] = None
+    """Description of the campaign"""
+
+
+class Campaign(CampaignDesign):
+    """A campaign is a collection of related experiments"""
+
+    campaign_id: ULID = Field(default_factory=ulid_factory)
     """ID of the campaign"""
     experiment_ids: List[str] = []
     """Experiments associated with the campaign"""
@@ -35,7 +43,7 @@ class ExperimentDesign(BaseModel):
 class Experiment(ExperimentDesign):
     """A single instance of an experiment"""
 
-    experiment_id: str = Field(default_factory=ulid_factory)
+    experiment_id: ULID = Field(default_factory=ulid_factory)
     """ID of the experiment"""
     experiment_directory: Optional[PathLike] = None
     """The directory where the experiment is stored on disk"""

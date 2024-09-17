@@ -54,11 +54,6 @@ def create_run(
         }
     )
     wf_run = WorkflowRun(**wf_dict)
-    get_workflow_run_directory(
-        workflow_name=wf_run.name,
-        workflow_run_id=wf_run.run_id,
-        experiment_id=experiment_id,
-    ).mkdir(parents=True, exist_ok=True)
 
     steps = []
     for step in workflow.flowdef:
@@ -105,6 +100,12 @@ def inject_payload(payload: Dict[str, Any], step: Step) -> None:
 def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> WorkflowRun:
     """Saves the files to the workflow run directory,
     and updates the step files to point to the new location"""
+
+    get_workflow_run_directory(
+        workflow_name=wf_run.name,
+        workflow_run_id=wf_run.run_id,
+        experiment_id=wf_run.experiment_id,
+    ).mkdir(parents=True, exist_ok=True)
     if files:
         for file in files:
             file_path = (

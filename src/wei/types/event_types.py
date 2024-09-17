@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import Field
+from pydantic_extra_types.ulid import ULID
 
 from wei.types.base_types import BaseModel, ulid_factory
 from wei.types.experiment_types import Campaign, Experiment
@@ -15,7 +16,7 @@ from wei.types.workflow_types import WorkflowRun
 class Event(BaseModel, extra="allow"):
     """A single event in an experiment"""
 
-    event_id: str = Field(default_factory=ulid_factory)
+    event_id: ULID = Field(default_factory=ulid_factory)
     event_timestamp: datetime = Field(default_factory=datetime.now)
     experiment_id: Optional[str] = None
     campaign_id: Optional[str] = None
@@ -27,14 +28,14 @@ class Event(BaseModel, extra="allow"):
     """Any additional information about the event (mostly kept for backwards compatibility)"""
 
 
-class CreateCampaignEvent(Event):
+class CampaignStartEvent(Event):
     """Event for creating a campaign"""
 
     event_type: Literal["CAMPAIGN"] = "CAMPAIGN"
     event_name: Literal["CREATE"] = "CREATE"
 
     campaign: Campaign
-    """The campaign that was created"""
+    """The campaign that was started"""
 
 
 class ExperimentStartEvent(Event):
@@ -138,7 +139,7 @@ class GladierFlowEvent(Event):
 
     flow_name: str
     """The name of the flow"""
-    flow_id: str
+    flow_id: ULID
     """The ID of the flow"""
 
 
@@ -191,7 +192,7 @@ class WorkflowQueuedEvent(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["QUEUED"] = "QUEUED"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""
@@ -212,7 +213,7 @@ class WorkflowStartEvent(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["START"] = "START"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""
@@ -233,7 +234,7 @@ class WorkflowFailedEvent(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["FAILED"] = "FAILED"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""
@@ -254,7 +255,7 @@ class WorkflowCompletedEvent(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["COMPLETED"] = "COMPLETED"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""
@@ -275,7 +276,7 @@ class WorkflowCancelled(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["CANCELLED"] = "CANCELLED"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""
@@ -296,7 +297,7 @@ class WorkflowPausedEvent(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["PAUSED"] = "PAUSED"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""
@@ -317,7 +318,7 @@ class WorkflowResumedEvent(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["RESUMED"] = "RESUMED"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""
@@ -338,7 +339,7 @@ class WorkflowStepEvent(Event):
     event_type: Literal["WORKFLOW"] = "WORKFLOW"
     event_name: Literal["STEP"] = "STEP"
 
-    run_id: str
+    run_id: ULID
     """The ID of the workflow"""
     workflow_name: str
     """The name of the workflow"""

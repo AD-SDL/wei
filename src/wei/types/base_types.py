@@ -54,10 +54,10 @@ class Metadata(BaseModel, extra="allow"):
     """Metadata container"""
 
     author: Optional[str] = None
-    """Who authored this workflow"""
+    """Who wrote this object"""
     description: Optional[str] = Field(
         default=None, alias=AliasChoices("description", "info")
     )
-    """Long description"""
-    version: float = 0.1
-    """Version of interface used"""
+    """Description of the object"""
+    version: Union[float, str] = ""
+    """Version of the object"""

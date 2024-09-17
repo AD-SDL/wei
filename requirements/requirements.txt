@@ -2,7 +2,7 @@
 # Please do not edit it manually.
 
 aenum==3.1.15
-alabaster==0.7.13
+alabaster==0.7.16
 annotated-types==0.7.0
 anyio==4.4.0
 asttokens==2.4.1
@@ -23,16 +23,15 @@ distlib==0.3.8
 docutils==0.20.1
 exceptiongroup==1.2.2; python_version < "3.11"
 executing==2.1.0
-fastapi==0.114.1
-filelock==3.16.0
+fastapi==0.115.0
+filelock==3.16.1
 globus-sdk==3.45.0
 h11==0.14.0
 httptools==0.6.1
-identify==2.6.0
-idna==3.8
+identify==2.6.1
+idna==3.10
 imagesize==1.4.1
 importlib-metadata==8.5.0; python_full_version < "3.10.2"
-importlib-resources==6.4.5; python_version < "3.9"
 iniconfig==2.0.0
 jinja2==3.1.4
 kafka-python==2.0.2
@@ -43,13 +42,14 @@ mypy-extensions==1.0.0
 nodeenv==1.9.1
 packaging==24.1
 pause==0.3
-platformdirs==4.3.2
+platformdirs==4.3.6
 pluggy==1.5.0
 pottery==3.0.0
-pre-commit==3.5.0
+pre-commit==3.8.0
 pycparser==2.22; implementation_name == "pypy" or platform_python_implementation != "PyPy"
-pydantic==2.9.1
-pydantic-core==2.23.3
+pydantic==2.9.2
+pydantic-core==2.23.4
+pydantic-extra-types==2.9.0
 pydantic-settings==2.5.2
 pygments==2.18.0
 pyjwt[crypto]==2.9.0
@@ -57,25 +57,25 @@ pyproject-hooks==1.1.0
 pytest==8.3.3
 python-dotenv==1.0.1
 python-multipart==0.0.9
-pytz==2024.2; python_version < "3.9"
+python-ulid[pydantic]==2.7.0
 pyyaml==6.0.2
 pyzmq==26.2.0
 redis==4.6.0
 requests==2.32.3
-ruff==0.6.4
+ruff==0.6.5
 secure-smtplib==0.1.1
 six==1.16.0
 sniffio==1.3.1
 snowballstemmer==2.2.0
-sphinx==7.1.2
+sphinx==7.4.7
 sphinx-rtd-theme==2.0.0
-sphinxcontrib-applehelp==1.0.4
-sphinxcontrib-devhelp==1.0.2
-sphinxcontrib-htmlhelp==2.0.1
+sphinxcontrib-applehelp==2.0.0
+sphinxcontrib-devhelp==2.0.0
+sphinxcontrib-htmlhelp==2.1.0
 sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1
-sphinxcontrib-qthelp==1.0.3
-sphinxcontrib-serializinghtml==1.1.5
+sphinxcontrib-qthelp==2.0.0
+sphinxcontrib-serializinghtml==2.0.0
 starlette==0.38.5
 tomli==2.0.1; python_version < "3.11"
 types-aiofiles==24.1.0.20240626
@@ -85,18 +85,17 @@ types-jwt==0.1.3
 types-orjson==3.6.2
 types-pyopenssl==24.1.0.20240722
 types-python-dateutil==2.9.0.20240906
-types-pyyaml==6.0.12.20240808
+types-pyyaml==6.0.12.20240917
 types-redis==4.6.0.20240903
 types-requests==2.31.0.6
-types-setuptools==74.1.0.20240907
+types-setuptools==75.1.0.20240917
 types-ujson==5.10.0.20240515
 types-urllib3==1.26.25.14
 typing-extensions==4.12.2
-ulid-py==1.1.0
 urllib3==1.26.20
 uvicorn[standard]==0.30.6
 uvloop==0.20.0; (sys_platform != "cygwin" and sys_platform != "win32") and platform_python_implementation != "PyPy"
 virtualenv==20.26.4
 watchfiles==0.24.0
 websockets==13.0.1
-zipp==3.20.1; python_full_version < "3.10.2"
+zipp==3.20.2; python_full_version < "3.10.2"

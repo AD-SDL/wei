@@ -11,6 +11,7 @@ import yaml
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
 from pydantic import AliasChoices, Field, ValidationInfo, field_validator, validator
+from pydantic_extra_types.ulid import ULID
 from typing_extensions import Literal
 
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
@@ -154,7 +155,7 @@ class Step(BaseModel, arbitrary_types_allowed=True):
 
     """Runtime information"""
 
-    id: str = Field(default_factory=ulid_factory)
+    id: ULID = Field(default_factory=ulid_factory)
     """ID of step"""
     start_time: Optional[datetime] = None
     """Time the step started running"""

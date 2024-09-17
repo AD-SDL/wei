@@ -11,6 +11,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_extra_types.ulid import ULID
 from typing_extensions import Literal, Self
 
 from wei.types.base_types import BaseModel, ulid_factory
@@ -252,7 +253,7 @@ class ModuleDefinition(BaseModel):
 class Module(ModuleDefinition):
     """Live instance of a Module"""
 
-    id: str = Field(default_factory=ulid_factory)
+    id: ULID = Field(default_factory=ulid_factory)
     """ID of this instance of a Module"""
     state: ModuleState = Field(default=ModuleState(status=ModuleStatus.UNKNOWN))
     """Current state of the module"""

@@ -80,18 +80,9 @@
       </v-window-item>
       <v-window-item :key="3" :value="3">
         <v-row class="pa-1 ma-1 justify-center">
-          <Experiments :experiment_objects="experiment_objects" :wc_state="wc_state" />
+          <Experiments :experiment_objects="experiment_objects" :wc_state="wc_state" :campaigns="campaigns"/>
         </v-row>
       </v-window-item>
-      <!-- <v-window-item :key="4" :value="4">
-              <p>test3</p>
-            </v-window-item>
-            <v-window-item :key="5" :value="5">
-              <p>test3</p>
-            </v-window-item>
-            <v-window-item :key="6" :value="6">
-              <p>test3</p>
-            </v-window-item> -->
     </v-window>
   </v-container>
 </template>
@@ -116,9 +107,11 @@ const experiments = ref()
 const experiments_url = ref()
 const wc_state = ref()
 const wc_info = ref()
+const campaigns = ref()
+const campaigns_url = ref()
 const experiment_keys = ref()
 const experiment_objects: any = ref([])
-main_url.value = "http://".concat(window.location.host) //.concat("/server")
+main_url.value = "http://".concat(window.location.host)
 class ExperimentInfo {
   experiment_id?: string;
   experiment_workflows: any;
@@ -135,38 +128,41 @@ watchEffect(async () => {
   state_url.value = main_url.value.concat("/wc/state")
 
   experiments_url.value = main_url.value.concat("/experiments/all")
+  campaigns_url.value = experiments_url.value.concat("/campaigns/all")
   workcell_info_url.value = main_url.value.concat("/wc/")
 
   watchEffect(async () => wc_state.value = await (await fetch(state_url.value)).json())
   watchEffect(async () => wc_info.value = await (await fetch(workcell_info_url.value)).json())
 
-  var new_experiment_keys = [];
-  experiment_keys.value = [];
+  // var new_experiment_keys = [];
+  // experiment_keys.value = [];
   setInterval(updateDashboard, 1000)
   setInterval(updateExperiments, 10000)
 
   async function updateExperiments() {
-    experiments.value = await ((await fetch(experiments_url.value)).json());
-    new_experiment_keys = Object.keys(experiments.value).sort();
-    let difference = new_experiment_keys.filter(x => !experiment_keys.value.includes(x));
-    experiment_keys.value = Object.keys(experiments.value).sort();
-    difference.forEach(async function (value: any) {
-      var experiment: ExperimentInfo = new ExperimentInfo();
-      experiment.experiment_id = value;
-      var events = await get_events(value);
+    experiment_objects.value = Object.values(experiments.value);
+    campaigns.value = await ((await fetch(campaigns_url.value)).json());
+    // new_experiment_keys = Object.keys(experiments.value).sort();
+    // let difference = new_experiment_keys.filter(x => !experiment_keys.value.includes(x));
+    // experiment_keys.value = Object.keys(experiments.value).sort();
+    // difference.forEach(async function (value: any) {
+    //   var experiment: ExperimentInfo = new ExperimentInfo();
+    //   experiment.experiment_id = value;
+    //   var events = await get_events(value);
 
-      experiment.experiment_name = experiments.value[value].experiment_name;
-      experiment.experiment_workflows = wfs.value.filter((key: any) => wc_state.value.workflows[key].experiment_id === value);
-      experiment.events = events;
-      experiment.num_wfs = experiment.experiment_workflows.length;
-      experiment.num_events = experiment.events.length;
-      experiment_objects.value.splice(0, 0, experiment);
-    });
+    //   experiment.experiment_name = experiments.value[value].experiment_name;
+    //   experiment.experiment_workflows = wfs.value.filter((key: any) => wc_state.value.workflows[key].experiment_id === value);
+    //   experiment.events = events;
+    //   experiment.num_wfs = experiment.experiment_workflows.length;
+    //   experiment.num_events = experiment.events.length;
+    //   experiment_objects.value.splice(0, 0, experiment);
+    // });
   }
 
   async function updateDashboard() {
     wc_state.value = await (await fetch(state_url.value)).json();
     wfs.value = Object.keys(wc_state.value.workflows).sort().reverse();
+    experiments.value = await ((await fetch(experiments_url.value)).json());
   }
 }
 )

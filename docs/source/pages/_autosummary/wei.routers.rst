@@ -1,4 +1,4 @@
-﻿wei.routers
+wei.routers
 ===========
 
 .. automodule:: wei.routers

@@ -1,4 +1,4 @@
-﻿wei.types
+wei.types
 =========
 
 .. automodule:: wei.types

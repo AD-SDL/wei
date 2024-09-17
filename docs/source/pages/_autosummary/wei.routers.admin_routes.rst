@@ -1,4 +1,4 @@
-﻿wei.routers.admin\_routes
+wei.routers.admin\_routes
 =========================
 
 .. automodule:: wei.routers.admin_routes
