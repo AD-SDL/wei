@@ -487,14 +487,15 @@ class CollectionBase(ResourceContainerBase):
     )
 
     @property
-    def contents_dict(self) -> Dict[str, AssetBase]:
+    def contents_dict(self) -> Dict[str, Any]:
         """
-        Return a dictionary of the collection's contents.
+        Return a deep copy of the collection's contents.
 
         Returns:
-            Dict[str, AssetBase]: The contents of the collection.
+            Dict[str, Any]: A deep copy of the contents of the collection.
         """
-        return {k: AssetBase(**v) for k, v in self.contents.items()}
+        # Return a deep copy of the current contents
+        return copy.deepcopy(self.contents)
 
     def insert(self, location: str, asset: AssetTable, session: Session) -> None:
         """
