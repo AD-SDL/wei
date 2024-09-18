@@ -96,7 +96,7 @@ class AssetTable(AssetBase, table=True):
         return f"({', '.join(attrs)})"
 
     def allocate_to_resource(
-        self, resource_type: str, resource_id: str, session: Session
+        self, resource_type: str, resource_id: str, index: int, session: Session
     ):
         """
         Allocate this asset to a specific resource.
@@ -104,6 +104,7 @@ class AssetTable(AssetBase, table=True):
         Args:
             resource_type (str): The type of the resource ('stack', 'queue', etc.).
             resource_id (str): The ID of the resource.
+            index (int): The index of the asset in the resource (for ordering in lists).
             session (Session): SQLAlchemy session to use for saving.
 
         Raises:
@@ -117,6 +118,7 @@ class AssetTable(AssetBase, table=True):
             if (
                 existing_allocation.resource_type == resource_type
                 and existing_allocation.resource_id == resource_id
+                and existing_allocation.index == index
             ):
                 # The asset is already allocated to this resource, no need to do anything.
                 return
@@ -128,7 +130,10 @@ class AssetTable(AssetBase, table=True):
 
         # If no existing allocation, create a new one
         new_allocation = AssetAllocation(
-            asset_id=self.id, resource_type=resource_type, resource_id=resource_id
+            asset_id=self.id,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            index=index,
         )
         session.add(new_allocation)
         session.commit()
@@ -178,6 +183,9 @@ class AssetAllocation(SQLModel, table=True):
     )
     resource_type: str = SQLField(nullable=False)
     resource_id: str = SQLField(nullable=False)
+    index: int = SQLField(
+        nullable=False
+    )  # Index for sorting assets in list-like resources
 
 
 class ResourceContainerBase(AssetBase):
@@ -295,43 +303,64 @@ class StackBase(ResourceContainerBase):
         contents (List[Dict[str, Any]]): List of assets in the stack, stored as JSONB.
     """
 
-    contents: List[Dict[str, Any]] = SQLField(
-        sa_column=Column("contents", JSONB, default=list)
-    )
-
-    @property
-    def contents_list(self) -> List[Dict[str, Any]]:
+    def get_contents(self, session: Session) -> List[AssetTable]:
         """
-        Return a deep copy of the stack's contents.
+        Fetch and return assets in the stack, ordered by their index.
+
+        The assets are returned as a list, ordered by their index in ascending order.
+        Args:
+            session (Session): The database session passed from the interface layer.
 
         Returns:
-            List[Dict[str, Any]]: The contents of the stack.
+            List[AssetTable]: A list of assets sorted by their index.
         """
-        return copy.deepcopy(self.contents)
+        allocations = (
+            session.query(AssetAllocation)
+            .filter_by(resource_id=self.id, resource_type="stack")
+            .order_by(AssetAllocation.index.asc())
+            .all()
+        )
 
-    def push(self, instance: AssetTable, session: Session) -> int:
+        # Return the assets as a list based on the sorted allocations
+        return [session.get(AssetTable, alloc.asset_id) for alloc in allocations]
+
+    def push(self, asset: AssetTable, session: Session) -> int:
         """
-        Return a deep copy of the stack's contents.
+        Push a new asset onto the stack. Assigns the next available index.
+
+        Args:
+            asset (AssetTable): The asset to push onto the stack.
+            session (Session): SQLAlchemy session passed from the interface layer.
 
         Returns:
-            List[Dict[str, Any]]: The contents of the stack.
+            int: The new index of the pushed asset.
         """
-        contents = self.contents_list
+        # Fetch the current contents (sorted by index)
+        contents = self.get_contents(session)
 
-        if not self.capacity or len(contents) < int(self.capacity):
-            serialized_instance = {"id": instance.id, "name": instance.name}
-            contents.append(serialized_instance)
-            self.contents = contents  # Ensure reassignment to the model attribute
-            self.quantity = len(contents)
-            self.save(session)
-            session.commit()  # Explicitly commit the session
-            instance.allocate_to_resource("stack", self.id, session)
+        # Find the next available index
+        if contents:
+            max_index = (
+                session.query(AssetAllocation)
+                .filter_by(resource_id=self.id)
+                .order_by(AssetAllocation.index.desc())
+                .first()
+                .index
+            )
+            next_index = max_index + 1
         else:
-            raise ValueError(f"Resource {self.name} is full.")
+            next_index = 1  # If there are no contents, start with index 1
 
-        return len(contents) - 1
+        # Allocate the asset to the stack with the next available index
+        asset.allocate_to_resource("stack", self.id, next_index, session)
 
-    def pop(self, session: Session) -> Any:
+        # Update the quantity based on the number of assets in the stack
+        self.quantity = len(contents) + 1  # Increase quantity by 1
+        self.save(session)
+
+        return next_index
+
+    def pop(self, session: Session) -> AssetTable:
         """
         Pop the last asset from the stack.
 
@@ -344,23 +373,23 @@ class StackBase(ResourceContainerBase):
         Raises:
             ValueError: If the stack is empty or if the asset is not found.
         """
-        contents = self.contents_list
+        # Fetch the current contents (sorted by index)
+        contents = self.get_contents(session)
 
-        if contents:
-            instance_data = contents.pop()
-            self.contents = contents
-            self.quantity = len(contents)
-            self.save(session)
-            session.commit()  # Explicitly commit the session
-
-            instance = session.get(AssetTable, instance_data["id"])
-            if instance:
-                instance.deallocate(session)  # Deallocate asset from this stack
-                return instance
-            else:
-                raise ValueError(f"Asset with id '{instance_data['id']}' not found.")
-        else:
+        if not contents:
             raise ValueError(f"Resource {self.name} is empty.")
+
+        # Pop the last asset (LIFO)
+        last_asset = contents[-1]
+
+        # Deallocate the asset from this stack
+        last_asset.deallocate(session)
+
+        # Update the quantity after removing the asset
+        self.quantity = len(contents) - 1  # Decrease quantity by 1
+        self.save(session)
+
+        return last_asset
 
 
 class StackTable(StackBase, table=True):
