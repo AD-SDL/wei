@@ -71,24 +71,18 @@ class ResourcesInterface:
             # Automatically create and link an AssetTable entry
             if isinstance(resource, StackTable):
                 asset = AssetTable(
-                    name=f"Asset for {resource.name}", stack_resource_id=resource.id
+                    name=f"{resource.name}", stack_resource_id=resource.id
                 )
             elif isinstance(resource, PoolTable):
-                asset = AssetTable(
-                    name=f"Asset for {resource.name}", pool_id=resource.id
-                )
+                asset = AssetTable(name=f"{resource.name}", pool_id=resource.id)
             elif isinstance(resource, QueueTable):
                 asset = AssetTable(
-                    name=f"Asset for {resource.name}", queue_resource_id=resource.id
+                    name=f"{resource.name}", queue_resource_id=resource.id
                 )
             elif isinstance(resource, PlateTable):
-                asset = AssetTable(
-                    name=f"Asset for {resource.name}", plate_id=resource.id
-                )
+                asset = AssetTable(name=f"{resource.name}", plate_id=resource.id)
             elif isinstance(resource, CollectionTable):
-                asset = AssetTable(
-                    name=f"Asset for {resource.name}", collection_id=resource.id
-                )
+                asset = AssetTable(name=f"{resource.name}", collection_id=resource.id)
             else:
                 asset = None
 
@@ -511,7 +505,7 @@ if __name__ == "__main__":
     all_pools = resource_interface.get_all_resources(PoolTable)
     print("\nAll Pools after modification:", all_pools)
     # Increase quantity in the Pool
-    resource_interface.increase_pool_quantity(pool, 25.0)
+    resource_interface.increase_pool_quantity(pool, 0.0)
     # print("Increased Pool Quantity:", pool)
 
     # Get all pools after modification
@@ -523,7 +517,7 @@ if __name__ == "__main__":
     )
     stack = resource_interface.add_resource(stack)
     retrieved_stack = resource_interface.get_resource(
-        "stack", resource_name="Test Stack"
+        resource_name="Test Stack", module_name="test2"
     )
     print("Retreived_STACK:", retrieved_stack)
     # Push an asset to the Stack
@@ -541,69 +535,69 @@ if __name__ == "__main__":
     all_stacks = resource_interface.get_all_resources(StackTable)
     print("\nAll Stacks after modification:", all_stacks)
 
-    # Create a Queue resource
-    queue = QueueTable(
-        name="Test Queue", description="A test queue", capacity=10, module_name="test3"
-    )
-    queue = resource_interface.add_resource(queue)
+    # # Create a Queue resource
+    # queue = QueueTable(
+    #     name="Test Queue", description="A test queue", capacity=10, module_name="test3"
+    # )
+    # queue = resource_interface.add_resource(queue)
 
-    # Push an asset to the Queue
-    asset2 = AssetTable(name="Test Asset2")
+    # # Push an asset to the Queue
+    # asset2 = AssetTable(name="Test Asset2")
 
-    resource_interface.push_to_queue(queue, asset2)
-    # resource_interface.push_to_queue(queue, asset)
+    # resource_interface.push_to_queue(queue, asset2)
+    # # resource_interface.push_to_queue(queue, asset)
 
-    # print("Updated Queue with Pushed Asset:", queue)
-    all_queues = resource_interface.get_all_resources(QueueTable)
-    print("\nAll Queues after modification:", all_queues)
+    # # print("Updated Queue with Pushed Asset:", queue)
+    # all_queues = resource_interface.get_all_resources(QueueTable)
+    # print("\nAll Queues after modification:", all_queues)
 
-    # Pop an asset from the Queue
-    popped_asset_q = resource_interface.pop_from_queue(queue)
-    print("\nPopped Asset from Queue:", popped_asset_q)
-    all_queues = resource_interface.get_all_resources(QueueTable)
-    print("\nAll Queues after modification:", all_queues)
-    # Create a Collection resource
-    collection = CollectionTable(
-        name="Test Collection",
-        description="A test collection",
-        capacity=10,
-        module_name="test4",
-    )
-    collection = resource_interface.add_resource(collection)
+    # # Pop an asset from the Queue
+    # popped_asset_q = resource_interface.pop_from_queue(queue)
+    # print("\nPopped Asset from Queue:", popped_asset_q)
+    # all_queues = resource_interface.get_all_resources(QueueTable)
+    # print("\nAll Queues after modification:", all_queues)
+    # # Create a Collection resource
+    # collection = CollectionTable(
+    #     name="Test Collection",
+    #     description="A test collection",
+    #     capacity=10,
+    #     module_name="test4",
+    # )
+    # collection = resource_interface.add_resource(collection)
 
-    # Insert an asset into the Collection
-    resource_interface.insert_into_collection(collection, "location1", asset3)
+    # # Insert an asset into the Collection
+    # resource_interface.insert_into_collection(collection, "location1", asset3)
 
-    # Retrieve an asset from the Collection
-    retrieved_asset = resource_interface.retrieve_from_collection(
-        collection, "location1"
-    )
-    print("\nRetrieved Asset from Collection:", retrieved_asset)
+    # # Retrieve an asset from the Collection
+    # retrieved_asset = resource_interface.retrieve_from_collection(
+    #     collection, "location1"
+    # )
+    # print("\nRetrieved Asset from Collection:", retrieved_asset)
 
-    # Create a Plate resource
-    plate = PlateTable(
-        name="Test Plate",
-        description="A test plate",
-        well_capacity=100.0,
-        module_name="test5",
-    )
-    plate = resource_interface.add_resource(plate)
+    # # Create a Plate resource
+    # plate = PlateTable(
+    #     name="Test Plate",
+    #     description="A test plate",
+    #     well_capacity=100.0,
+    #     module_name="test5",
+    # )
+    # plate = resource_interface.add_resource(plate)
 
-    # Update the contents of the Plate
-    resource_interface.update_plate_contents(
-        plate, {"A1": 75.0, "A2": 75.0, "A3": 75.0, "A4": 75.0}
-    )
-    print("\nUpdated Plate Contents:", plate)
+    # # Update the contents of the Plate
+    # resource_interface.update_plate_contents(
+    #     plate, {"A1": 75.0, "A2": 75.0, "A3": 75.0, "A4": 75.0}
+    # )
+    # print("\nUpdated Plate Contents:", plate)
 
-    # Update a specific well in the Plate
-    resource_interface.update_plate_well(plate, "A1", 80.0)
-    print("\nUpdated Specific Well in Plate:", plate)
+    # # Update a specific well in the Plate
+    # resource_interface.update_plate_well(plate, "A1", 80.0)
+    # print("\nUpdated Specific Well in Plate:", plate)
 
-    all_plates = resource_interface.get_all_resources(PlateTable)
-    print("\nAll Plates after modification:", all_plates)
+    # all_plates = resource_interface.get_all_resources(PlateTable)
+    # print("\nAll Plates after modification:", all_plates)
 
-    all_asset = resource_interface.get_all_resources(AssetTable)
-    print("\n Asset Table", all_asset)
+    # all_asset = resource_interface.get_all_resources(AssetTable)
+    # print("\n Asset Table", all_asset)
 
     # print(resource_interface.get_resource_type(stack.id))
 
