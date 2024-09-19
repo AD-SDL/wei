@@ -112,6 +112,18 @@ class StateManager:
         )
 
     @property
+    def locked(self) -> bool:
+        """Get the lock state of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:locked") == "true"
+
+    @locked.setter
+    def locked(self, value: bool) -> None:
+        """Set the lock state of the workcell"""
+        self._redis_client.set(
+            f"{self._workcell_prefix}:locked", "true" if value else "false"
+        )
+
+    @property
     def shutdown(self) -> bool:
         """Get the shutdown state of the workcell"""
         return self._redis_client.get(f"{self._workcell_prefix}:shutdown") == "true"
@@ -167,6 +179,9 @@ class StateManager:
             "modules": self._modules.to_dict(),
             "workflows": self._workflow_runs.to_dict(),
             "workcell": self._workcell.to_dict(),
+            "paused": self.paused,
+            "locked": self.locked,
+            "shutdown": self.shutdown,
         }
 
     @property
@@ -207,6 +222,7 @@ class StateManager:
         self._workcell.clear()
         self.state_change_marker = "0"
         self.paused = False
+        self.locked = False
         self.shutdown = False
         self.mark_state_changed()
 

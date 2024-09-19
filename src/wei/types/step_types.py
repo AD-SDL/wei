@@ -23,6 +23,7 @@ class StepStatus(str, Enum):
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class StepResponse(BaseModel):

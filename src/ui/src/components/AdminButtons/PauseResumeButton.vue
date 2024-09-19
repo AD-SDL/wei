@@ -24,12 +24,13 @@
   </template>
 
 <script lang="ts" setup>
-    import {defineProps, ref, watchEffect} from 'vue';
+    import { defineProps, ref, watchEffect } from 'vue';
 
     const props = defineProps<{
         main_url: string;
         module?: string;
         module_status?: string;
+        wc_state?: any;
     }>();
 
     const pause_url = ref()
@@ -68,6 +69,15 @@
     })
     }
     else {
+        if (props.wc_state) {
+            if (props.wc_state.paused) {
+                isPaused.value = true
+            } else {
+                isPaused.value = false
+            }
+        } else {
+            isPaused.value = false
+        }
         allowButton.value = true
     }
 

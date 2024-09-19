@@ -27,6 +27,12 @@
 
    
    
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      classproperty
+   
    
 
    

@@ -22,12 +22,13 @@
 </template>
 
 <script lang="ts" setup>
-    import {defineProps, ref, watchEffect} from 'vue';
+    import { defineProps, ref, watchEffect } from 'vue';
 
     const props = defineProps<{
         main_url: string;
         module?: string;
         module_status?: string;
+        wc_state?: any;
     }>();
 
     const shutdown_url = ref()

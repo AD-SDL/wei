@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex-column">
-    <h4>Steps</h4>
+    <h3>Steps</h3>
     <v-expansion-panels title="Steps">
       <v-expansion-panel v-for="(value, key) in steps" :key="key">
         <v-expansion-panel-title>
@@ -44,9 +44,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-const props = defineProps(['steps'])
 import VueJsonPretty from 'vue-json-pretty';
 import { VDataTable } from 'vuetify/components';
+const props = defineProps(['steps'])
 
 const test = ref()
 test.value = {}

@@ -40,6 +40,5 @@
    wei.core.step
    wei.core.storage
    wei.core.workcell
-   wei.core.workcell_actions
    wei.core.workflow
 
