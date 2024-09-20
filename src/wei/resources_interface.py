@@ -443,8 +443,9 @@ class ResourcesInterface:
         """
         with self.session as session:
             session.add(plate)  # Re-attach plate to the session
-            plate.update_well(well_id, quantity, session)
-            session.refresh(plate)
+            plate.set_wells({well_id: quantity}, session)  # Use the updated set_wells
+            session.commit()  # Commit the changes
+            session.refresh(plate)  # Refresh the plate object to reflect changes
 
     def update_plate_contents(
         self, plate: PlateTable, new_contents: Dict[str, float]
@@ -458,8 +459,9 @@ class ResourcesInterface:
         """
         with self.session as session:
             session.add(plate)  # Re-attach plate to the session
-            plate.update_plate(new_contents, session)
-            session.refresh(plate)
+            plate.set_wells(new_contents, session)  # Use the updated set_wells
+            session.commit()  # Commit the changes
+            session.refresh(plate)  # Refresh the plate object to reflect changes
 
     def get_well_quantity(self, plate: PlateTable, well_id: str) -> Optional[float]:
         """
@@ -476,8 +478,8 @@ class ResourcesInterface:
             # Ensure the plate is attached to the current session
             plate = session.merge(plate)
 
-            # Access the wells dictionary to get the specific well
-            wells = plate.wells
+            # Access the wells dictionary using the updated get_wells method
+            wells = plate.get_wells(session)
             well = wells.get(well_id)
 
             if well is not None:
@@ -485,6 +487,55 @@ class ResourcesInterface:
             else:
                 print(f"Well {well_id} not found in plate {plate.name}")
                 return None
+
+    def increase_well(self, plate: PlateTable, well_id: str, quantity: float) -> None:
+        """
+        Increase the quantity of liquid in a specific well of a plate.
+
+        Args:
+            plate (PlateTable): The plate resource to update.
+            well_id (str): The well ID to increase the quantity for.
+            quantity (float): The amount to increase the well quantity by.
+        """
+        with self.session as session:
+            session.add(plate)  # Re-attach plate to the session
+            plate.increase(well_id, quantity, session)  # Use the increase method
+            session.commit()  # Commit the changes
+            session.refresh(plate)  # Refresh the plate object to reflect changes
+
+    def decrease_well(self, plate: PlateTable, well_id: str, quantity: float) -> None:
+        """
+        Decrease the quantity of liquid in a specific well of a plate.
+
+        Args:
+            plate (PlateTable): The plate resource to update.
+            well_id (str): The well ID to decrease the quantity for.
+            quantity (float): The amount to decrease the well quantity by.
+        """
+        with self.session as session:
+            session.add(plate)  # Re-attach plate to the session
+            plate.decrease(well_id, quantity, session)  # Use the decrease method
+            session.commit()  # Commit the changes
+            session.refresh(plate)  # Refresh the plate object to reflect changes
+
+    def get_wells(self, plate: PlateTable) -> Dict[str, PoolTable]:
+        """
+        Retrieve the entire contents (wells) of a plate resource.
+
+        Args:
+            plate (PlateTable): The plate resource to query.
+
+        Returns:
+            Dict[str, PoolTable]: A dictionary of all wells in the plate, keyed by their well IDs.
+        """
+        with self.session as session:
+            # Ensure the plate is attached to the current session
+            plate = session.merge(plate)
+
+            # Use the get_wells method from the PlateBase class to retrieve all wells
+            wells = plate.get_wells(session)
+
+            return wells  # Return the entire contents of the plate (all wells)
 
 
 # Sample main function for testing
@@ -574,24 +625,38 @@ if __name__ == "__main__":
     # )
     # print("\nRetrieved Asset from Collection:", retrieved_asset)
 
-    # # Create a Plate resource
-    # plate = PlateTable(
-    #     name="Test Plate",
-    #     description="A test plate",
-    #     well_capacity=100.0,
-    #     module_name="test5",
-    # )
-    # plate = resource_interface.add_resource(plate)
+    # Create a Plate resource
+    plate = PlateTable(
+        name="Test Plate",
+        description="A test plate",
+        well_capacity=100.0,
+        module_name="test5",
+    )
+    plate = resource_interface.add_resource(plate)
+    wells_to_add = {
+        "A1": 50.0,  # Well A1 with 50.0 quantity
+        "B1": 30.0,  # Well B1 with 30.0 quantity
+    }
+    resource_interface.update_plate_contents(plate, wells_to_add)
 
-    # # Update the contents of the Plate
-    # resource_interface.update_plate_contents(
-    #     plate, {"A1": 75.0, "A2": 75.0, "A3": 75.0, "A4": 75.0}
-    # )
-    # print("\nUpdated Plate Contents:", plate)
+    # Retrieve all wells (the entire contents of the plate)
+    all_wells = resource_interface.get_wells(plate)
+    print(f"All wells in the plate: {all_wells}")
 
-    # # Update a specific well in the Plate
-    # resource_interface.update_plate_well(plate, "A1", 80.0)
-    # print("\nUpdated Specific Well in Plate:", plate)
+    # Increase the quantity in a well
+    resource_interface.increase_well(plate, well_id="A1", quantity=20.0)
+
+    # Decrease the quantity in a well
+    resource_interface.decrease_well(plate, well_id="B1", quantity=10.0)
+    new_well_to_add = {
+        "C1": 70.0,  # Well C1 with 70.0 quantity
+    }
+    resource_interface.update_plate_contents(plate, new_well_to_add)
+
+    # Retrieve the updated contents
+    updated_wells = resource_interface.get_wells(plate)
+    print(f"Updated wells: {updated_wells}")
+    resource_interface.update_plate_well(plate, well_id="A1", quantity=80.0)
 
     # all_plates = resource_interface.get_all_resources(PlateTable)
     # print("\nAll Plates after modification:", all_plates)
