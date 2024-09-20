@@ -688,38 +688,8 @@ class PlateBase(ResourceContainerBase):
         Returns:
             Dict[str, PoolTable]: A dictionary of wells keyed by their location.
         """
-        allocations = (
-            session.query(AssetAllocation)
-            .filter_by(resource_id=self.id, resource_type="plate")
-            .order_by(AssetAllocation.index.asc())
-            .all()
-        )
-
-        return {
-            str(alloc.index): session.get(PoolTable, alloc.asset_id)
-            for alloc in allocations
-        }
-
-    def allocate_well_as_asset(
-        self, well_id: str, index: int, session: Session
-    ) -> None:
-        """
-        Allocate a well to the plate as an asset, setting the index for the allocation.
-
-        Args:
-            well_id (str): The well ID to allocate.
-            index (int): The index to allocate for the well.
-            session (Session): The database session.
-        """
-        # Create a new asset for the well
-        new_asset = AssetTable(name=f"Well {well_id}", module_name=self.name)
-        session.add(new_asset)
-        session.commit()
-
-        # Allocate the asset to the plate with an index
-        new_asset.allocate_to_resource(
-            resource_type="plate", resource_id=self.id, index=index, session=session
-        )
+        wells = session.query(PoolTable).filter_by(module_name=self.name).all()
+        return {well.name: well for well in wells}
 
     def set_wells(self, wells_dict: Dict[str, float], session: Session):
         """
@@ -731,45 +701,31 @@ class PlateBase(ResourceContainerBase):
             session (Session): SQLAlchemy session passed from the interface layer.
         """
         current_wells = self.get_wells(session)
-        # Determine the next available index for new wells
-        existing_allocations = (
-            session.query(AssetAllocation)
-            .filter_by(resource_id=self.id, resource_type="plate")
-            .all()
-        )
-        used_indexes = [alloc.index for alloc in existing_allocations]
-        next_index = max(used_indexes, default=0) + 1
 
         for well_id, quantity in wells_dict.items():
             if well_id in current_wells:
                 # Update existing well
                 current_wells[well_id].quantity = quantity
             else:
-                # Create a new well and allocate it
+                # Create a new well
                 new_well = PoolTable(
-                    description=f"Well {well_id}",
+                    description=f"{well_id}",
                     name=f"{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
+                    module_name=self.module_name,  # Bug with self.name & self.module_name
                 )
                 session.add(new_well)  # Add the new well to the session
                 session.commit()  # Commit to generate the new_well ID
 
-                # Allocate the well as an asset to the plate with the next available index
-                self.allocate_well_as_asset(well_id, next_index, session)
-                next_index += 1  # Increment index for the next well
-
         # Update the plate's total quantity
-        self.quantity = sum(
-            [well.quantity for well in current_wells.values()]
-        )  # Recalculate total quantity
+        self.quantity = len(self.get_wells(session))  # Number of wells
         session.commit()  # Commit changes to the database
         session.refresh(self)  # Refresh the plate object to reflect changes
 
     def increase(self, well_id: str, quantity: float, session: Session) -> None:
         """
         Increase the quantity of liquid in a well.
-        Includes a check to ensure the well's capacity is not exceeded.
 
         Args:
             well_id (str): The ID of the well to update.
@@ -784,15 +740,7 @@ class PlateBase(ResourceContainerBase):
         # Check if the well exists
         if well_id in wells:
             well = wells[well_id]
-
-            # Ensure the well capacity is not exceeded
-            if self.well_capacity and well.quantity + quantity > self.well_capacity:
-                raise ValueError(
-                    f"Exceeds capacity of well {well_id}. Capacity: {self.well_capacity}"
-                )
-
-            # Increase the quantity in the well
-            well.quantity += quantity
+            well.increase(quantity, session)  # Use PoolBase's increase method
         else:
             # Create a new well if it doesn't exist
             if quantity > self.well_capacity:
@@ -804,25 +752,40 @@ class PlateBase(ResourceContainerBase):
                 name=f"{well_id}",
                 capacity=self.well_capacity,
                 quantity=quantity,
+                module_name=self.name,
             )
             session.add(new_well)
             session.commit()
 
-            # Allocate the well to the plate with the next available index
-            existing_allocations = (
-                session.query(AssetAllocation)
-                .filter_by(resource_id=self.id, resource_type="plate")
-                .all()
-            )
-            used_indexes = [alloc.index for alloc in existing_allocations]
-            next_index = max(used_indexes, default=0) + 1
-            self.allocate_well_as_asset(well_id, next_index, session)
+        # Update the total quantity of the plate and commit changes
+        self.quantity = len(self.get_wells(session))  # Number of wells
+        session.commit()
+        session.refresh(self)
+
+    def decrease(self, well_id: str, quantity: float, session: Session) -> None:
+        """
+        Decrease the quantity of liquid in a well.
+
+        Args:
+            well_id (str): The ID of the well to update.
+            quantity (float): The quantity to decrease in the well.
+            session (Session): SQLAlchemy session passed from the interface layer.
+
+        Raises:
+            ValueError: If the decrease would result in a negative quantity.
+        """
+        wells = self.get_wells(session)
+
+        # Check if the well exists
+        if well_id in wells:
+            well = wells[well_id]
+            well.decrease(quantity, session)  # Use PoolBase's decrease method
+        else:
+            raise ValueError(f"Well {well_id} does not exist in plate {self.name}.")
 
         # Update the total quantity of the plate and commit changes
+        self.quantity = len(self.get_wells(session))  # Number of wells
         session.commit()
-        self.quantity = sum(
-            [well.quantity for well in self.get_wells(session).values()]
-        )  # Recalculate total quantity
         session.refresh(self)
 
 

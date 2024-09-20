@@ -71,18 +71,34 @@ class ResourcesInterface:
             # Automatically create and link an AssetTable entry
             if isinstance(resource, StackTable):
                 asset = AssetTable(
-                    name=f"{resource.name}", stack_resource_id=resource.id
+                    name=f"{resource.name}",
+                    stack_resource_id=resource.id,
+                    module_name=resource.module_name,
                 )
             elif isinstance(resource, PoolTable):
-                asset = AssetTable(name=f"{resource.name}", pool_id=resource.id)
+                asset = AssetTable(
+                    name=f"{resource.name}",
+                    pool_id=resource.id,
+                    module_name=resource.module_name,
+                )
             elif isinstance(resource, QueueTable):
                 asset = AssetTable(
-                    name=f"{resource.name}", queue_resource_id=resource.id
+                    name=f"{resource.name}",
+                    queue_resource_id=resource.id,
+                    module_name=resource.module_name,
                 )
             elif isinstance(resource, PlateTable):
-                asset = AssetTable(name=f"{resource.name}", plate_id=resource.id)
+                asset = AssetTable(
+                    name=f"{resource.name}",
+                    plate_id=resource.id,
+                    module_name=resource.module_name,
+                )
             elif isinstance(resource, CollectionTable):
-                asset = AssetTable(name=f"{resource.name}", collection_id=resource.id)
+                asset = AssetTable(
+                    name=f"{resource.name}",
+                    collection_id=resource.id,
+                    module_name=resource.module_name,
+                )
             else:
                 asset = None
 
