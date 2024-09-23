@@ -70,13 +70,27 @@ def validate_step(step: Step) -> Tuple[bool, str]:
 
 def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     """Check if a step is able to be run by the workcell."""
+    return check_module_status(step, run_id) and check_dependency_status(step)
+
+
+def check_module_status(step: Step, run_id: str):
+    """Returns true if the module is able to run based on the module status"""
     module = state_manager.get_module(step.module)
-    if module.state.status[ModuleStatus.READY] == ModuleStatus.READY:
+    if module.state.status[ModuleStatus.READY] and not (
+        module.state.status[ModuleStatus.LOCKED]
+        or module.state.status[ModuleStatus.PAUSED]
+        or module.state.status[ModuleStatus.CANCELLED]
+    ):
+        return True
+    else:
         print(
             f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle. Module status: {module.state.status}"
         )
         return False
 
+
+def check_dependency_status(step: Step):
+    """Returns true if the module is able to run based on the step requirements"""
     return True
 
 

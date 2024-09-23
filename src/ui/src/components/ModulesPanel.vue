@@ -48,6 +48,11 @@ const get_status = (value: any) => {
 
 
   }
+  if(value["CANCELLED"] && value["CANCELLED"] != false)  {
+    return "CANCELLED"
+
+
+  }
   if(value["LOCKED"] && value["LOCKED"] != false)  {
     return "LOCKED"
 

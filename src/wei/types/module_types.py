@@ -68,6 +68,7 @@ class ModuleState(BaseModel, extra="allow"):
         ModuleStatus.LOCKED: False,
         ModuleStatus.PAUSED: False,
         ModuleStatus.ERROR: False,
+        ModuleStatus.CANCELLED: False,
     }
     """Current state of the module"""
     error: Optional[str] = None
@@ -76,10 +77,21 @@ class ModuleState(BaseModel, extra="allow"):
     @field_validator("status", mode="before")
     def validate_status(cls, v: Any) -> Any:
         """Validate the status field of the ModuleState"""
+        status = {
+            ModuleStatus.INIT: False,
+            ModuleStatus.READY: False,
+            ModuleStatus.RUNNING: False,
+            ModuleStatus.LOCKED: False,
+            ModuleStatus.PAUSED: False,
+            ModuleStatus.ERROR: False,
+            ModuleStatus.CANCELLED: False,
+        }
         if isinstance(v, str):
-            return {ModuleStatus(v): True}
+            status[ModuleStatus(v)] = True
+            return status
         elif isinstance(v, ModuleStatus):
-            return {v, True}
+            status[v] = True
+            return status
         return v
 
 
