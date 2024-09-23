@@ -4,13 +4,13 @@ import { ref, watchEffect } from 'vue';
 const main_url = ref()
 const state_url = ref()
 const workcell_info_url = ref()
-const wfs = ref([''])
+const workflows = ref([''])
 const experiments = ref()
 const experiments_url = ref()
 const events_url = ref()
 const events = ref()
-const wc_state = ref()
-const wc_info = ref()
+const workcell_state = ref()
+const workcell_info = ref()
 const campaigns = ref()
 const campaigns_url = ref()
 const experiment_keys = ref()
@@ -56,12 +56,13 @@ watchEffect(async () => {
     }
 
     async function updateWorkcellState() {
-        wc_state.value = await (await fetch(state_url.value)).json();
+        workcell_state.value = await (await fetch(state_url.value)).json();
+        workcell_info.value = await (await fetch(workcell_info_url.value)).json();
     }
 
     async function updateWorkflows() {
-        wfs.value = Object.keys(wc_state.value.workflows).sort().reverse();
+        workflows.value = Object.keys(workcell_state.value.workflows).sort().reverse();
     }
 })
 
-export { campaigns, campaigns_url, events, experiment_keys, experiment_objects, experiments, experiments_url, main_url, state_url, wc_info, wc_state, wfs, workcell_info_url };
+export { campaigns, campaigns_url, events, experiment_keys, experiment_objects, experiments, experiments_url, main_url, state_url, workcell_info, workcell_info_url, workcell_state, workflows };

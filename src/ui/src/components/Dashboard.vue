@@ -16,29 +16,29 @@
     </v-tabs>
     <v-window v-model="tab">
       <v-window-item :key="1" :value="1">
-        <v-container v-if="wc_state">
+        <v-container v-if="workcell_state">
           <v-card class="pa-1">
               <v-card-title class="text-center">
-                <h2>{{ wc_info.name }}</h2>
+                <h2>{{ workcell_info.name }}</h2>
                 <div class="d-flex justify-center">
-                  <PauseResumeButton :main_url="main_url" :wc_state=wc_state class="ml-2"/>
-                  <CancelButton :main_url="main_url" :wc_state=wc_state class="ml-2" />
-                  <ResetButton :main_url="main_url" :wc_state=wc_state class="ml-2" />
-                  <LockUnlockButton :main_url="main_url" :wc_state=wc_state class="ml-2"/>
-                  <ShutdownButton :main_url="main_url" :wc_state=wc_state class="ml-2" />
-                  <SafetyStopButton :main_url="main_url" :wc_state=wc_state class="ml-2"/>
+                  <PauseResumeButton :main_url="main_url" :wc_state=workcell_state class="ml-2"/>
+                  <CancelButton :main_url="main_url" :wc_state=workcell_state class="ml-2" />
+                  <ResetButton :main_url="main_url" :wc_state=workcell_state class="ml-2" />
+                  <LockUnlockButton :main_url="main_url" :wc_state=workcell_state class="ml-2"/>
+                  <ShutdownButton :main_url="main_url" :wc_state=workcell_state class="ml-2" />
+                  <SafetyStopButton :main_url="main_url" :wc_state=workcell_state class="ml-2"/>
                 </div>
               </v-card-title>
             <v-card-text>
               <v-container class="pa-1">
                 <v-row dense wrap justify-content="space-evenly">
                   <v-col cols="3" md="3" lg="3">
-                    <ModulesPanel :modules="wc_state.modules" :main_url="main_url" :wc_state="wc_state" />
+                    <ModulesPanel :modules="workcell_state.modules" :main_url="main_url" :wc_state="workcell_state" />
                   </v-col>
                   <v-col cols="9" md="9" lg="9">
-                    <LocationsPanel :locations="wc_state.locations" />
+                    <LocationsPanel :locations="workcell_state.locations" />
 
-                    <WorkflowsPanel :wc_state="wc_state" :wfs="wfs" @view-workflows="tab = 2" />
+                    <WorkflowsPanel :wc_state="workcell_state" :wfs="workflows" @view-workflows="tab = 2" />
                   </v-col>
                 </v-row>
               </v-container>
@@ -58,7 +58,7 @@
                       <h3>Workcell Info</h3>
                     </v-card-title>
                     <v-card-text>
-                      <vue-json-pretty :data="wc_info" />
+                      <vue-json-pretty :data="workcell_info" :deep="2" />
                     </v-card-text>
                     <v-card-actions>
                       <v-spacer />
@@ -71,12 +71,16 @@
           </v-card>
         </v-container>
         <v-container v-else>
-          <p>No WC info yet</p>
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="64"
+          ></v-progress-circular>
         </v-container>
       </v-window-item>
       <v-window-item :key="2" :value="2">
         <h2> All Workflows </h2>
-        <WorkflowTable title="All Workflows" :wc_state="wc_state" :wfs="wfs" />
+        <WorkflowTable title="All Workflows" :wc_state="workcell_state" :wfs="workflows" />
       </v-window-item>
       <v-window-item :key="3" :value="3">
         <v-row class="pa-1 ma-1 justify-center">
@@ -89,7 +93,7 @@
 
 <script setup lang="ts">
 /// <reference path="../store.d.ts" />
-import { main_url, wc_info, wc_state, wfs } from "@/store";
+import { main_url, workcell_info, workcell_state, workflows } from "@/store";
 import { ref } from 'vue';
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';

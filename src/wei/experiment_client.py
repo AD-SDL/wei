@@ -279,7 +279,6 @@ class ExperimentClient:
         """Checks in with the server to let it know the experiment is still running"""
         self._connect_to_server()
         while True:
-            time.sleep(10)
             try:
                 response = requests.post(
                     f"http://{self.server_host}:{self.server_port}/experiments/{self.experiment_id}/check_in"
@@ -289,6 +288,7 @@ class ExperimentClient:
             except Exception:
                 traceback.print_exc()
                 pass
+            time.sleep(10)
 
     def _check_experiment(self):
         """Checks that the experiment has been created"""
