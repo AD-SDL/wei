@@ -4,7 +4,6 @@ import traceback
 from datetime import datetime
 from typing import Tuple
 
-from wei.config import Config
 from wei.core.events import send_event
 from wei.core.location import free_source_and_target, update_source_and_target
 from wei.core.loggers import Logger
@@ -71,36 +70,13 @@ def validate_step(step: Step) -> Tuple[bool, str]:
 
 def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     """Check if a step is able to be run by the workcell."""
-    if Config.verify_locations_before_transfer:
-        if "target" in step.locations:
-            location = state_manager.get_location(step.locations["target"])
-            if not (location.state == "Empty"):
-                print(f"Can't run '{run_id}.{step.name}', target is not empty")
-                return False
-            if location.reserved and location.reserved != run_id:
-                print(f"Can't run '{run_id}.{step.name}', target is reserved")
-                return False
-        if "source" in step.locations:
-            location = state_manager.get_location(step.locations["source"])
-            if not (location.state == str(experiment_id)):
-                print(
-                    f"Can't run '{run_id}.{step.name}', source asset doesn't belong to experiment"
-                )
-                return False
-            if location.reserved and location.reserved != run_id:
-                print(f"Can't run {run_id}.{step.name}, source is reserved")
-                return False
     module = state_manager.get_module(step.module)
     if ModuleStatus(module.state.status) != ModuleStatus.READY:
         print(
             f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle. Module status: {module.state.status}"
         )
         return False
-    if module.reserved and module.reserved != run_id:
-        print(
-            f"Can't run '{run_id}.{step.name}', module '{step.module}' is reserved by workflow '{module.reserved}'"
-        )
-        return False
+
     return True
 
 
@@ -131,6 +107,14 @@ def run_step(
             error=error,
             files=files,
         )
+        if step_response.status == StepStatus.NOT_READY:
+            wf_run.status = WorkflowStatus.IN_PROGRESS
+            step.result = step_response
+            print("this one here")
+            with state_manager.wc_state_lock():
+                wf_run.steps[wf_run.step_index] = step
+                state_manager.set_workflow_run(wf_run)
+                return
     except Exception as e:
         logger.debug(f"Exception occurred while running step with name: {step.name}")
         logger.debug(str(e))

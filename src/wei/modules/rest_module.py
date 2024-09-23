@@ -10,7 +10,7 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
-from threading import Thread
+from threading import Lock, Thread
 from typing import Any, List, Optional, Set, Union
 
 from fastapi import (
@@ -34,7 +34,12 @@ from wei.types.module_types import (
     ModuleActionFile,
     ModuleState,
 )
-from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
+from wei.types.step_types import (
+    ActionRequest,
+    StepFileResponse,
+    StepResponse,
+    StepStatus,
+)
 from wei.utils import pretty_type_repr
 
 
@@ -95,6 +100,7 @@ class RESTModule:
         self.app = FastAPI(lifespan=RESTModule._lifespan, description=description)
         self.app.state = State(state={})
         self.state = self.app.state  # * Mirror the state object for easier access
+        self.state.action_lock = Lock()
         self.router = APIRouter()
 
         # * Set attributes from constructor arguments
@@ -379,7 +385,7 @@ class RESTModule:
                     except Exception:
                         error_message = f"Module is not ready to accept actions. Module Status: {state.status}"
                         print(error_message)
-                        return StepResponse.step_failed(error=error_message)
+                        return StepResponse.step_not_ready(error=error_message)
 
                     # * Prepare arguments for the action function.
                     # * If the action function has a 'state' or 'action' parameter
@@ -434,24 +440,32 @@ class RESTModule:
         and then setting the module's status to BUSY to prevent other actions from being taken for the duration.
         This can be overridden by the developer to provide more specific behavior.
         """
+        if blocking:
+            state.action_lock.acquire()
         if state.status is ModuleStatus.READY:
             if blocking:
                 state.status = ModuleStatus.BUSY
+                print("set to busy")
             else:
                 state.status = ModuleStatus.READY
             state._actions_running += 1
         else:
+            state.action_lock.release()
             raise Exception("Module is not ready to accept actions")
+        if blocking:
+            state.action_lock.release()
 
     @staticmethod
     def release_action_lock(state: State, action: ActionRequest):
         """Releases the lock on the module. This should be called after an action is completed.
         This can be overridden by the developer to provide more specific behavior.
         """
-        if state._actions_running >= 1:
-            state._actions_running -= 1
-        if state.status is ModuleStatus.BUSY:
-            state.status = ModuleStatus.READY
+        with state.action_lock:
+            if state._actions_running >= 1:
+                state._actions_running -= 1
+            if state.status is ModuleStatus.BUSY:
+                state.status = ModuleStatus.READY
+                print("set to Ready")
 
     # * Admin Command Handling Functions
 
@@ -655,7 +669,14 @@ class RESTModule:
             # * Try to run the action_handler for this module
             try:
                 step_result = state.action_handler(state=state, action=action_request)
-                state.release_action_lock(state=state, action=action_request)
+                try:
+                    if not step_result.status == StepStatus.NOT_READY:
+                        state.release_action_lock(state=state, action=action_request)
+                    else:
+                        print("here")
+                except Exception:
+                    state.release_action_lock(state=state, action=action_request)
+
             except Exception as e:
                 # * Handle any exceptions that occur while processing the action request,
                 # * which should put the module in the ERROR state
