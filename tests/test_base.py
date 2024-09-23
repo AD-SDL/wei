@@ -14,12 +14,12 @@ class TestWEI_Base(unittest.TestCase):
 
     experiment = ExperimentDesign(
         experiment_name="Test_Experiment",
-        description="An experiment for automated testing",
+        experiment_description="An experiment for automated testing",
         email_addresses=[],
     )
     campaign = CampaignDesign(
         campaign_name="Test_Campaign",
-        description="A campaign for automated testing",
+        campaign_description="A campaign for automated testing",
     )
 
     def __init__(self, *args, **kwargs):

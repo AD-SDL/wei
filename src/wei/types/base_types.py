@@ -2,12 +2,13 @@
 
 import json
 from pathlib import Path
-from typing import Optional, Type, TypeVar, Union
+from typing import Optional, Self, Type, TypeVar, Union
 
-import ulid
 import yaml
 from pydantic import AliasChoices, Field
 from pydantic import BaseModel as _BaseModel
+from pydantic.functional_validators import model_validator
+from ulid import ULID
 
 _T = TypeVar("_T")
 
@@ -15,8 +16,8 @@ PathLike = Union[str, Path]
 
 
 def ulid_factory() -> str:
-    """Generates a ulid string"""
-    return ulid.new().str
+    """Generates a ulid"""
+    return str(ULID())
 
 
 class BaseModel(_BaseModel, use_enum_values=True):
@@ -48,6 +49,18 @@ class BaseModel(_BaseModel, use_enum_values=True):
         with open(path) as fp:
             raw_data = yaml.safe_load(fp)
         return cls(**raw_data)
+
+    @model_validator(mode="after")
+    def validate_ulids(self) -> Self:
+        """Validates that all ULID fields are valid"""
+        for field in self.model_fields:
+            if field == "id" or field.endswith("_id"):
+                try:
+                    if self.model_dump()[field]:
+                        ULID.from_str(self.model_dump()[field])
+                except ValueError as e:
+                    raise ValueError(f"Invalid ULID in field {field}") from e
+        return self
 
 
 class Metadata(BaseModel, extra="allow"):

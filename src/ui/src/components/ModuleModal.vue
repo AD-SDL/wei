@@ -1,5 +1,5 @@
 <template>
-  <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1000">
+  <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1920">
     <v-card>
       <v-card-title>
         <div class="d-flex align-center w-100">
@@ -148,6 +148,7 @@ const arg_headers = [
   { title: 'Required', key: 'required' },
   { title: 'Default', key: 'default' },
   { title: 'Description', key: 'description' },
+  { title: "Value", minWidth: "200px"}
 ]
 const copy = ref(false)
 const file_headers = [

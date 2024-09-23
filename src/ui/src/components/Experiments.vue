@@ -7,7 +7,7 @@
       </v-toolbar>
     </template>
     <template v-slot:item.campaign_id="{ value }">
-      <td>{{ (value != null && value in campaigns) ? campaigns[value].campaign_name : "-" }}</td>
+      <td>{{ (value != null && campaigns !== undefined && value in campaigns) ? campaigns[value].campaign_name : "-" }}</td>
     </template>
     <!-- <template v-slot:expanded-row="{ columns, item}: {columns: any, item: any}">
       <tr>
@@ -31,7 +31,8 @@
 
 <script setup lang="ts">
 import { VDataTable } from 'vuetify/lib/components/index.mjs';
-const props = defineProps(["experiment_objects", "wc_state", "campaigns"])
+/// <reference path="../store.d.ts" />
+import { campaigns, experiment_objects } from "@/store";
 const sortBy: VDataTable['sortBy'] = [{ key: 'experiment_id', order:'desc'}];
 
 const arg_headers = [

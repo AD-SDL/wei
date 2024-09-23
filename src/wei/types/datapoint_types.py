@@ -3,7 +3,6 @@
 from typing import Any, Literal, Optional
 
 from pydantic import Field
-from pydantic_extra_types.ulid import ULID
 
 from wei.types.base_types import BaseModel, ulid_factory
 
@@ -23,7 +22,7 @@ class DataPoint(BaseModel, extra="allow"):
     """campaign of the data point"""
     type: str
     """type of the datapoint, inherited from class"""
-    id: ULID = Field(default_factory=ulid_factory)
+    id: str = Field(default_factory=ulid_factory)
     """specific id for this data point"""
 
 

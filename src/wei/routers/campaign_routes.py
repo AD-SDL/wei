@@ -34,14 +34,14 @@ def register_campaign(campaign_design: CampaignDesign) -> Campaign:
     return campaign
 
 
-@router.get("/{campaign_id}")
-def get_campaign(campaign_id: str) -> Campaign:
-    """Returns the details of a campaign"""
-    return state_manager.get_campaign(campaign_id)
-
-
 @router.get("/")
 @router.get("/all")
 def get_all_campaigns() -> Dict[str, Campaign]:
     """Returns all campaigns"""
     return state_manager.get_all_campaigns()
+
+
+@router.get("/{campaign_id}")
+def get_campaign(campaign_id: str) -> Campaign:
+    """Returns the details of a campaign"""
+    return state_manager.get_campaign(campaign_id)

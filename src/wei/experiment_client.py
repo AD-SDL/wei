@@ -53,8 +53,8 @@ class ExperimentClient:
         self,
         server_host: str = "localhost",
         server_port: str = "8000",
-        experiment: Optional[Union[ExperimentDesign, Experiment, ULID]] = None,
-        campaign: Optional[Union[CampaignDesign, Campaign, ULID]] = None,
+        experiment: Optional[Union[ExperimentDesign, Experiment, str]] = None,
+        campaign: Optional[Union[CampaignDesign, Campaign, str]] = None,
         working_dir: Optional[PathLike] = None,
         log_experiment_end_on_exit: bool = True,
         timeout=10,
@@ -69,10 +69,10 @@ class ExperimentClient:
         server_port: str
             port for WEI server
 
-        experiment: Optional[Union[ExperimentDesign, Experiment, ULID]]
+        experiment: Optional[Union[ExperimentDesign, Experiment, str]]
             A new experiment design, or an existing experiment or experiment_id to continue
 
-        campaign: Optional[Union[CampaignDesign, Campaign, ULID]]
+        campaign: Optional[Union[CampaignDesign, Campaign, str]]
             A new campaign design, or an existing campaign or campaign_id to associate with the experiment
 
         working_dir: Optional[Union[str, Path]]
@@ -89,6 +89,7 @@ class ExperimentClient:
         self.timeout = timeout
         self.experiment = experiment
         self.campaign = campaign
+        self.working_dir = Path(working_dir) or Path.cwd()
 
         if experiment:
             self.start_or_continue_experiment(experiment, campaign)
@@ -133,17 +134,17 @@ class ExperimentClient:
 
     def start_or_continue_experiment(
         self,
-        experiment: Union[ExperimentDesign, Experiment, ULID],
-        campaign: Optional[Union[CampaignDesign, Campaign, ULID]] = None,
+        experiment: Union[ExperimentDesign, Experiment, str],
+        campaign: Optional[Union[CampaignDesign, Campaign, str]] = None,
     ):
         """Creates a new experiment, or continues an existing experiment
 
         Parameters
         ----------
-        experiment: Union[ExperimentDesign, Experiment, ULID]
+        experiment: Union[ExperimentDesign, Experiment, str]
             A new experiment design, or an existing experiment or experiment_id to continue
 
-        campaign: Optional[Union[CampaignDesign, Campaign, ULID]]
+        campaign: Optional[Union[CampaignDesign, Campaign, str]]
             A new campaign design, or an existing campaign or campaign_id to associate with the experiment
 
         Returns
@@ -291,7 +292,7 @@ class ExperimentClient:
 
     def _check_experiment(self):
         """Checks that the experiment has been created"""
-        if self.expeirment_started is None:
+        if self.experiment_started is None:
             if self.experiment is None:
                 raise ValueError(
                     "Experiment has not been set. Please assign a valid experiment before performing this action."
@@ -441,7 +442,7 @@ class ExperimentClient:
             validate_only=True,
         )
 
-    def await_runs(self, run_ids: List[str, ULID]) -> Dict[str, WorkflowRun]:
+    def await_runs(self, run_ids: List[Union[str, ULID]]) -> Dict[str, WorkflowRun]:
         """
         Waits for all provided runs to complete, then returns a dictionary of their results
         """
