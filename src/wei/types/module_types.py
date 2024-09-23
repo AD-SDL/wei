@@ -43,7 +43,7 @@ class ModuleStatus(str, MultiValueEnum):
     """Status for the state of a Module"""
 
     READY = "READY", "IDLE", "OK"
-    BUSY = "BUSY", "RUNNING"
+    RUNNING = "BUSY", "RUNNING"
     INIT = "INIT", "STARTING"
     ERROR = "ERROR"
     UNKNOWN = "UNKNOWN"
@@ -61,7 +61,14 @@ class ModuleStatus(str, MultiValueEnum):
 class ModuleState(BaseModel, extra="allow"):
     """Model for the state of a Module"""
 
-    status: ModuleStatus
+    status: Dict[ModuleStatus, bool] = {
+        ModuleStatus.INIT: True,
+        ModuleStatus.READY: False,
+        ModuleStatus.RUNNING: False,
+        ModuleStatus.LOCKED: False,
+        ModuleStatus.PAUSED: False,
+        ModuleStatus.ERROR: False,
+    }
     """Current state of the module"""
     error: Optional[str] = None
     """Error message if the module is in an error state"""
@@ -70,7 +77,9 @@ class ModuleState(BaseModel, extra="allow"):
     def validate_status(cls, v: Any) -> Any:
         """Validate the status field of the ModuleState"""
         if isinstance(v, str):
-            return ModuleStatus(v)
+            return {ModuleStatus(v): True}
+        elif isinstance(v, ModuleStatus):
+            return {v, True}
         return v
 
 

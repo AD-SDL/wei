@@ -71,7 +71,7 @@ def validate_step(step: Step) -> Tuple[bool, str]:
 def check_step(experiment_id: str, run_id: str, step: Step) -> bool:
     """Check if a step is able to be run by the workcell."""
     module = state_manager.get_module(step.module)
-    if ModuleStatus(module.state.status) != ModuleStatus.READY:
+    if module.state.status[ModuleStatus.READY] == ModuleStatus.READY:
         print(
             f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle. Module status: {module.state.status}"
         )

@@ -8,7 +8,7 @@
           <v-row no-gutter wrap justify-content class="pa-1">
             <v-col class="pa-1" cols=12 xl=6 v-for="(value, module_name) in modules" :key="module_name">
               <v-card class="pa-1 module_indicator" @click="set_modal(String(module_name), value.about)"
-                :class="'module_status_' + value.state.status">
+                :class="'module_status_' + get_status(value.state.status)">
                 <v-card-text>
                   <h4>{{ module_name }}</h4>
 
@@ -42,4 +42,29 @@ const set_modal = (title: string, value: Object) => {
   modal_text.value = value
   modal.value = true
 }
+const get_status = (value: any) => {
+  if(value["ERROR"] && value["ERROR"] != false)  {
+    return "ERROR"
+
+
+  }
+  if(value["LOCKED"] && value["LOCKED"] != false)  {
+    return "LOCKED"
+
+
+  }
+  if(value["PAUSED"] && value["PAUSED"] != false) {
+    return "PAUSED"
+  }
+
+  if(value["BUSY"] && value["BUSY"]) {
+    return "BUSY"
+  } else {
+
+    return "READY"
+  }
+
+
+}
+
 </script>

@@ -200,7 +200,8 @@ class RESTModule:
         if error_message:
             print(f"Error: {error_message}")
         traceback.print_exc()
-        state.status = ModuleStatus.ERROR
+        state.status[ModuleStatus.ERROR] = True
+        state.status[ModuleStatus.READY] = False
         state.error = str(exception)
 
     @staticmethod
@@ -208,21 +209,24 @@ class RESTModule:
         """Runs the startup function for the module in a non-blocking thread, with error handling"""
         try:
             # * Call the module's startup function
+            state.status = ModuleState().status
             state._startup_handler(state=state)
         except Exception as exception:
             # * If an exception occurs during startup, handle it and put the module in an error state
             state.exception_handler(state, exception, "Error during startup")
-            state.status = (
-                ModuleStatus.ERROR
-            )  # * Make extra sure the status is set to ERROR
+            state.status[ModuleStatus.ERROR] = True
+            state.status[ModuleStatus.READY] = (
+                False  # * Make extra sure the status is set to ERROR
+            )
         else:
             # * If everything goes well, set the module status to IDLE
-            if state.status == ModuleStatus.INIT:
-                state.status = ModuleStatus.READY
+            if state.status[ModuleStatus.INIT]:
+                state.status[ModuleStatus.INIT] = False
+                state.status[ModuleStatus.READY] = True
                 print(
                     "Startup completed successfully. Module is now ready to accept actions."
                 )
-            elif state.status == ModuleStatus.ERROR:
+            elif state.status[ModuleStatus.ERROR]:
                 print("Startup completed with errors.")
 
     @asynccontextmanager
@@ -442,12 +446,14 @@ class RESTModule:
         """
         if blocking:
             state.action_lock.acquire()
-        if state.status is ModuleStatus.READY:
+        if state.status[ModuleStatus.READY] and not (
+            state.status[ModuleStatus.PAUSED] or state.status[ModuleStatus.LOCKED]
+        ):
             if blocking:
-                state.status = ModuleStatus.BUSY
-                print("set to busy")
+                state.status[ModuleStatus.READY] = False
+                state.status[ModuleStatus.RUNNING] = True
             else:
-                state.status = ModuleStatus.READY
+                state.status[ModuleStatus.RUNNING] = True
             state._actions_running += 1
         else:
             state.action_lock.release()
@@ -463,9 +469,10 @@ class RESTModule:
         with state.action_lock:
             if state._actions_running >= 1:
                 state._actions_running -= 1
-            if state.status is ModuleStatus.BUSY:
-                state.status = ModuleStatus.READY
-                print("set to Ready")
+                if state._actions_running == 0:
+                    state.status[ModuleStatus.RUNNING] = False
+        if not state.status[ModuleStatus.READY]:
+            state.status[ModuleStatus.READY] = True
 
     # * Admin Command Handling Functions
 
@@ -499,7 +506,7 @@ class RESTModule:
     def _pause(state: State):
         """Handles pausing the module. This should be overridden by the developer to provide custom behavior."""
         state.pre_paused_status = state.status
-        state.status = ModuleStatus.PAUSED
+        state.status[ModuleStatus.PAUSED] = True
         return {"message": "Module paused"}
 
     def resume(self):
@@ -515,8 +522,8 @@ class RESTModule:
     @staticmethod
     def _resume(state: State):
         """Handles resuming the module from the paused state. This should be overridden by the developer to provide custom behavior."""
-        if state.status is ModuleStatus.PAUSED:
-            state.status = state.pre_paused_status
+        if state.status[ModuleStatus.PAUSED]:
+            state.status[ModuleStatus.PAUSED] = False
             return {"message": "Module resumed"}
         else:
             return {"message": "Module not paused"}
@@ -535,7 +542,8 @@ class RESTModule:
     def _reset(state: State):
         """This function is called when the module needs to be reset.
         It should be overridden by the developer to do any necessary teardown for the module."""
-        state.status = ModuleStatus.INIT
+        state.status[ModuleStatus.INIT] = True
+        state.status[ModuleStatus.READY] = False
         try:
             state._shutdown_handler(state)
             Thread(target=RESTModule.startup_thread, args=[state]).start()

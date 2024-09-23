@@ -28,7 +28,7 @@
         main_url: string;
         module?: string;
         wc_state?: any;
-        module_status?: string;
+        module_status?: any;
     }>();
 
     const lock_url = ref()
@@ -51,7 +51,7 @@
     if (props.module) {
         watchEffect(() => {
         // Determine if the module is already locked
-        if (props.module_status == 'LOCKED') {
+        if (props.module_status["LOCKED"] == true) {
             isLocked.value = true
         } else {
             if (props.wc_state) {
