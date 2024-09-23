@@ -567,7 +567,8 @@ class RESTModule:
     @staticmethod
     def _cancel(state: State):
         """Handles cancelling any running actions on the module. This should be overridden by the developer to provide custom behavior."""
-        state.status = ModuleStatus.CANCELLED
+        state.status[ModuleStatus.READY] = False
+        state.status[ModuleStatus.PAUSED] = True
         return {"message": "Module actions canceled"}
 
     def lock(self):
