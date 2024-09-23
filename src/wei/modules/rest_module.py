@@ -479,7 +479,7 @@ class RESTModule:
     @staticmethod
     def _safety_stop(state: State):
         """Handles custom safety-stop functionality"""
-        state.status = ModuleStatus.CANCELLED
+        state.status[ModuleStatus.CANCELLED]
         return {"message": "Module safety-stopped"}
 
     def safety_stop(self):
@@ -584,7 +584,7 @@ class RESTModule:
     def _lock(state: State):
         """Handles locking the module. This should be overridden by the developer to provide custom behavior."""
         state.pre_locked_status = state.status
-        state.status = ModuleStatus.LOCKED
+        state.status[ModuleStatus.LOCKED] = True
         return {"message": "Module paused"}
 
     def unlock(self):
@@ -600,8 +600,8 @@ class RESTModule:
     @staticmethod
     def _unlock(state: State):
         """Logic for unlocking the module. This should be overridden by the developer to provide custom behavior."""
-        if state.status is ModuleStatus.LOCKED:
-            state.status = state.pre_locked_status
+        if state.status[ModuleStatus.LOCKED]:
+            state.status[ModuleStatus.LOCKED] = False
             return {"message": "Module unlocked"}
         else:
             return {"message": "Module not locked"}
