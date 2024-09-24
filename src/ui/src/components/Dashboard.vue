@@ -20,7 +20,7 @@
       </v-window-item>
       <v-window-item :key="2" :value="2">
         <h2> All Workflows </h2>
-        <WorkflowTable title="All Workflows" :wc_state="workcell_state" :wfs="workflows" />
+        <WorkflowTable title="All Workflows" />
       </v-window-item>
       <v-window-item :key="3" :value="3">
         <v-row class="pa-1 ma-1 justify-center">
@@ -33,7 +33,6 @@
 
 <script setup lang="ts">
 /// <reference path="../store.d.ts" />
-import { workcell_state, workflows } from "@/store";
 import { ref } from 'vue';
 import 'vue-json-pretty/lib/styles.css';
 import Experiments from './Experiments.vue';

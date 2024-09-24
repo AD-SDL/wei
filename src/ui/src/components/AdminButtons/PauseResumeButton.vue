@@ -24,35 +24,36 @@
   </template>
 
 <script lang="ts" setup>
-    import { defineProps, ref, watchEffect } from 'vue';
+import { main_url, workcell_state } from "@/store";
+import { ref, watchEffect } from 'vue';
 
-    const props = defineProps<{
-        main_url: string;
-        module?: string;
-        module_status?: string;
-        wc_state?: any;
-    }>();
+const props = defineProps<{
+    module?: string;
+    module_status?: string;
+}>();
 
-    const pause_url = ref()
-    const resume_url = ref()
-    const isPaused = ref(false);
-    const allowButton = ref(false)
-    const hoverText = ref()
+const pause_url = ref('')
+const resume_url = ref('')
+const isPaused = ref(false);
+const allowButton = ref(false)
+const hoverText = ref('')
 
-    // Format pause and resume urls
+// Format pause and resume urls
+watchEffect(() => {
     if (props.module) {
-        pause_url.value = props.main_url.concat('/admin/pause/'.concat(props.module))
-        resume_url.value = props.main_url.concat('/admin/resume/'.concat(props.module))
+        pause_url.value = main_url.value.concat('/admin/pause/'.concat(props.module))
+        resume_url.value = main_url.value.concat('/admin/resume/'.concat(props.module))
         hoverText.value = "Module"
     }
     else {
-        pause_url.value = props.main_url.concat('/admin/pause')
-        resume_url.value = props.main_url.concat('/admin/resume')
+        pause_url.value = main_url.value.concat('/admin/pause')
+        resume_url.value = main_url.value.concat('/admin/resume')
         hoverText.value = "Workcell"
     }
+})
 
+watchEffect(() => {
     if (props.module) {
-        watchEffect(() => {
         // Determine if pressing pause/resume button should be allowed
         if (props.module_status == "BUSY" || props.module_status == "PAUSED") {
             allowButton.value = true
@@ -66,62 +67,58 @@
         } else {
             isPaused.value = false
         }
-    })
     }
     else {
-        if (props.wc_state) {
-            if (props.wc_state.paused) {
-                isPaused.value = true
-            } else {
-                isPaused.value = false
-            }
+        if (workcell_state.value) {
+            isPaused.value = workcell_state.value.paused
         } else {
             isPaused.value = false
         }
         allowButton.value = true
     }
+})
 
-    // Function to toggle pause/resume
-    const togglePauseResume = async () => {
-        if (isPaused.value) {
-            await sendResumeCommand();
-        } else {
-            await sendPauseCommand();
+// Function to toggle pause/resume
+const togglePauseResume = async () => {
+    if (isPaused.value) {
+        await sendResumeCommand();
+    } else {
+        await sendPauseCommand();
+    }
+    isPaused.value = !isPaused.value;
+};
+
+// Function to send pause command
+const sendPauseCommand = async () => {
+    try {
+        const response = await fetch(pause_url.value, {
+            method: 'POST',
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-        isPaused.value = !isPaused.value;
-    };
+        console.log('Paused');
 
-    // Function to send pause command
-    const sendPauseCommand = async () => {
-        try {
-            const response = await fetch(pause_url.value, {
-                method: 'POST',
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            console.log('Paused');
+    } catch (error) {
+        console.error('Error pausing:', error);
+    }
+};
 
-        } catch (error) {
-            console.error('Error pausing:', error);
+// Function to send resume command
+const sendResumeCommand = async () => {
+    try {
+        const response = await fetch(resume_url.value, {
+            method: 'POST',
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    };
 
-    // Function to send resume command
-    const sendResumeCommand = async () => {
-        try {
-            const response = await fetch(resume_url.value, {
-                method: 'POST',
-            });
+        console.log('Resumed');
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            console.log('Resumed');
-
-        } catch (error) {
+    } catch (error) {
         console.error('Error resuming:', error);
-        }
-    };
+    }
+};
 </script>

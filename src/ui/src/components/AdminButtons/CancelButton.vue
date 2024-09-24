@@ -22,61 +22,59 @@
 </template>
 
 <script setup lang="ts">
-    import { defineProps, ref, watchEffect } from 'vue';
+import { main_url } from "@/store";
+import { ref, watchEffect } from 'vue';
 
-    const props = defineProps<{
-        main_url: string;
-        module?: string;
-        module_status?: string;
-        wc_state?: any;
-    }>();
+const props = defineProps<{
+    module?: string;
+    module_status?: string;
+}>();
 
-    const cancel_url = ref()
-    const canCancel = ref(false);
-    const hoverText = ref()
+const cancel_url = ref('')
+const canCancel = ref(false);
+const hoverText = ref('')
 
-    // Format cancel url
+// Format cancel url
+watchEffect(() => {
     if (props.module) {
-        cancel_url.value = props.main_url.concat('/admin/cancel/'.concat(props.module))
+        cancel_url.value = main_url.value.concat('/admin/cancel/'.concat(props.module))
         hoverText.value = "Cancel Module Action"
     }
     else {
-        cancel_url.value = props.main_url.concat('/admin/cancel')
+        cancel_url.value = main_url.value.concat('/admin/cancel')
         hoverText.value = "Cancel All Workflows"
     }
+})
 
-    watchEffect(() => {
-        // Determine if the module is cancelable (if actively running something)
-        if (props.module) {
-            if (props.module_status == 'BUSY' || props.module_status == 'PAUSED') {
-                canCancel.value = true
-            }
-            else {
-                canCancel.value = false
-            }
-        }
-        else {
-            // TODO: Allow cancel if there's an actively running workflow
-            // TODO: It might be better to allow cancel when there is a running experiment
-                // canceling a workflow might not cancel the rest of the experiment correctly
+watchEffect(() => {
+    // Determine if the module is cancelable (if actively running something)
+    if (props.module) {
+        if (props.module_status == 'BUSY' || props.module_status == 'PAUSED') {
             canCancel.value = true
         }
-
-    })
-
-    // Function to send cancel command
-    const sendCancelCommand = async () => {
-        try {
-            const response = await fetch(cancel_url.value, {
-                method: 'POST',
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            console.log('Cancel successful');
-
-        } catch (error) {
-            console.error('Error in cancel:', error);
+        else {
+            canCancel.value = false
         }
-    };
+    }
+    else {
+        // TODO: Allow cancel if there's an actively running workflow
+        canCancel.value = true
+    }
+})
+
+// Function to send cancel command
+const sendCancelCommand = async () => {
+    try {
+        const response = await fetch(cancel_url.value, {
+            method: 'POST',
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        console.log('Cancel successful');
+
+    } catch (error) {
+        console.error('Error in cancel:', error);
+    }
+};
 </script>

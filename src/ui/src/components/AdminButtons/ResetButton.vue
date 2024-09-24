@@ -22,31 +22,31 @@
 </template>
 
 <script lang="ts" setup>
-    import { defineProps, ref, watchEffect } from 'vue';
+    import { main_url } from "@/store";
+import { ref, watchEffect } from 'vue';
 
     const props = defineProps<{
-        main_url: string;
         module?: string;
         module_status?: string;
-        wc_state?: any;
     }>();
 
-    const reset_url = ref()
+    const reset_url = ref('')
     const canReset = ref(false);
-    const hoverText = ref()
+    const hoverText = ref('')
 
     // Format reset url
-    if (props.module) {
-        reset_url.value = props.main_url.concat('/admin/reset/'.concat(props.module))
-        hoverText.value = "Reset Module"
-    }
-    else {
-        reset_url.value = props.main_url.concat('/admin/reset')
-        hoverText.value = "Reset Workcell"
-    }
+    watchEffect(() => {
+        if (props.module) {
+            reset_url.value = main_url.value.concat('/admin/reset/'.concat(props.module))
+            hoverText.value = "Reset Module"
+        }
+        else {
+            reset_url.value = main_url.value.concat('/admin/reset')
+            hoverText.value = "Reset Workcell"
+        }
+    })
 
     watchEffect(() => {
-
         if (props.module) {
             // Determine if the module is able to be reset (if actively running something)
             if (props.module_status == 'BUSY') {

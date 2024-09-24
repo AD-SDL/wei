@@ -4,12 +4,12 @@
       <v-card-title class="text-center">
         <h2>{{ workcell_info.name }}</h2>
         <div class="d-flex justify-center">
-          <PauseResumeButton :main_url="main_url" :wc_state="workcell_state" class="ml-2"/>
-          <CancelButton :main_url="main_url" :wc_state="workcell_state" class="ml-2" />
-          <ResetButton :main_url="main_url" :wc_state="workcell_state" class="ml-2" />
-          <LockUnlockButton :main_url="main_url" :wc_state="workcell_state" class="ml-2"/>
-          <ShutdownButton :main_url="main_url" :wc_state="workcell_state" class="ml-2" />
-          <SafetyStopButton :main_url="main_url" :wc_state="workcell_state" class="ml-2"/>
+          <PauseResumeButton class="ml-2"/>
+          <CancelButton class="ml-2" />
+          <ResetButton class="ml-2" />
+          <LockUnlockButton class="ml-2"/>
+          <ShutdownButton class="ml-2" />
+          <SafetyStopButton class="ml-2"/>
         </div>
       </v-card-title>
       <v-card-text>
