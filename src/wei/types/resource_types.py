@@ -365,7 +365,12 @@ class StackBase(ResourceContainerBase):
             next_index = 1  # If there are no contents, start with index 1
 
         # Allocate the asset to the stack with the next available index
-        asset.allocate_to_resource("stack", self.id, next_index, session)
+        asset.allocate_to_resource(
+            resource_type="stack",
+            resource_id=self.id,
+            index=next_index,
+            session=session,
+        )
 
         # Update the quantity based on the number of assets in the stack
         self.quantity = len(contents) + 1  # Increase quantity by 1
@@ -448,7 +453,7 @@ class QueueBase(ResourceContainerBase):
         # Return the assets as a list based on the sorted allocations
         return [session.get(AssetTable, alloc.asset_id) for alloc in allocations]
 
-    def push(self, asset: Any, session: Session) -> int:
+    def push(self, asset: AssetTable, session: Session) -> int:
         """
         Push a new asset onto the queue.
 
@@ -482,7 +487,12 @@ class QueueBase(ResourceContainerBase):
             next_index = 1  # If there are no contents, start with index 1
 
         # Allocate the asset to the queue with the next available index
-        asset.allocate_to_resource("queue", self.id, next_index, session)
+        asset.allocate_to_resource(
+            resource_type="queue",
+            resource_id=self.id,
+            index=next_index,
+            session=session,
+        )
 
         # Update the quantity based on the number of assets in the queue
         self.quantity = len(contents) + 1  # Increase quantity by 1
@@ -567,12 +577,12 @@ class CollectionBase(ResourceContainerBase):
             for alloc in allocations
         }
 
-    def insert(self, location: str, asset: AssetTable, session: Session) -> None:
+    def insert(self, location: int, asset: AssetTable, session: Session) -> None:
         """
         Insert a new asset into the collection at the specified location.
 
         Args:
-            location (str): The location in the collection to insert the asset.
+            location (int): The location in the collection to insert the asset.
             asset (AssetTable): The asset to insert.
             session (Session): SQLAlchemy session to use for saving.
 
@@ -589,9 +599,7 @@ class CollectionBase(ResourceContainerBase):
         # Check if an asset is already at this location
         existing_allocation = (
             session.query(AssetAllocation)
-            .filter_by(
-                resource_id=self.id, resource_type="collection", index=int(location)
-            )
+            .filter_by(resource_id=self.id, resource_type="collection", index=location)
             .first()
         )
 
@@ -601,19 +609,24 @@ class CollectionBase(ResourceContainerBase):
             )
 
         # Allocate the asset to the collection at the specified location (index)
-        asset.allocate_to_resource("collection", self.id, int(location), session)
+        asset.allocate_to_resource(
+            resource_type="collection",
+            resource_id=self.id,
+            index=location,
+            session=session,
+        )
 
         # Update the quantity based on the number of assets in the collection
         contents = self.get_contents(session)
         self.quantity = len(contents)  # Update the quantity
         self.save(session)
 
-    def retrieve(self, location: str, session: Session) -> Optional[Dict[str, Any]]:
+    def retrieve(self, location: int, session: Session) -> Optional[Dict[str, Any]]:
         """
         Retrieve an asset from the collection at the specified location.
 
         Args:
-            location (str): The location in the collection to retrieve the asset from.
+            location (int): The location in the collection to retrieve the asset from.
             session (Session): SQLAlchemy session to use for fetching and saving.
 
         Returns:
@@ -624,9 +637,7 @@ class CollectionBase(ResourceContainerBase):
         """
         allocation = (
             session.query(AssetAllocation)
-            .filter_by(
-                resource_id=self.id, resource_type="collection", index=int(location)
-            )
+            .filter_by(resource_id=self.id, resource_type="collection", index=location)
             .first()
         )
 
@@ -709,11 +720,11 @@ class PlateBase(ResourceContainerBase):
             else:
                 # Create a new well
                 new_well = PoolTable(
-                    description=f"{well_id}",
+                    description=f"Well {well_id}",
                     name=f"{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
-                    module_name=self.module_name,  # Bug with self.name & self.module_name
+                    module_name=self.name,  # Bug with self.name & self.module_name
                 )
                 session.add(new_well)  # Add the new well to the session
                 session.commit()  # Commit to generate the new_well ID
