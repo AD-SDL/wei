@@ -405,14 +405,14 @@ class ResourcesInterface:
             return queue.pop(session)
 
     def insert_into_collection(
-        self, collection: CollectionTable, location: str, asset: AssetTable
+        self, collection: CollectionTable, location: int, asset: AssetTable
     ) -> None:
         """
         Insert an asset into a collection resource.
 
         Args:
             collection (CollectionTable): The collection resource to update.
-            location (str): The location within the collection to insert the asset.
+            location (int): The location within the collection to insert the asset.
             asset (AssetTable): The asset to insert.
         """
         with self.session as session:
@@ -426,14 +426,14 @@ class ResourcesInterface:
             session.refresh(collection)
 
     def retrieve_from_collection(
-        self, collection: CollectionTable, location: str
+        self, collection: CollectionTable, location: int
     ) -> Optional[AssetTable]:
         """
         Retrieve an asset from a collection resource.
 
         Args:
             collection (CollectionTable): The collection resource to update.
-            location (str): The location within the collection to retrieve the asset from.
+            location (int): The location within the collection to retrieve the asset from.
 
         Returns:
             AssetTable: The retrieved asset.
@@ -624,22 +624,22 @@ if __name__ == "__main__":
     # all_queues = resource_interface.get_all_resources(QueueTable)
     # print("\nAll Queues after modification:", all_queues)
     # # Create a Collection resource
-    # collection = CollectionTable(
-    #     name="Test Collection",
-    #     description="A test collection",
-    #     capacity=10,
-    #     module_name="test4",
-    # )
-    # collection = resource_interface.add_resource(collection)
+    collection = CollectionTable(
+        name="Test Collection",
+        description="A test collection",
+        capacity=10,
+        module_name="test4",
+    )
+    collection = resource_interface.add_resource(collection)
 
-    # # Insert an asset into the Collection
-    # resource_interface.insert_into_collection(collection, "location1", asset3)
+    # Insert an asset into the Collection
+    resource_interface.insert_into_collection(collection, location=1, asset=asset3)
 
-    # # Retrieve an asset from the Collection
-    # retrieved_asset = resource_interface.retrieve_from_collection(
-    #     collection, "location1"
-    # )
-    # print("\nRetrieved Asset from Collection:", retrieved_asset)
+    # Retrieve an asset from the Collection
+    retrieved_asset = resource_interface.retrieve_from_collection(
+        collection, location=1
+    )
+    print("\nRetrieved Asset from Collection:", retrieved_asset)
 
     # Create a Plate resource
     plate = PlateTable(
@@ -651,7 +651,7 @@ if __name__ == "__main__":
     plate = resource_interface.add_resource(plate)
     wells_to_add = {
         "A1": 50.0,  # Well A1 with 50.0 quantity
-        "B1": 30.0,  # Well B1 with 30.0 quantity
+        "B1": 66.0,  # Well B1 with 30.0 quantity
     }
     resource_interface.update_plate_contents(plate, wells_to_add)
 
@@ -669,13 +669,13 @@ if __name__ == "__main__":
     }
     resource_interface.update_plate_contents(plate, new_well_to_add)
 
-    # Retrieve the updated contents
+    # # Retrieve the updated contents
     updated_wells = resource_interface.get_wells(plate)
     print(f"Updated wells: {updated_wells}")
     resource_interface.update_plate_well(plate, well_id="A1", quantity=80.0)
 
-    # all_plates = resource_interface.get_all_resources(PlateTable)
-    # print("\nAll Plates after modification:", all_plates)
+    all_plates = resource_interface.get_all_resources(PlateTable)
+    print("\nAll Plates after modification:", all_plates)
 
     # all_asset = resource_interface.get_all_resources(AssetTable)
     # print("\n Asset Table", all_asset)
