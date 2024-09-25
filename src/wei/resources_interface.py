@@ -2,6 +2,7 @@
 
 from typing import Dict, List, Optional, Type
 
+from sqlalchemy import text
 from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
 
@@ -228,6 +229,12 @@ class ResourcesInterface:
         Drop all tables associated with the SQLModel metadata from the database.
         """
         try:
+            # Drop AssetTable first, handling foreign key constraints with CASCADE
+            with self.engine.connect() as connection:
+                # Drop AssetTable first, handling foreign key constraints with CASCADE
+                connection.execute(text("DROP TABLE IF EXISTS assettable CASCADE"))
+                connection.commit()
+            # Drop the rest of the tables
             SQLModel.metadata.drop_all(self.engine)
             print("All tables have been deleted.")
         except Exception as e:
