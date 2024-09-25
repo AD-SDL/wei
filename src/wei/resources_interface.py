@@ -72,31 +72,31 @@ class ResourcesInterface:
             if isinstance(resource, StackTable):
                 asset = AssetTable(
                     name=f"{resource.name}",
-                    stack_resource_id=resource.id,
+                    id=resource.id,
                     module_name=resource.module_name,
                 )
             elif isinstance(resource, PoolTable):
                 asset = AssetTable(
                     name=f"{resource.name}",
-                    pool_id=resource.id,
+                    id=resource.id,
                     module_name=resource.module_name,
                 )
             elif isinstance(resource, QueueTable):
                 asset = AssetTable(
                     name=f"{resource.name}",
-                    queue_resource_id=resource.id,
+                    id=resource.id,
                     module_name=resource.module_name,
                 )
             elif isinstance(resource, PlateTable):
                 asset = AssetTable(
                     name=f"{resource.name}",
-                    plate_id=resource.id,
+                    id=resource.id,
                     module_name=resource.module_name,
                 )
             elif isinstance(resource, CollectionTable):
                 asset = AssetTable(
                     name=f"{resource.name}",
-                    collection_id=resource.id,
+                    id=resource.id,
                     module_name=resource.module_name,
                 )
             else:
@@ -557,7 +557,7 @@ class ResourcesInterface:
 # Sample main function for testing
 if __name__ == "__main__":
     resource_interface = ResourcesInterface()
-    print(resource_interface.get_resource("Test Stack", "test2"))
+    # print(resource_interface.get_resource("Test Stack", "test2"))
     # resource_interface.clear_all_table_records()
     # Example usage: Create a Pool resource
     pool = PoolTable(
@@ -603,26 +603,26 @@ if __name__ == "__main__":
     print("\nAll Stacks after modification:", all_stacks)
 
     # # Create a Queue resource
-    # queue = QueueTable(
-    #     name="Test Queue", description="A test queue", capacity=10, module_name="test3"
-    # )
-    # queue = resource_interface.add_resource(queue)
+    queue = QueueTable(
+        name="Test Queue", description="A test queue", capacity=10, module_name="test3"
+    )
+    queue = resource_interface.add_resource(queue)
 
-    # # Push an asset to the Queue
-    # asset2 = AssetTable(name="Test Asset2")
+    # Push an asset to the Queue
+    asset2 = AssetTable(name="Test Asset2")
 
-    # resource_interface.push_to_queue(queue, asset2)
-    # # resource_interface.push_to_queue(queue, asset)
+    resource_interface.push_to_queue(queue, asset2)
+    # resource_interface.push_to_queue(queue, asset)
 
-    # # print("Updated Queue with Pushed Asset:", queue)
-    # all_queues = resource_interface.get_all_resources(QueueTable)
-    # print("\nAll Queues after modification:", all_queues)
+    # print("Updated Queue with Pushed Asset:", queue)
+    all_queues = resource_interface.get_all_resources(QueueTable)
+    print("\nAll Queues after modification:", all_queues)
 
     # # Pop an asset from the Queue
-    # popped_asset_q = resource_interface.pop_from_queue(queue)
-    # print("\nPopped Asset from Queue:", popped_asset_q)
-    # all_queues = resource_interface.get_all_resources(QueueTable)
-    # print("\nAll Queues after modification:", all_queues)
+    popped_asset_q = resource_interface.pop_from_queue(queue)
+    print("\nPopped Asset from Queue:", popped_asset_q)
+    all_queues = resource_interface.get_all_resources(QueueTable)
+    print("\nAll Queues after modification:", all_queues)
     # # Create a Collection resource
     collection = CollectionTable(
         name="Test Collection",
@@ -645,6 +645,7 @@ if __name__ == "__main__":
     plate = PlateTable(
         name="Test Plate",
         description="A test plate",
+        capacity=96,
         well_capacity=100.0,
         module_name="test5",
     )
