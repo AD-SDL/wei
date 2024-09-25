@@ -124,7 +124,6 @@ def run_step(
         if step_response.status == StepStatus.NOT_READY:
             wf_run.status = WorkflowStatus.IN_PROGRESS
             step.result = step_response
-            print("this one here")
             with state_manager.wc_state_lock():
                 wf_run.steps[wf_run.step_index] = step
                 state_manager.set_workflow_run(wf_run)

@@ -57,6 +57,12 @@ class ModuleStatus(str, MultiValueEnum):
         """Alias for READY"""
         return ModuleStatus.READY
 
+    @nonmember
+    @classproperty
+    def BUSY(cls) -> "ModuleStatus":
+        """Alias for RUNNING"""
+        return ModuleStatus.RUNNING
+
 
 class ModuleState(BaseModel, extra="allow"):
     """Model for the state of a Module"""

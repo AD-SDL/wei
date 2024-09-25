@@ -677,12 +677,10 @@ class RESTModule:
             # * Try to run the action_handler for this module
             try:
                 step_result = state.action_handler(state=state, action=action_request)
-                try:
-                    if not step_result.status == StepStatus.NOT_READY:
-                        state.release_action_lock(state=state, action=action_request)
-                    else:
-                        print("here")
-                except Exception:
+                if (
+                    isinstance(step_result, StepFileResponse)
+                    or not step_result.status == StepStatus.NOT_READY
+                ):
                     state.release_action_lock(state=state, action=action_request)
 
             except Exception as e:
