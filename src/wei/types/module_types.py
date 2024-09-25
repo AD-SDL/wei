@@ -43,7 +43,7 @@ class ModuleStatus(str, MultiValueEnum):
     """Status for the state of a Module"""
 
     READY = "READY", "IDLE", "OK"
-    BUSY = "BUSY", "RUNNING"
+    RUNNING = "BUSY", "RUNNING"
     INIT = "INIT", "STARTING"
     ERROR = "ERROR"
     UNKNOWN = "UNKNOWN"
@@ -57,11 +57,25 @@ class ModuleStatus(str, MultiValueEnum):
         """Alias for READY"""
         return ModuleStatus.READY
 
+    @nonmember
+    @classproperty
+    def BUSY(cls) -> "ModuleStatus":
+        """Alias for RUNNING"""
+        return ModuleStatus.RUNNING
+
 
 class ModuleState(BaseModel, extra="allow"):
     """Model for the state of a Module"""
 
-    status: ModuleStatus
+    status: Dict[ModuleStatus, bool] = {
+        ModuleStatus.INIT: True,
+        ModuleStatus.READY: False,
+        ModuleStatus.RUNNING: False,
+        ModuleStatus.LOCKED: False,
+        ModuleStatus.PAUSED: False,
+        ModuleStatus.ERROR: False,
+        ModuleStatus.CANCELLED: False,
+    }
     """Current state of the module"""
     error: Optional[str] = None
     """Error message if the module is in an error state"""
@@ -69,8 +83,21 @@ class ModuleState(BaseModel, extra="allow"):
     @field_validator("status", mode="before")
     def validate_status(cls, v: Any) -> Any:
         """Validate the status field of the ModuleState"""
+        status = {
+            ModuleStatus.INIT: False,
+            ModuleStatus.READY: False,
+            ModuleStatus.RUNNING: False,
+            ModuleStatus.LOCKED: False,
+            ModuleStatus.PAUSED: False,
+            ModuleStatus.ERROR: False,
+            ModuleStatus.CANCELLED: False,
+        }
         if isinstance(v, str):
-            return ModuleStatus(v)
+            status[ModuleStatus(v)] = True
+            return status
+        elif isinstance(v, ModuleStatus):
+            status[v] = True
+            return status
         return v
 
 

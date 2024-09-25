@@ -20,6 +20,7 @@ class StepStatus(str, Enum):
     """Status for a step of a workflow"""
 
     IDLE = "idle"
+    NOT_READY = "not_ready"
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
@@ -72,6 +73,11 @@ class StepResponse(BaseModel):
     def step_failed(cls, error: str = "") -> "StepResponse":
         """Returns a StepResponse for a failed step"""
         return cls(status=StepStatus.FAILED, error=error)
+
+    @classmethod
+    def step_not_ready(cls, error: str = "") -> "StepResponse":
+        """Returns a StepResponse for a failed step"""
+        return cls(status=StepStatus.NOT_READY, error=error)
 
 
 class StepSucceeded(StepResponse):

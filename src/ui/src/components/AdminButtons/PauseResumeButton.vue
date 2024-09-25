@@ -29,7 +29,7 @@
     const props = defineProps<{
         main_url: string;
         module?: string;
-        module_status?: string;
+        module_status?: any;
         wc_state?: any;
     }>();
 
@@ -54,14 +54,14 @@
     if (props.module) {
         watchEffect(() => {
         // Determine if pressing pause/resume button should be allowed
-        if (props.module_status == "BUSY" || props.module_status == "PAUSED") {
+        if (props.module_status["BUSY"] == true || props.module_status["PAUSED"] == true) {
             allowButton.value = true
         } else {
             allowButton.value = false
         }
 
         // Determine if the module is already paused
-        if (props.module_status == 'PAUSED') {
+        if (props.module_status["PAUSED"] == true) {
             isPaused.value = true
         } else {
             isPaused.value = false

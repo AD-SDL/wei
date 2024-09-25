@@ -3,8 +3,6 @@
 from datetime import datetime
 
 from wei.core.events import send_event
-from wei.core.location import reserve_source_and_target
-from wei.core.module import reserve_module
 from wei.core.state_manager import state_manager
 from wei.core.step import check_step, run_step
 from wei.core.workcell import find_step_module
@@ -44,8 +42,7 @@ class Scheduler:
                         module = find_step_module(
                             state_manager.get_workcell(), step.module
                         )
-                        reserve_module(module, wf_run.run_id)
-                        reserve_source_and_target(wf_run)
+
                         if wf_run.status == WorkflowStatus.QUEUED:
                             send_event(WorkflowStartEvent.from_wf_run(wf_run=wf_run))
                         wf_run.status = WorkflowStatus.RUNNING

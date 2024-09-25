@@ -10,7 +10,7 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
-from threading import Thread
+from threading import Lock, Thread
 from typing import Any, List, Optional, Set, Union
 
 from fastapi import (
@@ -34,7 +34,12 @@ from wei.types.module_types import (
     ModuleActionFile,
     ModuleState,
 )
-from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
+from wei.types.step_types import (
+    ActionRequest,
+    StepFileResponse,
+    StepResponse,
+    StepStatus,
+)
 from wei.utils import pretty_type_repr
 
 
@@ -95,6 +100,7 @@ class RESTModule:
         self.app = FastAPI(lifespan=RESTModule._lifespan, description=description)
         self.app.state = State(state={})
         self.state = self.app.state  # * Mirror the state object for easier access
+        self.state.action_lock = Lock()
         self.router = APIRouter()
 
         # * Set attributes from constructor arguments
@@ -194,7 +200,8 @@ class RESTModule:
         if error_message:
             print(f"Error: {error_message}")
         traceback.print_exc()
-        state.status = ModuleStatus.ERROR
+        state.status[ModuleStatus.ERROR] = True
+        state.status[ModuleStatus.READY] = False
         state.error = str(exception)
 
     @staticmethod
@@ -202,21 +209,24 @@ class RESTModule:
         """Runs the startup function for the module in a non-blocking thread, with error handling"""
         try:
             # * Call the module's startup function
+            state.status = ModuleState().status
             state._startup_handler(state=state)
         except Exception as exception:
             # * If an exception occurs during startup, handle it and put the module in an error state
             state.exception_handler(state, exception, "Error during startup")
-            state.status = (
-                ModuleStatus.ERROR
-            )  # * Make extra sure the status is set to ERROR
+            state.status[ModuleStatus.ERROR] = True
+            state.status[ModuleStatus.READY] = (
+                False  # * Make extra sure the status is set to ERROR
+            )
         else:
             # * If everything goes well, set the module status to IDLE
-            if state.status == ModuleStatus.INIT:
-                state.status = ModuleStatus.READY
+            if state.status[ModuleStatus.INIT]:
+                state.status[ModuleStatus.INIT] = False
+                state.status[ModuleStatus.READY] = True
                 print(
                     "Startup completed successfully. Module is now ready to accept actions."
                 )
-            elif state.status == ModuleStatus.ERROR:
+            elif state.status[ModuleStatus.ERROR]:
                 print("Startup completed with errors.")
 
     @asynccontextmanager
@@ -379,7 +389,7 @@ class RESTModule:
                     except Exception:
                         error_message = f"Module is not ready to accept actions. Module Status: {state.status}"
                         print(error_message)
-                        return StepResponse.step_failed(error=error_message)
+                        return StepResponse.step_not_ready(error=error_message)
 
                     # * Prepare arguments for the action function.
                     # * If the action function has a 'state' or 'action' parameter
@@ -434,31 +444,42 @@ class RESTModule:
         and then setting the module's status to BUSY to prevent other actions from being taken for the duration.
         This can be overridden by the developer to provide more specific behavior.
         """
-        if state.status is ModuleStatus.READY:
+        if blocking:
+            state.action_lock.acquire()
+        if state.status[ModuleStatus.READY] and not (
+            state.status[ModuleStatus.PAUSED] or state.status[ModuleStatus.LOCKED]
+        ):
             if blocking:
-                state.status = ModuleStatus.BUSY
+                state.status[ModuleStatus.READY] = False
+                state.status[ModuleStatus.RUNNING] = True
             else:
-                state.status = ModuleStatus.READY
+                state.status[ModuleStatus.RUNNING] = True
             state._actions_running += 1
         else:
+            state.action_lock.release()
             raise Exception("Module is not ready to accept actions")
+        if blocking:
+            state.action_lock.release()
 
     @staticmethod
     def release_action_lock(state: State, action: ActionRequest):
         """Releases the lock on the module. This should be called after an action is completed.
         This can be overridden by the developer to provide more specific behavior.
         """
-        if state._actions_running >= 1:
-            state._actions_running -= 1
-        if state.status is ModuleStatus.BUSY:
-            state.status = ModuleStatus.READY
+        with state.action_lock:
+            if state._actions_running >= 1:
+                state._actions_running -= 1
+                if state._actions_running == 0:
+                    state.status[ModuleStatus.RUNNING] = False
+        if not state.status[ModuleStatus.READY]:
+            state.status[ModuleStatus.READY] = True
 
     # * Admin Command Handling Functions
 
     @staticmethod
     def _safety_stop(state: State):
         """Handles custom safety-stop functionality"""
-        state.status = ModuleStatus.CANCELLED
+        state.status[ModuleStatus.CANCELLED]
         return {"message": "Module safety-stopped"}
 
     def safety_stop(self):
@@ -485,7 +506,7 @@ class RESTModule:
     def _pause(state: State):
         """Handles pausing the module. This should be overridden by the developer to provide custom behavior."""
         state.pre_paused_status = state.status
-        state.status = ModuleStatus.PAUSED
+        state.status[ModuleStatus.PAUSED] = True
         return {"message": "Module paused"}
 
     def resume(self):
@@ -501,8 +522,8 @@ class RESTModule:
     @staticmethod
     def _resume(state: State):
         """Handles resuming the module from the paused state. This should be overridden by the developer to provide custom behavior."""
-        if state.status is ModuleStatus.PAUSED:
-            state.status = state.pre_paused_status
+        if state.status[ModuleStatus.PAUSED]:
+            state.status[ModuleStatus.PAUSED] = False
             return {"message": "Module resumed"}
         else:
             return {"message": "Module not paused"}
@@ -521,7 +542,8 @@ class RESTModule:
     def _reset(state: State):
         """This function is called when the module needs to be reset.
         It should be overridden by the developer to do any necessary teardown for the module."""
-        state.status = ModuleStatus.INIT
+        state.status[ModuleStatus.INIT] = True
+        state.status[ModuleStatus.READY] = False
         try:
             state._shutdown_handler(state)
             Thread(target=RESTModule.startup_thread, args=[state]).start()
@@ -545,7 +567,7 @@ class RESTModule:
     @staticmethod
     def _cancel(state: State):
         """Handles cancelling any running actions on the module. This should be overridden by the developer to provide custom behavior."""
-        state.status = ModuleStatus.CANCELLED
+        state.status[ModuleStatus.CANCELLED] = True
         return {"message": "Module actions canceled"}
 
     def lock(self):
@@ -562,7 +584,7 @@ class RESTModule:
     def _lock(state: State):
         """Handles locking the module. This should be overridden by the developer to provide custom behavior."""
         state.pre_locked_status = state.status
-        state.status = ModuleStatus.LOCKED
+        state.status[ModuleStatus.LOCKED] = True
         return {"message": "Module paused"}
 
     def unlock(self):
@@ -578,8 +600,8 @@ class RESTModule:
     @staticmethod
     def _unlock(state: State):
         """Logic for unlocking the module. This should be overridden by the developer to provide custom behavior."""
-        if state.status is ModuleStatus.LOCKED:
-            state.status = state.pre_locked_status
+        if state.status[ModuleStatus.LOCKED]:
+            state.status[ModuleStatus.LOCKED] = False
             return {"message": "Module unlocked"}
         else:
             return {"message": "Module not locked"}
@@ -655,7 +677,12 @@ class RESTModule:
             # * Try to run the action_handler for this module
             try:
                 step_result = state.action_handler(state=state, action=action_request)
-                state.release_action_lock(state=state, action=action_request)
+                if (
+                    isinstance(step_result, StepFileResponse)
+                    or not step_result.status == StepStatus.NOT_READY
+                ):
+                    state.release_action_lock(state=state, action=action_request)
+
             except Exception as e:
                 # * Handle any exceptions that occur while processing the action request,
                 # * which should put the module in the ERROR state
