@@ -80,6 +80,9 @@ class WorkcellConfig(BaseModel, extra="allow"):
         default="localhost", description="Hostname for the Redis server"
     )
     redis_port: int = Field(default=6379, description="Port for the Redis server")
+    redis_password: str = Field(
+        default="", description="Password for the Redis server, if any"
+    )
     data_directory: PathLike = Field(
         default=Path.home() / ".wei",
         description="Directory to store data produced by WEI",

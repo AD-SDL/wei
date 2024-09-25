@@ -2,6 +2,7 @@
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
 
+import time
 from typing import Annotated
 
 from fastapi import UploadFile
@@ -190,41 +191,9 @@ def synthesize(
 ) -> StepResponse:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
 
-    # Read the uploaded protocol file content (not used further in this example)
-    protocol_content = protocol.file.read().decode("utf-8")
-    print(protocol_content)
-
-    # Retrieve the plate resource
-    plate = state.resource_interface.get_resource(
-        resource_name="Plate0", module_name=state.module_name
-    )
-
-    if not plate:
-        return StepResponse.step_failed("Plate0 resource not found")
-
-    try:
-        # Update specific wells
-        state.resource_interface.update_plate_well(plate, "A1", 80.0)  # Set A1 to 80
-        # Safely retrieve well 'B1' quantity before modification
-        well_B1_quantity = state.resource_interface.get_well_quantity(plate, "B1")
-        state.resource_interface.update_plate_well(
-            plate, "B1", well_B1_quantity - 1
-        )  # Decrease B1 by 'bar'
-
-        # Update the entire contents of wells, setting C1 to well capacity
-        state.resource_interface.update_plate_contents(
-            plate, {"C1": plate.well_capacity}
-        )
-
-        # Set D1 well to zero
-        state.resource_interface.update_plate_well(plate, "D1", 0.0)
-
-        all_plates = state.resource_interface.get_all_resources(PlateTable)
-        print("All Plates in the database:", all_plates)
-        return StepResponse.step_succeeded()
-
-    except Exception as e:
-        return StepResponse.step_failed(f"Failed to synthesize: {e}")
+    state.foobar = foo + bar
+    time.sleep(5)
+    return StepResponse.step_succeeded()
 
 
 @test_rest_node.action(
@@ -267,10 +236,10 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         all_collections = state.resource_interface.get_all_resources(CollectionTable)
         print("All Collections in the database:", all_collections)
         # Return the success response with the generated files
-        # return StepResponse.step_succeeded(
-        #     files={"test_file": "test.txt", "test2_file": "test2.txt"},
-        #     data={"test": {"test": "test"}},
-        # )
+        return StepResponse.step_succeeded(
+            files={"test_file": "test.txt", "test2_file": "test2.txt"},
+            data={"test": {"test": "test"}},
+        )
         return StepResponse.step_succeeded()
 
     else:

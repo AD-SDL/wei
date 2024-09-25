@@ -53,6 +53,7 @@ class StateManager:
                 port=int(Config.redis_port),
                 db=0,
                 decode_responses=True,
+                password=Config.redis_password if Config.redis_password else None,
             )
         return self._redis_connection
 
