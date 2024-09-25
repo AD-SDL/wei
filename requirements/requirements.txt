@@ -78,7 +78,7 @@ sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
-sqlalchemy==2.0.32
+sqlalchemy==2.0.35
 sqlmodel==0.0.21
 starlette==0.38.2
 tomli==2.0.1; python_version < "3.11"

@@ -2,7 +2,6 @@
 REST-based node that interfaces with WEI and provides various fake actions for testing purposes
 """
 
-from time import sleep
 from typing import Annotated
 
 from fastapi import UploadFile
@@ -65,9 +64,9 @@ def test_node_startup(state: State):
     state.resource_interface = ResourcesInterface(
         "postgresql://rpl:rpl@wei_postgres:5432/resources"
     )
+    # state.resource_interface.delete_all_tables()
+    # sleep(15)
     try:
-        state.resource_interface.delete_all_tables()
-        sleep(7)
         # Example: Create resources using ResourceInterface
         stack1 = StackTable(
             name="Stack1",
