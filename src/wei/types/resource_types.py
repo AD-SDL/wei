@@ -1,11 +1,12 @@
 """Resources Data Classes"""
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import ulid
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import Column, DateTime, UniqueConstraint, func
 from sqlmodel import Field as SQLField
-from sqlmodel import Relationship, Session, SQLModel
+from sqlmodel import Session, SQLModel
 
 
 class AssetBase(SQLModel):
@@ -15,11 +16,14 @@ class AssetBase(SQLModel):
     Attributes:
         id (str): Unique identifier for the asset.
         name (str): Name of the asset.
+        module_name (str): Module name of the asset.
+        time_created (datetime): Timestamp when the asset is created.
+        time_updated (datetime): Timestamp when the asset is last updated.
     """
 
     id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
     name: str = SQLField(default="", nullable=False)
-    module_name: str = SQLField(default="", nullable=False)
+    module_name: str = SQLField(default="", nullable=True)
 
 
 class AssetTable(AssetBase, table=True):
@@ -27,61 +31,18 @@ class AssetTable(AssetBase, table=True):
     Represents the asset table with relationships to other resources.
 
     Attributes:
-        stack_resource_id (Optional[str]): Foreign key to the stack table.
-        queue_resource_id (Optional[str]): Foreign key to the queue table.
-        pool_id (Optional[str]): Foreign key to the pool table.
-        collection_id (Optional[str]): Foreign key to the collection table.
-        plate_id (Optional[str]): Foreign key to the plate table.
-        stack (Optional["StackTable"]): Relationship to the StackTable.
-        queue (Optional["QueueTable"]): Relationship to the QueueTable.
-        pool (Optional["PoolTable"]): Relationship to the PoolTable.
-        collection (Optional["CollectionTable"]): Relationship to the CollectionTable.
-        plate (Optional["PlateTable"]): Relationship to the PlateTable.
+        time_created (datetime): Timestamp when the asset is created.
+        time_updated (datetime): Timestamp when the asset is last updated.
     """
 
-    stack_resource_id: Optional[str] = SQLField(
-        default=None, foreign_key="stacktable.id", nullable=True
+    time_created: datetime = SQLField(
+        sa_column=Column(DateTime(timezone=True), server_default=func.now())
     )
-    queue_resource_id: Optional[str] = SQLField(
-        default=None, foreign_key="queuetable.id", nullable=True
+    time_updated: datetime = SQLField(
+        sa_column=Column(
+            DateTime(timezone=True), onupdate=func.now(), server_default=func.now()
+        )
     )
-    pool_id: Optional[str] = SQLField(
-        default=None, foreign_key="pooltable.id", nullable=True
-    )
-    collection_id: Optional[str] = SQLField(
-        default=None, foreign_key="collectiontable.id", nullable=True
-    )
-    plate_id: Optional[str] = SQLField(
-        default=None, foreign_key="platetable.id", nullable=True
-    )
-
-    stack: Optional["StackTable"] = Relationship(back_populates="assets")
-    queue: Optional["QueueTable"] = Relationship(back_populates="assets")
-    pool: Optional["PoolTable"] = Relationship(back_populates="assets")
-    collection: Optional["CollectionTable"] = Relationship(back_populates="assets")
-    plate: Optional["PlateTable"] = Relationship(back_populates="assets")
-
-    def __repr__(self):
-        """
-        Returns a string representation of the asset, including its relationships.
-
-        Returns:
-            str: String representation of the asset.
-        """
-        attrs = [f"id='{self.id}'", f"name='{self.name}'"]
-
-        if self.stack_resource_id:
-            attrs.append(f"stack_resource_id='{self.stack_resource_id}''")
-        if self.pool_id:
-            attrs.append(f"pool_id='{self.pool_id}'")
-        if self.queue_resource_id:
-            attrs.append(f"queue_resource_id='{self.queue_resource_id}'")
-        if self.collection_id:
-            attrs.append(f"collection_id='{self.collection_id}'")
-        if self.plate_id:
-            attrs.append(f"plate_id='{self.plate_id}'")
-
-        return f"({', '.join(attrs)})"
 
     def allocate_to_resource(
         self, resource_type: str, resource_id: str, index: int, session: Session
@@ -116,6 +77,13 @@ class AssetTable(AssetBase, table=True):
                     f"Asset {self.id} is already allocated to a different resource."
                 )
 
+        # Update the module_name to match the resource being allocated
+        resource = session.get(AssetTable, resource_id)
+        if resource:
+            self.module_name = (
+                resource.module_name
+            )  # Set the module_name of the asset to the resource's module_name
+
         # If no existing allocation, create a new one
         new_allocation = AssetAllocation(
             asset_id=self.id,
@@ -124,6 +92,9 @@ class AssetTable(AssetBase, table=True):
             index=index,
         )
         session.add(new_allocation)
+        self.time_updated = datetime.now(
+            timezone.utc
+        )  # Set time_updated to current time
         session.commit()
 
     def deallocate(self, session: Session):
@@ -141,19 +112,24 @@ class AssetTable(AssetBase, table=True):
         if allocation is None:
             raise ValueError(f"Asset {self.id} is not allocated to any resource.")
 
+        # Deallocate and set the module_name to None (indicating the asset is no longer allocated)
+        self.module_name = None
+        self.time_updated = datetime.now(
+            timezone.utc
+        )  # Set time_updated to current time
         session.delete(allocation)
         session.commit()
 
-    @staticmethod
-    def handle_asset_deletion(session: Session):
+    def delete_asset(self, session: Session):
         """
-        Trigger function to remove an asset from a resource's contents when the asset is deleted.
+        Delete this asset and automatically remove any associated asset allocations.
 
         Args:
-            session (Session): SQLAlchemy session to use for handling the deletion.
+            session (Session): The current SQLAlchemy session.
         """
-        # Implementation depends on setting up triggers in your PostgreSQL database.
-        pass
+        # Deleting the asset
+        session.delete(self)
+        session.commit()
 
 
 class AssetAllocation(SQLModel, table=True):
@@ -199,6 +175,14 @@ class ResourceContainerBase(AssetBase):
         """
         session.add(self)
         session.commit()
+
+        asset = session.get(AssetTable, self.id)
+        if asset:
+            asset.time_updated = datetime.now(
+                timezone.utc
+            )  # Set time_updated to current time
+            session.commit()
+
         session.refresh(self)
 
 
@@ -206,28 +190,6 @@ class PoolBase(ResourceContainerBase):
     """
     Base class for pool resources with methods to manipulate quantities.
     """
-
-    def allocate_as_asset(self, session: Session):
-        """
-        Allocate this pool as an asset in the AssetAllocation table.
-
-        Args:
-            session (Session): The database session.
-        """
-        # Check if the pool is already allocated
-        existing_allocation = (
-            session.query(AssetAllocation).filter_by(asset_id=self.id).first()
-        )
-        if not existing_allocation:
-            # Create a new asset allocation for the pool with the same ID and module_name
-            new_asset = AssetTable(
-                id=self.id, name=self.name, module_name=self.module_name
-            )
-            session.add(new_asset)
-            session.commit()
-
-            # Allocate the asset to the pool resource
-            new_asset.allocate_to_resource("pool", self.id, session)
 
     def increase(self, amount: float, session: Session) -> None:
         """
@@ -297,8 +259,6 @@ class PoolTable(PoolBase, table=True):
     Attributes:
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
-
-    assets: List["AssetTable"] = Relationship(back_populates="pool")
 
     __table_args__ = (
         UniqueConstraint("name", "module_name", name="uix_name_module_name_pool"),
@@ -418,7 +378,6 @@ class StackTable(StackBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    assets: List["AssetTable"] = Relationship(back_populates="stack")
     __table_args__ = (
         UniqueConstraint("name", "module_name", name="uix_name_module_name_stack"),
     )
@@ -529,7 +488,11 @@ class QueueBase(ResourceContainerBase):
         self.quantity = len(contents) - 1  # Decrease quantity by 1
         self.save(session)
 
-        return first_asset
+        return {
+            "id": first_asset.id,
+            "name": first_asset.name,
+            "module_name": first_asset.module_name,
+        }
 
 
 class QueueTable(QueueBase, table=True):
@@ -540,7 +503,6 @@ class QueueTable(QueueBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    assets: List["AssetTable"] = Relationship(back_populates="queue")
     __table_args__ = (
         UniqueConstraint("name", "module_name", name="uix_name_module_name_queue"),
     )
@@ -607,7 +569,6 @@ class CollectionBase(ResourceContainerBase):
             raise ValueError(
                 f"Location {location} is already occupied in collection {self.name}."
             )
-
         # Allocate the asset to the collection at the specified location (index)
         asset.allocate_to_resource(
             resource_type="collection",
@@ -643,16 +604,22 @@ class CollectionBase(ResourceContainerBase):
 
         if allocation:
             asset = session.get(AssetTable, allocation.asset_id)
+            module_name = asset.module_name
             if asset:
                 # Deallocate the asset from the collection
                 asset.deallocate(session)
-
                 # Update the quantity after removing the asset, ensuring it does not drop below 0
                 contents = self.get_contents(session)
                 self.quantity = max(len(contents) - 1, 0)  # Prevent negative quantity
                 self.save(session)
 
-                return asset
+                return {
+                    "id": asset.id,
+                    "name": asset.name,
+                    "module_name": module_name,
+                    "resource_type": "collection",
+                    "location": location,
+                }
             else:
                 raise ValueError(
                     f"Asset with id '{allocation.asset_id}' not found in database."
@@ -670,8 +637,6 @@ class CollectionTable(CollectionBase, table=True):
     Attributes:
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
-
-    assets: List["AssetTable"] = Relationship(back_populates="collection")
 
     __table_args__ = (
         UniqueConstraint("name", "module_name", name="uix_name_module_name_collection"),
@@ -726,7 +691,13 @@ class PlateBase(ResourceContainerBase):
                     quantity=quantity,
                     module_name=self.name,  # Bug with self.name & self.module_name
                 )
+                asset = AssetTable(
+                    name=f"{new_well.name}",
+                    id=new_well.id,
+                    module_name=new_well.module_name,
+                )
                 session.add(new_well)  # Add the new well to the session
+                session.add(asset)
                 session.commit()  # Commit to generate the new_well ID
 
         # Update the plate's total quantity
@@ -808,7 +779,6 @@ class PlateTable(PlateBase, table=True):
         assets (List["AssetTable"]): Relationship to the AssetTable.
     """
 
-    assets: List["AssetTable"] = Relationship(back_populates="plate")
     __table_args__ = (
         UniqueConstraint("name", "module_name", name="uix_name_module_name_plate"),
     )
