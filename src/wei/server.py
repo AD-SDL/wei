@@ -89,7 +89,7 @@ if __name__ == "__main__":
     initialize_storage()
     uvicorn.run(
         "wei.server:app",
-        host=Config.server_host,
+        host="0.0.0.0",
         port=Config.server_port,
         reload=False,
     )

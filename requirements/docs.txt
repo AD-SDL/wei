@@ -28,6 +28,7 @@ markupsafe==2.1.5
 mmh3==4.1.0
 packaging==24.1
 pottery==3.0.0
+psycopg2-binary==2.9.9
 pydantic==2.8.2
 pydantic-core==2.20.1
 pydantic-settings==2.4.0
