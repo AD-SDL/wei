@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import ulid
-from sqlalchemy import Column, DateTime, UniqueConstraint, func
+from sqlalchemy import Column, DateTime, Integer, UniqueConstraint, func
 from sqlmodel import Field as SQLField
 from sqlmodel import Session, SQLModel
 
@@ -17,8 +17,6 @@ class AssetBase(SQLModel):
         id (str): Unique identifier for the asset.
         name (str): Name of the asset.
         module_name (str): Module name of the asset.
-        time_created (datetime): Timestamp when the asset is created.
-        time_updated (datetime): Timestamp when the asset is last updated.
     """
 
     id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
@@ -26,7 +24,7 @@ class AssetBase(SQLModel):
     module_name: str = SQLField(default="", nullable=True)
 
 
-class AssetTable(AssetBase, table=True):
+class Asset(AssetBase, table=True):
     """
     Represents the asset table with relationships to other resources.
 
@@ -45,7 +43,7 @@ class AssetTable(AssetBase, table=True):
     )
 
     def allocate_to_resource(
-        self, resource_type: str, resource_id: str, index: int, session: Session
+        self, resource_type: str, resource_id: str, index: str, session: Session
     ):
         """
         Allocate this asset to a specific resource.
@@ -78,7 +76,7 @@ class AssetTable(AssetBase, table=True):
                 )
 
         # Update the module_name to match the resource being allocated
-        resource = session.get(AssetTable, resource_id)
+        resource = session.get(Asset, resource_id)
         if resource:
             self.module_name = (
                 resource.module_name
@@ -137,17 +135,15 @@ class AssetAllocation(SQLModel, table=True):
     Table that tracks which asset is allocated to which resource.
 
     Attributes:
-        asset_id (str): Foreign key referencing the AssetTable.
+        asset_id (str): Foreign key referencing the Asset.
         resource_type (str): Type of resource (e.g., 'stack', 'queue').
         resource_id (str): ID of the resource to which the asset is allocated.
     """
 
-    asset_id: str = SQLField(
-        primary_key=True, foreign_key="assettable.id", nullable=False
-    )
+    asset_id: str = SQLField(primary_key=True, foreign_key="asset.id", nullable=False)
     resource_type: str = SQLField(nullable=False)
     resource_id: str = SQLField(nullable=False)
-    index: int = SQLField(
+    index: str = SQLField(
         nullable=False
     )  # Index for sorting assets in list-like resources
 
@@ -176,7 +172,7 @@ class ResourceContainerBase(AssetBase):
         session.add(self)
         session.commit()
 
-        asset = session.get(AssetTable, self.id)
+        asset = session.get(Asset, self.id)
         if asset:
             asset.time_updated = datetime.now(
                 timezone.utc
@@ -252,12 +248,12 @@ class PoolBase(ResourceContainerBase):
             raise ValueError("Cannot fill without a defined capacity.")
 
 
-class PoolTable(PoolBase, table=True):
+class Pool(PoolBase, table=True):
     """
     Table for storing pool resources.
 
     Attributes:
-        assets (List["AssetTable"]): Relationship to the AssetTable.
+        assets (List["Asset"]): Relationship to the Asset.
     """
 
     __table_args__ = (
@@ -273,7 +269,7 @@ class StackBase(ResourceContainerBase):
         contents (List[Dict[str, Any]]): List of assets in the stack, stored as JSONB.
     """
 
-    def get_contents(self, session: Session) -> List[AssetTable]:
+    def get_contents(self, session: Session) -> List[Asset]:
         """
         Fetch and return assets in the stack, ordered by their index.
 
@@ -282,24 +278,26 @@ class StackBase(ResourceContainerBase):
             session (Session): The database session passed from the interface layer.
 
         Returns:
-            List[AssetTable]: A list of assets sorted by their index.
+            List[Asset]: A list of assets sorted by their index.
         """
         allocations = (
             session.query(AssetAllocation)
             .filter_by(resource_id=self.id, resource_type="stack")
-            .order_by(AssetAllocation.index.asc())
+            .order_by(
+                func.cast(AssetAllocation.index, Integer).asc()
+            )  # Use SQLAlchemy's Integer type
             .all()
         )
 
         # Return the assets as a list based on the sorted allocations
-        return [session.get(AssetTable, alloc.asset_id) for alloc in allocations]
+        return [session.get(Asset, alloc.asset_id) for alloc in allocations]
 
-    def push(self, asset: AssetTable, session: Session) -> int:
+    def push(self, asset: Asset, session: Session) -> int:
         """
         Push a new asset onto the stack. Assigns the next available index.
 
         Args:
-            asset (AssetTable): The asset to push onto the stack.
+            asset (Asset): The asset to push onto the stack.
             session (Session): SQLAlchemy session passed from the interface layer.
 
         Returns:
@@ -316,11 +314,10 @@ class StackBase(ResourceContainerBase):
             max_index = (
                 session.query(AssetAllocation)
                 .filter_by(resource_id=self.id)
-                .order_by(AssetAllocation.index.desc())
+                .order_by(func.cast(AssetAllocation.index, Integer).desc())
                 .first()
-                .index
             )
-            next_index = max_index + 1
+            next_index = int(max_index.index) + 1
         else:
             next_index = 1  # If there are no contents, start with index 1
 
@@ -328,7 +325,7 @@ class StackBase(ResourceContainerBase):
         asset.allocate_to_resource(
             resource_type="stack",
             resource_id=self.id,
-            index=next_index,
+            index=str(next_index),
             session=session,
         )
 
@@ -338,7 +335,7 @@ class StackBase(ResourceContainerBase):
 
         return next_index
 
-    def pop(self, session: Session) -> AssetTable:
+    def pop(self, session: Session) -> Asset:
         """
         Pop the last asset from the stack.
 
@@ -370,12 +367,12 @@ class StackBase(ResourceContainerBase):
         return last_asset
 
 
-class StackTable(StackBase, table=True):
+class Stack(StackBase, table=True):
     """
     Table for storing stack resources.
 
     Attributes:
-        assets (List["AssetTable"]): Relationship to the AssetTable.
+        assets (List["Asset"]): Relationship to the Asset.
     """
 
     __table_args__ = (
@@ -391,7 +388,7 @@ class QueueBase(ResourceContainerBase):
         contents (List[Dict[str, Any]]): List of assets in the queue, stored as JSONB.
     """
 
-    def get_contents(self, session: Session) -> List[AssetTable]:
+    def get_contents(self, session: Session) -> List[Asset]:
         """
         Fetch and return assets in the queue, ordered by their index (FIFO).
 
@@ -400,19 +397,23 @@ class QueueBase(ResourceContainerBase):
             session (Session): The database session passed from the interface layer.
 
         Returns:
-            List[AssetTable]: A list of assets sorted by their index.
+            List[Asset]: A list of assets sorted by their index.
         """
         allocations = (
             session.query(AssetAllocation)
-            .filter_by(resource_id=self.id, resource_type="queue")
-            .order_by(AssetAllocation.index.asc())
+            .filter_by(
+                resource_id=self.id, resource_type="queue"
+            )  # Ensure resource_type is 'queue'
+            .order_by(
+                func.cast(AssetAllocation.index, Integer).asc()
+            )  # Sorted by index (FIFO)
             .all()
         )
 
-        # Return the assets as a list based on the sorted allocations
-        return [session.get(AssetTable, alloc.asset_id) for alloc in allocations]
+        # Return the assets based on the sorted allocations
+        return [session.get(Asset, alloc.asset_id) for alloc in allocations]
 
-    def push(self, asset: AssetTable, session: Session) -> int:
+    def push(self, asset: Asset, session: Session) -> int:
         """
         Push a new asset onto the queue.
 
@@ -432,24 +433,23 @@ class QueueBase(ResourceContainerBase):
         if self.capacity and len(contents) >= self.capacity:
             raise ValueError(f"Queue {self.name} is full. Capacity: {self.capacity}")
 
-        # Find the next available index
+        # Find the next available index as an integer
         if contents:
             max_index = (
                 session.query(AssetAllocation)
                 .filter_by(resource_id=self.id)
-                .order_by(AssetAllocation.index.desc())
+                .order_by(func.cast(AssetAllocation.index, Integer).desc())
                 .first()
-                .index
             )
-            next_index = max_index + 1
+            next_index = int(max_index.index) + 1
         else:
-            next_index = 1  # If there are no contents, start with index 1
+            next_index = 1
 
         # Allocate the asset to the queue with the next available index
         asset.allocate_to_resource(
             resource_type="queue",
             resource_id=self.id,
-            index=next_index,
+            index=str(next_index),
             session=session,
         )
 
@@ -473,10 +473,10 @@ class QueueBase(ResourceContainerBase):
             ValueError: If the queue is empty or if the asset is not found.
         """
         # Fetch the current contents (sorted by index)
-        contents = self.get_contents(session)
+        contents = self.get_contents(session)  # Get the current queue contents
 
         if not contents:
-            raise ValueError(f"Resource {self.name} is empty.")
+            raise ValueError(f"Resource {self.name} is empty.")  # Error raised here
 
         # Pop the first asset (FIFO)
         first_asset = contents[0]
@@ -485,7 +485,7 @@ class QueueBase(ResourceContainerBase):
         first_asset.deallocate(session)
 
         # Update the quantity after removing the asset
-        self.quantity = len(contents) - 1  # Decrease quantity by 1
+        self.quantity = len(contents) - 1  # Decrease quantity
         self.save(session)
 
         return {
@@ -495,12 +495,12 @@ class QueueBase(ResourceContainerBase):
         }
 
 
-class QueueTable(QueueBase, table=True):
+class Queue(QueueBase, table=True):
     """
     Table for storing queue resources.
 
     Attributes:
-        assets (List["AssetTable"]): Relationship to the AssetTable.
+        assets (List["Asset"]): Relationship to the Asset.
     """
 
     __table_args__ = (
@@ -516,7 +516,7 @@ class CollectionBase(ResourceContainerBase):
         contents (Dict[str, Any]): Dictionary of assets in the collection, stored as JSONB.
     """
 
-    def get_contents(self, session: Session) -> Dict[str, AssetTable]:
+    def get_contents(self, session: Session) -> Dict[str, Asset]:
         """
         Fetch and return assets in the collection, with index serving as the dictionary key.
 
@@ -525,27 +525,24 @@ class CollectionBase(ResourceContainerBase):
             session (Session): The database session passed from the interface layer.
 
         Returns:
-            Dict[str, AssetTable]: A dictionary of assets keyed by their index.
+            Dict[str, Asset]: A dictionary of assets keyed by their index.
         """
         allocations = (
             session.query(AssetAllocation)
             .filter_by(resource_id=self.id, resource_type="collection")
             .all()
         )
-
-        # Return the assets as a dictionary based on the allocation index
         return {
-            str(alloc.index): session.get(AssetTable, alloc.asset_id)
-            for alloc in allocations
+            alloc.index: session.get(Asset, alloc.asset_id) for alloc in allocations
         }
 
-    def insert(self, location: int, asset: AssetTable, session: Session) -> None:
+    def insert(self, location: str, asset: Asset, session: Session) -> None:
         """
         Insert a new asset into the collection at the specified location.
 
         Args:
             location (int): The location in the collection to insert the asset.
-            asset (AssetTable): The asset to insert.
+            asset (Asset): The asset to insert.
             session (Session): SQLAlchemy session to use for saving.
 
         Raises:
@@ -573,7 +570,7 @@ class CollectionBase(ResourceContainerBase):
         asset.allocate_to_resource(
             resource_type="collection",
             resource_id=self.id,
-            index=location,
+            index=str(location),  # Use string-based location
             session=session,
         )
 
@@ -603,7 +600,7 @@ class CollectionBase(ResourceContainerBase):
         )
 
         if allocation:
-            asset = session.get(AssetTable, allocation.asset_id)
+            asset = session.get(Asset, allocation.asset_id)
             module_name = asset.module_name
             if asset:
                 # Deallocate the asset from the collection
@@ -630,12 +627,12 @@ class CollectionBase(ResourceContainerBase):
             )
 
 
-class CollectionTable(CollectionBase, table=True):
+class Collection(CollectionBase, table=True):
     """
     Table for storing collection resources.
 
     Attributes:
-        assets (List["AssetTable"]): Relationship to the AssetTable.
+        assets (List["Asset"]): Relationship to the Asset.
     """
 
     __table_args__ = (
@@ -643,7 +640,7 @@ class CollectionTable(CollectionBase, table=True):
     )
 
 
-class PlateBase(ResourceContainerBase):
+class Plate(CollectionBase):
     """
     Base class for plate resources with methods to manage wells.
 
@@ -654,23 +651,22 @@ class PlateBase(ResourceContainerBase):
 
     well_capacity: Optional[float] = None  # Capacity of each well
 
-    def get_wells(self, session: Session) -> Dict[str, PoolTable]:
+    def get_wells(self, session: Session) -> Dict[str, Pool]:
         """
-        Fetch and return the wells in the plate, unified method for fetching the contents (wells).
+        Fetch and return the wells in the plate. Wells are stored as Pool resources within the plate.
 
         Args:
             session (Session): The database session passed from the interface layer.
 
         Returns:
-            Dict[str, PoolTable]: A dictionary of wells keyed by their location.
+            Dict[str, Pool]: A dictionary of wells keyed by their location.
         """
-        wells = session.query(PoolTable).filter_by(module_name=self.name).all()
-        return {well.name: well for well in wells}
+        return self.get_contents(session)  # Since Plate is a collection, we reuse this
 
     def set_wells(self, wells_dict: Dict[str, float], session: Session):
         """
-        Dynamically add or update wells in the plate using only well_id and quantity.
-        The PoolTable object will be created internally.
+        Dynamically add or update wells in the plate using well_id and quantity.
+        Wells are stored as Pool resources.
 
         Args:
             wells_dict (Dict[str, float]): A dictionary of well IDs and quantities.
@@ -684,14 +680,14 @@ class PlateBase(ResourceContainerBase):
                 current_wells[well_id].quantity = quantity
             else:
                 # Create a new well
-                new_well = PoolTable(
+                new_well = Pool(
                     description=f"Well {well_id}",
                     name=f"{well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
                     module_name=self.name,  # Bug with self.name & self.module_name
                 )
-                asset = AssetTable(
+                asset = Asset(
                     name=f"{new_well.name}",
                     id=new_well.id,
                     module_name=new_well.module_name,
@@ -700,14 +696,17 @@ class PlateBase(ResourceContainerBase):
                 session.add(asset)
                 session.commit()  # Commit to generate the new_well ID
 
-        # Update the plate's total quantity
-        self.quantity = len(self.get_wells(session))  # Number of wells
-        session.commit()  # Commit changes to the database
-        session.refresh(self)  # Refresh the plate object to reflect changes
+                # Insert the well into the plate's collection resource (indexed by well_id)
+                self.insert(location=str(well_id), asset=asset, session=session)
 
-    def increase(self, well_id: str, quantity: float, session: Session) -> None:
+        # Update the plate's total quantity (number of wells)
+        self.quantity = len(self.get_wells(session))
+        session.commit()
+        session.refresh(self)
+
+    def increase_well(self, well_id: str, quantity: float, session: Session) -> None:
         """
-        Increase the quantity of liquid in a well.
+        Increase the quantity of liquid in a specific well.
 
         Args:
             well_id (str): The ID of the well to update.
@@ -722,31 +721,18 @@ class PlateBase(ResourceContainerBase):
         # Check if the well exists
         if well_id in wells:
             well = wells[well_id]
-            well.increase(quantity, session)  # Use PoolBase's increase method
+            well.increase(quantity, session)  # Use Pool's increase method
         else:
-            # Create a new well if it doesn't exist
-            if quantity > self.well_capacity:
-                raise ValueError(
-                    f"Initial quantity exceeds capacity of well {well_id}. Capacity: {self.well_capacity}"
-                )
-            new_well = PoolTable(
-                description=f"Well {well_id}",
-                name=f"{well_id}",
-                capacity=self.well_capacity,
-                quantity=quantity,
-                module_name=self.name,
-            )
-            session.add(new_well)
-            session.commit()
+            raise ValueError(f"Well {well_id} does not exist in plate {self.name}.")
 
-        # Update the total quantity of the plate and commit changes
-        self.quantity = len(self.get_wells(session))  # Number of wells
+        # Update the total quantity of the plate (number of wells)
+        self.quantity = len(self.get_wells(session))
         session.commit()
         session.refresh(self)
 
-    def decrease(self, well_id: str, quantity: float, session: Session) -> None:
+    def decrease_well(self, well_id: str, quantity: float, session: Session) -> None:
         """
-        Decrease the quantity of liquid in a well.
+        Decrease the quantity of liquid in a specific well.
 
         Args:
             well_id (str): The ID of the well to update.
@@ -761,24 +747,24 @@ class PlateBase(ResourceContainerBase):
         # Check if the well exists
         if well_id in wells:
             well = wells[well_id]
-            well.decrease(quantity, session)  # Use PoolBase's decrease method
+            well.decrease(quantity, session)  # Use Pool's decrease method
         else:
             raise ValueError(f"Well {well_id} does not exist in plate {self.name}.")
 
-        # Update the total quantity of the plate and commit changes
-        self.quantity = len(self.get_wells(session))  # Number of wells
+        # Update the total quantity of the plate (number of wells)
+        self.quantity = len(self.get_wells(session))
         session.commit()
         session.refresh(self)
 
 
-class PlateTable(PlateBase, table=True):
-    """
-    Table for storing plate resources.
+# class PlateTable(PlateBase, table=True):
+#     """
+#     Table for storing plate resources.
 
-    Attributes:
-        assets (List["AssetTable"]): Relationship to the AssetTable.
-    """
+#     Attributes:
+#         assets (List["Asset"]): Relationship to the Asset.
+#     """
 
-    __table_args__ = (
-        UniqueConstraint("name", "module_name", name="uix_name_module_name_plate"),
-    )
+#     __table_args__ = (
+#         UniqueConstraint("name", "module_name", name="uix_name_module_name_plate"),
+#     )
