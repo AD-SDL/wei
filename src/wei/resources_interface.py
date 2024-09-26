@@ -7,12 +7,12 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from wei.types.resource_types import (
-    AssetTable,
-    CollectionTable,
-    PlateTable,
-    PoolTable,
-    QueueTable,
-    StackTable,
+    Asset,
+    Collection,
+    Plate,
+    Pool,
+    Queue,
+    Stack,
 )
 
 
@@ -42,7 +42,7 @@ class ResourcesInterface:
     def add_resource(self, resource: SQLModel) -> SQLModel:
         """
         Add a resource to the database if it doesn't already exist,
-        and link it to the AssetTable.
+        and link it to the Asset.
 
         Args:
             resource (SQLModel): The resource to add.
@@ -69,44 +69,15 @@ class ResourcesInterface:
             session.commit()
             session.refresh(resource)
 
-            # Automatically create and link an AssetTable entry
-            if isinstance(resource, StackTable):
-                asset = AssetTable(
-                    name=f"{resource.name}",
-                    id=resource.id,
-                    module_name=resource.module_name,
-                )
-            elif isinstance(resource, PoolTable):
-                asset = AssetTable(
-                    name=f"{resource.name}",
-                    id=resource.id,
-                    module_name=resource.module_name,
-                )
-            elif isinstance(resource, QueueTable):
-                asset = AssetTable(
-                    name=f"{resource.name}",
-                    id=resource.id,
-                    module_name=resource.module_name,
-                )
-            elif isinstance(resource, PlateTable):
-                asset = AssetTable(
-                    name=f"{resource.name}",
-                    id=resource.id,
-                    module_name=resource.module_name,
-                )
-            elif isinstance(resource, CollectionTable):
-                asset = AssetTable(
-                    name=f"{resource.name}",
-                    id=resource.id,
-                    module_name=resource.module_name,
-                )
-            else:
-                asset = None
-
-            if asset:
-                session.add(asset)
-                session.commit()
-                session.refresh(asset)
+            # Automatically create and link an Asset entry
+            asset = Asset(
+                name=f"{resource.name}",
+                id=resource.id,
+                module_name=resource.module_name,
+            )
+            session.add(asset)
+            session.commit()
+            session.refresh(asset)
 
             print(f"Added new resource: {resource.name}")
             return resource
@@ -124,11 +95,11 @@ class ResourcesInterface:
         """
         with self.session as session:
             resource_classes = [
-                StackTable,
-                QueueTable,
-                CollectionTable,
-                PoolTable,
-                PlateTable,
+                Stack,
+                Queue,
+                Collection,
+                Pool,
+                Plate,
             ]
 
             for resource_class in resource_classes:
@@ -161,11 +132,11 @@ class ResourcesInterface:
             str or None: The name of the resource type if found, otherwise None.
         """
         resource_types = {
-            "StackTable": StackTable,
-            "PoolTable": PoolTable,
-            "QueueTable": QueueTable,
-            "CollectionTable": CollectionTable,
-            "PlateTable": PlateTable,
+            "Stack": Stack,
+            "Pool": Pool,
+            "Queue": Queue,
+            "Collection": Collection,
+            "Plate": Plate,
         }
 
         with self.session as session:
@@ -229,10 +200,10 @@ class ResourcesInterface:
         Drop all tables associated with the SQLModel metadata from the database.
         """
         try:
-            # Drop AssetTable first, handling foreign key constraints with CASCADE
+            # Drop Asset first, handling foreign key constraints with CASCADE
             with self.engine.connect() as connection:
-                # Drop AssetTable first, handling foreign key constraints with CASCADE
-                connection.execute(text("DROP TABLE IF EXISTS assettable CASCADE"))
+                # Drop Asset first, handling foreign key constraints with CASCADE
+                connection.execute(text("DROP TABLE IF EXISTS Asset CASCADE"))
                 connection.commit()
             # Drop the rest of the tables
             SQLModel.metadata.drop_all(self.engine)
@@ -266,25 +237,25 @@ class ResourcesInterface:
         """
         with self.session as session:
             statement = select(resource_type)
-            # If the resource type is AssetTable, load all relationships
-            if resource_type is AssetTable:
+            # If the resource type is Asset, load all relationships
+            if resource_type is Asset:
                 statement = statement.options(
-                    selectinload(AssetTable.stack),
-                    selectinload(AssetTable.queue),
-                    selectinload(AssetTable.pool),
-                    selectinload(AssetTable.collection),
-                    selectinload(AssetTable.plate),
+                    selectinload(Asset.stack),
+                    selectinload(Asset.queue),
+                    selectinload(Asset.pool),
+                    selectinload(Asset.collection),
+                    selectinload(Asset.plate),
                 )
             resources = session.exec(statement).all()
             return resources
 
     # Methods to delegate resource operations
-    def increase_pool_quantity(self, pool: PoolTable, amount: float) -> None:
+    def increase_pool_quantity(self, pool: Pool, amount: float) -> None:
         """
         Increase the quantity of a pool resource.
 
         Args:
-            pool (PoolTable): The pool resource to update.
+            pool (Pool): The pool resource to update.
             amount (float): The amount to increase.
         """
         with self.session as session:
@@ -292,12 +263,12 @@ class ResourcesInterface:
             pool.increase(amount, session)
             session.refresh(pool)
 
-    def decrease_pool_quantity(self, pool: PoolTable, amount: float) -> None:
+    def decrease_pool_quantity(self, pool: Pool, amount: float) -> None:
         """
         Decrease the quantity of a pool resource.
 
         Args:
-            pool (PoolTable): The pool resource to update.
+            pool (Pool): The pool resource to update.
             amount (float): The amount to decrease.
         """
         with self.session as session:
@@ -305,37 +276,37 @@ class ResourcesInterface:
             pool.decrease(amount, session)
             session.refresh(pool)
 
-    def empty_pool(self, pool: PoolTable) -> None:
+    def empty_pool(self, pool: Pool) -> None:
         """
         Empty the pool by setting the quantity to zero.
 
         Args:
-            pool (PoolTable): The pool resource to empty.
+            pool (Pool): The pool resource to empty.
         """
         with self.session as session:
             session.add(pool)  # Re-attach pool to the session
             pool.empty(session)
             session.refresh(pool)
 
-    def fill_pool(self, pool: PoolTable) -> None:
+    def fill_pool(self, pool: Pool) -> None:
         """
         Fill the pool by setting the quantity to its capacity.
 
         Args:
-            pool (PoolTable): The pool resource to fill.
+            pool (Pool): The pool resource to fill.
         """
         with self.session as session:
             session.add(pool)  # Re-attach pool to the session
             pool.fill(session)
             session.refresh(pool)
 
-    def push_to_stack(self, stack: StackTable, asset: AssetTable) -> None:
+    def push_to_stack(self, stack: Stack, asset: Asset) -> None:
         """
         Push an asset to the stack. Automatically adds the asset to the database if it's not already there.
 
         Args:
-            stack (StackTable): The stack resource to push the asset onto.
-            asset (AssetTable): The asset to push onto the stack.
+            stack (Stack): The stack resource to push the asset onto.
+            asset (Asset): The asset to push onto the stack.
         """
         with self.session as session:
             # Ensure both stack and asset are attached to the current session
@@ -347,15 +318,15 @@ class ResourcesInterface:
             session.commit()
             session.refresh(stack)
 
-    def pop_from_stack(self, stack: StackTable) -> AssetTable:
+    def pop_from_stack(self, stack: Stack) -> Asset:
         """
         Pop an asset from a stack resource.
 
         Args:
-            stack (StackTable): The stack resource to update.
+            stack (Stack): The stack resource to update.
 
         Returns:
-            AssetTable: The popped asset.
+            Asset: The popped asset.
         """
         with self.session as session:
             # Ensure the stack is attached to the current session
@@ -371,13 +342,13 @@ class ResourcesInterface:
             else:
                 raise ValueError("The stack is empty or the asset does not exist.")
 
-    def push_to_queue(self, queue: QueueTable, asset: AssetTable) -> None:
+    def push_to_queue(self, queue: Queue, asset: Asset) -> None:
         """
         Push an asset to the queue. Automatically adds the asset to the database if it's not already there.
 
         Args:
-            queue (QueueTable): The queue resource to push the asset onto.
-            asset (AssetTable): The asset to push onto the queue.
+            queue (Queue): The queue resource to push the asset onto.
+            asset (Asset): The asset to push onto the queue.
         """
         with self.session as session:
             session.add(queue)  # Re-attach queue to the session
@@ -386,7 +357,7 @@ class ResourcesInterface:
             asset = session.merge(asset)
 
             # Check if the asset exists in the database
-            existing_asset = session.get(AssetTable, asset.id)
+            existing_asset = session.get(Asset, asset.id)
             if not existing_asset:
                 session.add(asset)
                 session.commit()
@@ -397,30 +368,30 @@ class ResourcesInterface:
             session.commit()
             session.refresh(queue)
 
-    def pop_from_queue(self, queue: QueueTable) -> AssetTable:
+    def pop_from_queue(self, queue: Queue) -> Asset:
         """
         Pop an asset from a queue resource.
 
         Args:
-            queue (QueueTable): The queue resource to update.
+            queue (Queue): The queue resource to update.
 
         Returns:
-            AssetTable: The popped asset.
+            Asset: The popped asset.
         """
         with self.session as session:
             session.add(queue)  # Re-attach queue to the session
             return queue.pop(session)
 
     def insert_into_collection(
-        self, collection: CollectionTable, location: int, asset: AssetTable
+        self, collection: Collection, location: int, asset: Asset
     ) -> None:
         """
         Insert an asset into a collection resource.
 
         Args:
-            collection (CollectionTable): The collection resource to update.
+            collection (Collection): The collection resource to update.
             location (int): The location within the collection to insert the asset.
-            asset (AssetTable): The asset to insert.
+            asset (Asset): The asset to insert.
         """
         with self.session as session:
             # Ensure the collection and asset are attached to the session
@@ -433,17 +404,17 @@ class ResourcesInterface:
             session.refresh(collection)
 
     def retrieve_from_collection(
-        self, collection: CollectionTable, location: int
-    ) -> Optional[AssetTable]:
+        self, collection: Collection, location: int
+    ) -> Optional[Asset]:
         """
         Retrieve an asset from a collection resource.
 
         Args:
-            collection (CollectionTable): The collection resource to update.
+            collection (Collection): The collection resource to update.
             location (int): The location within the collection to retrieve the asset from.
 
         Returns:
-            AssetTable: The retrieved asset.
+            Asset: The retrieved asset.
         """
         with self.session as session:
             collection = session.merge(
@@ -453,14 +424,12 @@ class ResourcesInterface:
                 location, session
             )  # Ensure the correct order of arguments
 
-    def update_plate_well(
-        self, plate: PlateTable, well_id: str, quantity: float
-    ) -> None:
+    def update_plate_well(self, plate: Plate, well_id: str, quantity: float) -> None:
         """
         Update the quantity of a specific well in a plate resource.
 
         Args:
-            plate (PlateTable): The plate resource to update.
+            plate (Plate): The plate resource to update.
             well_id (str): The well ID to update.
             quantity (float): The new quantity for the well.
         """
@@ -471,13 +440,13 @@ class ResourcesInterface:
             session.refresh(plate)  # Refresh the plate object to reflect changes
 
     def update_plate_contents(
-        self, plate: PlateTable, new_contents: Dict[str, float]
+        self, plate: Plate, new_contents: Dict[str, float]
     ) -> None:
         """
         Update the entire contents of a plate resource.
 
         Args:
-            plate (PlateTable): The plate resource to update.
+            plate (Plate): The plate resource to update.
             new_contents (Dict[str, float]): A dictionary with well IDs as keys and quantities as values.
         """
         with self.session as session:
@@ -486,12 +455,12 @@ class ResourcesInterface:
             session.commit()  # Commit the changes
             session.refresh(plate)  # Refresh the plate object to reflect changes
 
-    def get_well_quantity(self, plate: PlateTable, well_id: str) -> Optional[float]:
+    def get_well_quantity(self, plate: Plate, well_id: str) -> Optional[float]:
         """
         Retrieve the quantity in a specific well of a plate resource.
 
         Args:
-            plate (PlateTable): The plate resource to query.
+            plate (Plate): The plate resource to query.
             well_id (str): The ID of the well to retrieve the quantity for.
 
         Returns:
@@ -511,12 +480,12 @@ class ResourcesInterface:
                 print(f"Well {well_id} not found in plate {plate.name}")
                 return None
 
-    def increase_well(self, plate: PlateTable, well_id: str, quantity: float) -> None:
+    def increase_well(self, plate: Plate, well_id: str, quantity: float) -> None:
         """
         Increase the quantity of liquid in a specific well of a plate.
 
         Args:
-            plate (PlateTable): The plate resource to update.
+            plate (Plate): The plate resource to update.
             well_id (str): The well ID to increase the quantity for.
             quantity (float): The amount to increase the well quantity by.
         """
@@ -526,12 +495,12 @@ class ResourcesInterface:
             session.commit()  # Commit the changes
             session.refresh(plate)  # Refresh the plate object to reflect changes
 
-    def decrease_well(self, plate: PlateTable, well_id: str, quantity: float) -> None:
+    def decrease_well(self, plate: Plate, well_id: str, quantity: float) -> None:
         """
         Decrease the quantity of liquid in a specific well of a plate.
 
         Args:
-            plate (PlateTable): The plate resource to update.
+            plate (Plate): The plate resource to update.
             well_id (str): The well ID to decrease the quantity for.
             quantity (float): The amount to decrease the well quantity by.
         """
@@ -541,15 +510,15 @@ class ResourcesInterface:
             session.commit()  # Commit the changes
             session.refresh(plate)  # Refresh the plate object to reflect changes
 
-    def get_wells(self, plate: PlateTable) -> Dict[str, PoolTable]:
+    def get_wells(self, plate: Plate) -> Dict[str, Pool]:
         """
         Retrieve the entire contents (wells) of a plate resource.
 
         Args:
-            plate (PlateTable): The plate resource to query.
+            plate (Plate): The plate resource to query.
 
         Returns:
-            Dict[str, PoolTable]: A dictionary of all wells in the plate, keyed by their well IDs.
+            Dict[str, Pool]: A dictionary of all wells in the plate, keyed by their well IDs.
         """
         with self.session as session:
             # Ensure the plate is attached to the current session
@@ -567,7 +536,7 @@ if __name__ == "__main__":
     # print(resource_interface.get_resource("Test Stack", "test2"))
     # resource_interface.clear_all_table_records()
     # Example usage: Create a Pool resource
-    pool = PoolTable(
+    pool = Pool(
         name="Test Pool",
         description="A test pool",
         capacity=100.0,
@@ -576,17 +545,17 @@ if __name__ == "__main__":
     )
     pool = resource_interface.add_resource(pool)
     # print("\nCreated Pool:", pool)
-    all_pools = resource_interface.get_all_resources(PoolTable)
+    all_pools = resource_interface.get_all_resources(Pool)
     print("\nAll Pools after modification:", all_pools)
     # Increase quantity in the Pool
     resource_interface.increase_pool_quantity(pool, 0.0)
     # print("Increased Pool Quantity:", pool)
 
     # Get all pools after modification
-    all_pools = resource_interface.get_all_resources(PoolTable)
+    all_pools = resource_interface.get_all_resources(Pool)
     print("\nAll Pools after modification:", all_pools)
     # Create a Stack resource
-    stack = StackTable(
+    stack = Stack(
         name="Test Stack", description="A test stack", capacity=10, module_name="test2"
     )
     stack = resource_interface.add_resource(stack)
@@ -595,43 +564,43 @@ if __name__ == "__main__":
     )
     print("Retreived_STACK:", retrieved_stack)
     # Push an asset to the Stack
-    asset = AssetTable(name="Test Asset")
-    asset3 = AssetTable(name="Test Asset3")
+    asset = Asset(name="Test Asset")
+    asset3 = Asset(name="Test Asset3")
 
     resource_interface.push_to_stack(stack, asset)
     resource_interface.push_to_stack(stack, asset3)
 
-    all_stacks = resource_interface.get_all_resources(StackTable)
+    all_stacks = resource_interface.get_all_resources(Stack)
     print("\nAll Stacks after modification:", all_stacks)
 
     # Pop an asset from the Stack
     popped_asset = resource_interface.pop_from_stack(stack)
-    all_stacks = resource_interface.get_all_resources(StackTable)
+    all_stacks = resource_interface.get_all_resources(Stack)
     print("\nAll Stacks after modification:", all_stacks)
 
     # # Create a Queue resource
-    queue = QueueTable(
+    queue = Queue(
         name="Test Queue", description="A test queue", capacity=10, module_name="test3"
     )
     queue = resource_interface.add_resource(queue)
 
     # Push an asset to the Queue
-    asset2 = AssetTable(name="Test Asset2")
+    asset2 = Asset(name="Test Asset2")
 
     resource_interface.push_to_queue(queue, asset2)
     # resource_interface.push_to_queue(queue, asset)
 
     # print("Updated Queue with Pushed Asset:", queue)
-    all_queues = resource_interface.get_all_resources(QueueTable)
+    all_queues = resource_interface.get_all_resources(Queue)
     print("\nAll Queues after modification:", all_queues)
 
     # # Pop an asset from the Queue
     popped_asset_q = resource_interface.pop_from_queue(queue)
     print("\nPopped Asset from Queue:", popped_asset_q)
-    all_queues = resource_interface.get_all_resources(QueueTable)
+    all_queues = resource_interface.get_all_resources(Queue)
     print("\nAll Queues after modification:", all_queues)
     # # Create a Collection resource
-    collection = CollectionTable(
+    collection = Collection(
         name="Test Collection",
         description="A test collection",
         capacity=10,
@@ -640,16 +609,16 @@ if __name__ == "__main__":
     collection = resource_interface.add_resource(collection)
 
     # Insert an asset into the Collection
-    resource_interface.insert_into_collection(collection, location=1, asset=asset3)
+    resource_interface.insert_into_collection(collection, location="1", asset=asset3)
 
     # Retrieve an asset from the Collection
-    retrieved_asset = resource_interface.retrieve_from_collection(
-        collection, location=1
-    )
-    print("\nRetrieved Asset from Collection:", retrieved_asset)
+    # retrieved_asset = resource_interface.retrieve_from_collection(
+    #     collection, location=1
+    # )
+    # print("\nRetrieved Asset from Collection:", retrieved_asset)
 
     # Create a Plate resource
-    plate = PlateTable(
+    plate = Plate(
         name="Test Plate",
         description="A test plate",
         capacity=96,
@@ -682,10 +651,10 @@ if __name__ == "__main__":
     print(f"Updated wells: {updated_wells}")
     resource_interface.update_plate_well(plate, well_id="A1", quantity=80.0)
 
-    all_plates = resource_interface.get_all_resources(PlateTable)
+    all_plates = resource_interface.get_all_resources(Plate)
     print("\nAll Plates after modification:", all_plates)
 
-    # all_asset = resource_interface.get_all_resources(AssetTable)
+    # all_asset = resource_interface.get_all_resources(Asset)
     # print("\n Asset Table", all_asset)
 
     # print(resource_interface.get_resource_type(stack.id))
