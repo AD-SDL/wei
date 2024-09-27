@@ -33,6 +33,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { get_status } from '../store';
 const props = defineProps(['modules', 'wc_state', 'main_url'])
 const modal_title = ref()
 const modal = ref(false)
@@ -41,35 +42,6 @@ const set_modal = (title: string, value: Object) => {
   modal_title.value = title
   modal_text.value = value
   modal.value = true
-}
-const get_status = (value: any) => {
-  if(value["ERROR"] && value["ERROR"] != false)  {
-    return "ERROR"
-
-
-  }
-  if(value["CANCELLED"] && value["CANCELLED"] != false)  {
-    return "CANCELLED"
-
-
-  }
-  if(value["LOCKED"] && value["LOCKED"] != false)  {
-    return "LOCKED"
-
-
-  }
-  if(value["PAUSED"] && value["PAUSED"] != false) {
-    return "PAUSED"
-  }
-
-  if(value["BUSY"] && value["BUSY"]) {
-    return "BUSY"
-  } else {
-
-    return "READY"
-  }
-
-
 }
 
 </script>

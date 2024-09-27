@@ -63,6 +63,28 @@ watchEffect(async () => {
     async function updateWorkflows() {
         workflows.value = Object.keys(workcell_state.value.workflows).sort().reverse();
     }
+
+
 })
 
-export { campaigns, campaigns_url, events, experiment_keys, experiment_objects, experiments, experiments_url, main_url, state_url, workcell_info, workcell_info_url, workcell_state, workflows };
+function get_status(value: any) {
+    if(value["ERROR"] && value["ERROR"] != false)  {
+        return "ERROR"
+    }
+    if(value["CANCELLED"] && value["CANCELLED"] != false)  {
+        return "CANCELLED"
+    }
+    if(value["LOCKED"] && value["LOCKED"] != false)  {
+        return "LOCKED"
+    }
+    if(value["PAUSED"] && value["PAUSED"] != false) {
+        return "PAUSED"
+    }
+    if(value["BUSY"] && value["BUSY"]) {
+        return "BUSY"
+    } else {
+        return "READY"
+    }
+}
+
+export { campaigns, campaigns_url, events, experiment_keys, experiment_objects, experiments, experiments_url, get_status, main_url, state_url, workcell_info, workcell_info_url, workcell_state, workflows };

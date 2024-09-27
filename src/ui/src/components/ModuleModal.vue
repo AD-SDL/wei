@@ -42,7 +42,7 @@
               class="ml-2"/>
           </template>
         </div>
-        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'module_status_' + wc_state.modules[modal_title].state.status">{{ wc_state.modules[modal_title].state.status }}</v-sheet>
+        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'module_status_' + get_status(wc_state.modules[modal_title].state.status)">{{ wc_state.modules[modal_title].state.status }}</v-sheet>
       </v-card-title>
 
       <v-card-text class="subheading grey--text">
@@ -129,7 +129,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-
+import { get_status } from '../store';
 
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';

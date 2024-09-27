@@ -52,11 +52,13 @@
     </v-card>
   </v-container>
   <v-container v-else>
-    <v-progress-circular
-      indeterminate
-      color="primary"
-      size="64"
-    ></v-progress-circular>
+    <div class="d-flex justify-center">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="64"
+      ></v-progress-circular>
+    </div>
   </v-container>
 </template>
 
