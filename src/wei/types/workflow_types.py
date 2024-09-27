@@ -95,8 +95,6 @@ class WorkflowRun(Workflow):
     """current status of the workflow"""
     steps: List[Step] = []
     """WEI Processed Steps of the flow"""
-    hist: Dict[str, Any] = Field(default={})
-    """history of the workflow"""
     experiment_id: str
     """ID of the experiment this workflow is a part of"""
     step_index: int = 0

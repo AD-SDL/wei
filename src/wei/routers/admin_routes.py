@@ -28,6 +28,7 @@ def safety_stop_workcell() -> None:
     """Safety-stops a workcell"""
     for module in state_manager.get_all_modules().values():
         send_safety_stop(module)
+    cancel_active_workflow_runs()
     state_manager.paused = True
 
 

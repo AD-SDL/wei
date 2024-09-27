@@ -4,7 +4,7 @@
 aenum==3.1.15
 alabaster==0.7.16
 annotated-types==0.7.0
-anyio==4.4.0
+anyio==4.6.0
 asttokens==2.4.1
 async-timeout==4.0.3; python_full_version <= "3.11.2"
 autodoc-pydantic==2.2.0
@@ -18,7 +18,8 @@ click==8.1.7
 colorama==0.4.6
 cryptography==43.0.1
 devtools==0.12.2
-diaspora-event-sdk[kafka-python]==0.3.5
+diaspora-event-sdk==0.3.6
+diaspora-event-sdk[kafka-python]==0.3.6
 distlib==0.3.8
 docutils==0.20.1
 exceptiongroup==1.2.2; python_version < "3.11"
@@ -36,7 +37,7 @@ iniconfig==2.0.0
 jinja2==3.1.4
 kafka-python==2.0.2
 markupsafe==2.1.5
-mmh3==4.1.0
+mmh3==5.0.1
 mypy==1.11.2
 mypy-extensions==1.0.0
 nodeenv==1.9.1
@@ -52,17 +53,19 @@ pydantic-core==2.23.4
 pydantic-extra-types==2.9.0
 pydantic-settings==2.5.2
 pygments==2.18.0
+pyjwt==2.9.0
 pyjwt[crypto]==2.9.0
 pyproject-hooks==1.1.0
 pytest==8.3.3
 python-dotenv==1.0.1
-python-multipart==0.0.9
+python-multipart==0.0.10
+python-ulid==2.7.0
 python-ulid[pydantic]==2.7.0
 pyyaml==6.0.2
 pyzmq==26.2.0
 redis==4.6.0
 requests==2.32.3
-ruff==0.6.5
+ruff==0.6.7
 secure-smtplib==0.1.1
 six==1.16.0
 sniffio==1.3.1
@@ -76,7 +79,7 @@ sphinxcontrib-jquery==4.1
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
-starlette==0.38.5
+starlette==0.38.6
 tomli==2.0.1; python_version < "3.11"
 types-aiofiles==24.1.0.20240626
 types-cffi==1.16.0.20240331
@@ -93,9 +96,10 @@ types-ujson==5.10.0.20240515
 types-urllib3==1.26.25.14
 typing-extensions==4.12.2
 urllib3==1.26.20
+uvicorn==0.30.6
 uvicorn[standard]==0.30.6
 uvloop==0.20.0; (sys_platform != "cygwin" and sys_platform != "win32") and platform_python_implementation != "PyPy"
-virtualenv==20.26.4
+virtualenv==20.26.5
 watchfiles==0.24.0
-websockets==13.0.1
+websockets==13.1
 zipp==3.20.2; python_full_version < "3.10.2"

@@ -281,7 +281,7 @@ class ExperimentClient:
         while True:
             try:
                 response = requests.post(
-                    f"http://{self.server_host}:{self.server_port}/experiments/{self.experiment_id}/check_in"
+                    f"http://{self.server_host}:{self.server_port}/experiments/{self.experiment.experiment_id}/check_in"
                 )
                 if not response.ok:
                     response.raise_for_status()
@@ -481,6 +481,8 @@ class ExperimentClient:
         else:
             response.raise_for_status()
 
+    get_run = query_run
+
     def get_run_log(self, run_id: str) -> Dict[Any, Any]:
         """Returns the log for this experiment as a string
 
@@ -638,7 +640,7 @@ class ExperimentClient:
         """
         returns a dictionary of the datapoints for this experiment.
         """
-        url = f"{self.url}/{self.experiment_id}/data"
+        url = f"{self.url}/{self.experiment.experiment_id}/data"
         response = requests.get(url)
         if response.ok:
             return response.json()
@@ -792,6 +794,28 @@ class ExperimentClient:
     ***************
     """
 
+    def get_workcell_state(self) -> dict:
+        """
+        Fetches the current state of the workcell from the server.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the current state of the workcell
+
+        Raises
+        ------
+        requests.exceptions.RequestException
+            If there's an error communicating with the server
+        """
+        self._connect_to_server()
+
+        state_url = f"{self.url}/wc/state"
+        state_response = requests.get(state_url)
+        state_response.raise_for_status()
+
+        return state_response.json()
+
     """
     Deprecated Methods
     """
@@ -828,3 +852,48 @@ class ExperimentClient:
         with open(output_filepath, "wb") as f:
             f.write(response.content)
         return output_filepath
+
+    def wait_for_workflow(
+        self, workflow: Union[WorkflowRun, str, ULID], polling_interval: float = 1.0
+    ) -> WorkflowRun:
+        """
+        Waits for a workflow to reach a terminal state (COMPLETED, FAILED, or CANCELLED).
+
+        Parameters
+        ----------
+        workflow : Union[WorkflowRun, str, ULID]
+            The workflow run object, run_id, or ULID to wait for.
+        polling_interval : float, optional
+            The time in seconds to wait between status checks. Defaults to 1.0 second.
+
+        Returns
+        -------
+        WorkflowRun
+            The final state of the workflow run.
+
+        Raises
+        ------
+        ValueError
+            If the provided workflow is invalid.
+        """
+        self._connect_to_server()
+        self._check_experiment()
+
+        if isinstance(workflow, WorkflowRun):
+            run_id = workflow.run_id
+        elif isinstance(workflow, (str, ULID)):
+            run_id = str(workflow)
+        else:
+            raise ValueError(
+                "Invalid workflow type. Expected WorkflowRun, str, or ULID."
+            )
+
+        while True:
+            wf_run = self.query_run(run_id)
+            if wf_run.status in [
+                WorkflowStatus.COMPLETED,
+                WorkflowStatus.FAILED,
+                WorkflowStatus.CANCELLED,
+            ]:
+                return wf_run
+            time.sleep(polling_interval)

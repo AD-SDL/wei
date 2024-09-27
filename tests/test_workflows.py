@@ -11,7 +11,7 @@ from .test_base import TestWEI_Base
 
 
 class TestWEI_Workflows(TestWEI_Base):
-    """Tests WEI location management"""
+    """Tests WEI workflow functionality"""
 
     def test_workflow_run(self):
         """Test Running a simple workflow"""

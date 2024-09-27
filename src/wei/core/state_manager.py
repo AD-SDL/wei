@@ -178,6 +178,7 @@ class StateManager:
             "error": self.error,
             "locations": self._locations.to_dict(),
             "modules": self._modules.to_dict(),
+            # "config": Config.dump_to_json(),
             "workflows": self._workflow_runs.to_dict(),
             "workcell": self._workcell.to_dict(),
             "paused": self.paused,

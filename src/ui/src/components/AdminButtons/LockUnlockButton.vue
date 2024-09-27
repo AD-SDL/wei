@@ -27,9 +27,8 @@ import { ref, watchEffect } from 'vue';
 
 const props = defineProps<{
     module?: string;
-    module_status?: string;
+    module_status?: any;
 }>();
-
 const lock_url = ref('')
 const unlock_url = ref('')
 const isLocked = ref(false);
@@ -52,7 +51,7 @@ watchEffect(() => {
 watchEffect(() => {
     if (props.module) {
         // Determine if the module is already locked
-        if (props.module_status == 'LOCKED') {
+        if (props.module_status["LOCKED"] == true) {
             isLocked.value = true
         } else {
             if (workcell_state.value) {

@@ -29,7 +29,7 @@ import { ref, watchEffect } from 'vue';
 
 const props = defineProps<{
     module?: string;
-    module_status?: string;
+    module_status?: any;
 }>();
 
 const pause_url = ref('')
@@ -55,14 +55,14 @@ watchEffect(() => {
 watchEffect(() => {
     if (props.module) {
         // Determine if pressing pause/resume button should be allowed
-        if (props.module_status == "BUSY" || props.module_status == "PAUSED") {
+        if (props.module_status["BUSY"] == true || props.module_status["PAUSED"] == true) {
             allowButton.value = true
         } else {
             allowButton.value = false
         }
 
         // Determine if the module is already paused
-        if (props.module_status == 'PAUSED') {
+        if (props.module_status["PAUSED"] == true) {
             isPaused.value = true
         } else {
             isPaused.value = false
