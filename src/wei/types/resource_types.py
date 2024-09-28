@@ -26,6 +26,9 @@ class AssetBase(SQLModel):
     id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
     name: str = SQLField(default="", nullable=False)
     module_name: str = SQLField(default="", nullable=True)
+    unique_resource: bool = SQLField(
+        default=True, nullable=False
+    )  # New flag to determine uniqueness
 
 
 class Asset(AssetBase, table=True):
