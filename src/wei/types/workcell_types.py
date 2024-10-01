@@ -95,7 +95,7 @@ class WorkcellConfig(BaseModel, extra="allow"):
         default="mailgateway.anl.gov", description="Hostname for the SMTP server"
     )
     smtp_port: int = Field(default=25, description="Port number for the SMTP server")
-    resource_database_url: str = Field(
+    resources_database_url: str = Field(
         default="postgresql://rpl:rpl@wei_postgres:5432/resources",
         description="URL for resource PostgreSql database",
     )
