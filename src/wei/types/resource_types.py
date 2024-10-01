@@ -5,7 +5,14 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import ulid
-from sqlalchemy import Column, DateTime, Integer, UniqueConstraint, func
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Integer,
+    PrimaryKeyConstraint,
+    UniqueConstraint,
+    func,
+)
 from sqlmodel import Field as SQLField
 from sqlmodel import Session, SQLModel
 
@@ -68,19 +75,28 @@ class Asset(AssetBase, table=True):
             session.query(AssetAllocation).filter_by(asset_id=self.id).first()
         )
 
-        if existing_allocation:
-            if (
-                existing_allocation.resource_type == resource_type
-                and existing_allocation.resource_id == resource_id
-                and existing_allocation.index == index
-            ):
-                # The asset is already allocated to this resource, no need to do anything.
-                return
-            else:
-                # The asset is already allocated to a different resource.
-                raise ValueError(
-                    f"Asset {self.id} is already allocated to a different resource."
-                )
+        if self.unique_resource:
+            # Handle uniqueness constraint for assets that must be unique in a resource
+            if existing_allocation:
+                # Check if the asset is already allocated to the same resource
+                if (
+                    existing_allocation.resource_type == resource_type
+                    and existing_allocation.resource_id == resource_id
+                    and existing_allocation.index == index
+                ):
+                    # The asset is already allocated to this resource, no need to do anything.
+                    return
+                else:
+                    # The asset is already allocated to a different resource.
+                    raise ValueError(
+                        f"Asset {self.name, self.id} is already allocated to a different resource or violates uniqueness."
+                    )
+
+        # If unique_resource is False, allow multiple allocations
+        else:
+            if existing_allocation:
+                # Allow asset to be allocated multiple times in different resources (or same resource if allowed)
+                print(f"Asset {self.name} is non-unique; continuing with allocation.")
 
         # Update the module_name to match the resource being allocated
         resource = session.get(Asset, resource_id)
@@ -89,7 +105,7 @@ class Asset(AssetBase, table=True):
                 resource.module_name
             )  # Set the module_name of the asset to the resource's module_name
 
-        # If no existing allocation, create a new one
+        # Create a new allocation for the asset
         new_allocation = AssetAllocation(
             asset_id=self.id,
             resource_type=resource_type,
@@ -97,9 +113,9 @@ class Asset(AssetBase, table=True):
             index=index,
         )
         session.add(new_allocation)
-        self.time_updated = datetime.now(
-            timezone.utc
-        )  # Set time_updated to current time
+
+        # Update the asset's timestamp
+        self.time_updated = datetime.now(timezone.utc)
         session.commit()
 
     def deallocate(self, session: Session):
@@ -147,12 +163,23 @@ class AssetAllocation(SQLModel, table=True):
         resource_id (str): ID of the resource to which the asset is allocated.
     """
 
-    asset_id: str = SQLField(primary_key=True, foreign_key="asset.id", nullable=False)
+    asset_id: str = SQLField(foreign_key="asset.id", nullable=False)
     resource_type: str = SQLField(nullable=False)
     resource_id: str = SQLField(nullable=False)
     index: str = SQLField(
         nullable=False
     )  # Index for sorting assets in list-like resources
+
+    # Use a composite primary key
+    __table_args__ = (
+        UniqueConstraint(
+            "asset_id",
+            "resource_type",
+            "resource_id",
+            name="uix_asset_resource_allocation",
+        ),
+        PrimaryKeyConstraint("asset_id", "resource_type", "resource_id"),
+    )
 
 
 class ResourceContainerBase(AssetBase):
@@ -196,6 +223,8 @@ class ResourceContainerBase(AssetBase):
                     capacity=self.capacity,
                     quantity=self.quantity,
                     module_name=self.module_name,
+                    unique_resource=self.unique_resource,
+                    is_plate=True,
                 )
                 session.add(collection)
             else:
@@ -241,82 +270,90 @@ class ResourceContainerBase(AssetBase):
         Returns:
             ResourceContainerBase: The saved or existing resource.
         """
-        # If this is a Plate, treat it as a Collection for database operations
+        # Handle Plate type as Collection
         if isinstance(self, Plate):
             print("Handling Plate as a Collection")
-            # Create a new Collection object from the Plate data
-            collection_resource = Collection(
-                id=self.id,
-                name=self.name,
-                description=self.description,
-                capacity=self.capacity,
-                module_name=self.module_name,
-                quantity=self.quantity,
-            )
 
-            # Check if the collection already exists
+            # Check if the Plate (treated as Collection) already exists
             existing_resource = (
                 session.query(Collection)
-                .filter_by(
-                    name=self.name,
-                    module_name=self.module_name,
-                )
+                .filter_by(name=self.name, module_name=self.module_name)
                 .first()
             )
 
-            if existing_resource:
-                print(f"Using existing collection resource: {existing_resource.name}")
+            # If unique_resource is True, check for existing Plate and return or raise an error
+            if self.unique_resource:
+                if existing_resource:
+                    print(
+                        f"Using existing collection resource: {existing_resource.name}"
+                    )
+                    return self  # Return the Plate object (don't create a duplicate)
+
+            # If unique_resource is False, allow multiple plates with the same name
+            if not self.unique_resource or not existing_resource:
+                # Create a new Collection object from the Plate data
+                collection_resource = Collection(
+                    id=self.id,
+                    name=self.name,
+                    description=self.description,
+                    capacity=self.capacity,
+                    module_name=self.module_name,
+                    quantity=self.quantity,
+                    unique_resource=self.unique_resource,
+                    is_plate=True,
+                )
+
+                session.add(collection_resource)
+                session.commit()
+                session.refresh(collection_resource)
+
+                # Create and link an Asset entry for the resource
+                asset = Asset(
+                    name=collection_resource.name,
+                    id=collection_resource.id,
+                    module_name=collection_resource.module_name,
+                    unique_resource=self.unique_resource,
+                )
+                session.add(asset)
+                session.commit()
+                session.refresh(asset)
+
+                print(f"Added new collection resource: {collection_resource.name}")
                 return self  # Returning the Plate object itself
 
-            # If the resource doesn't exist, create and save a new collection
-            session.add(collection_resource)
-            session.commit()
-            session.refresh(collection_resource)
+        # Handle normal resources (non-Plate)
+        existing_resource = (
+            session.query(type(self))
+            .filter_by(name=self.name, module_name=self.module_name)
+            .first()
+        )
 
-            # Create and link an Asset entry for the resource
+        # If unique_resource is True, check for existing resource and return or raise an error
+        if self.unique_resource:
+            if existing_resource:
+                print(f"Using existing resource: {existing_resource.name}")
+                return existing_resource
+
+        # If unique_resource is False, allow creating multiple resources with the same name
+        if not self.unique_resource or not existing_resource:
+            # If the resource doesn't exist, create and save a new one
+            session.add(self)
+            session.commit()
+            session.refresh(self)
+
+            # Automatically create and link an Asset entry for the resource
             asset = Asset(
-                name=collection_resource.name,
-                id=collection_resource.id,
-                module_name=collection_resource.module_name,
+                name=self.name,
+                id=self.id,
+                module_name=self.module_name,
+                unique_resource=self.unique_resource,
             )
             session.add(asset)
             session.commit()
             session.refresh(asset)
 
-            print(f"Added new collection resource: {collection_resource.name}")
-            return self  # Returning the Plate object itself
-
-        # Handle normal resources (non-Plate)
-        existing_resource = (
-            session.query(type(self))
-            .filter_by(
-                name=self.name,
-                module_name=self.module_name,
-            )
-            .first()
-        )
-
-        if existing_resource:
-            print(f"Using existing resource: {existing_resource.name}")
-            return existing_resource
-
-        # If the resource doesn't exist, create and save a new one
-        session.add(self)
-        session.commit()
-        session.refresh(self)
-
-        # Automatically create and link an Asset entry for the resource
-        asset = Asset(
-            name=self.name,
-            id=self.id,
-            module_name=self.module_name,
-        )
-        session.add(asset)
-        session.commit()
-        session.refresh(asset)
-
-        print(f"Added new resource: {self.name}")
-        return self
+            print(f"Added new resource: {self.name}")
+            return self
 
 
 class PoolBase(ResourceContainerBase):
@@ -393,9 +430,9 @@ class Pool(PoolBase, table=True):
         assets (List["Asset"]): Relationship to the Asset.
     """
 
-    __table_args__ = (
-        UniqueConstraint("name", "module_name", name="uix_name_module_name_pool"),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_pool"),
+    # )
 
 
 class StackBase(ResourceContainerBase):
@@ -512,9 +549,9 @@ class Stack(StackBase, table=True):
         assets (List["Asset"]): Relationship to the Asset.
     """
 
-    __table_args__ = (
-        UniqueConstraint("name", "module_name", name="uix_name_module_name_stack"),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_stack"),
+    # )
 
 
 class QueueBase(ResourceContainerBase):
@@ -640,9 +677,9 @@ class Queue(QueueBase, table=True):
         assets (List["Asset"]): Relationship to the Asset.
     """
 
-    __table_args__ = (
-        UniqueConstraint("name", "module_name", name="uix_name_module_name_queue"),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_queue"),
+    # )
 
 
 class CollectionBase(ResourceContainerBase):
@@ -652,6 +689,10 @@ class CollectionBase(ResourceContainerBase):
     Attributes:
         contents (Dict[str, Any]): Dictionary of assets in the collection, stored as JSONB.
     """
+
+    is_plate: bool = SQLField(
+        default=False
+    )  # Flag to indicate if this collection is a Plate
 
     def get_contents(self, session: Session) -> Dict[str, Asset]:
         """
@@ -776,9 +817,9 @@ class Collection(CollectionBase, table=True):
         assets (List["Asset"]): Relationship to the Asset.
     """
 
-    __table_args__ = (
-        UniqueConstraint("name", "module_name", name="uix_name_module_name_collection"),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_collection"),
+    # )
 
 
 class Plate(CollectionBase):
@@ -820,7 +861,9 @@ class Plate(CollectionBase):
             session (Session): SQLAlchemy session passed from the interface layer.
         """
         #  Find the corresponding collection for this plate
-        collection = session.query(Collection).filter_by(name=self.name).first()
+        collection = (
+            session.query(Collection).filter_by(id=self.id, name=self.name).first()
+        )
 
         # Iterate over wells to add or update them
         for well_id, quantity in wells_dict.items():
@@ -842,6 +885,7 @@ class Plate(CollectionBase):
                     capacity=self.well_capacity,
                     quantity=quantity,
                     module_name=self.name,  # Plate's name as module_name
+                    unique_resource=self.unique_resource,
                 )
                 session.add(new_well)
                 session.commit()
@@ -851,6 +895,7 @@ class Plate(CollectionBase):
                     name=new_well.name,
                     id=new_well.id,
                     module_name=new_well.module_name,
+                    unique_resource=new_well.unique_resource,
                 )
                 session.add(asset)
                 session.commit()
@@ -917,16 +962,3 @@ class Plate(CollectionBase):
 
         # Step 3: Decrease the quantity of the existing well
         existing_well.quantity -= quantity
-
-
-# class PlateTable(PlateBase, table=True):
-#     """
-#     Table for storing plate resources.
-
-#     Attributes:
-#         assets (List["Asset"]): Relationship to the Asset.
-#     """
-
-#     __table_args__ = (
-#         UniqueConstraint("name", "module_name", name="uix_name_module_name_plate"),
-#     )

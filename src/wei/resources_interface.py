@@ -621,6 +621,7 @@ if __name__ == "__main__":
         capacity=96,
         well_capacity=100.0,
         module_name="test5",
+        unique_resource=False,
     )
     plate2 = Plate(
         name="Test Plate",
@@ -628,6 +629,7 @@ if __name__ == "__main__":
         capacity=96,
         well_capacity=100.0,
         module_name="test5",
+        unique_resource=False,
     )
     plate = resource_interface.add_resource(plate)
     plate2 = resource_interface.add_resource(plate2)
