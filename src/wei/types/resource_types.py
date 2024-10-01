@@ -148,7 +148,6 @@ class Asset(AssetBase, table=True):
         Args:
             session (Session): The current SQLAlchemy session.
         """
-        # Deleting the asset
         session.delete(self)
         session.commit()
 
@@ -166,9 +165,7 @@ class AssetAllocation(SQLModel, table=True):
     asset_id: str = SQLField(foreign_key="asset.id", nullable=False)
     resource_type: str = SQLField(nullable=False)
     resource_id: str = SQLField(nullable=False)
-    index: str = SQLField(
-        nullable=False
-    )  # Index for sorting assets in list-like resources
+    index: str = SQLField(nullable=False)
 
     # Use a composite primary key
     __table_args__ = (
@@ -430,10 +427,6 @@ class Pool(PoolBase, table=True):
         assets (List["Asset"]): Relationship to the Asset.
     """
 
-    # __table_args__ = (
-    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_pool"),
-    # )
-
 
 class StackBase(ResourceContainerBase):
     """
@@ -457,9 +450,7 @@ class StackBase(ResourceContainerBase):
         allocations = (
             session.query(AssetAllocation)
             .filter_by(resource_id=self.id, resource_type="stack")
-            .order_by(
-                func.cast(AssetAllocation.index, Integer).asc()
-            )  # Use SQLAlchemy's Integer type
+            .order_by(func.cast(AssetAllocation.index, Integer).asc())
             .all()
         )
 
@@ -548,10 +539,6 @@ class Stack(StackBase, table=True):
     Attributes:
         assets (List["Asset"]): Relationship to the Asset.
     """
-
-    # __table_args__ = (
-    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_stack"),
-    # )
 
 
 class QueueBase(ResourceContainerBase):
@@ -676,10 +663,6 @@ class Queue(QueueBase, table=True):
     Attributes:
         assets (List["Asset"]): Relationship to the Asset.
     """
-
-    # __table_args__ = (
-    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_queue"),
-    # )
 
 
 class CollectionBase(ResourceContainerBase):
@@ -817,10 +800,6 @@ class Collection(CollectionBase, table=True):
         assets (List["Asset"]): Relationship to the Asset.
     """
 
-    # __table_args__ = (
-    #     UniqueConstraint("name", "module_name", name="uix_name_module_name_collection"),
-    # )
-
 
 class Plate(CollectionBase):
     """
@@ -931,7 +910,7 @@ class Plate(CollectionBase):
         if not existing_well:
             raise ValueError(f"Well {well_id} not found in plate {self.name}.")
 
-        # Step 2: Increase the quantity of the existing well
+        # Increase the quantity of the existing well
         existing_well.quantity += quantity
 
     def decrease_well(self, well_id: str, quantity: float, session: Session) -> None:
@@ -946,7 +925,7 @@ class Plate(CollectionBase):
         Raises:
             ValueError: If the decrease would result in a negative quantity.
         """
-        # Step 1: Find the corresponding well (Pool) in the Collection
+        # Find the corresponding well (Pool) in the Collection
         existing_well = (
             session.query(Pool).filter_by(name=well_id, module_name=self.name).first()
         )
@@ -954,11 +933,11 @@ class Plate(CollectionBase):
         if not existing_well:
             raise ValueError(f"Well {well_id} not found in plate {self.name}.")
 
-        # Step 2: Check if the well has sufficient quantity to decrease
+        # Check if the well has sufficient quantity to decrease
         if existing_well.quantity < quantity:
             raise ValueError(
                 f"Well {well_id} does not have enough quantity to decrease by {quantity}."
             )
 
-        # Step 3: Decrease the quantity of the existing well
+        # Decrease the quantity of the existing well
         existing_well.quantity -= quantity
