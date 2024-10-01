@@ -555,7 +555,6 @@ class ResourcesInterface:
             return wells
 
 
-# Sample main function for testing
 if __name__ == "__main__":
     resource_interface = ResourcesInterface()
     print(resource_interface.get_resource("Test Stack", "test2"))
