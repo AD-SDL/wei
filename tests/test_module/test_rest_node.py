@@ -20,10 +20,10 @@ from wei.types.module_types import (
     ValueModuleActionResult,
 )
 from wei.types.resource_types import (
-    AssetTable,
-    CollectionTable,
-    PlateTable,
-    StackTable,
+    Asset,
+    Collection,
+    Plate,
+    Stack,
 )
 from wei.types.step_types import ActionRequest
 
@@ -65,11 +65,11 @@ def test_node_startup(state: State):
     state.resource_interface = ResourcesInterface(
         "postgresql://rpl:rpl@wei_postgres:5432/resources"
     )
-    # state.resource_interface.delete_all_tables()
-    # sleep(15)
+    state.resource_interface.delete_all_tables()
+    time.sleep(10)
     try:
         # Example: Create resources using ResourceInterface
-        stack1 = StackTable(
+        stack1 = Stack(
             name="Stack1",
             description="Stack for transfer",
             capacity=10,
@@ -77,7 +77,7 @@ def test_node_startup(state: State):
         )
         state.resource_interface.add_resource(stack1)
 
-        stack2 = StackTable(
+        stack2 = Stack(
             name="Stack2",
             description="Stack for transfer",
             capacity=10,
@@ -85,7 +85,7 @@ def test_node_startup(state: State):
         )
         state.resource_interface.add_resource(stack2)
 
-        stack3 = StackTable(
+        stack3 = Stack(
             name="Stack3",
             description="Stack for transfer",
             capacity=4,
@@ -93,7 +93,7 @@ def test_node_startup(state: State):
         )
         state.resource_interface.add_resource(stack3)
 
-        trash = StackTable(
+        trash = Stack(
             name="Trash",
             description="Trash",
             capacity=None,
@@ -101,14 +101,14 @@ def test_node_startup(state: State):
         )
         state.resource_interface.add_resource(trash)
 
-        # Add two PlateTable resources per stack (except Trash)
-        asset = AssetTable(name="Initial Asset")
+        # Add two Plate resources per stack (except Trash)
+        asset = Asset(name="Initial Asset")
 
         # Push assets to stacks
         state.resource_interface.push_to_stack(stack1, asset)
         # state.resource_interface.push_to_stack(stack2, asset)
 
-        plate0 = PlateTable(
+        plate0 = Plate(
             name="Plate0",
             description="Test plate",
             well_capacity=100.0,
@@ -118,7 +118,7 @@ def test_node_startup(state: State):
         state.resource_interface.update_plate_contents(
             plate0, {"A1": 50.0, "B1": 25.0, "C1": 75.0, "D1": 45.0}
         )
-        collection = CollectionTable(
+        collection = Collection(
             name="Collection1",
             description="Collection for measurement",
             capacity=5,
@@ -150,7 +150,7 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
-    all_stacks = state.resource_interface.get_all_resources(StackTable)
+    all_stacks = state.resource_interface.get_all_resources(Stack)
     print("All Stacks:", all_stacks)
 
     target_stack = state.resource_interface.get_resource(
@@ -174,7 +174,7 @@ def transfer(
             return StepResponse.step_failed(str(e))
     else:
         try:
-            example_plate = AssetTable(name="ExamplePlate")
+            example_plate = Asset(name="ExamplePlate")
             state.resource_interface.push_to_stack(target_stack, example_plate)
             return StepResponse.step_succeeded()
         except ValueError as e:
@@ -219,8 +219,8 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         # Create a new location for the measurement
         location = f"location_{collection.quantity + 1}"
 
-        # Create a new AssetTable instance
-        instance = AssetTable(name=f"Measurement at {location}")
+        # Create a new Asset instance
+        instance = Asset(name=f"Measurement at {location}")
 
         # Insert the new asset into the collection
         state.resource_interface.insert_into_collection(collection, location, instance)
@@ -233,13 +233,13 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         with open("test2.txt", "w") as f:
             f.write("test")
 
-        all_collections = state.resource_interface.get_all_resources(CollectionTable)
+        all_collections = state.resource_interface.get_all_resources(Collection)
         print("All Collections in the database:", all_collections)
         # Return the success response with the generated files
-        return StepResponse.step_succeeded(
-            files={"test_file": "test.txt", "test2_file": "test2.txt"},
-            data={"test": {"test": "test"}},
-        )
+        # return StepResponse.step_succeeded(
+        #     files={"test_file": "test.txt", "test2_file": "test2.txt"},
+        #     data={"test": {"test": "test"}},
+        # )
         return StepResponse.step_succeeded()
 
     else:
