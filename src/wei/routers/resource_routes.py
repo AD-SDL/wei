@@ -1,26 +1,49 @@
 """API server for the Resource Manager"""
 
-from typing import Any, Dict, List
+from typing import Dict, List, Optional, Type
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from sqlmodel import SQLModel
 
 from wei.config import Config
 from wei.core.state_manager import StateManager
 from wei.resources_interface import ResourcesInterface
 from wei.types.resource_types import (
-    AssetTable,
-    CollectionTable,
-    PlateTable,
-    PoolTable,
-    QueueTable,
-    StackTable,
+    Asset,
+    Collection,
+    Plate,
+    Pool,
+    Queue,
+    ResourceContainerBase,
+    Stack,
 )
 
 router = APIRouter()
 state_manager = StateManager()
-state_manager.resource_interface = ResourcesInterface(
-    database_url=Config.resource_database_url
+state_manager.resources_interface = ResourcesInterface(
+    database_url=Config.resources_database_url
 )
+
+# Mapping of resource type names to actual classes
+RESOURCE_TYPE_MAP = {
+    "Stack": Stack,
+    "Queue": Queue,
+    "Collection": Collection,
+    "Plate": Plate,
+    "Pool": Pool,
+    "Asset": Asset,
+}
+
+
+# Helper to get the actual SQLModel class from string
+def get_resource_class(resource_type_name: str) -> Type[SQLModel]:
+    "Returns the resource type"
+    resource_class = RESOURCE_TYPE_MAP.get(resource_type_name)
+    if not resource_class:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid resource type: {resource_type_name}"
+        )
+    return resource_class
 
 
 @router.get("/up")
@@ -31,272 +54,316 @@ def is_server_up() -> Dict[str, bool]:
     return {"up": True}
 
 
-@router.get("/resources/{resource_type}")
-def get_all_resources(
-    resource_type: str,
+@router.post("/resources/add_resource")
+def add_resource(resource: ResourceContainerBase):
+    """
+    Add a new resource to the database.
+    """
+    try:
+        resource_obj = state_manager.resources_interface.add_resource(resource)
+        return {"message": "Resource added successfully", "resource": resource_obj}
+    except Exception as e:
+        return e
+
+
+@router.get("/resources/get_resource/{resource_name}")
+def get_resource(
+    resource_name: str, module_name: str, resource_id: Optional[str] = None
 ):
     """
-    Retrieve all resources of a specific type from the database.
-
-    Args:
-        resource_type (str): The type of resource to retrieve.
-
-    Returns:
-        List[ResourceContainer]: List of all resources of the specified type.
+    Retrieve a resource from the database.
     """
-    resource_map = {
-        "pool": PoolTable,
-        "stack": StackTable,
-        "queue": QueueTable,
-        "plate": PlateTable,
-        "collection": CollectionTable,
-    }
-    resource_class = resource_map.get(resource_type.lower())
-    if resource_class:
-        return state_manager.resource_interface.get_all_resources(resource_class)
-    else:
-        return {"error": f"Invalid resource type: {resource_type}"}
+    try:
+        resource = state_manager.resources_interface.get_resource(
+            resource_name, module_name, resource_id
+        )
+        if resource:
+            return resource
+        raise Exception("Resource not found")
+    except Exception as e:
+        return e
 
 
-@router.get("/assets")
-def get_all_assets() -> List[AssetTable]:
+@router.get("/resources/get_type/{resource_id}")
+def get_resource_type(resource_id: str):
+    """
+    Get the type of the resource based on its ID.
+    """
+    try:
+        resource_type = state_manager.resources_interface.get_resource_type(resource_id)
+        if resource_type:
+            return {"resource_type": resource_type}
+        raise Exception("Resource type not found")
+    except Exception as e:
+        return e
+
+
+@router.get("/resources/get_all_by_type/{resource_type}")
+def get_all_resources(resource_type: str):
+    """
+    Retrieve all resources of a specific type from the database.
+    """
+    try:
+        # Convert the string to the actual SQLModel class
+        resource_type_class = get_resource_class(resource_type)
+
+        # Call the resources_interface with the correct resource type
+        resources = state_manager.resource_interface.get_all_resources(
+            resource_type_class
+        )
+        return resources
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        return e
+
+
+@router.get("/resources/get_assets")
+def get_all_assets() -> List[Asset]:
     """
     Get all available assets
     """
-    return state_manager.resource_interface.get_all_resources(AssetTable)
+    return state_manager.resources_interface.get_all_resources(Asset)
 
 
-@router.get("/resource/{resource_type}/{resource_id}")
-def get_resource_by_id(resource_type: str, resource_id: str):
+@router.put("/resources/update_resource/{resource_type}/{resource_id}")
+def update_resource(resource_type: str, resource_id: str, updates: Dict):
     """
-    Get a resource by its ID and type.
+    Update a resource in the database.
     """
-    resource_map = {
-        "pools": PoolTable,
-        "stacks": StackTable,
-        "queues": QueueTable,
-        "plates": PlateTable,
-        "collections": CollectionTable,
-    }
-    resource_class = resource_map.get(resource_type.lower())
-    if resource_class:
-        return state_manager.resource_interface.get_resource(
-            resource_class, resource_id
+    try:
+        # Convert the string to the actual SQLModel class
+        resource_type_class = get_resource_class(resource_type)
+
+        # Update the resource
+        updated_resource = state_manager.resources_interface.update_resource(
+            resource_type_class, resource_id, updates
         )
-    else:
-        return {"error": f"Invalid resource type: {resource_type}"}
+        if updated_resource:
+            return {
+                "message": "Resource updated successfully",
+                "resource": updated_resource,
+            }
+        raise HTTPException(status_code=404, detail="Resource not found")
+    except Exception as e:
+        return e
 
 
-@router.get("/asset/{asset_id}")
-def get_asset_by_id(asset_id: str) -> AssetTable:
+@router.delete("/resources/delete_resource/{resource_type}/{resource_id}")
+def delete_resource(resource_type: str, resource_id: str):
     """
-    Get an asset by its ID
+    Delete a resource from the database.
     """
-    return state_manager.resource_interface.get_resource(AssetTable, asset_id)
+    try:
+        # Convert the string to the actual SQLModel class
+        resource_type_class = get_resource_class(resource_type)
 
-
-@router.post("/resource/{resource_type}")
-def create_resource(resource_type: str, resource) -> Any:
-    """
-    Create a new resource of a specific type.
-    """
-    resource_map = {
-        "pools": PoolTable,
-        "stacks": StackTable,
-        "queues": QueueTable,
-        "plates": PlateTable,
-        "collections": CollectionTable,
-    }
-    resource_class = resource_map.get(resource_type.lower())
-    if resource_class:
-        return state_manager.resource_interface.add_resource(resource)
-    else:
-        return {"error": f"Invalid resource type: {resource_type}"}
-
-
-@router.post("/asset")
-def create_asset(asset: AssetTable) -> AssetTable:
-    """
-    Create a new asset
-    """
-    return state_manager.resource_interface.add_resource(asset)
-
-
-@router.put("/asset/{asset_id}")
-def update_asset(asset_id: str, asset: AssetTable) -> AssetTable:
-    """
-    Update an asset
-    """
-    return state_manager.resource_interface.update_resource(
-        AssetTable, asset_id, asset.model_dump()
-    )
-
-
-@router.put("/resource/{resource_type}/{resource_id}")
-def update_resource(
-    resource_type: str, resource_id: str, updates: Dict[str, Any]
-) -> Any:
-    """
-    Update a resource by its ID and type.
-    """
-    resource_map = {
-        "pools": PoolTable,
-        "stacks": StackTable,
-        "queues": QueueTable,
-        "plates": PlateTable,
-        "collections": CollectionTable,
-    }
-    resource_class = resource_map.get(resource_type.lower())
-    if resource_class:
-        return state_manager.resource_interface.update_resource(
-            resource_class, resource_id, updates
+        # Delete the resource
+        deleted = state_manager.resources_interface.delete_resource(
+            resource_type_class, resource_id
         )
-    else:
-        return {"error": f"Invalid resource type: {resource_type}"}
+        if deleted:
+            return {"message": "Resource deleted successfully"}
+        raise HTTPException(status_code=404, detail="Resource not found")
+    except Exception as e:
+        return e
 
 
-@router.delete("/resource/{resource_type}/{resource_id}")
-def delete_resource(resource_type: str, resource_id: str) -> Dict[str, Any]:
+@router.delete("/resources/delete_tables")
+def delete_all_tables():
     """
-    Delete a resource by its ID and type.
+    Delete all tables from the database.
     """
-    resource_map = {
-        "pools": PoolTable,
-        "stacks": StackTable,
-        "queues": QueueTable,
-        "plates": PlateTable,
-        "collections": CollectionTable,
-    }
-    resource_class = resource_map.get(resource_type.lower())
-    if resource_class:
-        return {
-            "deleted": state_manager.resource_interface.delete_resource(
-                resource_class, resource_id
-            )
-        }
-    else:
-        return {"error": f"Invalid resource type: {resource_type}"}
+    try:
+        state_manager.resources_interface.delete_all_tables()
+        return {"message": "All tables deleted successfully"}
+    except Exception as e:
+        return e
 
 
-@router.delete("/asset/{asset_id}")
-def delete_asset(asset_id: str) -> Dict[str, Any]:
+@router.delete("/resources/clear_all_records")
+def clear_all_table_records():
     """
-    Delete an asset
+    Clear all records from all tables.
     """
-    return {
-        "deleted": state_manager.resource_interface.delete_resource(
-            AssetTable, asset_id
+    try:
+        state_manager.resources_interface.clear_all_table_records()
+        return {"message": "All records cleared successfully"}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/pool/increase")
+def increase_pool_quantity(pool: Pool, amount: float):
+    """
+    Increase the quantity of a pool resource.
+    """
+    try:
+        state_manager.resources_interface.increase_pool_quantity(pool, amount)
+        return {"message": "Pool quantity increased successfully"}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/pool/decrease")
+def decrease_pool_quantity(pool: Pool, amount: float):
+    """
+    Decrease the quantity of a pool resource.
+    """
+    try:
+        state_manager.resources_interface.decrease_pool_quantity(pool, amount)
+        return {"message": "Pool quantity decreased successfully"}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/pool/fill")
+def fill_pool(pool: Pool):
+    """
+    Fill the pool by setting the quantity to its capacity.
+    """
+    try:
+        state_manager.resources_interface.fill_pool(pool)
+        return {"message": "Pool filled successfully"}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/pool/empty")
+def empty_pool(pool: Pool):
+    """
+    Empty the pool by setting the quantity to zero.
+    """
+    try:
+        state_manager.resources_interface.empty_pool(pool)
+        return {"message": "Pool emptied successfully"}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/stack/push")
+def push_to_stack(stack: Stack, asset: Asset):
+    """
+    Push an asset to a stack.
+    """
+    try:
+        state_manager.resources_interface.push_to_stack(stack, asset)
+        return {"message": "Asset pushed to stack successfully"}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/stack/pop")
+def pop_from_stack(stack: Stack):
+    """
+    Pop an asset from a stack.
+    """
+    try:
+        asset = state_manager.resources_interface.pop_from_stack(stack)
+        return {"message": "Asset popped from stack", "asset": asset}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/queue/push")
+def push_to_queue(queue: Queue, asset: Asset):
+    """
+    Push an asset to a queue.
+    """
+    try:
+        state_manager.resources_interface.push_to_queue(queue, asset)
+        return {"message": "Asset pushed to queue successfully"}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/queue/pop")
+def pop_from_queue(queue: Queue):
+    """
+    Pop an asset from a queue.
+    """
+    try:
+        asset = state_manager.resources_interface.pop_from_queue(queue)
+        return {"message": "Asset popped from queue", "asset": asset}
+    except Exception as e:
+        return e
+
+
+@router.put("/resources/collection/insert")
+def insert_into_collection(collection: Collection, location: str, asset: Asset):
+    """
+    Insert an asset into a collection.
+    """
+    try:
+        state_manager.resources_interface.insert_into_collection(
+            collection, location, asset
         )
-    }
+        return {"message": "Asset inserted into collection successfully"}
+    except Exception as e:
+        return e
 
 
-@router.put("/resources/{resource_id}/push")
-def push_asset_to_resource(resource_id: str, asset: AssetTable) -> int:
+@router.get("/resources/collection/retrieve")
+def retrieve_from_collection(collection: Collection, location: str):
     """
-    Push an asset to a stack or queue resource
+    Retrieve an asset from a collection.
     """
-    resource_type = state_manager.resource_interface.get_resource_type(resource_id)
-    if resource_type == "StackTable":
-        stack = state_manager.resource_interface.get_resource(StackTable, resource_id)
-        return state_manager.resource_interface.push_to_stack(stack, asset)
-    elif resource_type == "QueueTable":
-        queue = state_manager.resource_interface.get_resource(QueueTable, resource_id)
-        return state_manager.resource_interface.push_to_queue(queue, asset)
-    else:
-        return {"error": f"Invalid resource type for push operation: {resource_type}"}
+    try:
+        asset = state_manager.resources_interface.retrieve_from_collection(
+            collection, location
+        )
+        if asset:
+            return asset
+        raise HTTPException(status_code=404, detail="Asset not found")
+    except Exception as e:
+        return e
 
 
-@router.put("/resources/{resource_id}/pop")
-def pop_asset_from_resource(resource_id: str) -> Any:
+@router.put("/resources/plate/well/update")
+def update_plate_well(plate: Plate, well_id: str, quantity: float):
     """
-    Pop an asset from a stack or queue resource
+    Update the quantity of a well in a plate.
     """
-    resource_type = state_manager.resource_interface.get_resource_type(resource_id)
-    if resource_type == "StackTable":
-        stack = state_manager.resource_interface.get_resource(StackTable, resource_id)
-        return state_manager.resource_interface.pop_from_stack(stack)
-    elif resource_type == "QueueTable":
-        queue = state_manager.resource_interface.get_resource(QueueTable, resource_id)
-        return state_manager.resource_interface.pop_from_queue(queue)
-    else:
-        return {"error": f"Invalid resource type for pop operation: {resource_type}"}
+    try:
+        state_manager.resources_interface.update_plate_well(plate, well_id, quantity)
+        return {"message": "Plate well updated successfully"}
+    except Exception as e:
+        return e
 
 
-@router.put("/resources/{resource_id}/increase")
-def increase_resource_quantity(resource_id: str, quantity: float) -> float:
+@router.put("/resources/plate/contents/update")
+def update_plate_contents(plate: Plate, new_contents: Dict[str, float]):
     """
-    Increase the quantity in a Pool resource
+    Update the entire contents of a plate.
     """
-    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
-    state_manager.resource_interface.increase_pool_quantity(pool, quantity)
-    return pool.quantity
+    try:
+        state_manager.resources_interface.update_plate_contents(plate, new_contents)
+        return {"message": "Plate contents updated successfully"}
+    except Exception as e:
+        return e
 
 
-@router.put("/resources/{resource_id}/decrease")
-def decrease_resource_quantity(resource_id: str, quantity: float) -> float:
+@router.get("/resources/plate/get_well_quantity/{well_id}")
+def get_well_quantity(plate: Plate, well_id: str):
     """
-    Decrease the quantity in a Pool resource
+    Get the quantity in a specific well of a plate.
     """
-    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
-    state_manager.resource_interface.decrease_pool_quantity(pool, quantity)
-    return pool.quantity
+    try:
+        quantity = state_manager.resources_interface.get_well_quantity(plate, well_id)
+        if quantity is not None:
+            return {"quantity": quantity}
+        raise HTTPException(status_code=404, detail="Well not found")
+    except Exception as e:
+        return e
 
 
-@router.put("/resources/{resource_id}/insert")
-def insert_asset_into_resource(
-    resource_id: str, location: str, asset: AssetTable
-) -> int:
+@router.get("/resources/plate/wells")
+def get_wells(plate: Plate):
     """
-    Insert an asset into a Collection resource
+    Retrieve the entire contents (wells) of a plate resource.
     """
-    collection = state_manager.resource_interface.get_resource(
-        CollectionTable, resource_id
-    )
-    state_manager.resource_interface.insert_into_collection(collection, location, asset)
-    return len(collection.contents_dict)
-
-
-@router.put("/resources/{resource_id}/retrieve")
-def remove_asset_from_resource(resource_id: str, location: str) -> Dict[str, str]:
-    """
-    Retrieve an asset from a Collection resource
-    """
-    collection = state_manager.resource_interface.get_resource(
-        CollectionTable, resource_id
-    )
-    asset = state_manager.resource_interface.retrieve_from_collection(
-        collection, location
-    )
-    return {"id": asset.id, "name": asset.name}
-
-
-@router.put("/resources/{resource_id}/empty")
-def empty_pool_resource(resource_id: str) -> float:
-    """
-    Empty a Pool resource by setting its quantity to zero.
-
-    Args:
-        resource_id (str): The ID of the pool resource to empty.
-
-    Returns:
-        float: The new quantity of the pool (which should be 0).
-    """
-    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
-    state_manager.resource_interface.empty_pool(pool)
-    return pool.quantity
-
-
-@router.put("/resources/{resource_id}/fill")
-def fill_pool_resource(resource_id: str) -> float:
-    """
-    Fill a Pool resource by setting its quantity to its capacity.
-
-    Args:
-        resource_id (str): The ID of the pool resource to fill.
-
-    Returns:
-        float: The new quantity of the pool (which should be its capacity).
-    """
-    pool = state_manager.resource_interface.get_resource(PoolTable, resource_id)
-    state_manager.resource_interface.fill_pool(pool)
-    return pool.quantity
+    try:
+        wells = state_manager.resources_interface.get_wells(plate)
+        return {"wells": wells}
+    except Exception as e:
+        return e
