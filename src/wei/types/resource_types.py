@@ -27,12 +27,12 @@ class AssetBase(SQLModel):
     Attributes:
         id (str): Unique identifier for the asset.
         name (str): Name of the asset.
-        module_name (str): Module name of the asset.
+        owner_name (str): Module name of the asset.
     """
 
     id: str = SQLField(default_factory=lambda: str(ulid.new()), primary_key=True)
     name: str = SQLField(default="", nullable=False)
-    module_name: str = SQLField(default="", nullable=True)
+    owner_name: str = SQLField(default="", nullable=True)
     unique_resource: bool = SQLField(
         default=True, nullable=False
     )  # New flag to determine uniqueness
@@ -71,39 +71,24 @@ class Asset(AssetBase, table=True):
         Raises:
             ValueError: If the asset is already allocated to a different resource.
         """
+        # Check if this asset is already allocated
         existing_allocation = (
             session.query(AssetAllocation).filter_by(asset_id=self.id).first()
         )
 
-        if self.unique_resource:
-            # Handle uniqueness constraint for assets that must be unique in a resource
-            if existing_allocation:
-                # Check if the asset is already allocated to the same resource
-                if (
-                    existing_allocation.resource_type == resource_type
-                    and existing_allocation.resource_id == resource_id
-                    and existing_allocation.index == index
-                ):
-                    # The asset is already allocated to this resource, no need to do anything.
-                    return
-                else:
-                    # The asset is already allocated to a different resource.
-                    raise ValueError(
-                        f"Asset {self.name, self.id} is already allocated to a different resource or violates uniqueness."
-                    )
+        if existing_allocation:
+            # Raise an error if the asset is already allocated to a different resource
+            raise ValueError(
+                f"Asset {self.name} (ID: {self.id}) is already allocated to resource {existing_allocation.resource_type} "
+                f"with resource ID {existing_allocation.resource_id}."
+            )
 
-        # If unique_resource is False, allow multiple allocations
-        else:
-            if existing_allocation:
-                # Allow asset to be allocated multiple times in different resources (or same resource if allowed)
-                print(f"Asset {self.name} is non-unique; continuing with allocation.")
-
-        # Update the module_name to match the resource being allocated
+        # Update the owner_name to match the resource being allocated (optional step)
         resource = session.get(Asset, resource_id)
         if resource:
-            self.module_name = (
-                resource.module_name
-            )  # Set the module_name of the asset to the resource's module_name
+            self.owner_name = (
+                resource.owner_name
+            )  # Sync the owner_name with the resource
 
         # Create a new allocation for the asset
         new_allocation = AssetAllocation(
@@ -116,6 +101,8 @@ class Asset(AssetBase, table=True):
 
         # Update the asset's timestamp
         self.time_updated = datetime.now(timezone.utc)
+
+        # Commit the transaction
         session.commit()
 
     def deallocate(self, session: Session):
@@ -133,8 +120,8 @@ class Asset(AssetBase, table=True):
         if allocation is None:
             raise ValueError(f"Asset {self.id} is not allocated to any resource.")
 
-        # Deallocate and set the module_name to None (indicating the asset is no longer allocated)
-        self.module_name = None
+        # Deallocate and set the owner_name to None (indicating the asset is no longer allocated)
+        self.owner_name = None
         self.time_updated = datetime.now(
             timezone.utc
         )  # Set time_updated to current time
@@ -206,7 +193,7 @@ class ResourceContainerBase(AssetBase):
                 session.query(Collection)
                 .filter_by(
                     name=self.name,
-                    module_name=self.module_name,
+                    owner_name=self.owner_name,
                 )
                 .first()
             )
@@ -219,7 +206,7 @@ class ResourceContainerBase(AssetBase):
                     description=self.description,
                     capacity=self.capacity,
                     quantity=self.quantity,
-                    module_name=self.module_name,
+                    owner_name=self.owner_name,
                     unique_resource=self.unique_resource,
                     is_plate=True,
                 )
@@ -229,7 +216,7 @@ class ResourceContainerBase(AssetBase):
                 collection.description = self.description
                 collection.capacity = self.capacity
                 collection.quantity = self.quantity
-                collection.module_name = self.module_name
+                collection.owner_name = self.owner_name
 
             session.commit()
             session.refresh(collection)
@@ -257,7 +244,7 @@ class ResourceContainerBase(AssetBase):
 
     def add_resource(self, session: Session) -> "ResourceContainerBase":
         """
-        Check if a resource with the same name and module_name exists.
+        Check if a resource with the same name and owner_name exists.
         If it exists, return the existing resource. Otherwise, create the resource
         and link it with an Asset.
 
@@ -274,7 +261,7 @@ class ResourceContainerBase(AssetBase):
             # Check if the Plate (treated as Collection) already exists
             existing_resource = (
                 session.query(Collection)
-                .filter_by(name=self.name, module_name=self.module_name)
+                .filter_by(name=self.name, owner_name=self.owner_name)
                 .first()
             )
 
@@ -294,7 +281,7 @@ class ResourceContainerBase(AssetBase):
                     name=self.name,
                     description=self.description,
                     capacity=self.capacity,
-                    module_name=self.module_name,
+                    owner_name=self.owner_name,
                     quantity=self.quantity,
                     unique_resource=self.unique_resource,
                     is_plate=True,
@@ -308,7 +295,7 @@ class ResourceContainerBase(AssetBase):
                 asset = Asset(
                     name=collection_resource.name,
                     id=collection_resource.id,
-                    module_name=collection_resource.module_name,
+                    owner_name=collection_resource.owner_name,
                     unique_resource=self.unique_resource,
                 )
                 session.add(asset)
@@ -321,7 +308,7 @@ class ResourceContainerBase(AssetBase):
         # Handle normal resources (non-Plate)
         existing_resource = (
             session.query(type(self))
-            .filter_by(name=self.name, module_name=self.module_name)
+            .filter_by(name=self.name, owner_name=self.owner_name)
             .first()
         )
 
@@ -342,7 +329,7 @@ class ResourceContainerBase(AssetBase):
             asset = Asset(
                 name=self.name,
                 id=self.id,
-                module_name=self.module_name,
+                owner_name=self.owner_name,
                 unique_resource=self.unique_resource,
             )
             session.add(asset)
@@ -652,7 +639,7 @@ class QueueBase(ResourceContainerBase):
         return {
             "id": first_asset.id,
             "name": first_asset.name,
-            "module_name": first_asset.module_name,
+            "owner_name": first_asset.owner_name,
         }
 
 
@@ -766,7 +753,7 @@ class CollectionBase(ResourceContainerBase):
 
         if allocation:
             asset = session.get(Asset, allocation.asset_id)
-            module_name = asset.module_name
+            owner_name = asset.owner_name
             if asset:
                 # Deallocate the asset from the collection
                 asset.deallocate(session)
@@ -778,7 +765,7 @@ class CollectionBase(ResourceContainerBase):
                 return {
                     "id": asset.id,
                     "name": asset.name,
-                    "module_name": module_name,
+                    "owner_name": owner_name,
                     "resource_type": "collection",
                     "location": location_str,
                 }
@@ -823,7 +810,7 @@ class Plate(CollectionBase):
             Dict[str, Pool]: A dictionary of wells keyed by their location.
         """
         # Query the Pool table for all wells associated with this plate
-        wells = session.query(Pool).filter_by(module_name=self.name).all()
+        wells = session.query(Pool).filter_by(owner_name=self.name).all()
 
         # Create a dictionary of wells, using the well ID (name) as the key
         wells_dict = {well.name: well for well in wells}
@@ -849,7 +836,7 @@ class Plate(CollectionBase):
             # Check if the well already exists in the Collection
             existing_well = (
                 session.query(Pool)
-                .filter_by(name=well_id, module_name=self.name)
+                .filter_by(name=well_id, owner_name=self.name)
                 .first()
             )
             if existing_well:
@@ -863,7 +850,7 @@ class Plate(CollectionBase):
                     description=f"Well {well_id}",
                     capacity=self.well_capacity,
                     quantity=quantity,
-                    module_name=self.name,  # Plate's name as module_name
+                    owner_name=self.name,  # Plate's name as owner_name
                     unique_resource=self.unique_resource,
                 )
                 session.add(new_well)
@@ -873,7 +860,7 @@ class Plate(CollectionBase):
                 asset = Asset(
                     name=new_well.name,
                     id=new_well.id,
-                    module_name=new_well.module_name,
+                    owner_name=new_well.owner_name,
                     unique_resource=new_well.unique_resource,
                 )
                 session.add(asset)
@@ -885,7 +872,7 @@ class Plate(CollectionBase):
         # Update the Plate's total quantity and commit
         total_quantity = (
             session.query(func.sum(Pool.quantity))
-            .filter(Pool.module_name == self.name)
+            .filter(Pool.owner_name == self.name)
             .scalar()
         )
         self.quantity = total_quantity
@@ -904,7 +891,7 @@ class Plate(CollectionBase):
             ValueError: If the addition exceeds the well's capacity.
         """
         existing_well = (
-            session.query(Pool).filter_by(name=well_id, module_name=self.name).first()
+            session.query(Pool).filter_by(name=well_id, owner_name=self.name).first()
         )
 
         if not existing_well:
@@ -927,7 +914,7 @@ class Plate(CollectionBase):
         """
         # Find the corresponding well (Pool) in the Collection
         existing_well = (
-            session.query(Pool).filter_by(name=well_id, module_name=self.name).first()
+            session.query(Pool).filter_by(name=well_id, owner_name=self.name).first()
         )
 
         if not existing_well:
