@@ -66,14 +66,14 @@ def test_node_startup(state: State):
         "postgresql://rpl:rpl@wei_postgres:5432/resources"
     )
     state.resource_interface.delete_all_tables()
-    time.sleep(10)
+    time.sleep(5)
     try:
         # Example: Create resources using ResourceInterface
         stack1 = Stack(
             name="Stack1",
             description="Stack for transfer",
             capacity=10,
-            module_name=state.module_name,
+            owner_name=state.module_name,
         )
         state.resource_interface.add_resource(stack1)
 
@@ -81,7 +81,7 @@ def test_node_startup(state: State):
             name="Stack2",
             description="Stack for transfer",
             capacity=10,
-            module_name=state.module_name,
+            owner_name=state.module_name,
         )
         state.resource_interface.add_resource(stack2)
 
@@ -89,7 +89,7 @@ def test_node_startup(state: State):
             name="Stack3",
             description="Stack for transfer",
             capacity=4,
-            module_name=state.module_name,
+            owner_name=state.module_name,
         )
         state.resource_interface.add_resource(stack3)
 
@@ -97,7 +97,7 @@ def test_node_startup(state: State):
             name="Trash",
             description="Trash",
             capacity=None,
-            module_name=state.module_name,
+            owner_name=state.module_name,
         )
         state.resource_interface.add_resource(trash)
 
@@ -112,7 +112,7 @@ def test_node_startup(state: State):
             name="Plate0",
             description="Test plate",
             well_capacity=100.0,
-            module_name=state.module_name,
+            owner_name=state.module_name,
         )
         state.resource_interface.add_resource(plate0)
         state.resource_interface.update_plate_contents(
@@ -122,7 +122,7 @@ def test_node_startup(state: State):
             name="Collection1",
             description="Collection for measurement",
             capacity=5,
-            module_name=state.module_name,
+            owner_name=state.module_name,
         )
         state.resource_interface.add_resource(collection)
 
@@ -154,14 +154,14 @@ def transfer(
     print("All Stacks:", all_stacks)
 
     target_stack = state.resource_interface.get_resource(
-        resource_name=target, module_name=state.module_name
+        resource_name=target, owner_name=state.module_name
     )
     if not target_stack:
         return StepResponse.step_failed(f"Invalid target stack ({target})")
 
     if source:
         source_stack = state.resource_interface.get_resource(
-            resource_name=source, module_name=state.module_name
+            resource_name=source, owner_name=state.module_name
         )
         if not source_stack:
             return StepResponse.step_failed(f"Invalid source stack ({source})")
@@ -210,7 +210,7 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
     # Retrieve the collection resource
     collection = state.resource_interface.get_resource(
-        resource_name="Collection1", module_name=state.module_name
+        resource_name="Collection1", owner_name=state.module_name
     )
 
     if collection:
