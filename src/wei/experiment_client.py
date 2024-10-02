@@ -42,6 +42,7 @@ class ExperimentClient:
     connected = False
     timeout = 10
     experiment_started = False
+    experiment_ended = False
 
     """
     *****************
@@ -96,7 +97,7 @@ class ExperimentClient:
 
     def __del__(self):
         """Logs the end of the experiment when cleaning up the experiment, if log_experiment_end_on_exit is True"""
-        if self.log_experiment_end_on_exit:
+        if self.log_experiment_end_on_exit and not self.experiment_ended:
             self.log_experiment_end()
 
     def __enter__(self):
@@ -105,7 +106,8 @@ class ExperimentClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Logs the end of the experiment when exiting the experiment application context, if log_experiment_end_on_exit is True"""
-        pass
+        if self.log_experiment_end_on_exit and not self.experiment_ended:
+            self.log_experiment_end()
 
     def _connect_to_server(self):
         """Ensures the server is reachable, and waits for it to be available"""
@@ -124,13 +126,13 @@ class ExperimentClient:
                 raise TimeoutError(
                     "Timed out while attempting to connect with WEI server. Check that your server is running and the server_host and server_port are correct."
                 )
-        server_version = requests.get(f"{self.url}/version").json()["version"]
-        if server_version != __version__:
-            warnings.warn(
-                message=f"WEI Server version {server_version} does not match client's WEI library version {__version__}!",
-                category=UserWarning,
-                stacklevel=1,
-            )
+            server_version = requests.get(f"{self.url}/version").json()["version"]
+            if server_version != __version__:
+                warnings.warn(
+                    message=f"WEI Server version {server_version} does not match client's WEI library version {__version__}!",
+                    category=UserWarning,
+                    stacklevel=1,
+                )
 
     def start_or_continue_experiment(
         self,
@@ -152,6 +154,8 @@ class ExperimentClient:
         None
         """
         self._connect_to_server()
+
+        assert experiment is not None, "Experiment must be provided"
 
         if isinstance(campaign, ULID) or isinstance(campaign, str):
             self.campaign = self._get_campaign(campaign)
@@ -689,6 +693,7 @@ class ExperimentClient:
         Event
             The event that was logged
         """
+        self.experiment_ended = True
         return self.log_event(ExperimentEndEvent(experiment=self.experiment))
 
     def log_decision(self, decision_name: str, decision_value: bool) -> Event:

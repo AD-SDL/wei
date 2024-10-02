@@ -6,14 +6,21 @@
       <v-card-text>
         <v-container v-if="modules" fluid class="pa-1">
           <v-row no-gutter wrap justify-content class="pa-1">
-            <v-col class="pa-1" cols=12 xl=6 v-for="(value, module_name) in modules" :key="module_name">
+            <v-col class="pa-1" cols=12 sm=6 md=4 lg-=3 xl=2 v-for="(value, module_name) in modules" :key="module_name">
               <v-card class="pa-1 module_indicator" @click="set_modal(String(module_name), value.about)"
                 :class="'module_status_' + get_status(value.state.status)">
                 <v-card-text>
                   <h4>{{ module_name }}</h4>
 
                   <p class="text-caption">
-                    status: {{ value.state.status }}
+                    status:
+                  <ul class="status-list" style="padding-left: 12px;">
+                    <template v-for="(statusValue, statusKey) in value.state.status" :key="statusKey">
+                      <li v-if="statusValue === true">
+                        {{ statusKey }}
+                      </li>
+                    </template>
+                  </ul>
                   </p>
                   <div v-for="(value2, key2) in value.state" :key="key2">
                     <p v-if="(key2.toString() != 'status') && (value2 != null)" class="text-caption">
@@ -25,7 +32,7 @@
             </v-col>
           </v-row>
         </v-container>
-        <p v-else> No Modules Yet</p>
+        <p v-else> No Modules In Workcell</p>
       </v-card-text>
     </v-card>
   </div>

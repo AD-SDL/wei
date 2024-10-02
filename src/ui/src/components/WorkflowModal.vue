@@ -1,5 +1,5 @@
 <template>
-  <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1000">
+  <v-dialog class="pa-3" v-slot:default="{ isActive }">
     <v-card>
       <v-card-title>
         <h2 class="title">Workflow: {{ modal_title }}</h2>

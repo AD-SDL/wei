@@ -1,38 +1,45 @@
 <template>
-  <v-container>
-    <v-tabs v-model="tab" align-tabs="center" color="deep-purple-accent-4">
-      <v-tab :value="1">
-        Workcells
-      </v-tab>
-      <v-tab :value="2">
-        Workflows
-      </v-tab>
-      <v-tab :value="3">
-        Experiments
-      </v-tab>
-      <!-- <v-tab :value="4">Events</v-tab>
-          <v-tab :value="5">Admin</v-tab>
-          <v-tab :value="6">Resources</v-tab> -->
-    </v-tabs>
-    <v-window v-model="tab">
-      <v-window-item :key="1" :value="1">
+  <v-tabs v-model="tab" align-tabs="center" color="deep-purple-accent-4">
+    <v-tab :value="1">
+      Workcells
+    </v-tab>
+    <v-tab :value="2">
+      Workflows
+    </v-tab>
+    <v-tab :value="3">
+      Experiments
+    </v-tab>
+    <!-- <v-tab :value="4">Events</v-tab>
+        <v-tab :value="5">Admin</v-tab>
+        <v-tab :value="6">Resources</v-tab> -->
+  </v-tabs>
+  <v-window v-model="tab">
+    <v-window-item :key="1" :value="1">
+      <v-container class="pa-1 ma-1 justify-center" fluid>
         <WorkcellPanel @view-workflows="tab = 2" />
-      </v-window-item>
-      <v-window-item :key="2" :value="2">
-        <h2> All Workflows </h2>
-        <WorkflowTable title="All Workflows" />
-      </v-window-item>
-      <v-window-item :key="3" :value="3">
-        <v-row class="pa-1 ma-1 justify-center">
-          <Experiments/>
-        </v-row>
-      </v-window-item>
-    </v-window>
-  </v-container>
+      </v-container>
+    </v-window-item>
+    <v-window-item :key="2" :value="2">
+      <v-container class="pa-1 ma-1 justify-center" fluid>
+      <v-card>
+        <v-card-title class="text-center">
+          <h2>Workflows</h2>
+        </v-card-title>
+        <v-card-text>
+          <WorkflowTable/>
+          </v-card-text>
+        </v-card>
+      </v-container>
+    </v-window-item>
+    <v-window-item :key="3" :value="3">
+      <v-container class="pa-1 ma-1 justify-center" fluid>
+        <Experiments/>
+      </v-container>
+    </v-window-item>
+  </v-window>
 </template>
 
 <script setup lang="ts">
-/// <reference path="../store.d.ts" />
 import { ref } from 'vue';
 import 'vue-json-pretty/lib/styles.css';
 import Experiments from './Experiments.vue';

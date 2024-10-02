@@ -3,7 +3,7 @@
 ################################################################################
 .DEFAULT_GOAL := init
 
-.PHONY: init checks test clean
+.PHONY: init checks test clean down up restart
 
 init: # Do the initial configuration of the project
 	@test -e .env || cp example.env .env
@@ -22,10 +22,17 @@ checks: # Runs all the pre-commit checks
 	@pre-commit install
 	@pre-commit run --all-files || { echo "Checking fixes\n" ; pre-commit run --all-files; }
 
-test: init .env build # Runs all the tests
-	@docker compose up -d --remove-orphans
+test: init .env build up # Runs all the tests
 	@docker compose run test_wei_server pytest -p no:cacheprovider wei
 	@#docker compose down
+
+down:
+	@docker compose down
+
+up:
+	@docker compose up -d --remove-orphans
+
+restart: build up
 
 clean:
 	@rm .env

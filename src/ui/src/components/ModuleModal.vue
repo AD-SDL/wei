@@ -1,5 +1,5 @@
 <template>
-  <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1920">
+  <v-dialog class="pa-3" v-slot:default="{ isActive }">
     <v-card>
       <v-card-title>
         <div class="d-flex align-center w-100">
@@ -42,15 +42,13 @@
               class="ml-2"/>
           </template>
         </div>
-        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'module_status_' + get_status(wc_state.modules[modal_title].state.status)">{{ wc_state.modules[modal_title].state.status }}</v-sheet>
+        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'module_status_' + get_status(wc_state.modules[modal_title].state.status)">
+          {{ Object.entries(wc_state.modules[modal_title].state.status).filter(([_, value]) => value === true).map(([key, _]) => key).join(' ') }}
+        </v-sheet>
       </v-card-title>
 
       <v-card-text class="subheading grey--text">
         <div>
-          <h3>State</h3>
-          <vue-json-pretty :data="wc_state.modules[modal_title].state"></vue-json-pretty>
-          <h3>About</h3>
-          <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
           <h3>Actions</h3>
           <v-expansion-panels>
             <v-expansion-panel v-for="action in modal_text.actions" :key="action.name">
@@ -117,6 +115,12 @@
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
+          <h3>State</h3>
+          <vue-json-pretty :data="wc_state.modules[modal_title].state"></vue-json-pretty>
+          <h3>About</h3>
+          <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
+          <h3>Resources</h3>
+          <p>Coming Soon</p>
         </div>
       </v-card-text>
       <v-card-actions>

@@ -1,5 +1,4 @@
 <template>
-  <v-container>
     <WorkflowModal :modal_title="modal_title" :modal_text="modal_text" v-model="modal" />
     <!-- eslint-disable vue/no-parsing-error-->
     <v-data-table :headers="arg_headers" hover
@@ -18,20 +17,12 @@
         </tr>
       </template>
     </v-data-table>
-  </v-container>
 </template>
 
 <script setup lang="ts">
 import { workcell_state, workflows } from "@/store";
 import { ref } from 'vue';
 import { VDataTable } from 'vuetify/components';
-
-defineProps({
-  title: {
-    type: String,
-    required: true
-  }
-});
 
 const modal = ref(false)
 const modal_text = ref()
