@@ -56,19 +56,27 @@ class ResourcesInterface:
             return resource.add_resource(session)
 
     def get_resource(
-        self, resource_name: str, module_name: str, resource_id: Optional[str] = None
+        self,
+        resource_name: Optional[str] = None,
+        owner_name: Optional[str] = None,
+        resource_id: Optional[str] = None,
     ) -> Optional[SQLModel]:
         """
-        Retrieve a resource from the database by its name and module_name across all resource types.
+        Retrieve a resource from the database by its name and owner_name across all resource types.
 
         Args:
             resource_name (str): The name of the resource to retrieve.
-            module_name (str): The module name associated with the resource.
-        resource_id (Optional[str]): The optional ID of the resource if it's non-unique.
+            owner_name (str): The module name associated with the resource.
+            resource_id (Optional[str]): The optional ID of the resource (if provided, this will take priority).
 
         Returns:
             Optional[SQLModel]: The resource if found, otherwise None.
         """
+        if not resource_id and (not resource_name or not owner_name):
+            raise ValueError(
+                "You must provide either a resource_id or both resource_name and owner_name."
+            )
+
         with self.session as session:
             resource_classes = [
                 Stack,
@@ -77,56 +85,75 @@ class ResourcesInterface:
                 Pool,
             ]
 
+        # If resource_id is provided, use it to directly query the resource
+        if resource_id:
             for resource_class in resource_classes:
                 statement = select(resource_class).where(
-                    resource_class.name == resource_name,
-                    resource_class.module_name == module_name,
+                    resource_class.id == resource_id
                 )
-                resources = session.exec(statement).all()
-                if not resources:
-                    continue
-                # Check if there are multiple resources
-                if len(resources) > 1:
-                    if resource_id:
-                        # Filter resources by the provided resource ID
-                        resource = next(
-                            (res for res in resources if res.id == resource_id), None
-                        )
-                        if resource:
-                            print(f"Resource found by ID: {resource.id}")
-                        else:
-                            print(f"No resource found with ID '{resource_id}'.")
-                            return None
-                    else:
-                        raise MultipleResultsFound(
-                            f"Multiple resources found for name '{resource_name}' in module '{module_name}'. Please provide a resource ID."
-                        )
-                else:
-                    resource = resources[0]
+                resource = session.exec(statement).first()
 
-                # Check if the resource is a Plate (i.e., Collection with is_plate=True)
-                if isinstance(resource, Collection) and resource.is_plate:
-                    plate = Plate(
-                        id=resource.id,
-                        name=resource.name,
-                        description=resource.description,
-                        capacity=resource.capacity,
-                        well_capacity=100.0,  # TODO: Find a better way than setting manually
-                        module_name=resource.module_name,
-                        quantity=resource.quantity,
-                        unique_resource=resource.unique_resource,
-                    )
-                    return plate
-                else:
-                    print(
-                        f"Resource found: {resource.name} in Module: {module_name} (Type: {resource_class.__name__})"
-                    )
+                if resource:
+                    # Check if the resource is a Collection and is_plate is True
+                    if isinstance(resource, Collection) and resource.is_plate:
+                        plate = Plate(
+                            id=resource.id,
+                            name=resource.name,
+                            description=resource.description,
+                            capacity=resource.capacity,
+                            well_capacity=100.0,  # TODO: Set well_capacity dynamically
+                            owner_name=resource.owner_name,
+                            quantity=resource.quantity,
+                            unique_resource=resource.unique_resource,
+                        )
+                        return plate
+
+                    # If it's not a plate, return the found resource
+                    print(f"Resource found by ID: {resource.id}")
                     return resource
 
-            print(
-                f"No resource found with name '{resource_name}' in Module: '{module_name}'"
-            )
+            print(f"No resource found with ID '{resource_id}'.")
             return None
+
+        # Fallback to using resource_name and owner_name if resource_id is not provided
+        for resource_class in resource_classes:
+            statement = select(resource_class).where(
+                resource_class.name == resource_name,
+                resource_class.owner_name == owner_name,
+            )
+            resources = session.exec(statement).all()
+            if not resources:
+                continue
+
+            # Handle multiple results found
+            if len(resources) > 1:
+                raise MultipleResultsFound(
+                    f"Multiple resources found for name '{resource_name}' in owner '{owner_name}'. Please provide a resource ID."
+                )
+
+            resource = resources[0]
+
+            # If the resource is a Plate (Collection with is_plate=True), return a Plate object
+            if isinstance(resource, Collection) and resource.is_plate:
+                plate = Plate(
+                    id=resource.id,
+                    name=resource.name,
+                    description=resource.description,
+                    capacity=resource.capacity,
+                    well_capacity=100.0,  # TODO: Set well_capacity dynamically
+                    owner_name=resource.owner_name,
+                    quantity=resource.quantity,
+                    unique_resource=resource.unique_resource,
+                )
+                return plate
+
+            print(
+                f"Resource found: {resource.name} in owner '{owner_name}' (Type: {resource_class.__name__})"
+            )
+            return resource
+
+        print(f"No resource found with name '{resource_name}' in owner '{owner_name}'.")
+        return None
 
     def get_resource_type(self, resource_id: str) -> Optional[str]:
         """
@@ -464,7 +491,7 @@ class ResourcesInterface:
                 session.query(Collection)
                 .filter_by(
                     name=plate.name,
-                    module_name=plate.module_name,
+                    owner_name=plate.owner_name,
                 )
                 .first()
             )
@@ -564,7 +591,7 @@ if __name__ == "__main__":
         description="A test pool",
         capacity=100.0,
         quantity=50.0,
-        module_name="test1",
+        owner_name="test1",
     )
     pool = resource_interface.add_resource(pool)
     all_pools = resource_interface.get_all_resources(Pool)
@@ -573,11 +600,11 @@ if __name__ == "__main__":
     all_pools = resource_interface.get_all_resources(Pool)
     print("\nAll Pools after modification:", all_pools)
     stack = Stack(
-        name="Test Stack", description="A test stack", capacity=10, module_name="test2"
+        name="Test Stack", description="A test stack", capacity=10, owner_name="test2"
     )
     stack = resource_interface.add_resource(stack)
     retrieved_stack = resource_interface.get_resource(
-        resource_name="Test Stack", module_name="test2"
+        resource_name="Test Stack", owner_name="test2"
     )
     print("Retreived_STACK:", retrieved_stack)
     asset = Asset(name="Test Asset", unique_resource=False)
@@ -590,12 +617,12 @@ if __name__ == "__main__":
     all_stacks = resource_interface.get_all_resources(Stack)
     print("\nAll Stacks after modification:", all_stacks)
     queue = Queue(
-        name="Test Queue", description="A test queue", capacity=10, module_name="test3"
+        name="Test Queue", description="A test queue", capacity=10, owner_name="test3"
     )
     queue = resource_interface.add_resource(queue)
     asset2 = Asset(name="Test Asset2")
     resource_interface.push_to_queue(queue, asset2)
-    resource_interface.push_to_queue(queue, asset)
+    # resource_interface.push_to_queue(queue, asset)
     all_queues = resource_interface.get_all_resources(Queue)
     print("\nAll Queues after modification:", all_queues)
     popped_asset_q = resource_interface.pop_from_queue(queue)
@@ -606,7 +633,7 @@ if __name__ == "__main__":
         name="Test Collection",
         description="A test collection",
         capacity=10,
-        module_name="test4",
+        owner_name="test4",
     )
     collection = resource_interface.add_resource(collection)
     resource_interface.insert_into_collection(collection, location="1", asset=asset3)
@@ -619,7 +646,7 @@ if __name__ == "__main__":
         description="A test plate",
         capacity=96,
         well_capacity=100.0,
-        module_name="test5",
+        owner_name="test5",
         unique_resource=False,
     )
     plate2 = Plate(
@@ -627,7 +654,7 @@ if __name__ == "__main__":
         description="A test plate",
         capacity=96,
         well_capacity=100.0,
-        module_name="test5",
+        owner_name="test5",
         unique_resource=False,
     )
     plate = resource_interface.add_resource(plate)
@@ -654,9 +681,7 @@ if __name__ == "__main__":
         "D1": 70.0,  # Well C1 with 70.0 quantity
     }
 
-    r = resource_interface.get_resource(
-        resource_name="Test Plate", module_name="test5", resource_id=plate2.id
-    )
+    r = resource_interface.get_resource(resource_id=plate2.id)
     resource_interface.update_plate_contents(r, new_well_to_add2)
 
     # all_asset = resource_interface.get_all_resources(Asset)
