@@ -64,7 +64,7 @@ def test_node_startup(state: State):
         "postgresql://rpl:rpl@wei_postgres:5432/resources"
     )
     # state.resource_interface.delete_all_tables()
-    # time.sleep(5)
+    # time.sleep(10)
     try:
         # Example: Create resources using ResourceInterface
         stack1 = Stack(
@@ -74,7 +74,6 @@ def test_node_startup(state: State):
             owner_name=state.module_name,
         )
         stack1 = state.resource_interface.add_resource(stack1)
-        print(state.resource_interface.get_all_resources(Stack))
         stack2 = Stack(
             name="Stack2",
             description="Stack for transfer",

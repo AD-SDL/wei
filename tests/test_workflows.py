@@ -3,10 +3,11 @@
 from pathlib import Path
 
 import pytest
-from test_base import TestWEI_Base
 
 from wei.types import WorkflowStatus
 from wei.types.exceptions import WorkflowFailedException
+
+from .test_base import TestWEI_Base
 
 
 class TestWEI_Workflows(TestWEI_Base):

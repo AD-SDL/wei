@@ -21,7 +21,7 @@ class TestWEI_Base(unittest.TestCase):
         self.workcell = Workcell.from_yaml(
             self.root_dir / Path("tests/workcells/test_workcell.yaml")
         )
-        self.server_host = "0.0.0.0"
+        self.server_host = self.workcell.config.server_host
         self.server_port = self.workcell.config.server_port
         self.experiment = ExperimentClient(
             server_host=self.server_host,

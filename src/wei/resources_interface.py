@@ -346,7 +346,15 @@ class ResourcesInterface:
             asset (Asset): The asset to push onto the stack.
         """
         with self.session as session:
-            stack = session.merge(stack)
+            # Check if the stack exists in the database
+            existing_stack = session.query(Stack).filter_by(id=stack.id).first()
+
+            if not existing_stack:
+                # If the stack doesn't exist, raise an error
+                raise ValueError(
+                    f"Stack '{stack.name, stack.id}' does not exist in the database. Please provide a valid resource."
+                )
+            stack = existing_stack
             asset = session.merge(asset)
             stack.push(asset, session)
             session.commit()
@@ -382,14 +390,17 @@ class ResourcesInterface:
             asset (Asset): The asset to push onto the queue.
         """
         with self.session as session:
-            session.add(queue)
-            asset = session.merge(asset)
-            existing_asset = session.get(Asset, asset.id)
-            if not existing_asset:
-                session.add(asset)
-                session.commit()
-                session.refresh(asset)
+            # Check if the queue exists in the database
+            existing_queue = session.query(Queue).filter_by(id=queue.id).first()
 
+            if not existing_queue:
+                # If the queue doesn't exist, raise an error
+                raise ValueError(
+                    f"Queue '{queue.name}' does not exist in the database. Please provide a valid resource."
+                )
+
+            queue = existing_queue
+            asset = session.merge(asset)
             queue.push(asset, session)
             session.commit()
             session.refresh(queue)
@@ -575,8 +586,6 @@ class ResourcesInterface:
 
 if __name__ == "__main__":
     resource_interface = ResourcesInterface()
-    print(resource_interface.get_all_resources(Asset))
-    print(resource_interface.get_resource("Test Stack", "test2"))
     resource_interface.clear_all_table_records()
     pool = Pool(
         name="Test Pool",
@@ -594,7 +603,7 @@ if __name__ == "__main__":
     stack = Stack(
         name="Test Stack", description="A test stack", capacity=10, owner_name="test2"
     )
-    stack = resource_interface.add_resource(stack)
+    resource_interface.add_resource(stack)
     retrieved_stack = resource_interface.get_resource(
         resource_name="Test Stack", owner_name="test2"
     )
