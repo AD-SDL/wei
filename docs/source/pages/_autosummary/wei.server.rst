@@ -1,4 +1,4 @@
-wei.server
+﻿wei.server
 ==========
 
 .. automodule:: wei.server

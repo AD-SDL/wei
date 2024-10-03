@@ -1,4 +1,4 @@
-wei.modules
+﻿wei.modules
 ===========
 
 .. automodule:: wei.modules
@@ -28,4 +28,5 @@ wei.modules
    :recursive:
 
    wei.modules.rest_module
+   wei.modules.utility_module
 

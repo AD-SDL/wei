@@ -19,8 +19,8 @@ class TestWEI_Workflows(TestWEI_Base):
         workflow_path = Path(__file__).parent / "workflows" / "test_workflow.yaml"
 
         run_info = self.experiment.start_run(
-            workflow_file=workflow_path,
-            payload={"wait_time": 5},
+            workflow=workflow_path,
+            payload={"wait_time": 1},
             blocking=True,
             simulate=False,
         )
@@ -47,16 +47,16 @@ class TestWEI_Workflows(TestWEI_Base):
 
         with pytest.raises(WorkflowFailedException):
             run_info = self.experiment.start_run(
-                workflow_file=workflow_path,
-                payload={"wait_time": 5, "fail": True},
+                workflow=workflow_path,
+                payload={"wait_time": 1, "fail": True},
                 blocking=True,
                 simulate=False,
                 raise_on_failed=True,
             )
 
         run_info = self.experiment.start_run(
-            workflow_file=workflow_path,
-            payload={"wait_time": 5, "fail": True},
+            workflow=workflow_path,
+            payload={"wait_time": 1, "fail": True},
             blocking=True,
             simulate=False,
             raise_on_failed=False,

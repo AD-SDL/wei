@@ -12,17 +12,14 @@ from wei.modules.rest_module import RESTModule
 from wei.resources_interface import ResourcesInterface
 from wei.types import StepFileResponse, StepResponse, StepStatus
 from wei.types.module_types import (
+    AdminCommands,
     LocalFileModuleActionResult,
     Location,
     ModuleState,
+    ModuleStatus,
     ValueModuleActionResult,
 )
-from wei.types.resource_types import (
-    Asset,
-    Collection,
-    Plate,
-    Stack,
-)
+from wei.types.resource_types import Asset, Collection, Plate, Stack
 from wei.types.step_types import ActionRequest
 
 # * Test predefined action functions
@@ -34,6 +31,7 @@ test_rest_node = RESTModule(
     version="1.0.0",
     model="test_module",
     actions=[],
+    admin_commands=set([admin_command for admin_command in AdminCommands]),
 )
 test_rest_node.arg_parser.add_argument(
     "--foo",
@@ -47,12 +45,8 @@ test_rest_node.arg_parser.add_argument(
     help="The starting amount of bar",
     default=0.0,
 )
-
 test_rest_node.arg_parser.add_argument(
-    "--module_name",
-    type=str,
-    help="The starting amount of bar",
-    default="test",
+    "--dwell_time", type=int, help="The amount of time to dwell on actions", default=1
 )
 
 
@@ -71,14 +65,14 @@ def test_node_startup(state: State):
             name="Stack1",
             description="Stack for transfer",
             capacity=10,
-            owner_name=state.module_name,
+            owner_name=state.name,
         )
         stack1 = state.resource_interface.add_resource(stack1)
         stack2 = Stack(
             name="Stack2",
             description="Stack for transfer",
             capacity=10,
-            owner_name=state.module_name,
+            owner_name=state.name,
         )
         stack2 = state.resource_interface.add_resource(stack2)
 
@@ -86,7 +80,7 @@ def test_node_startup(state: State):
             name="Stack3",
             description="Stack for transfer",
             capacity=4,
-            owner_name=state.module_name,
+            owner_name=state.name,
         )
         stack3 = state.resource_interface.add_resource(stack3)
 
@@ -94,7 +88,7 @@ def test_node_startup(state: State):
             name="Trash",
             description="Trash",
             capacity=None,
-            owner_name=state.module_name,
+            owner_name=state.name,
         )
         trash = state.resource_interface.add_resource(trash)
 
@@ -107,7 +101,7 @@ def test_node_startup(state: State):
             name="Plate0",
             description="Test plate",
             well_capacity=100.0,
-            owner_name=state.module_name,
+            owner_name=state.name,
         )
         plate0 = state.resource_interface.add_resource(plate0)
         state.resource_interface.update_plate_contents(
@@ -117,7 +111,7 @@ def test_node_startup(state: State):
             name="Collection1",
             description="Collection for measurement",
             capacity=5,
-            owner_name=state.module_name,
+            owner_name=state.name,
         )
         collection = state.resource_interface.add_resource(collection)
 
@@ -137,6 +131,22 @@ def fail(state: State, action: ActionRequest) -> StepResponse:
     return StepResponse.step_failed("Oh no! This step failed!")
 
 
+def sleep_with_signals(seconds: int, state: State):
+    """Sleeps for `seconds` seconds, checking for state changes every second"""
+    for i in range(seconds):
+        print(i)
+        time.sleep(1)
+        while state.status[ModuleStatus.PAUSED]:
+            time.sleep(1)
+        if (
+            state.status[ModuleStatus.PAUSED]
+            or state.status[ModuleStatus.CANCELLED]
+            or state.status[ModuleStatus.INIT]
+        ):
+            return False
+    return True
+
+
 @test_rest_node.action()
 def transfer(
     state: State,
@@ -149,31 +159,34 @@ def transfer(
     print("All Stacks:", all_stacks)
 
     target_stack = state.resource_interface.get_resource(
-        resource_name=target, owner_name=state.module_name
+        resource_name=target, owner_name=state.name
     )
     if not target_stack:
         return StepResponse.step_failed(f"Invalid target stack ({target})")
 
-    if source:
-        source_stack = state.resource_interface.get_resource(
-            resource_name=source, owner_name=state.module_name
-        )
-        if not source_stack:
-            return StepResponse.step_failed(f"Invalid source stack ({source})")
+    if sleep_with_signals(state.dwell_time, state):
+        if source:
+            source_stack = state.resource_interface.get_resource(
+                resource_name=source, owner_name=state.name
+            )
+            if not source_stack:
+                return StepResponse.step_failed(f"Invalid source stack ({source})")
 
-        try:
-            asset = state.resource_interface.pop_from_stack(source_stack)
-            state.resource_interface.push_to_stack(target_stack, asset)
-            return StepResponse.step_succeeded()
-        except ValueError as e:
-            return StepResponse.step_failed(str(e))
+            try:
+                asset = state.resource_interface.pop_from_stack(source_stack)
+                state.resource_interface.push_to_stack(target_stack, asset)
+                return StepResponse.step_succeeded()
+            except ValueError as e:
+                return StepResponse.step_failed(str(e))
+        else:
+            try:
+                example_plate = Asset(name="ExamplePlate")
+                state.resource_interface.push_to_stack(target_stack, example_plate)
+                return StepResponse.step_succeeded()
+            except ValueError as e:
+                return StepResponse.step_failed(str(e))
     else:
-        try:
-            example_plate = Asset(name="ExamplePlate")
-            state.resource_interface.push_to_stack(target_stack, example_plate)
-            return StepResponse.step_succeeded()
-        except ValueError as e:
-            return StepResponse.step_failed(str(e))
+        return StepResponse.step_failed("Transfer was cancelled or e-stopped.")
 
 
 @test_rest_node.action()
@@ -185,10 +198,16 @@ def synthesize(
     protocol: Annotated[UploadFile, "Python Protocol File"],
 ) -> StepResponse:
     """Synthesizes a sample using specified amounts `foo` and `bar` according to file `protocol`"""
+    if not sleep_with_signals(state.dwell_time, state):
+        return StepResponse.step_failed("Synthesis was cancelled or e-stopped.")
+    protocol = protocol.file.read().decode("utf-8")
+    print(protocol)
 
     state.foobar = foo + bar
-    time.sleep(5)
-    return StepResponse.step_succeeded()
+    if sleep_with_signals(state.dwell_time, state):
+        return StepResponse.step_succeeded()
+    else:
+        return StepResponse.step_failed("Synthesis was cancelled or e-stopped.")
 
 
 @test_rest_node.action(
@@ -203,9 +222,11 @@ def synthesize(
 )
 def measure_action(state: State, action: ActionRequest) -> StepResponse:
     """Measures the foobar of the current sample"""
+    if not sleep_with_signals(state.dwell_time, state):
+        return StepResponse.step_failed("Measure was cancelled or e-stopped.")
     # Retrieve the collection resource
     collection = state.resource_interface.get_resource(
-        resource_name="Collection1", owner_name=state.module_name
+        resource_name="Collection1", owner_name=state.name
     )
 
     if collection:
@@ -224,15 +245,24 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
             f.write("test")
         with open("test2.txt", "w") as f:
             f.write("test")
-        time.sleep(5)
-        return StepFileResponse(
-            StepStatus.SUCCEEDED,
-            files={"test_file": "test.txt", "test2_file": "test2.txt"},
-            data={"test": {"test": "test"}},
-        )
-
+        if sleep_with_signals(state.dwell_time, state):
+            return StepFileResponse(
+                StepStatus.SUCCEEDED,
+                files={"test_file": "test.txt", "test2_file": "test2.txt"},
+                data={"test": {"test": "test"}},
+            )
     else:
         return StepResponse.step_failed("Collection resource not found")
+
+
+@test_rest_node.action(name="admin_actions_test")
+def admin_actions_test(state: State, action: ActionRequest) -> StepResponse:
+    """Allows testing of the admin action functionality"""
+
+    if not sleep_with_signals(30, state):
+        return StepResponse.step_failed()
+    else:
+        return StepResponse.step_succeeded()
 
 
 if __name__ == "__main__":

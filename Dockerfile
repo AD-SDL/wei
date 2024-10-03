@@ -25,16 +25,15 @@ RUN mkdir -p wei/requirements
 RUN mkdir -p .wei/experiments
 RUN mkdir -p .diaspora
 
-# Install Python Dependencies first, for caching purposes
+# Install Node and Python Dependencies first, for caching purposes
+COPY ./src/ui/package*.json ./
+RUN npm install
+
 COPY requirements/requirements.txt wei/requirements/requirements.txt
 COPY requirements/dev.txt wei/requirements/dev.txt
 RUN --mount=type=cache,target=/root/.cache \
 	pip install --upgrade setuptools wheel pip && \
     pip install -r wei/requirements/requirements.txt
-
-# Install Node Dependencies first, for caching purposes
-COPY ./src/ui/package*.json ./
-RUN npm install
 
 # Copy rest of wei files
 COPY src wei/src

@@ -74,7 +74,6 @@ Starting a workcell that has already been dockerized is as simple as the followi
 
     - ``USER_ID``: The user ID of the user running in the container. This is used to ensure that files created by the container are owned by the correct user on the host system. You can find your user ID by running ``id -u`` in a terminal on Linux/WSL/Mac.
     - ``GROUP_ID``: The group ID of the user running in the container. This is used to ensure that files created by the container are owned by the correct group on the host system. You can find your group ID by running ``id -g`` in a terminal on Linux/WSL/Mac.
-    - ``PROJECT_DIR``: The absolute path to the directory containing the workcell, usually the top level directory of the repository.
 
 #. Run ``docker compose up`` in the directory containing the ``compose.yaml`` file (usually the top of the repository, or in ``/docker``). In some cases, there are multiple compose files for a single workcell, such as a compose file for the WEI core services and one or more compose files for modules. In these cases, the individual compose files might have names like ``workcell_name.compose.yml`` or ``hostname.compose.yml``, and you will need to run ``docker compose -f /path/to/file.yaml up`` to specify the compose file to use.
 #. Upon running this command, you should see a log stream from the containers that are starting up. If you see any errors/container exits, you may need to troubleshoot them.

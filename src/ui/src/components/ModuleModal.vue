@@ -2,22 +2,71 @@
   <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1000">
     <v-card>
       <v-card-title>
-        <h1 class="title py-3 my-3">Module: {{ modal_title }}</h1>
+        <div class="d-flex align-center w-100">
+          <h2 class="title py-3 my-3">Module: {{ modal_title }}</h2>
+
+          <!-- Display pause/resume button only if module has 'pause' and 'resume' admin actions -->
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('pause') && wc_state.modules[modal_title].about.admin_commands.includes('resume')">
+            <PauseResumeButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
+              class="ml-2" />
+          </template>
+
+          <CancelButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
+            class="ml-2" />
+
+          <ResetButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
+            class="ml-2" />
+
+          <LockUnlockButton
+            :main_url="main_url"
+            :module="modal_title"
+            :module_status="wc_state.modules[modal_title].state.status"
+            class="ml-2" />
+
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('shutdown')">
+            <ShutdownButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
+              class="ml-2"/>
+          </template>
+
+          <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('safety_stop')">
+            <SafetyStopButton
+              :main_url="main_url"
+              :module="modal_title"
+              :module_status="wc_state.modules[modal_title].state.status"
+              class="ml-2"/>
+          </template>
+        </div>
+        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'module_status_' + wc_state.modules[modal_title].state.status">{{ wc_state.modules[modal_title].state.status }}</v-sheet>
       </v-card-title>
+
       <v-card-text class="subheading grey--text">
         <div>
-          <p>{{ modal_text.description }}</p>
-          <br>
-          <h2>Actions</h2>
+          <h3>State</h3>
+          <vue-json-pretty :data="wc_state.modules[modal_title].state"></vue-json-pretty>
+          <h3>About</h3>
+          <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
+          <h3>Actions</h3>
           <v-expansion-panels>
             <v-expansion-panel v-for="action in modal_text.actions" :key="action.name">
               <v-expansion-panel-title @click="set_text(action)">
-                <h3>{{ action.name }}</h3>
+                <h4>{{ action.name }}</h4>
               </v-expansion-panel-title>
               <v-expansion-panel-text>
-                <h4>Description</h4>
+                <h5>Description</h5>
                 <p class="py-1 my-1">{{ action.description }}</p>
-                <h4>Arguments</h4>
+                <h5>Arguments</h5>
                 <v-data-table :headers="arg_headers" :items="action.args" hover items-per-page="-1"
                   no-data-text="No Arguments" density="compact">
                   <!-- eslint-disable vue/no-parsing-error-->
@@ -37,7 +86,7 @@
                   </template>
                   <template #bottom></template>
                 </v-data-table>
-                <h4 v-if="action.files.length > 0">Files</h4>
+                <h5 v-if="action.files.length > 0">Files</h5>
                 <v-data-table v-if="action.files.length > 0" :headers="file_headers" :items="action.files" hover
                   items-per-page="-1" no-data-text="No Files" density="compact">
                   <template v-slot:item="{ item }: { item: any }">
@@ -49,7 +98,7 @@
                     </tr>
                   </template>
                 </v-data-table>
-                <h4 v-if="action.results.length > 0">Results</h4>
+                <h5 v-if="action.results.length > 0">Results</h5>
                 <v-data-table v-if="action.results.length > 0" :headers="result_headers" :items="action.results" hover
                   items-per-page="-1" no-data-text="No Results" density="compact">
                   <template v-slot:item="{ item }: { item: any }">
@@ -86,8 +135,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
+
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
+import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
+import ShutdownButton from './AdminButtons/ShutdownButton.vue';
 const props = defineProps(['modal_title', 'modal_text', 'main_url', 'wc_state'])
 const arg_headers = [
   { title: 'Name', key: 'name' },
@@ -110,6 +163,7 @@ const result_headers = [
 ]
 const text = ref()
 const json_text = ref()
+
 function set_text(action: any) {
   text.value = "- name : ".concat(action.name).concat("\n\t").concat(
     "module : ").concat(props.modal_text.name).concat("\n\t").concat(
@@ -122,7 +176,11 @@ function set_text(action: any) {
       args[arg.name] = arg.default
     }
     else {
-      args[arg.name] = arg.value
+      try {
+        args[arg.name] = JSON.parse(arg.value)
+      } catch (e) {
+        args[arg.name] = arg.value
+      }
     }
   }
   )
@@ -153,7 +211,11 @@ async function send_wf(action: any) {
       args[arg.name] = arg.default
     }
     else {
-      args[arg.name] = arg.value
+      try {
+        args[arg.name] = JSON.parse(arg.value)
+      } catch (e) {
+        args[arg.name] = arg.value
+      }
     }
 
   })
@@ -221,3 +283,9 @@ function copyAction(test: any) {
   alert("Copied!")
 }
 </script>
+
+<style>
+  .title {
+    margin-right: 30px;
+  }
+</style>

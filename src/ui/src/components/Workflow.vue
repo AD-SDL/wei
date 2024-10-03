@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex-column">
-    <h4>Steps</h4>
+    <h3>Steps</h3>
     <v-expansion-panels title="Steps">
       <v-expansion-panel v-for="(value, key) in steps" :key="key">
         <v-expansion-panel-title>
@@ -44,9 +44,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-const props = defineProps(['steps'])
 import VueJsonPretty from 'vue-json-pretty';
 import { VDataTable } from 'vuetify/components';
+const props = defineProps(['steps'])
 
 const test = ref()
 test.value = {}
@@ -60,7 +60,7 @@ const data_headers = [
 props.steps.forEach((step : any)=> { test.value[step.id] = {}; if(step.result && step.result.data)
   {Object.keys(step.result.data).forEach(async (key: string) =>   {
 
-    let val = await ((await fetch( "http://".concat(window.location.host).concat("/runs/data/").concat(step.result.data[key]).concat("/info"))).json())
+    let val = await ((await fetch( "http://".concat(window.location.host).concat("/data/").concat(step.result.data[key]).concat("/info"))).json())
     console.log(val)
     test.value[step.id][val.id] = val
 
@@ -79,7 +79,7 @@ const forceFileDownload = (val : any, title: any)  => {
 }
 
 async function trydownload(id: string, label: string) {
-    let val = await (await fetch("http://".concat(window.location.host).concat('/runs/data/').concat(id))).blob()
+    let val = await (await fetch("http://".concat(window.location.host).concat('/data/').concat(id))).blob()
     forceFileDownload(val, label)
 
 

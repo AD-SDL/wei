@@ -1,4 +1,4 @@
-wei.routers
+﻿wei.routers
 ===========
 
 .. automodule:: wei.routers
@@ -28,6 +28,7 @@ wei.routers
    :recursive:
 
    wei.routers.admin_routes
+   wei.routers.data_routes
    wei.routers.event_routes
    wei.routers.experiment_routes
    wei.routers.location_routes

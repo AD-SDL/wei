@@ -1,5 +1,6 @@
 """Types related to experiments"""
 
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import AliasChoices, Field
@@ -37,3 +38,6 @@ class Experiment(ExperimentDesign):
     experiment_id: str = Field(default_factory=ulid_factory)
     """ID of the experiment"""
     experiment_directory: Optional[PathLike] = None
+    """The directory where the experiment is stored on disk"""
+    check_in_timestamp: Optional[datetime] = None
+    """The last time the experiment client checked in"""

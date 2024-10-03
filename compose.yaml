@@ -7,7 +7,7 @@ services:
     container_name: synthesis
     ports:
       - 2000:2000
-    command: 'python3 wei/tests/test_module/test_rest_node.py --module_name synthesis
+    command: 'python3 wei/tests/test_module/test_rest_node.py --name synthesis
       --port 2000
       --alias synthesis'
   transfer:
@@ -15,7 +15,7 @@ services:
     container_name: transfer
     ports:
       - 2001:2001
-    command: 'python3 wei/tests/test_module/test_rest_node.py --module_name transfer
+    command: 'python3 wei/tests/test_module/test_rest_node.py --name transfer
       --port 2001
       --alias transfer'
   measure:
@@ -23,7 +23,7 @@ services:
     container_name: measure
     ports:
       - 2002:2002
-    command: 'python3 wei/tests/test_module/test_rest_node.py --module_name measure
+    command: 'python3 wei/tests/test_module/test_rest_node.py --name measure
       --port 2002
       --alias measure'
 
@@ -66,12 +66,20 @@ services:
       --save 600 1
       --loglevel warning
       --appendonly yes'
+  utilities:
+    image: ${IMAGE}
+    container_name: utilities
+    ports:
+      - 8001:8001
+    command: 'python3 -m wei.modules.utility_module
+      --port 8001
+      --alias utilities'
 
 ####################
 # PostgreSQL Setup #
 ####################
   wei_postgres:
-    image: postgres:13
+    image: postgres:16
     container_name: wei_postgres
     environment:
       POSTGRES_USER: rpl

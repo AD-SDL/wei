@@ -1,4 +1,4 @@
-wei.routers.experiment\_routes
+﻿wei.routers.experiment\_routes
 ==============================
 
 .. automodule:: wei.routers.experiment_routes
@@ -13,6 +13,9 @@ wei.routers.experiment\_routes
 
    .. autosummary::
    
+      check_in
+      data_return
+      event_return
       get_all_experiments
       get_campaign
       get_experiment_endpoint

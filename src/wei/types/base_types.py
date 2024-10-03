@@ -2,10 +2,11 @@
 
 import json
 from pathlib import Path
-from typing import Type, TypeVar, Union
+from typing import Optional, Type, TypeVar, Union
 
 import ulid
 import yaml
+from pydantic import AliasChoices, Field
 from pydantic import BaseModel as _BaseModel
 
 _T = TypeVar("_T")
@@ -23,27 +24,40 @@ class BaseModel(_BaseModel, use_enum_values=True):
     Can load a yaml into a class and write a class into a yaml file.
     """
 
-    def write_yaml(self, cfg_path: PathLike) -> None:
-        """Allows programmatic creation of ot2util objects and saving them into yaml.
+    def write_yaml(self, path: PathLike) -> None:
+        """Allows all derived data models to be exported into yaml.
         Parameters
         ----------
-        cfg_path : PathLike
+        path : PathLike
             Path to dump the yaml file.
         Returns
         -------
         None
         """
-        with open(cfg_path, mode="w") as fp:
+        with open(path, mode="w") as fp:
             yaml.dump(json.loads(self.json()), fp, indent=4, sort_keys=False)
 
     @classmethod
-    def from_yaml(cls: Type[_T], filename: PathLike) -> _T:
-        """Allows loading of yaml into ot2util objects.
+    def from_yaml(cls: Type[_T], path: PathLike) -> _T:
+        """Allows all derived data models to be loaded from yaml.
         Parameters
         ----------
-        filename: PathLike
-            Path to yaml file location.
+        path: PathLike
+            Path to a yaml file to be read.
         """
-        with open(filename) as fp:
+        with open(path) as fp:
             raw_data = yaml.safe_load(fp)
         return cls(**raw_data)
+
+
+class Metadata(BaseModel, extra="allow"):
+    """Metadata container"""
+
+    author: Optional[str] = None
+    """Who authored this workflow"""
+    description: Optional[str] = Field(
+        default=None, alias=AliasChoices("description", "info")
+    )
+    """Long description"""
+    version: float = 0.1
+    """Version of interface used"""

@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.6.2"
+version = "0.6.3"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -29,6 +29,9 @@ dependencies = [
     "sqlmodel>=0.0.21",
     "SQLAlchemy>=2.0.35",
     "psycopg2-binary>=2.9.9",
+    "aenum>=3.1.15",
+    "colorama>=0.4.6",
+    "pause>=0.3",
 ]
 
 [project.optional-dependencies]

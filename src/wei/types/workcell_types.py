@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import Field, field_validator
 
-from wei.types.base_types import BaseModel, PathLike
+from wei.types.base_types import BaseModel, Metadata, PathLike
 from wei.types.module_types import ModuleDefinition
 
 
@@ -15,6 +15,8 @@ class Workcell(BaseModel):
 
     name: str
     """Name of the workflow"""
+    metadata: Metadata = Field(default_factory=Metadata)
+    """Information about the workcell"""
     config: "WorkcellConfig"
     """Globus search index, needed for publishing"""
     modules: List[ModuleDefinition]

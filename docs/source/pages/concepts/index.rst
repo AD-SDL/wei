@@ -9,3 +9,5 @@ Core Concepts
     workcell
     workflow
     experiment
+    dashboard
+    datapoints

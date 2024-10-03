@@ -1,5 +1,6 @@
 """Resources Interface"""
 
+import time
 from typing import Dict, List, Optional, Type
 
 from sqlalchemy import text
@@ -27,7 +28,9 @@ class ResourcesInterface:
     """
 
     def __init__(
-        self, database_url: str = "postgresql://postgres:rpl@localhost:5432/resources"
+        self,
+        database_url: str = "postgresql://postgres:rpl@localhost:5432/resources",
+        init_timeout: float = 10,
     ):
         """
         Initialize the ResourceInterface with a database URL.
@@ -35,9 +38,17 @@ class ResourcesInterface:
         Args:
             database_url (str): Database connection URL.
         """
-        self.engine = create_engine(database_url)
-        self.session = Session(self.engine)
-        SQLModel.metadata.create_all(self.engine)
+        start_time = time.time()
+        while time.time() - start_time < init_timeout:
+            try:
+                self.engine = create_engine(database_url)
+                self.session = Session(self.engine)
+                SQLModel.metadata.create_all(self.engine)
+                break
+            except Exception:
+                print("Database not ready yet. Retrying...")
+                time.sleep(5)
+                continue
         print(f"Resources Database started on: {database_url}")
 
     def add_resource(self, resource: ResourceContainerBase):

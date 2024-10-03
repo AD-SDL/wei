@@ -29,16 +29,17 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     """
     from wei.routers import (
         admin_routes,
+        data_routes,
         event_routes,
         experiment_routes,
         location_routes,
         module_routes,
-        resource_routes,
         workcell_routes,
         workflow_routes,
     )
 
     app.include_router(admin_routes.router, prefix="/admin")
+    app.include_router(data_routes.router, prefix="/data")
     app.include_router(workflow_routes.router, prefix="/runs")
     app.include_router(experiment_routes.router, prefix="/experiments")
     app.include_router(event_routes.router, prefix="/events")
@@ -46,7 +47,7 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     app.include_router(module_routes.router, prefix="/modules")
     app.include_router(workcell_routes.router, prefix="/workcells")
     app.include_router(workcell_routes.router, prefix="/wc")
-    app.include_router(resource_routes.router, prefix="/resources")
+    # app.include_router(resource_routes.router, prefix="/resources")
     app.mount("/", StaticFiles(directory="wei/src/ui/dist", html=True))
     EventHandler.initialize_diaspora()
 

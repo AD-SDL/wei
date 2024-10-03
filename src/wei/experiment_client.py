@@ -2,13 +2,15 @@
 
 import json
 import time
+import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 
 from wei.types import Workflow, WorkflowRun, WorkflowStatus
 from wei.types.base_types import PathLike
+from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import (
     CommentEvent,
     DecisionEvent,
@@ -23,6 +25,7 @@ from wei.types.event_types import (
 )
 from wei.types.exceptions import WorkflowFailedException
 from wei.types.experiment_types import Experiment, ExperimentDesign
+from wei.utils import threaded_daemon
 
 
 class ExperimentClient:
@@ -32,12 +35,13 @@ class ExperimentClient:
         self,
         server_host: str,
         server_port: str,
-        experiment_name: str,
+        experiment_name: Optional[str] = None,
         experiment_id: Optional[str] = None,
         campaign_id: Optional[str] = None,
         description: Optional[str] = None,
         working_dir: Optional[PathLike] = None,
         email_addresses: List[str] = [],
+        log_experiment_end_on_exit: bool = True,
     ) -> None:
         """Initializes an Experiment, and creates its log files
 
@@ -60,6 +64,9 @@ class ExperimentClient:
 
         email_addresses: Optional[List[str]]
             List of email addresses to send notifications at the end of the experiment
+
+        log_experiment_end_on_exit: bool
+            Whether to log the end of the experiment when cleaning up the experiment
         """
 
         self.server_host = server_host
@@ -67,6 +74,7 @@ class ExperimentClient:
         self.url = f"http://{self.server_host}:{self.server_port}"
         self.experiment_id = experiment_id
         self.email_addresses = email_addresses
+        self.log_experiment_end_on_exit = log_experiment_end_on_exit
 
         if experiment_name is None:
             assert (
@@ -111,6 +119,35 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
             raise Exception(
                 "Timed out while attempting to connect with WEI server. Check that your server is running and the server_host and server_port are correct."
             )
+        self.check_in()
+
+    @threaded_daemon
+    def check_in(self):
+        """Checks in with the server to let it know the experiment is still running"""
+        while True:
+            time.sleep(10)
+            try:
+                response = requests.post(
+                    f"http://{self.server_host}:{self.server_port}/experiments/{self.experiment_id}/check_in"
+                )
+                if not response.ok:
+                    response.raise_for_status()
+            except Exception:
+                traceback.print_exc()
+                pass
+
+    def __del__(self):
+        """Logs the end of the experiment when cleaning up the experiment, if log_experiment_end_on_exit is True"""
+        if self.log_experiment_end_on_exit:
+            self.log_experiment_end()
+
+    def __enter__(self):
+        """Creates the experiment application context"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Logs the end of the experiment when exiting the experiment application context, if log_experiment_end_on_exit is True"""
+        pass
 
     def _register_experiment(self) -> None:
         """Registers a new experiment with the server
@@ -257,18 +294,19 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
     def start_run(
         self,
-        workflow_file: PathLike,
+        workflow: Union[Workflow, PathLike],
         payload: Optional[Dict[str, Any]] = None,
         simulate: bool = False,
         blocking: bool = True,
         raise_on_failed: bool = True,
+        raise_on_cancelled: bool = True,
     ) -> WorkflowRun:
         """Submits a workflow file to the server to be executed, and logs it in the overall event log.
 
         Parameters
         ----------
-        workflow_file : str
-           The path to the workflow file to be executed
+        workflow : str
+           A workflow definition, or path to a workflow definition file
 
         payload: Optional[Dict[Any, Any]]
             The input to the workflow
@@ -281,14 +319,16 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
         Returns
         -------
-        Dict
-           The JSON portion of the response from the server, including the ID of the job as job_id
+        WorkflowRun
+           Information about the run that was started
         """
         if payload is None:
             payload = {}
-        workflow_file = Path(workflow_file).expanduser().resolve()
-        assert workflow_file.exists(), f"{workflow_file} does not exist"
-        workflow = Workflow.from_yaml(workflow_file)
+        if isinstance(workflow, str) or isinstance(workflow, Path):
+            workflow = Path(workflow).expanduser().resolve()
+            assert workflow.exists(), f"Workflow file {workflow} does not exist"
+            workflow = Workflow.from_yaml(workflow)
+        Workflow.model_validate(workflow)
         url = f"{self.url}/runs/start"
         files = self._extract_files_from_workflow(workflow, payload)
         response = requests.post(
@@ -315,39 +355,42 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
             prior_index = None
             while True:
                 run_info = self.query_run(response_json["run_id"])
-                status = run_info["status"]
-                step_index = run_info["step_index"]
+                wf_run = WorkflowRun(**run_info)
+                status = wf_run.status
+                step_index = wf_run.step_index
                 if prior_status != status or prior_index != step_index:
-                    if step_index < len(run_info["steps"]):
-                        step_name = run_info["steps"][step_index]["name"]
+                    if step_index < len(wf_run.steps):
+                        step_name = wf_run.steps[step_index].name
                     else:
                         step_name = "Workflow End"
                     print()
                     print(
-                        f"{run_info['name']} [{step_index}]: {step_name} ({run_info['status']})",
+                        f"{wf_run.name} [{step_index}]: {step_name} ({wf_run.status})",
                         end="",
                         flush=True,
                     )
                 else:
                     print(".", end="", flush=True)
                 time.sleep(1)
-                if run_info["status"] == WorkflowStatus.COMPLETED:
+                if wf_run.status == WorkflowStatus.COMPLETED:
                     print()
                     break
-                elif run_info["status"] in [
+                elif wf_run.status in [
                     WorkflowStatus.FAILED,
                     WorkflowStatus.CANCELLED,
                 ]:
                     print()
-                    print(json.dumps(response.json(), indent=2))
+                    print(json.dumps(wf_run.model_dump(mode="json"), indent=2))
                     break
                 prior_status = status
                 prior_index = step_index
-
-            wf_run = WorkflowRun(**run_info)
         if wf_run.status == WorkflowStatus.FAILED and raise_on_failed:
             raise WorkflowFailedException(
                 f"Workflow {wf_run.name} ({wf_run.run_id}) failed."
+            )
+        if wf_run.status == WorkflowStatus.CANCELLED and raise_on_cancelled:
+            raise WorkflowFailedException(
+                f"Workflow {wf_run.name} ({wf_run.run_id}) was cancelled."
             )
         return wf_run
 
@@ -436,20 +479,65 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
         else:
             response.raise_for_status()
 
-    def get_datapoint_value(self, datapoint_id: str) -> Dict[Any, Any]:
-        """Returns the datapoint for the given id
+    def create_datapoint(self, datapoint: DataPoint):
+        """Creates a new datapoint attached to the experiment"""
+
+        if datapoint.experiment_id is None:
+            datapoint.experiment_id = self.experiment_info.experiment_id
+        if datapoint.campaign_id is None:
+            datapoint.campaign_id = self.experiment_info.campaign_id
+        url = f"{self.url}/data/"
+        if datapoint.type == "local_file":
+            with open(datapoint.path, "rb") as f:
+                response = requests.post(
+                    url,
+                    files={"file": (datapoint.path, f)},
+                    data={"datapoint": datapoint.model_dump_json()},
+                )
+        else:
+            response = requests.post(
+                url, data={"datapoint": datapoint.model_dump_json()}
+            )
+        if response.ok:
+            return response.json()
+        else:
+            response.raise_for_status()
+
+    def get_datapoint_info(self, datapoint_id: str) -> DataPoint:
+        """Returns the metadata for the datapoint for the given id
 
         Parameters
         ----------
 
-        None
+        datapoint_id : str
+            The id of the datapoint to get
 
         Returns
         -------
 
-        response: Dict
-           figuring it out"""
-        url = f"{self.url}/runs/data/" + datapoint_id
+        response: DataPoint
+           The metadata for the requested datapoint"""
+        url = f"{self.url}/data/" + datapoint_id + "/info"
+        response = requests.get(url)
+        if response.ok:
+            return DataPoint.model_validate(response.json())
+        response.raise_for_status()
+
+    def get_datapoint_value(self, datapoint_id: str) -> Dict[str, Any] | bytes:
+        """Returns the value of the datapoint for the given id
+
+        Parameters
+        ----------
+
+        datapoint_id : str
+            The id of the datapoint to get
+
+        Returns
+        -------
+
+        response: Dict[str, Any] | bytes
+           Either a json object (for Value Datapoints) or bytes object (for File Datapoints) containing the value of the requested datapoint"""
+        url = f"{self.url}/data/" + datapoint_id
         response = requests.get(url)
         if response.ok:
             try:
@@ -458,22 +546,20 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                 return response.content
         response.raise_for_status()
 
-    def save_datapoint_value(
-        self, datapoint_id: str, output_filepath: str
-    ) -> Dict[Any, Any]:
-        """Returns the datapoint for the given id
+    def save_datapoint_value(self, datapoint_id: str, output_filepath: str) -> None:
+        """Saves the datapoint for the given id to the specified file
 
         Parameters
         ----------
-
-        None
+        datapoint_id : str
+            The id of the datapoint to save
+        output_filepath : str
+            The path to save the datapoint to
 
         Returns
         -------
-
-        response: Dict
-           figuring it out"""
-        url = f"{self.url}/runs/data/" + datapoint_id
+        None"""
+        url = f"{self.url}/data/" + datapoint_id
         response = requests.get(url)
         if response.ok:
             try:
@@ -486,6 +572,15 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
                     f.write(response.content)
         response.raise_for_status()
 
+    def get_experiment_datapoints(self) -> Dict[str, DataPoint]:
+        """
+        returns a dictionary of the datapoints for this experiment.
+        """
+        url = f"{self.url}/{self.experiment_id}/data"
+        response = requests.get(url)
+        if response.ok:
+            return response.json()
+
     def log_experiment_end(self) -> Event:
         """Logs the end of the experiment in the experiment log
 
@@ -496,8 +591,9 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
         Returns
         -------
-        response: Dict
-           The JSON portion of the response from the server"""
+        Event
+            The event that was logged
+        """
         return self._log_event(ExperimentEndEvent(experiment=self.experiment_info))
 
     def log_decision(self, decision_name: str, decision_value: bool) -> Event:
@@ -513,8 +609,9 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
         Returns
         -------
-        response: Dict
-           The JSON portion of the response from the server"""
+        Event
+            The event that was logged
+        """
         decision = DecisionEvent(
             decision_name=decision_name, decision_value=decision_value
         )
@@ -530,8 +627,9 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
         Returns
         -------
-        response: Dict
-           The JSON portion of the response from the server"""
+        Event
+            The event that was logged
+        """
         comment = CommentEvent(comment=comment)
         return self._log_event(comment)
 
@@ -557,8 +655,9 @@ experiment_design: {self.experiment_design.model_dump_json(indent=2)}
 
         Returns
         -------
-        response: Dict
-           The JSON portion of the response from the server"""
+        Event
+            The event that was logged
+        """
         local_compute = LocalComputeEvent(
             function_name=function_name, args=args, kwargs=kwargs, result=result
         )

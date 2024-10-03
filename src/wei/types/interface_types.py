@@ -24,6 +24,7 @@ class InterfaceMap:
         "wei_ros_node": ROS2Interface,
         "wei_tcp_node": TcpInterface,
         "wei_rest_node": RestInterface,
+        "wei_rest_interface": RestInterface,
         "wei_zmq_node": ZmqInterface,
         "simulate_callback": SimulateInterface,
     }
