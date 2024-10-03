@@ -16,6 +16,20 @@ from .module_types import (
     ModuleActionFile,
     ModuleStatus,
 )
+from .resource_types import (
+    Asset,
+    AssetBase,
+    Collection,
+    CollectionBase,
+    Plate,
+    Pool,
+    PoolBase,
+    Queue,
+    QueueBase,
+    ResourceContainerBase,
+    Stack,
+    StackBase,
+)
 from .step_types import Step, StepFileResponse, StepResponse, StepStatus
 from .workcell_types import Location, Workcell, WorkcellConfig
 from .workflow_types import Workflow, WorkflowRun, WorkflowStatus
@@ -48,4 +62,16 @@ __all__ = [
     "ExperimentDesign",
     "Event",
     "Interface",
+    "PoolBase",
+    "Pool",
+    "StackBase",
+    "Stack",
+    "QueueBase",
+    "Queue",
+    "CollectionBase",
+    "Collection",
+    "Plate",
+    "AssetBase",
+    "Asset",
+    "ResourceContainerBase",
 ]

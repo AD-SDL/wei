@@ -11,7 +11,7 @@ import traceback
 import warnings
 from contextlib import asynccontextmanager
 from threading import Lock, Thread
-from typing import Any, List, Optional, Set, Union
+from typing import List, Optional, Set, Union
 
 from fastapi import (
     APIRouter,
@@ -67,8 +67,6 @@ class RESTModule:
     """The interface used by the module."""
     actions: List[ModuleAction] = []
     """A list of actions that the module can perform."""
-    resource_pools: List[Any] = []
-    """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
     wei_version: Optional[str] = importlib.metadata.version("ad_sdl.wei")
@@ -88,7 +86,6 @@ class RESTModule:
         model: Optional[str] = None,
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
-        resource_pools: Optional[List[Any]] = None,
         admin_commands: Optional[Set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
@@ -112,7 +109,6 @@ class RESTModule:
         self.model = model
         self.interface = interface
         self.actions = actions if actions else []
-        self.resource_pools = resource_pools if resource_pools else []
         self.admin_commands = admin_commands if admin_commands else set()
         self.admin_commands.add(AdminCommands.SHUTDOWN)
 
@@ -215,6 +211,7 @@ class RESTModule:
             # * If an exception occurs during startup, handle it and put the module in an error state
             state.exception_handler(state, exception, "Error during startup")
             state.status[ModuleStatus.ERROR] = True
+            state.status[ModuleStatus.INIT] = False
             state.status[ModuleStatus.READY] = (
                 False  # * Make extra sure the status is set to ERROR
             )
@@ -227,6 +224,7 @@ class RESTModule:
                     "Startup completed successfully. Module is now ready to accept actions."
                 )
             elif state.status[ModuleStatus.ERROR]:
+                state.status[ModuleStatus.INIT] = False
                 print("Startup completed with errors.")
 
     @asynccontextmanager
@@ -271,8 +269,6 @@ class RESTModule:
             return function
 
         return decorator
-
-    # * Module Action Handling Functions
 
     def action(self, **kwargs):
         """Decorator to add an action to the module.
@@ -337,6 +333,8 @@ class RESTModule:
                             default = (
                                 None
                                 if parameter_info.default == inspect.Parameter.empty
+                                else "None"
+                                if parameter_info.default is None
                                 else parameter_info.default
                             )
 
@@ -640,11 +638,6 @@ class RESTModule:
                 return ModuleState(status=state.status, error=state.error)
             return self._state_handler(state=state)
 
-        @self.router.get("/resources")
-        async def resources(request: Request):
-            # state = request.app.state
-            return {"resources": {}}
-
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
             state = request.app.state
@@ -714,6 +707,7 @@ class RESTModule:
                 getattr(args, arg_name) is not None
             ):  # * Don't override already set attributes with None's
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
+
         self._configure_routes()
 
         # * Enforce a name

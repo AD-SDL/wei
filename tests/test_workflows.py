@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+
 from wei.types import WorkflowStatus
 from wei.types.exceptions import WorkflowFailedException
 
@@ -19,7 +20,7 @@ class TestWEI_Workflows(TestWEI_Base):
 
         run_info = self.experiment.start_run(
             workflow=workflow_path,
-            payload={"wait_time": 5},
+            payload={"wait_time": 1},
             blocking=True,
             simulate=False,
         )
@@ -47,7 +48,7 @@ class TestWEI_Workflows(TestWEI_Base):
         with pytest.raises(WorkflowFailedException):
             run_info = self.experiment.start_run(
                 workflow=workflow_path,
-                payload={"wait_time": 5, "fail": True},
+                payload={"wait_time": 1, "fail": True},
                 blocking=True,
                 simulate=False,
                 raise_on_failed=True,
@@ -55,10 +56,15 @@ class TestWEI_Workflows(TestWEI_Base):
 
         run_info = self.experiment.start_run(
             workflow=workflow_path,
-            payload={"wait_time": 5, "fail": True},
+            payload={"wait_time": 1, "fail": True},
             blocking=True,
             simulate=False,
             raise_on_failed=False,
         )
 
         assert run_info.status == WorkflowStatus.FAILED
+
+
+if __name__ == "__main__":
+    test = TestWEI_Workflows()
+    test.test_workflow_run()

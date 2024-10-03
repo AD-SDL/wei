@@ -11,16 +11,6 @@ from wei.config import Config
 from wei.core.events import EventHandler
 from wei.core.storage import initialize_storage
 from wei.engine import Engine
-from wei.routers import (
-    admin_routes,
-    data_routes,
-    event_routes,
-    experiment_routes,
-    location_routes,
-    module_routes,
-    workcell_routes,
-    workflow_routes,
-)
 from wei.utils import parse_args
 
 
@@ -37,6 +27,17 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     -------
     None
     """
+    from wei.routers import (
+        admin_routes,
+        data_routes,
+        event_routes,
+        experiment_routes,
+        location_routes,
+        module_routes,
+        workcell_routes,
+        workflow_routes,
+    )
+
     app.include_router(admin_routes.router, prefix="/admin")
     app.include_router(data_routes.router, prefix="/data")
     app.include_router(workflow_routes.router, prefix="/runs")
@@ -46,6 +47,7 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     app.include_router(module_routes.router, prefix="/modules")
     app.include_router(workcell_routes.router, prefix="/workcells")
     app.include_router(workcell_routes.router, prefix="/wc")
+    # app.include_router(resource_routes.router, prefix="/resources")
     app.mount("/", StaticFiles(directory="wei/src/ui/dist", html=True))
     EventHandler.initialize_diaspora()
 
@@ -88,7 +90,7 @@ if __name__ == "__main__":
     initialize_storage()
     uvicorn.run(
         "wei.server:app",
-        host=Config.server_host,
+        host="0.0.0.0",
         port=Config.server_port,
         reload=False,
     )
