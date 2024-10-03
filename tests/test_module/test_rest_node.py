@@ -10,9 +10,7 @@ from fastapi.datastructures import State
 
 from wei.modules.rest_module import RESTModule
 from wei.resources_interface import ResourcesInterface
-from wei.types import (
-    StepResponse,
-)
+from wei.types import StepFileResponse, StepResponse, StepStatus
 from wei.types.module_types import (
     LocalFileModuleActionResult,
     Location,
@@ -75,15 +73,15 @@ def test_node_startup(state: State):
             capacity=10,
             owner_name=state.module_name,
         )
-        state.resource_interface.add_resource(stack1)
-
+        stack1 = state.resource_interface.add_resource(stack1)
+        print(state.resource_interface.get_all_resources(Stack))
         stack2 = Stack(
             name="Stack2",
             description="Stack for transfer",
             capacity=10,
             owner_name=state.module_name,
         )
-        state.resource_interface.add_resource(stack2)
+        stack2 = state.resource_interface.add_resource(stack2)
 
         stack3 = Stack(
             name="Stack3",
@@ -91,7 +89,7 @@ def test_node_startup(state: State):
             capacity=4,
             owner_name=state.module_name,
         )
-        state.resource_interface.add_resource(stack3)
+        stack3 = state.resource_interface.add_resource(stack3)
 
         trash = Stack(
             name="Trash",
@@ -99,14 +97,12 @@ def test_node_startup(state: State):
             capacity=None,
             owner_name=state.module_name,
         )
-        state.resource_interface.add_resource(trash)
+        trash = state.resource_interface.add_resource(trash)
 
-        # Add two Plate resources per stack (except Trash)
         asset = Asset(name="Initial Asset")
 
         # Push assets to stacks
         state.resource_interface.push_to_stack(stack1, asset)
-        # state.resource_interface.push_to_stack(stack2, asset)
 
         plate0 = Plate(
             name="Plate0",
@@ -114,7 +110,7 @@ def test_node_startup(state: State):
             well_capacity=100.0,
             owner_name=state.module_name,
         )
-        state.resource_interface.add_resource(plate0)
+        plate0 = state.resource_interface.add_resource(plate0)
         state.resource_interface.update_plate_contents(
             plate0, {"A1": 50.0, "B1": 25.0, "C1": 75.0, "D1": 45.0}
         )
@@ -124,7 +120,7 @@ def test_node_startup(state: State):
             capacity=5,
             owner_name=state.module_name,
         )
-        state.resource_interface.add_resource(collection)
+        collection = state.resource_interface.add_resource(collection)
 
     except Exception as err:
         print(err)
@@ -218,29 +214,23 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
 
         # Create a new location for the measurement
         location = f"location_{collection.quantity + 1}"
-
         # Create a new Asset instance
         instance = Asset(name=f"Measurement at {location}")
-
         # Insert the new asset into the collection
         state.resource_interface.insert_into_collection(collection, location, instance)
 
         print(f"Updated quantity: {collection.quantity}")
 
-        # Create and write test files
         with open("test.txt", "w") as f:
             f.write("test")
         with open("test2.txt", "w") as f:
             f.write("test")
-
-        all_collections = state.resource_interface.get_all_resources(Collection)
-        print("All Collections in the database:", all_collections)
-        # Return the success response with the generated files
-        # return StepResponse.step_succeeded(
-        #     files={"test_file": "test.txt", "test2_file": "test2.txt"},
-        #     data={"test": {"test": "test"}},
-        # )
-        return StepResponse.step_succeeded()
+        time.sleep(5)
+        return StepFileResponse(
+            StepStatus.SUCCEEDED,
+            files={"test_file": "test.txt", "test2_file": "test2.txt"},
+            data={"test": {"test": "test"}},
+        )
 
     else:
         return StepResponse.step_failed("Collection resource not found")
