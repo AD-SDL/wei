@@ -1,14 +1,12 @@
 """Tests WEI workflow functionality"""
 
-import json
 from pathlib import Path
 
 import pytest
+from test_base import TestWEI_Base
 
 from wei.types import WorkflowStatus
 from wei.types.exceptions import WorkflowFailedException
-
-from .test_base import TestWEI_Base
 
 
 class TestWEI_Workflows(TestWEI_Base):
@@ -18,14 +16,13 @@ class TestWEI_Workflows(TestWEI_Base):
         """Test Running a simple workflow"""
 
         workflow_path = Path(__file__).parent / "workflows" / "test_workflow.yaml"
-        print(workflow_path)
+
         run_info = self.experiment.start_run(
             workflow_file=workflow_path,
-            # payload={"wait_time": 5},
-            # blocking=True,
-            # simulate=False,
+            payload={"wait_time": 5},
+            blocking=True,
+            simulate=False,
         )
-        print(json.dumps(run_info, indent=2))
 
         assert run_info.status == WorkflowStatus.COMPLETED
         assert self.experiment.get_datapoint_value(
