@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, Type
 
 from sqlalchemy import text
 from sqlalchemy.exc import MultipleResultsFound
-from sqlalchemy.orm import selectinload
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from wei.types.resource_types import (
@@ -208,14 +207,6 @@ class ResourcesInterface:
             # Handle all other resource types normally
             else:
                 statement = select(resource_type)
-                if resource_type is Asset:
-                    # If the resource type is Asset, load related resources
-                    statement = statement.options(
-                        selectinload(Asset.stack),
-                        selectinload(Asset.queue),
-                        selectinload(Asset.pool),
-                    )
-
                 # Fetch and return resources of the requested type
                 resources = session.exec(statement).all()
                 return resources
@@ -584,6 +575,7 @@ class ResourcesInterface:
 
 if __name__ == "__main__":
     resource_interface = ResourcesInterface()
+    print(resource_interface.get_all_resources(Asset))
     print(resource_interface.get_resource("Test Stack", "test2"))
     resource_interface.clear_all_table_records()
     pool = Pool(
