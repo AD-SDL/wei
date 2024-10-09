@@ -115,12 +115,22 @@
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
-          <h3>State</h3>
-          <vue-json-pretty :data="wc_state.modules[modal_title].state"></vue-json-pretty>
-          <h3>About</h3>
-          <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
-          <h3>Resources</h3>
-          <p>Coming Soon</p>
+          <v-container fluid>
+            <v-row dense wrap justify-content="space-evenly">
+              <v-col cols="12" md="6" lg="4" xl="3">
+                <h3>State</h3>
+                <vue-json-pretty :data="wc_state.modules[modal_title].state"></vue-json-pretty>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" xl="3">
+                <h3>About</h3>
+                <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" xl="3">
+                <h3>Resources</h3>
+                  <p>Coming Soon</p>
+              </v-col>
+            </v-row>
+          </v-container>
         </div>
       </v-card-text>
       <v-card-actions>

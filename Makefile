@@ -3,7 +3,7 @@
 ################################################################################
 .DEFAULT_GOAL := init
 
-.PHONY: init checks test clean down up restart
+.PHONY: init checks test clean down up restart rebuild
 
 init: # Do the initial configuration of the project
 	@test -e .env || cp example.env .env
@@ -33,6 +33,8 @@ up:
 	@docker compose up -d --remove-orphans
 
 restart: build up
+
+rebuild: restart
 
 clean:
 	@rm .env

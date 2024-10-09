@@ -7,9 +7,7 @@
         <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'wf_status_' + modal_text.status">{{ modal_text.status }}</v-sheet>
       </v-card-title>
       <v-card-text>
-        <h3>Details</h3>
-        <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
-        <Workflow :steps="modal_text.steps" />
+        <Workflow :steps="modal_text.steps" :wf="modal_text" />
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
@@ -21,7 +19,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import VueJsonPretty from 'vue-json-pretty';
 const props = defineProps(['modal_title', 'modal_text'])
 const flowdef = ref(false)
 </script>

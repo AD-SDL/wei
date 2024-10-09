@@ -10,7 +10,7 @@
               <v-card class="pa-1 module_indicator" @click="set_modal(String(module_name), value.about)"
                 :class="'module_status_' + get_status(value.state.status)">
                 <v-card-text>
-                  <h4>{{ module_name }}</h4>
+                  <h3>{{ module_name }}</h3>
 
                   <p class="text-caption">
                     status:
