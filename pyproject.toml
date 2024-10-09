@@ -30,6 +30,7 @@ dependencies = [
     "pause>=0.3",
     "pydantic-extra-types>=2.9.0",
     "python-ulid[pydantic]>=2.7.0",
+    "rich>=13.9.2",
 ]
 
 [project.optional-dependencies]

@@ -2,12 +2,13 @@
 
 import json
 from pathlib import Path
-from typing import Optional, Self, Type, TypeVar, Union
+from typing import Optional, Type, TypeVar, Union
 
 import yaml
 from pydantic import AliasChoices, Field
 from pydantic import BaseModel as _BaseModel
 from pydantic.functional_validators import model_validator
+from typing_extensions import Self
 from ulid import ULID
 
 _T = TypeVar("_T")
