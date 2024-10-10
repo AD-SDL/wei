@@ -72,7 +72,7 @@ def sleep_with_signals(seconds: int, state: State):
     for i in range(seconds):
         print(i)
         time.sleep(1)
-        while state.status == ModuleStatus.PAUSED:
+        while state.status[ModuleStatus.PAUSED]:
             time.sleep(1)
         if state.status in [
             ModuleStatus.CANCELLED,

@@ -18,7 +18,6 @@ click==8.1.7
 colorama==0.4.6
 cryptography==43.0.1
 devtools==0.12.2
-diaspora-event-sdk==0.3.6
 diaspora-event-sdk[kafka-python]==0.3.6
 distlib==0.3.8
 docutils==0.20.1
@@ -36,7 +35,9 @@ importlib-metadata==8.5.0; python_full_version < "3.10.2"
 iniconfig==2.0.0
 jinja2==3.1.4
 kafka-python==2.0.2
+markdown-it-py==3.0.0
 markupsafe==2.1.5
+mdurl==0.1.2
 mmh3==5.0.1
 mypy==1.11.2
 mypy-extensions==1.0.0
@@ -53,18 +54,17 @@ pydantic-core==2.23.4
 pydantic-extra-types==2.9.0
 pydantic-settings==2.5.2
 pygments==2.18.0
-pyjwt==2.9.0
 pyjwt[crypto]==2.9.0
 pyproject-hooks==1.1.0
 pytest==8.3.3
 python-dotenv==1.0.1
 python-multipart==0.0.10
-python-ulid==2.7.0
 python-ulid[pydantic]==2.7.0
 pyyaml==6.0.2
 pyzmq==26.2.0
 redis==4.6.0
 requests==2.32.3
+rich==13.9.2
 ruff==0.6.7
 secure-smtplib==0.1.1
 six==1.16.0
@@ -96,7 +96,6 @@ types-ujson==5.10.0.20240515
 types-urllib3==1.26.25.14
 typing-extensions==4.12.2
 urllib3==1.26.20
-uvicorn==0.30.6
 uvicorn[standard]==0.30.6
 uvloop==0.20.0; (sys_platform != "cygwin" and sys_platform != "win32") and platform_python_implementation != "PyPy"
 virtualenv==20.26.5
