@@ -424,15 +424,11 @@ class ExperimentClient:
                 else:
                     print(".", end="", flush=True)
                 time.sleep(1)
-                if wf_run.status == WorkflowStatus.COMPLETED:
-                    print()
-                    break
-                elif wf_run.status in [
+                if wf_run.status in [
+                    WorkflowStatus.COMPLETED,
                     WorkflowStatus.FAILED,
                     WorkflowStatus.CANCELLED,
                 ]:
-                    print()
-                    print(json.dumps(wf_run.model_dump(mode="json"), indent=2))
                     break
                 prior_status = status
                 prior_index = step_index
@@ -444,6 +440,7 @@ class ExperimentClient:
             raise WorkflowFailedException(
                 f"Workflow {wf_run.name} ({wf_run.run_id}) was cancelled on step {wf_run.step_index}: '{wf_run.steps[wf_run.step_index].name}."
             )
+        print()
         print(wf_run)
         return wf_run
 
