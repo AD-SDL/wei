@@ -44,11 +44,11 @@ flowdef:
     data_labels:
       test_file: test_label
 
-  - name: Wait for 10 seconds
+  - name: Wait for payload.delay seconds
     module: utilities
     action: delay
     args:
-      seconds: 10
+      seconds: payload.delay
 
   - name: Discard sample
     module: transfer
