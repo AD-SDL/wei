@@ -7,12 +7,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from wei import __version__
 from wei.config import Config
 from wei.core.events import EventHandler
 from wei.core.storage import initialize_storage
 from wei.engine import Engine
 from wei.routers import (
     admin_routes,
+    campaign_routes,
+    data_routes,
     event_routes,
     experiment_routes,
     location_routes,
@@ -37,8 +40,10 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     None
     """
     app.include_router(admin_routes.router, prefix="/admin")
+    app.include_router(data_routes.router, prefix="/data")
     app.include_router(workflow_routes.router, prefix="/runs")
     app.include_router(experiment_routes.router, prefix="/experiments")
+    app.include_router(campaign_routes.router, prefix="/campaigns")
     app.include_router(event_routes.router, prefix="/events")
     app.include_router(location_routes.router, prefix="/locations")
     app.include_router(module_routes.router, prefix="/modules")
@@ -69,6 +74,14 @@ def is_server_up() -> Dict[str, bool]:
     Check if the server is up
     """
     return {"up": True}
+
+
+@app.get("/version")
+def get_version() -> Dict[str, str]:
+    """
+    Get the version of WEI
+    """
+    return {"version": __version__}
 
 
 app.add_middleware(

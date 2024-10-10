@@ -10,7 +10,7 @@ from zipfile import ZipFile
 import yaml
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from pydantic import AliasChoices, Field, ValidationInfo, field_validator, validator
+from pydantic import AliasChoices, Field, ValidationInfo, field_validator
 from typing_extensions import Literal
 
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
@@ -20,9 +20,11 @@ class StepStatus(str, Enum):
     """Status for a step of a workflow"""
 
     IDLE = "idle"
+    NOT_READY = "not_ready"
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class StepResponse(BaseModel):
@@ -68,9 +70,14 @@ class StepResponse(BaseModel):
         return cls(status=StepStatus.SUCCEEDED, files=files, data=data)
 
     @classmethod
-    def step_failed(cls, error: str) -> "StepResponse":
+    def step_failed(cls, error: str = "") -> "StepResponse":
         """Returns a StepResponse for a failed step"""
         return cls(status=StepStatus.FAILED, error=error)
+
+    @classmethod
+    def step_not_ready(cls, error: str = "") -> "StepResponse":
+        """Returns a StepResponse for a failed step"""
+        return cls(status=StepStatus.NOT_READY, error=error)
 
 
 class StepSucceeded(StepResponse):
@@ -124,6 +131,8 @@ class StepFileResponse(FileResponse):
 class Step(BaseModel, arbitrary_types_allowed=True):
     """Container for a single step"""
 
+    """Step Definition"""
+
     name: str
     """Name of step"""
     module: str
@@ -144,12 +153,15 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """Other steps required to be done before this can start"""
     priority: Optional[int] = None
     """For scheduling"""
-    id: str = Field(default_factory=ulid_factory)
-    """ID of step"""
     comment: Optional[str] = None
     """Notes about step"""
     data_labels: Optional[Dict[str, str]] = None
     """Dictionary of user provided data labels"""
+
+    """Runtime information"""
+
+    id: str = Field(default_factory=ulid_factory)
+    """ID of step"""
     start_time: Optional[datetime] = None
     """Time the step started running"""
     end_time: Optional[datetime] = None
@@ -160,8 +172,9 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """Result of the step after being run"""
 
     # Load any yaml arguments
-    @validator("args")
-    def validate_args_dict(cls, v: Any, **kwargs: Any) -> Any:
+    @field_validator("args")
+    @classmethod
+    def validate_args_dict(cls, v: Any) -> Any:
         """asserts that args dict is assembled correctly"""
         assert isinstance(v, dict), "Args is not a dictionary"
         for key, arg_data in v.items():

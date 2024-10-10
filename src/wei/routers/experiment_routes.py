@@ -3,6 +3,7 @@ Router for the "experiments"/"exp" endpoints
 """
 
 import json
+from datetime import datetime
 from typing import Dict
 
 from fastapi import APIRouter
@@ -11,8 +12,9 @@ from fastapi.responses import JSONResponse
 from wei.core.experiment import get_experiment, register_new_experiment
 from wei.core.state_manager import state_manager
 from wei.core.storage import get_experiment_log_file
+from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import Event
-from wei.types.experiment_types import Campaign, Experiment, ExperimentDesign
+from wei.types.experiment_types import Experiment, ExperimentDesign
 
 router = APIRouter()
 
@@ -25,6 +27,27 @@ async def event_return(experiment_id: str) -> Dict[str, Event]:
         if event.experiment_id == experiment_id:
             events[event_id] = event
     return events
+
+
+@router.post("/{experiment_id}/check_in")
+async def check_in(experiment_id: str) -> None:
+    """Returns a simple pong response"""
+    experiment = state_manager.get_experiment(experiment_id)
+    experiment.check_in_timestamp = datetime.now()
+    with state_manager.wc_state_lock():
+        state_manager.set_experiment(experiment)
+
+    return
+
+
+@router.get("/{experiment_id}/data")
+async def data_return(experiment_id: str) -> Dict[str, DataPoint]:
+    """Returns all of the data points related to an experiment"""
+    datapoints = {}
+    for datapoint_id, datapoint in state_manager.get_all_datapoints().items():
+        if datapoint.experiment_id == experiment_id:
+            datapoints[datapoint_id] = datapoint
+    return datapoints
 
 
 @router.get("/{experiment_id}/log")
@@ -70,27 +93,3 @@ def register_experiment(
 ) -> Experiment:
     """Creates a new experiment, optionally associating it with a campaign"""
     return register_new_experiment(experiment_design)
-
-
-@router.post("/campaign")
-def register_campaign(campaign_name: str) -> Campaign:
-    """Creates a new campaign
-
-    Parameters
-    ----------
-    campaign_name: str
-        The human readable name of the campaign
-    Returns
-    -------
-    response: Campaign
-    """
-
-    campaign = Campaign(campaign_name=campaign_name)
-    state_manager.set_campaign(campaign)
-    return campaign
-
-
-@router.get("/campaign/{campaign_id}")
-def get_campaign(campaign_id: str) -> Campaign:
-    """Returns the details of a campaign"""
-    return state_manager.get_campaign(campaign_id)

@@ -6,20 +6,9 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field, field_validator
 
-from wei.types.base_types import BaseModel, ulid_factory
+from wei.types.base_types import BaseModel, Metadata, ulid_factory
 from wei.types.module_types import SimpleModule
 from wei.types.step_types import Step
-
-
-class Metadata(BaseModel, extra="allow"):
-    """Metadata container"""
-
-    author: Optional[str] = None
-    """Who authored this workflow"""
-    info: Optional[str] = None
-    """Long description"""
-    version: float = 0.1
-    """Version of interface used"""
 
 
 class WorkflowStatus(str, Enum):
@@ -43,6 +32,17 @@ class WorkflowStatus(str, Enum):
     """Workflow run status is unknown"""
     CANCELLED = "cancelled"
     """Workflow run has been cancelled"""
+
+    @property
+    def is_active(self) -> bool:
+        """Whether or not the workflow run is active"""
+        return self in [
+            WorkflowStatus.NEW,
+            WorkflowStatus.QUEUED,
+            WorkflowStatus.RUNNING,
+            WorkflowStatus.IN_PROGRESS,
+            WorkflowStatus.PAUSED,
+        ]
 
 
 class Workflow(BaseModel):
@@ -95,9 +95,7 @@ class WorkflowRun(Workflow):
     """current status of the workflow"""
     steps: List[Step] = []
     """WEI Processed Steps of the flow"""
-    hist: Dict[str, Any] = Field(default={})
-    """history of the workflow"""
-    experiment_id: str = ""
+    experiment_id: str
     """ID of the experiment this workflow is a part of"""
     step_index: int = 0
     """Index of the current step"""

@@ -28,7 +28,9 @@ wei.types
    :recursive:
 
    wei.types.base_types
+   wei.types.datapoint_types
    wei.types.event_types
+   wei.types.exceptions
    wei.types.experiment_types
    wei.types.interface_types
    wei.types.module_types

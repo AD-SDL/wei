@@ -10,7 +10,7 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
-from threading import Thread
+from threading import Lock, Thread
 from typing import Any, List, Optional, Set, Union
 
 from fastapi import (
@@ -34,7 +34,12 @@ from wei.types.module_types import (
     ModuleActionFile,
     ModuleState,
 )
-from wei.types.step_types import ActionRequest, StepFileResponse, StepResponse
+from wei.types.step_types import (
+    ActionRequest,
+    StepFileResponse,
+    StepResponse,
+    StepStatus,
+)
 from wei.utils import pretty_type_repr
 
 
@@ -68,18 +73,13 @@ class RESTModule:
     """A list of admin commands supported by the module."""
     wei_version: Optional[str] = importlib.metadata.version("ad_sdl.wei")
     """The version of WEI that this module is compatible with."""
+    pre_locked_status = ModuleStatus.INIT
+    """The status of the module before it was locked"""
+    pre_paused_status = ModuleStatus.INIT
+    """The status of the module before it was paused"""
 
-    # * Admin command function placeholders
-    _safety_stop = None
-    """Handles custom safety-stop functionality"""
-    _pause = None
-    """Handles custom pause functionality"""
-    _reset = None
-    """Handles custom reset functionality"""
-    _resume = None
-    """Handles custom resume functionality"""
-    _cancel = None
-    """Handles custom cancel functionality"""
+    _actions_running = 0
+    """Keep track of how many actions are currently running"""
 
     def __init__(
         self,
@@ -100,6 +100,7 @@ class RESTModule:
         self.app = FastAPI(lifespan=RESTModule._lifespan, description=description)
         self.app.state = State(state={})
         self.state = self.app.state  # * Mirror the state object for easier access
+        self.state.action_lock = Lock()
         self.router = APIRouter()
 
         # * Set attributes from constructor arguments
@@ -199,38 +200,43 @@ class RESTModule:
         if error_message:
             print(f"Error: {error_message}")
         traceback.print_exc()
-        state.status = ModuleStatus.ERROR
+        state.status[ModuleStatus.ERROR] = True
+        state.status[ModuleStatus.READY] = False
         state.error = str(exception)
+
+    @staticmethod
+    def startup_thread(state: State):
+        """Runs the startup function for the module in a non-blocking thread, with error handling"""
+        try:
+            # * Call the module's startup function
+            state.status = ModuleState().status
+            state._startup_handler(state=state)
+        except Exception as exception:
+            # * If an exception occurs during startup, handle it and put the module in an error state
+            state.exception_handler(state, exception, "Error during startup")
+            state.status[ModuleStatus.ERROR] = True
+            state.status[ModuleStatus.READY] = (
+                False  # * Make extra sure the status is set to ERROR
+            )
+        else:
+            # * If everything goes well, set the module status to IDLE
+            if state.status[ModuleStatus.INIT]:
+                state.status[ModuleStatus.INIT] = False
+                state.status[ModuleStatus.READY] = True
+                print(
+                    "Startup completed successfully. Module is now ready to accept actions."
+                )
+            elif state.status[ModuleStatus.ERROR]:
+                print("Startup completed with errors.")
 
     @asynccontextmanager
     @staticmethod
     async def _lifespan(app: FastAPI):
         """Initializes the module, doing any instrument startup and starting the REST app."""
 
-        def startup_thread(state: State):
-            """Runs the startup function for the module in a non-blocking thread, with error handling"""
-            try:
-                # * Call the module's startup function
-                state._startup_handler(state=state)
-            except Exception as exception:
-                # * If an exception occurs during startup, handle it and put the module in an error state
-                state.exception_handler(state, exception, "Error during startup")
-                state.status = (
-                    ModuleStatus.ERROR
-                )  # * Make extra sure the status is set to ERROR
-            else:
-                # * If everything goes well, set the module status to IDLE
-                if state.status == ModuleStatus.INIT:
-                    state.status = ModuleStatus.IDLE
-                    print(
-                        "Startup completed successfully. Module is now ready to accept actions."
-                    )
-                elif state.status == ModuleStatus.ERROR:
-                    print("Startup completed with errors.")
-
         # * Run startup on a separate thread so it doesn't block the rest server from starting
         # * (module won't accept actions until startup is complete)
-        Thread(target=startup_thread, args=[app.state]).start()
+        Thread(target=RESTModule.startup_thread, args=[app.state]).start()
 
         yield
 
@@ -375,6 +381,16 @@ class RESTModule:
                             error="Action is defined, but not implemented. Please define a `function` for the action, or use the `@<class RestModule>.action` decorator."
                         )
 
+                    # * Check if the module is ready to accept actions
+                    try:
+                        state.get_action_lock(
+                            state=state, action=action, blocking=module_action.blocking
+                        )
+                    except Exception:
+                        error_message = f"Module is not ready to accept actions. Module Status: {state.status}"
+                        print(error_message)
+                        return StepResponse.step_not_ready(error=error_message)
+
                     # * Prepare arguments for the action function.
                     # * If the action function has a 'state' or 'action' parameter
                     # * we'll pass in our state and action objects.
@@ -422,28 +438,51 @@ class RESTModule:
             return StepResponse.step_failed(error=f"Action '{action.name}' not found")
 
     @staticmethod
-    def get_action_lock(state: State, action: ActionRequest):
+    def get_action_lock(state: State, action: ActionRequest, blocking: bool = True):
         """This function is used to ensure the module only performs actions when it is safe to do so.
         In most cases, this means ensuring the instrument is not currently acting
         and then setting the module's status to BUSY to prevent other actions from being taken for the duration.
         This can be overridden by the developer to provide more specific behavior.
         """
-        if state.status == ModuleStatus.IDLE:
-            state.status = ModuleStatus.BUSY
+        if blocking:
+            state.action_lock.acquire()
+        if state.status[ModuleStatus.READY] and not (
+            state.status[ModuleStatus.PAUSED] or state.status[ModuleStatus.LOCKED]
+        ):
+            if blocking:
+                state.status[ModuleStatus.READY] = False
+                state.status[ModuleStatus.RUNNING] = True
+            else:
+                state.status[ModuleStatus.RUNNING] = True
+            state._actions_running += 1
         else:
+            state.action_lock.release()
             raise Exception("Module is not ready to accept actions")
+        if blocking:
+            state.action_lock.release()
 
     @staticmethod
     def release_action_lock(state: State, action: ActionRequest):
         """Releases the lock on the module. This should be called after an action is completed.
         This can be overridden by the developer to provide more specific behavior.
         """
-        if state.status == ModuleStatus.BUSY:
-            state.status = ModuleStatus.IDLE
-        else:
-            print("Tried to release action lock, but module is not BUSY.")
+        with state.action_lock:
+            if state._actions_running >= 1:
+                state._actions_running -= 1
+                if state._actions_running == 0:
+                    state.status[ModuleStatus.RUNNING] = False
+        if not state.status[ModuleStatus.READY]:
+            state.status[ModuleStatus.READY] = True
 
     # * Admin Command Handling Functions
+
+    @staticmethod
+    def _safety_stop(state: State):
+        """Handles custom safety-stop functionality"""
+        state.status[ModuleStatus.CANCELLED] = True
+        state.status[ModuleStatus.LOCKED] = True
+        state.status[ModuleStatus.PAUSED] = True
+        return {"message": "Module safety-stopped"}
 
     def safety_stop(self):
         """Decorator to add safety_stop functionality to the module"""
@@ -465,6 +504,13 @@ class RESTModule:
 
         return decorator
 
+    @staticmethod
+    def _pause(state: State):
+        """Handles pausing the module. This should be overridden by the developer to provide custom behavior."""
+        state.pre_paused_status = state.status
+        state.status[ModuleStatus.PAUSED] = True
+        return {"message": "Module paused"}
+
     def resume(self):
         """Decorator to add resume functionality to the module"""
 
@@ -475,15 +521,14 @@ class RESTModule:
 
         return decorator
 
-    def cancel(self):
-        """Decorator to add cancellation functionality to the module"""
-
-        def decorator(function):
-            self.admin_commands.add(AdminCommands.CANCEL)
-            self._cancel = function
-            return function
-
-        return decorator
+    @staticmethod
+    def _resume(state: State):
+        """Handles resuming the module from the paused state. This should be overridden by the developer to provide custom behavior."""
+        if state.status[ModuleStatus.PAUSED]:
+            state.status[ModuleStatus.PAUSED] = False
+            return {"message": "Module resumed"}
+        else:
+            return {"message": "Module not paused"}
 
     def reset(self):
         """Decorator to add reset functionality to the module"""
@@ -495,44 +540,76 @@ class RESTModule:
 
         return decorator
 
+    @staticmethod
+    def _reset(state: State):
+        """This function is called when the module needs to be reset.
+        It should be overridden by the developer to do any necessary teardown for the module."""
+        state.status[ModuleStatus.INIT] = True
+        state.status[ModuleStatus.READY] = False
+        try:
+            state._shutdown_handler(state)
+            Thread(target=RESTModule.startup_thread, args=[state]).start()
+            return {"message": "Module reset"}
+        except Exception as e:
+            state.exception_handler(
+                state, e, "Error while attempting to reset the module"
+            )
+            return {"error": "Error while attempting to reset the module"}
+
+    def cancel(self):
+        """Decorator to add cancellation functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.CANCEL)
+            self._cancel = function
+            return function
+
+        return decorator
+
+    @staticmethod
+    def _cancel(state: State):
+        """Handles cancelling any running actions on the module. This should be overridden by the developer to provide custom behavior."""
+        state.status[ModuleStatus.CANCELLED] = True
+        return {"message": "Module actions canceled"}
+
+    def lock(self):
+        """Decorator to add locking functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.LOCK)
+            self._lock = function
+            return function
+
+        return decorator
+
+    @staticmethod
+    def _lock(state: State):
+        """Handles locking the module. This should be overridden by the developer to provide custom behavior."""
+        state.pre_locked_status = state.status
+        state.status[ModuleStatus.LOCKED] = True
+        return {"message": "Module paused"}
+
+    def unlock(self):
+        """Decorator to add unlocking functionality to the module"""
+
+        def decorator(function):
+            self.admin_commands.add(AdminCommands.UNLOCK)
+            self._unlock = function
+            return function
+
+        return decorator
+
+    @staticmethod
+    def _unlock(state: State):
+        """Logic for unlocking the module. This should be overridden by the developer to provide custom behavior."""
+        if state.status[ModuleStatus.LOCKED]:
+            state.status[ModuleStatus.LOCKED] = False
+            return {"message": "Module unlocked"}
+        else:
+            return {"message": "Module not locked"}
+
     def _configure_routes(self):
         """Configure the API endpoints for the REST module"""
-
-        @self.router.post("/admin/safety_stop")
-        async def safety_stop(request: Request):
-            state = request.app.state
-            state.status = ModuleStatus.PAUSED
-            if self._safety_stop:
-                return self._safety_stop(state)
-            else:
-                return {"message": "Module safety-stopped"}
-
-        @self.router.post("/admin/pause")
-        async def pause(request: Request):
-            state = request.app.state
-            state.status = ModuleStatus.PAUSED
-            if self._pause:
-                return self._pause(state)
-            else:
-                return {"message": "Module paused"}
-
-        @self.router.post("/admin/resume")
-        async def resume(request: Request):
-            state = request.app.state
-            if self._resume:
-                return self._resume(state)
-            else:
-                state.status = ModuleStatus.IDLE
-                return {"message": "Module resumed"}
-
-        @self.router.post("/admin/cancel")
-        async def cancel(request: Request):
-            state = request.app.state
-            state.status = ModuleStatus.ERROR
-            if self._cancel:
-                return self._cancel(state)
-            else:
-                return {"message": "Module canceled"}
 
         @self.router.post("/admin/shutdown")
         async def shutdown(background_tasks: BackgroundTasks):
@@ -544,22 +621,18 @@ class RESTModule:
             background_tasks.add_task(shutdown_server)
             return {"message": "Shutting down server"}
 
-        @self.router.post("/admin/reset")
-        async def reset(request: Request):
+        @self.router.post("/admin/{admin_command}")
+        async def admin_command_handler(request: Request, admin_command: str):
             state = request.app.state
-            state.status = ModuleStatus.INIT
-            if self._reset:
-                self._reset(state)
-            else:
+            if admin_command in self.admin_commands:
                 try:
-                    state._shutdown_handler(state)
-                    self._startup_handler(state)
-                    return {"message": "Module reset"}
-                except Exception as e:
-                    state.exception_handler(
-                        state, e, "Error while attempting to reset the module"
-                    )
-                    return {"error": "Error while attempting to reset the module"}
+                    return getattr(self, f"_{admin_command.lower()}")(state)
+                except AttributeError:
+                    return {
+                        "message": f"Admin command '{admin_command}' not implemented"
+                    }
+            else:
+                return status.HTTP_404_NOT_FOUND
 
         @self.router.get("/state")
         async def state(request: Request) -> ModuleState:
@@ -603,19 +676,15 @@ class RESTModule:
             )
             state = request.app.state
 
-            # * Check if the module is ready to accept actions
-            try:
-                state.get_action_lock(state=state, action=action_request)
-            except Exception:
-                error_message = f"Module is not ready to accept actions. Module Status: {state.status}"
-                print(error_message)
-                response.status_code = status.HTTP_409_CONFLICT
-                return StepResponse.step_failed(error=error_message)
-
             # * Try to run the action_handler for this module
             try:
                 step_result = state.action_handler(state=state, action=action_request)
-                state.release_action_lock(state=state, action=action_request)
+                if (
+                    isinstance(step_result, StepFileResponse)
+                    or not step_result.status == StepStatus.NOT_READY
+                ):
+                    state.release_action_lock(state=state, action=action_request)
+
             except Exception as e:
                 # * Handle any exceptions that occur while processing the action request,
                 # * which should put the module in the ERROR state
@@ -652,6 +721,9 @@ class RESTModule:
         # * Enforce a name
         if not self.state.name:
             raise Exception("A unique --name is required")
+        import colorama
+
+        colorama.just_fix_windows_console()
         uvicorn.run(self.app, host=self.state.host, port=self.state.port)
 
 

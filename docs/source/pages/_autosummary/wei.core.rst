@@ -34,6 +34,7 @@ wei.core
    wei.core.location
    wei.core.loggers
    wei.core.module
+   wei.core.notifications
    wei.core.scheduler
    wei.core.state_manager
    wei.core.step

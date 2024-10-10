@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, Union
 
 import redis
 from pottery import InefficientAccessWarning, RedisDict, Redlock
+from pydantic import ValidationError
 
 from wei.config import Config
 from wei.types import Module, Workcell, WorkflowRun
@@ -14,7 +15,7 @@ from wei.types.base_types import ulid_factory
 from wei.types.datapoint_types import DataPoint
 from wei.types.event_types import Event
 from wei.types.experiment_types import Campaign, Experiment
-from wei.types.module_types import ModuleDefinition
+from wei.types.module_types import ModuleDefinition, ModuleStatus
 from wei.types.workcell_types import Location
 
 
@@ -112,6 +113,18 @@ class StateManager:
         )
 
     @property
+    def locked(self) -> bool:
+        """Get the lock state of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:locked") == "true"
+
+    @locked.setter
+    def locked(self, value: bool) -> None:
+        """Set the lock state of the workcell"""
+        self._redis_client.set(
+            f"{self._workcell_prefix}:locked", "true" if value else "false"
+        )
+
+    @property
     def shutdown(self) -> bool:
         """Get the shutdown state of the workcell"""
         return self._redis_client.get(f"{self._workcell_prefix}:shutdown") == "true"
@@ -123,7 +136,7 @@ class StateManager:
             f"{self._workcell_prefix}:shutdown", "true" if value else "false"
         )
 
-    # Locking Methods
+    # *Locking Methods
     def campaign_lock(self, campaign_id: str) -> Redlock:
         """
         Get a lock on a particular campaign. This should be called before editing a Campaign.
@@ -155,17 +168,47 @@ class StateManager:
             auto_release_time=60,
         )
 
-    # State Methods
+    # *State Methods
     def get_state(self) -> Dict[str, Dict[Any, Any]]:
         """
         Return a dict containing the current state of the workcell.
         """
         return {
+            "status": self.wc_status,
+            "error": self.error,
             "locations": self._locations.to_dict(),
             "modules": self._modules.to_dict(),
+            # "config": Config.dump_to_json(),
             "workflows": self._workflow_runs.to_dict(),
             "workcell": self._workcell.to_dict(),
+            "paused": self.paused,
+            "locked": self.locked,
+            "shutdown": self.shutdown,
         }
+
+    @property
+    def wc_status(self) -> ModuleStatus:
+        """The current status of the workcell"""
+        return self._redis_client.get(f"{self._workcell_prefix}:status")
+
+    @wc_status.setter
+    def wc_status(self, value: ModuleStatus) -> None:
+        """Set the status of the workcell"""
+        if self.wc_status != value:
+            self.mark_state_changed()
+        self._redis_client.set(f"{self._workcell_prefix}:status", value)
+
+    @property
+    def error(self) -> str:
+        """Latest error on the server"""
+        return self._redis_client.get(f"{self._workcell_prefix}:error")
+
+    @error.setter
+    def error(self, value: str) -> None:
+        """Add an error to the workcell's error deque"""
+        if self.error != value:
+            self.mark_state_changed()
+        return self._redis_client.set(f"{self._workcell_prefix}:error", value)
 
     def clear_state(
         self, reset_locations: bool = True, clear_workflow_runs: bool = False
@@ -181,6 +224,7 @@ class StateManager:
         self._workcell.clear()
         self.state_change_marker = "0"
         self.paused = False
+        self.locked = False
         self.shutdown = False
         self.mark_state_changed()
 
@@ -199,21 +243,24 @@ class StateManager:
         else:
             return False
 
-    # Campaign Methods
+    # *Campaign Methods
     def get_campaign(self, campaign_id: str) -> Campaign:
         """
         Returns a campaign by ID
         """
-        return self._campaigns[campaign_id]
+        return Campaign.model_validate(self._campaigns[campaign_id])
 
     def get_all_campaigns(self) -> Dict[str, Campaign]:
         """
         Returns all campaigns
         """
-        return {
-            str(campaign_id): Campaign.model_validate(campaign)
-            for campaign_id, campaign in self._campaigns.to_dict().items()
-        }
+        valid_campaigns = {}
+        for campaign_id, campaign in self._campaigns.to_dict().items():
+            try:
+                valid_campaigns[str(campaign_id)] = Campaign.model_validate(campaign)
+            except ValidationError:
+                continue
+        return valid_campaigns
 
     def set_campaign(self, campaign: Campaign) -> None:
         """
@@ -235,7 +282,7 @@ class StateManager:
         """
         self.set_campaign(func(self.get_campaign(campaign_id), *args, **kwargs))
 
-    # Experiment Methods
+    # *Experiment Methods
     def get_experiment(self, experiment_id: str) -> Experiment:
         """
         Returns an experiment by ID
@@ -246,12 +293,15 @@ class StateManager:
         """
         Returns all experiments
         """
-        return {
-            str(experiment_id): Experiment.model_validate(
-                experiment, from_attributes=True
-            )
-            for experiment_id, experiment in self._experiments.to_dict().items()
-        }
+        valid_experiments = {}
+        for experiment_id, experiment in self._experiments.to_dict().items():
+            try:
+                valid_experiments[str(experiment_id)] = Experiment.model_validate(
+                    experiment, from_attributes=True
+                )
+            except ValidationError:
+                continue
+        return valid_experiments
 
     def set_experiment(self, experiment: Experiment) -> None:
         """
@@ -273,7 +323,7 @@ class StateManager:
         """
         self.set_experiment(func(self.get_experiment(experiment_id), *args, **kwargs))
 
-    # Event Methods
+    # *Event Methods
     def get_event(self, event_id: str) -> Event:
         """
         Returns an event by ID
@@ -284,10 +334,15 @@ class StateManager:
         """
         Returns all events
         """
-        return {
-            str(event_id): Event.model_validate(event)
-            for event_id, event in self._events.to_dict().items()
-        }
+        from pydantic import ValidationError
+
+        valid_events = {}
+        for event_id, event in self._events.to_dict().items():
+            try:
+                valid_events[str(event_id)] = Event.model_validate(event)
+            except ValidationError:
+                continue
+        return valid_events
 
     def set_event(self, event: Event) -> None:
         """
@@ -295,7 +350,7 @@ class StateManager:
         """
         self._events[event.event_id] = event.model_dump(mode="json")
 
-    # DataPoint Methods
+    # *DataPoint Methods
     def get_datapoint(self, data_id: str) -> DataPoint:
         """
         Returns an event by ID
@@ -306,12 +361,17 @@ class StateManager:
 
     def get_all_datapoints(self) -> Dict[str, DataPoint]:
         """
-        Returns all events
+        Returns all datapoints
         """
-        return {
-            str(datapoint_id): DataPoint.model_validate(datapoint)
-            for datapoint_id, datapoint in self._datapoints.to_dict().items()
-        }
+        valid_datapoints = {}
+        for datapoint_id, datapoint in self._datapoints.to_dict().items():
+            try:
+                valid_datapoints[str(datapoint_id)] = DataPoint.model_validate(
+                    datapoint
+                )
+            except ValidationError:
+                continue
+        return valid_datapoints
 
     def set_datapoint(self, datapoint: DataPoint) -> None:
         """
@@ -319,7 +379,7 @@ class StateManager:
         """
         self._datapoints[datapoint.id] = datapoint.model_dump(mode="json")
 
-    # Workcell Methods
+    # *Workcell Methods
     def get_workcell(self) -> Workcell:
         """
         Returns the current workcell as a Workcell object
@@ -350,7 +410,7 @@ class StateManager:
             wc_id = self._redis_client.get(f"{self._workcell_prefix}:workcell_id")
         return wc_id
 
-    # Workflow Methods
+    # *Workflow Methods
     def get_workflow_run(self, run_id: Union[str, str]) -> WorkflowRun:
         """
         Returns a workflow by ID
@@ -359,12 +419,17 @@ class StateManager:
 
     def get_all_workflow_runs(self) -> Dict[str, WorkflowRun]:
         """
-        Returns all workflows
+        Returns all workflow runs
         """
-        return {
-            str(run_id): WorkflowRun.model_validate(workflow_run)
-            for run_id, workflow_run in self._workflow_runs.to_dict().items()
-        }
+        valid_workflow_runs = {}
+        for run_id, workflow_run in self._workflow_runs.to_dict().items():
+            try:
+                valid_workflow_runs[str(run_id)] = WorkflowRun.model_validate(
+                    workflow_run
+                )
+            except ValidationError:
+                continue
+        return valid_workflow_runs
 
     def set_workflow_run(self, wf: WorkflowRun) -> None:
         """
@@ -392,7 +457,7 @@ class StateManager:
         """
         self.set_workflow_run(func(self.get_workflow_run(run_id), *args, **kwargs))
 
-    # Location Methods
+    # *Location Methods
     def get_location(self, location_name: str) -> Location:
         """
         Returns a location by name
@@ -403,10 +468,13 @@ class StateManager:
         """
         Returns all locations
         """
-        return {
-            str(location_name): Location.model_validate(location)
-            for location_name, location in self._locations.to_dict().items()
-        }
+        valid_locations = {}
+        for location_name, location in self._locations.to_dict().items():
+            try:
+                valid_locations[str(location_name)] = Location.model_validate(location)
+            except ValidationError:
+                continue
+        return valid_locations
 
     def set_location(
         self, location_name: str, location: Union[Location, Dict[str, Any]]
@@ -438,7 +506,7 @@ class StateManager:
             location_name, func(self.get_location(location_name), *args, **kwargs)
         )
 
-    # Module Methods
+    # *Module Methods
     def get_module(self, module_name: str) -> Module:
         """
         Returns a module by name
@@ -447,12 +515,15 @@ class StateManager:
 
     def get_all_modules(self) -> Dict[str, Module]:
         """
-        Returns a module by name
+        Returns all modules
         """
-        return {
-            str(module_name): Module.model_validate(module)
-            for module_name, module in self._modules.to_dict().items()
-        }
+        valid_modules = {}
+        for module_name, module in self._modules.to_dict().items():
+            try:
+                valid_modules[str(module_name)] = Module.model_validate(module)
+            except ValidationError:
+                continue
+        return valid_modules
 
     def set_module(
         self, module_name: str, module: Union[Module, ModuleDefinition, Dict[str, Any]]

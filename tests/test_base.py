@@ -1,17 +1,26 @@
 """Provides base classes for WEI's pytest tests"""
 
-import time
 import unittest
 from pathlib import Path
 
-import requests
 import wei
 from wei import ExperimentClient
 from wei.types import Workcell
+from wei.types.experiment_types import CampaignDesign, ExperimentDesign
 
 
 class TestWEI_Base(unittest.TestCase):
     """Base class for WEI's pytest tests"""
+
+    experiment = ExperimentDesign(
+        experiment_name="Test_Experiment",
+        experiment_description="An experiment for automated testing",
+        email_addresses=[],
+    )
+    campaign = CampaignDesign(
+        campaign_name="Test_Campaign",
+        campaign_description="A campaign for automated testing",
+    )
 
     def __init__(self, *args, **kwargs):
         """Basic setup for WEI's pytest tests"""
@@ -22,27 +31,21 @@ class TestWEI_Base(unittest.TestCase):
         )
         self.server_host = self.workcell.config.server_host
         self.server_port = self.workcell.config.server_port
-        self.experiment = ExperimentClient(
+        self.experiment_client = ExperimentClient(
             server_host=self.server_host,
             server_port=self.server_port,
-            experiment_name="Test_Experiment",
+            experiment=TestWEI_Base.experiment,
+            campaign=TestWEI_Base.campaign,
             working_dir=Path(__file__).resolve().parent,
-            # email_addresses=["ryan.lewis@anl.gov"],
         )
+        TestWEI_Base.experiment = self.experiment_client.experiment
+        TestWEI_Base.campaign = self.experiment_client.campaign
         self.url = f"http://{self.server_host}:{self.server_port}"
         self.redis_host = self.workcell.config.redis_host
 
-        # Check to see that server is up
-        start_time = time.time()
-        while True:
-            try:
-                if requests.get(self.url + "/wc/state").status_code == 200:
-                    break
-            except Exception:
-                pass
-            time.sleep(1)
-            if time.time() - start_time > 60:
-                raise TimeoutError("Server did not start in 60 seconds")
+    def __del__(self):
+        """Basic cleanup for WEI's pytest tests"""
+        self.experiment_client.log_experiment_end()
 
 
 class TestPackaging(TestWEI_Base):

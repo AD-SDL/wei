@@ -7,7 +7,7 @@ This guide provides instructions for deploying a bare-metal WEI workcell. It ass
 Installing the WEI Python Package
 =================================
 
-Note on platforms: WEI is primarily developed for and tested on Linux. While we have tried to write it to be platform-agnostic, we do not target or test natively on Windows or Mac. If you are using Windows, we recommend using the `Windows Subsystem for Linux (WSL) <https://learn.microsoft.com/en-us/windows/wsl/install>`_.
+Note on platforms: WEI is primarily developed for and tested on Linux. While we have tried to write it to be platform-agnostic, we do not target or test natively on Windows or Mac. If you are using Windows, one options is using the `Windows Subsystem for Linux (WSL) <https://learn.microsoft.com/en-us/windows/wsl/install>`_.
 
 Installing from PyPi
 ---------------------
@@ -35,11 +35,18 @@ This will start the server and load the workcell configuration from the specifie
 Running the WEI Engine
 ======================
 
+.. note:: As of version 0.6.3, the WEI engine is automatically started as part of the WEI server by default. If you do still want to start the engine separately, you can do so using the following instructions.
+
 The WEI engine is responsible for the scheduling and execution of workflows and other scheduled operations on the workcell. To start the engine, run the following command:
 
 ``python -m wei.engine --workcell <path/to/workcell.yaml>``
 
 This will start the engine and load the workcell configuration from the specified YAML file. The engine will begin scheduling and executing workflows and other operations as they are queued via the WEI Server.
+
+To run the engine separately, make sure you run the server with the ``--autostart_engine`` flag set to ``False``:
+
+``python -m wei.server --workcell <path/to/workcell.yaml> --autostart_engine False``
+
 
 Running Redis
 =============
@@ -53,4 +60,4 @@ There are two methods for configuring the WEI Engine and Server that work in tan
 
 The only required argument for the WEI Engine and Server is the path to the workcell YAML file.
 
-For a complete breakdown of configuration options, see :class:`wei.types.WorkcellConfig`.
+For a complete breakdown of configuration options, see :class:`wei.types.workcell_types.WorkcellConfig`.

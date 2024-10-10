@@ -26,5 +26,7 @@ We refer to any program or application using the ExperimentClient or the REST AP
 
     A diagram of how a WEI experiment application interacts with a workcell.
 
+Next Steps
+==========
 
 To learn how to write your own Experiment Application, consult :doc:`/pages/how-to/experiment`.

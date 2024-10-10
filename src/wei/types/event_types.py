@@ -27,14 +27,14 @@ class Event(BaseModel, extra="allow"):
     """Any additional information about the event (mostly kept for backwards compatibility)"""
 
 
-class CreateCampaignEvent(Event):
+class CampaignStartEvent(Event):
     """Event for creating a campaign"""
 
     event_type: Literal["CAMPAIGN"] = "CAMPAIGN"
     event_name: Literal["CREATE"] = "CREATE"
 
     campaign: Campaign
-    """The campaign that was created"""
+    """The campaign that was started"""
 
 
 class ExperimentStartEvent(Event):

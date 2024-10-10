@@ -39,4 +39,4 @@ class SimulateInterface(Interface):
     @staticmethod
     def get_state(module: Module, **kwargs: Any) -> Dict[str, Any]:
         """Returns the current state of the module"""
-        return {"State": ModuleStatus.IDLE}
+        return {"State": ModuleStatus.READY}

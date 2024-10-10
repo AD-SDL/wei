@@ -1,0 +1,13 @@
+name: Test_Admin_Actions
+metadata:
+  author: Ryan D. Lewis
+  info: Example workflow that can be used to test admin actions
+  version: 0.2
+
+flowdef:
+  - name: Fail step
+    module: transfer
+    action: admin_actions_test
+    args:
+      run_time: payload.wait_time
+    comment: Test admin actions

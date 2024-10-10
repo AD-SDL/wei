@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import Field, field_validator
 
-from wei.types.base_types import BaseModel, PathLike
+from wei.types.base_types import BaseModel, Metadata, PathLike
 from wei.types.module_types import ModuleDefinition
 
 
@@ -15,6 +15,8 @@ class Workcell(BaseModel):
 
     name: str
     """Name of the workflow"""
+    metadata: Metadata = Field(default_factory=Metadata)
+    """Information about the workcell"""
     config: "WorkcellConfig"
     """Globus search index, needed for publishing"""
     modules: List[ModuleDefinition]
@@ -96,7 +98,7 @@ class WorkcellConfig(BaseModel, extra="allow"):
     )
     smtp_port: int = Field(default=25, description="Port number for the SMTP server")
     autostart_engine: bool = Field(
-        default=False,
+        default=True,
         description="Whether or not to start the engine and scheduler for the workcell from the server process (set to False if you want/need to run the engine as a separate process/container). This will default to True in the future.",
     )
 
