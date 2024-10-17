@@ -338,6 +338,7 @@ class ExperimentClient:
         self,
         workflow: Union[Workflow, PathLike],
         payload: Optional[Dict[str, Any]] = None,
+        parameters: Optional[Dict[str, Any]] = {},
         simulate: bool = False,
         blocking: bool = True,
         validate_only: bool = False,
@@ -376,6 +377,12 @@ class ExperimentClient:
         """
         self._connect_to_server()
         self._check_experiment()
+        if payload is not None:
+            warnings.warn(
+                message="Payload is deprecated, use parameters and $ insertion syntax instead",
+                category=UserWarning,
+                stacklevel=1,
+            )
         if payload is None:
             payload = {}
         if isinstance(workflow, str) or isinstance(workflow, Path):
@@ -383,7 +390,7 @@ class ExperimentClient:
             assert workflow.exists(), f"Workflow file {workflow} does not exist"
             workflow = Workflow.from_yaml(workflow)
         Workflow.model_validate(workflow)
-        workflow.parameter_insertion(payload)
+        workflow.parameter_insertion(parameters)
         url = f"{self.url}/runs/start"
         files = self._extract_files_from_workflow(workflow, payload)
         response = requests.post(

@@ -20,7 +20,7 @@ class TestWEI_Workflows(TestWEI_Base):
 
         run_info = self.experiment_client.start_run(
             workflow=workflow_path,
-            payload={"delay": 1},
+            parameters={"delay": 1, "pos": "transfer.pos"},
             blocking=True,
             simulate=False,
         )

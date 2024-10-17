@@ -46,6 +46,15 @@ class WorkflowStatus(str, Enum):
         ]
 
 
+class WorkflowParameter(BaseModel):
+    """container for a workflow parameter"""
+
+    name: str
+    """the name of the parameter"""
+    default: Optional[Any] = None
+    """ the default value of the parameter"""
+
+
 class Workflow(BaseModel):
     """Grand container that pulls all info of a workflow together"""
 
@@ -53,7 +62,7 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
-    parameters: Optional[List[str]] = []
+    parameters: Optional[List[WorkflowParameter]] = []
     """Inputs to the workflow"""
     flowdef: List[Step]
     """User Submitted Steps of the flow"""
@@ -84,17 +93,25 @@ class Workflow(BaseModel):
                         labels.append(step.data_labels[key])
         return v
 
-    def parameter_insertion(self, payload):
-        """insert the payload"""
+    def parameter_insertion(self, parameters):
+        """insert the parameters"""
         for param in self.parameters:
-            if param not in payload:
-                raise ValueError("Workflow parameter: " + param + " not provided")
+            print(param)
+            print(param.name)
+            print(parameters.keys())
+            if param.name not in parameters.keys():
+                if param.default:
+                    parameters[param.name] = param.default
+                else:
+                    raise ValueError(
+                        "Workflow parameter: " + param.name + " not provided"
+                    )
         steps = []
         for step in self.flowdef:
             for key, val in iter(step):
                 if type(val) is str and re.match(r"^\$[A-z0-1_\-]*$", val):
-                    if val.strip("$") in self.parameters:
-                        setattr(step, key, payload[val.strip("$")])
+                    if val.strip("$") in parameters.keys():
+                        setattr(step, key, parameters[val.strip("$")])
                     else:
                         raise ValueError(
                             "Unknown parameter: " + val + ", please specify"
@@ -107,12 +124,12 @@ class Workflow(BaseModel):
                     ):
                         param_name = match[0].strip("$")
                         param_name = param_name.strip("{")
-                        if param_name in self.parameters:
+                        if param_name in parameters:
                             if match[1] == "}":
                                 if match[0][1] == "{":
                                     test = re.sub(
                                         r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\})",
-                                        str(payload[param_name]),
+                                        str(parameters[param_name]),
                                         test,
                                     )
                                     setattr(step, key, test)
@@ -125,13 +142,13 @@ class Workflow(BaseModel):
                             elif match[1] == " ":
                                 test = re.sub(
                                     r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s)",
-                                    str(payload[param_name]) + " ",
+                                    str(parameters[param_name]) + " ",
                                     test,
                                 )
                             elif match[1] == "":
                                 test = re.sub(
                                     r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)($)",
-                                    str(payload[param_name]),
+                                    str(parameters[param_name]),
                                     test,
                                 )
                             setattr(step, key, test)
@@ -142,20 +159,20 @@ class Workflow(BaseModel):
 
                     # setattr(step, key, test)
             test = step.args
-            test = walk_and_replace(test, self.parameters, payload)
+            test = walk_and_replace(test, self.parameters, parameters)
             step.args = test
             steps.append(step)
         self.flowdef = steps
 
 
 def walk_and_replace(
-    args: Dict[str, Any], parameters: List[str], payload: Dict[str, Any]
+    args: Dict[str, Any], parameters: List[str], input_parameters: Dict[str, Any]
 ):
     """recursively walk the arguments and replace all parameters"""
     for key in args.keys():
         if type(args[key]) is str and re.match(r"^\$[A-z0-1_\-]*$", args[key]):
-            if args[key].strip("$") in parameters:
-                args[key] = payload[args[key].strip("$")]
+            if args[key].strip("$") in input_parameters.keys():
+                args[key] = input_parameters[args[key].strip("$")]
             else:
                 raise ValueError("Unknown parameter:" + args[key] + ", please specify")
         elif type(args[key]) is str:
@@ -170,7 +187,7 @@ def walk_and_replace(
                         if match[0][1] == "{":
                             test = re.sub(
                                 r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\})",
-                                str(payload[param_name]),
+                                str(input_parameters[param_name]),
                                 test,
                             )
                             args[key] = test
@@ -183,19 +200,19 @@ def walk_and_replace(
                     elif match[1] == " ":
                         test = re.sub(
                             r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s)",
-                            str(payload[param_name]) + " ",
+                            str(input_parameters[param_name]) + " ",
                             test,
                         )
                     elif match[1] == "":
                         test = re.sub(
                             r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)($)",
-                            str(payload[param_name]),
+                            str(input_parameters[param_name]),
                             test,
                         )
                     args[key] = test
 
         elif type(args[key]) is dict:
-            args[key] = walk_and_replace(args[key], parameters, payload)
+            args[key] = walk_and_replace(args[key], parameters, input_parameters)
     return args
 
 

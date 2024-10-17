@@ -4,20 +4,22 @@ metadata:
   info: Example workflow for WEI
   version: 0.3
 parameters:
-  - delay
+  - name: delay
+    default: 1.5
+  - name: pos
 flowdef:
-  - name: Get plate
+  - name: Get plate to $pos
     module: transfer
     action: transfer
     args:
-      target: "transfer.pos"
+      target: $pos
     comment: Get a new plate
 
   - name: Transfer plate to synthesis
     module: transfer
     action: transfer
     args:
-      source: transfer.pos
+      source: $pos
       target: synthesis.pos
     comment: put a plate in first position
 
