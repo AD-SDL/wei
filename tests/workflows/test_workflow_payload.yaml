@@ -6,6 +6,7 @@ metadata:
 parameters:
   - test
   - test2
+  - delay
 
 flowdef:
   - name: Get plate
@@ -24,8 +25,8 @@ flowdef:
     comment: put a plate in first position
 
   - name: Synthesize foobar
-    module: synthesis
-    action: synthesize
+    module: $test2
+    action: $test
     args:
       foo: {"thing": {"test": "$test"}}
       bar: "test"
@@ -47,11 +48,11 @@ flowdef:
     data_labels:
       test_file: test_label
 
-  - name: Wait for payload.delay seconds
+  - name: Wait for $delay seconds
     module: utilities
     action: delay
     args:
-      seconds: payload.delay
+      seconds: $delay
 
   - name: Discard sample
     module: transfer

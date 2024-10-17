@@ -1,5 +1,6 @@
 """Types related to workflows"""
 
+import re
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -52,8 +53,8 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
-    parameters: Optional[List[str]]
-    """inputs to the workflow"""
+    parameters: Optional[List[str]] = []
+    """Inputs to the workflow"""
     flowdef: List[Step]
     """User Submitted Steps of the flow"""
 
@@ -91,12 +92,55 @@ class Workflow(BaseModel):
         steps = []
         for step in self.flowdef:
             for key, val in iter(step):
-                if (
-                    type(val) is str
-                    and "$" in val
-                    and val.strip("$") in self.parameters
-                ):
-                    step[key] = payload[val.strip("$")]
+                if type(val) is str and re.match(r"^\$[A-z0-1_\-]*$", val):
+                    if val.strip("$") in self.parameters:
+                        setattr(step, key, payload[val.strip("$")])
+                    else:
+                        raise ValueError(
+                            "Unknown parameter: " + val + ", please specify"
+                        )
+
+                elif type(val) is str:
+                    test = val
+                    for match in re.findall(
+                        r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s|\}|$)", val
+                    ):
+                        param_name = match[0].strip("$")
+                        param_name = param_name.strip("{")
+                        if param_name in self.parameters:
+                            if match[1] == "}":
+                                if match[0][1] == "{":
+                                    test = re.sub(
+                                        r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\})",
+                                        str(payload[param_name]),
+                                        test,
+                                    )
+                                    setattr(step, key, test)
+                                else:
+                                    raise SyntaxError(
+                                        "forgot opening { in parameter insertion: "
+                                        + match[0]
+                                        + "}"
+                                    )
+                            elif match[1] == " ":
+                                test = re.sub(
+                                    r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s)",
+                                    str(payload[param_name]) + " ",
+                                    test,
+                                )
+                            elif match[1] == "":
+                                test = re.sub(
+                                    r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)($)",
+                                    str(payload[param_name]),
+                                    test,
+                                )
+                            setattr(step, key, test)
+                        else:
+                            raise ValueError(
+                                "Unknown parameter: " + param_name + ", please specify"
+                            )
+
+                    # setattr(step, key, test)
             test = step.args
             test = walk_and_replace(test, self.parameters, payload)
             step.args = test
@@ -109,12 +153,47 @@ def walk_and_replace(
 ):
     """recursively walk the arguments and replace all parameters"""
     for key in args.keys():
-        if (
-            type(args[key]) is str
-            and "$" in args[key]
-            and args[key].strip("$") in parameters
-        ):
-            args[key] = payload[args[key].strip("$")]
+        if type(args[key]) is str and re.match(r"^\$[A-z0-1_\-]*$", args[key]):
+            if args[key].strip("$") in parameters:
+                args[key] = payload[args[key].strip("$")]
+            else:
+                raise ValueError("Unknown parameter:" + args[key] + ", please specify")
+        elif type(args[key]) is str:
+            test = args[key]
+            for match in re.findall(
+                r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s|\}|$)", args[key]
+            ):
+                param_name = match[0].strip("$")
+                param_name = param_name.strip("{")
+                if param_name in parameters:
+                    if match[1] == "}":
+                        if match[0][1] == "{":
+                            test = re.sub(
+                                r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\})",
+                                str(payload[param_name]),
+                                test,
+                            )
+                            args[key] = test
+                        else:
+                            raise SyntaxError(
+                                "forgot opening { in parameter insertion: "
+                                + match[0]
+                                + "}"
+                            )
+                    elif match[1] == " ":
+                        test = re.sub(
+                            r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s)",
+                            str(payload[param_name]) + " ",
+                            test,
+                        )
+                    elif match[1] == "":
+                        test = re.sub(
+                            r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)($)",
+                            str(payload[param_name]),
+                            test,
+                        )
+                    args[key] = test
+
         elif type(args[key]) is dict:
             args[key] = walk_and_replace(args[key], parameters, payload)
     return args

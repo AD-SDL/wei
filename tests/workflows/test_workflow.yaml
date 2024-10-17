@@ -4,8 +4,8 @@ metadata:
   info: Example workflow for WEI
   version: 0.3
 parameters:
-  - test
-  - test2
+  - delay
+  - thingy
 
 flowdef:
   - name: Get plate
@@ -27,7 +27,7 @@ flowdef:
     module: synthesis
     action: synthesize
     args:
-      foo: 2.0
+      foo: 2
       bar: 0.5
     files:
       protocol: ./protocols/foobar_protocol.py
@@ -47,11 +47,11 @@ flowdef:
     data_labels:
       test_file: test_label
 
-  - name: Wait for payload.delay seconds
+  - name: Wait for $delay seconds
     module: utilities
     action: delay
     args:
-      seconds: payload.delay
+      seconds: $delay
 
   - name: Discard sample
     module: transfer
