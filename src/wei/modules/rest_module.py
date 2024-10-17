@@ -113,8 +113,18 @@ class RESTModule:
         self.interface = interface
         self.actions = actions if actions else []
         self.resource_pools = resource_pools if resource_pools else []
-        self.admin_commands = admin_commands if admin_commands else set()
-        self.admin_commands.add(AdminCommands.SHUTDOWN)
+        self.admin_commands = (
+            admin_commands
+            if admin_commands
+            else set(
+                [
+                    AdminCommands.SHUTDOWN,
+                    AdminCommands.RESET,
+                    AdminCommands.LOCK,
+                    AdminCommands.UNLOCK,
+                ]
+            )
+        )
 
         # * Set any additional keyword arguments as attributes as well
         # * These will then get added to the state object

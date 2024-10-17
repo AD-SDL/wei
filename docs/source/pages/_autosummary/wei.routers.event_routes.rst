@@ -4,11 +4,6 @@ wei.routers.event\_routes
 .. automodule:: wei.routers.event_routes
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,15 +12,3 @@ wei.routers.event\_routes
       get_event
       log_event
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

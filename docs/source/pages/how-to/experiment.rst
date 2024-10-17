@@ -39,6 +39,7 @@ Using Workflows
 You can easily submit workflows with the ExperimentClient by calling the :func:`wei.experiment_client.ExperimentClient.start_run` method. This method takes a Workflow definition as a string, and returns a Workflow Run object, which you can use to monitor the progress of the Workflow run and retrieve data points and results.
 
 .. code-block:: python
+
     from pathlib import Path
 
     # Define a simple Workflow

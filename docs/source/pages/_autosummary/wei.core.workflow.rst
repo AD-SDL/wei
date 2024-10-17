@@ -4,11 +4,6 @@ wei.core.workflow
 .. automodule:: wei.core.workflow
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -20,15 +15,3 @@ wei.core.workflow
       replace_positions
       save_workflow_files
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
