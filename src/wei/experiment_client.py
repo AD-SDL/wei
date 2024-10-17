@@ -383,7 +383,7 @@ class ExperimentClient:
             assert workflow.exists(), f"Workflow file {workflow} does not exist"
             workflow = Workflow.from_yaml(workflow)
         Workflow.model_validate(workflow)
-        workflow.payload_insertion(payload)
+        workflow.parameter_insertion(payload)
         url = f"{self.url}/runs/start"
         files = self._extract_files_from_workflow(workflow, payload)
         response = requests.post(

@@ -84,11 +84,11 @@ class Workflow(BaseModel):
                         labels.append(step.data_labels[key])
         return v
 
-    def payload_insertion(self, payload):
+    def parameter_insertion(self, payload):
         """insert the payload"""
         for param in self.parameters:
             if param not in payload:
-                raise ValueError("Workflow parameter not provided")
+                raise ValueError("Workflow parameter: " + param + " not provided")
         steps = []
         for step in self.flowdef:
             for key, val in iter(step):

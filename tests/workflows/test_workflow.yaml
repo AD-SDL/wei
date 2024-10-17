@@ -5,8 +5,6 @@ metadata:
   version: 0.3
 parameters:
   - delay
-  - thingy
-
 flowdef:
   - name: Get plate
     module: transfer
