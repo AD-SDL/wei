@@ -4,31 +4,32 @@ metadata:
   info: Example workflow for WEI
   version: 0.3
 parameters:
-  - name: delay
-    default: 1.5
-  - name: pos
+  - test
+  - test2
+  - delay
+
 flowdef:
-  - name: Get plate to $pos
+  - name: Get plate
     module: transfer
     action: transfer
     args:
-      target: $pos
+      target: "transfer.pos"
     comment: Get a new plate
 
   - name: Transfer plate to synthesis
     module: transfer
     action: transfer
     args:
-      source: $pos
-      target: synthesis.pos
+      source: $test
+      target: $test2
     comment: put a plate in first position
 
   - name: Synthesize foobar
-    module: synthesis
-    action: synthesize
+    module: $test2
+    action: $test
     args:
-      foo: 2
-      bar: 0.5
+      foo: {"thing": {"test": "$test"}}
+      bar: "test"
     files:
       protocol: ./protocols/foobar_protocol.py
     comment: Combines foo and bar to produce foobar, using foobar_protocol.yaml
