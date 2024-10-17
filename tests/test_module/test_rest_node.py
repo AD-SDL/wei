@@ -9,7 +9,6 @@ from fastapi import UploadFile
 from fastapi.datastructures import State
 
 from wei.modules.rest_module import RESTModule
-from wei.resources_interface import ResourcesInterface
 from wei.types import StepFileResponse, StepResponse, StepStatus
 from wei.types.module_types import (
     AdminCommands,
@@ -54,11 +53,6 @@ test_rest_node.arg_parser.add_argument(
 def test_node_startup(state: State):
     """Initializes the module"""
     state.foobar = state.foo + state.bar
-    state.resource_interface = ResourcesInterface(
-        "postgresql://rpl:rpl@wei_postgres:5432/resources"
-    )
-    # state.resource_interface.delete_all_tables()
-    # time.sleep(10)
     try:
         # Example: Create resources using ResourceInterface
         stack1 = Stack(
@@ -67,14 +61,14 @@ def test_node_startup(state: State):
             capacity=10,
             owner_name=state.name,
         )
-        stack1 = state.resource_interface.add_resource(stack1)
+        stack1 = state.resources_interface.add_resource(stack1)
         stack2 = Stack(
             name="Stack2",
             description="Stack for transfer",
             capacity=10,
             owner_name=state.name,
         )
-        stack2 = state.resource_interface.add_resource(stack2)
+        stack2 = state.resources_interface.add_resource(stack2)
 
         stack3 = Stack(
             name="Stack3",
@@ -82,7 +76,7 @@ def test_node_startup(state: State):
             capacity=4,
             owner_name=state.name,
         )
-        stack3 = state.resource_interface.add_resource(stack3)
+        stack3 = state.resources_interface.add_resource(stack3)
 
         trash = Stack(
             name="Trash",
@@ -90,12 +84,12 @@ def test_node_startup(state: State):
             capacity=None,
             owner_name=state.name,
         )
-        trash = state.resource_interface.add_resource(trash)
+        trash = state.resources_interface.add_resource(trash)
 
         asset = Asset(name="Initial Asset")
 
         # Push assets to stacks
-        state.resource_interface.push_to_stack(stack1, asset)
+        state.resources_interface.push_to_stack(stack1, asset)
 
         plate0 = Plate(
             name="Plate0",
@@ -103,8 +97,8 @@ def test_node_startup(state: State):
             well_capacity=100.0,
             owner_name=state.name,
         )
-        plate0 = state.resource_interface.add_resource(plate0)
-        state.resource_interface.update_plate_contents(
+        plate0 = state.resources_interface.add_resource(plate0)
+        state.resources_interface.update_plate_contents(
             plate0, {"A1": 50.0, "B1": 25.0, "C1": 75.0, "D1": 45.0}
         )
         collection = Collection(
@@ -113,7 +107,7 @@ def test_node_startup(state: State):
             capacity=5,
             owner_name=state.name,
         )
-        collection = state.resource_interface.add_resource(collection)
+        collection = state.resources_interface.add_resource(collection)
 
     except Exception as err:
         print(err)
@@ -155,10 +149,10 @@ def transfer(
     source: Annotated[Location[str], "the location to transfer from"] = "",
 ) -> StepResponse:
     """Transfers a sample from source to target"""
-    all_stacks = state.resource_interface.get_all_resources(Stack)
+    all_stacks = state.resources_interface.get_all_resources(Stack)
     print("All Stacks:", all_stacks)
 
-    target_stack = state.resource_interface.get_resource(
+    target_stack = state.resources_interface.get_resource(
         resource_name=target, owner_name=state.name
     )
     if not target_stack:
@@ -166,22 +160,22 @@ def transfer(
 
     if sleep_with_signals(state.dwell_time, state):
         if source:
-            source_stack = state.resource_interface.get_resource(
+            source_stack = state.resources_interface.get_resource(
                 resource_name=source, owner_name=state.name
             )
             if not source_stack:
                 return StepResponse.step_failed(f"Invalid source stack ({source})")
 
             try:
-                asset = state.resource_interface.pop_from_stack(source_stack)
-                state.resource_interface.push_to_stack(target_stack, asset)
+                asset = state.resources_interface.pop_from_stack(source_stack)
+                state.resources_interface.push_to_stack(target_stack, asset)
                 return StepResponse.step_succeeded()
             except ValueError as e:
                 return StepResponse.step_failed(str(e))
         else:
             try:
                 example_plate = Asset(name="ExamplePlate")
-                state.resource_interface.push_to_stack(target_stack, example_plate)
+                state.resources_interface.push_to_stack(target_stack, example_plate)
                 return StepResponse.step_succeeded()
             except ValueError as e:
                 return StepResponse.step_failed(str(e))
@@ -225,7 +219,7 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
     if not sleep_with_signals(state.dwell_time, state):
         return StepResponse.step_failed("Measure was cancelled or e-stopped.")
     # Retrieve the collection resource
-    collection = state.resource_interface.get_resource(
+    collection = state.resources_interface.get_resource(
         resource_name="Collection1", owner_name=state.name
     )
 
@@ -237,7 +231,7 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
         # Create a new Asset instance
         instance = Asset(name=f"Measurement at {location}")
         # Insert the new asset into the collection
-        state.resource_interface.insert_into_collection(collection, location, instance)
+        state.resources_interface.insert_into_collection(collection, location, instance)
 
         print(f"Updated quantity: {collection.quantity}")
 

@@ -29,7 +29,7 @@ class ResourcesInterface:
 
     def __init__(
         self,
-        database_url: str = "postgresql://postgres:rpl@localhost:5432/resources",
+        database_url: str = "postgresql://rpl:rpl@wei_postgres:5432/resources",
         init_timeout: float = 10,
     ):
         """
@@ -596,8 +596,8 @@ class ResourcesInterface:
 
 
 if __name__ == "__main__":
-    resource_interface = ResourcesInterface()
-    resource_interface.clear_all_table_records()
+    resources_interface = ResourcesInterface()
+    resources_interface.clear_all_table_records()
     pool = Pool(
         name="Test Pool",
         description="A test pool",
@@ -605,41 +605,41 @@ if __name__ == "__main__":
         quantity=50.0,
         owner_name="test1",
     )
-    pool = resource_interface.add_resource(pool)
-    all_pools = resource_interface.get_all_resources(Pool)
+    pool = resources_interface.add_resource(pool)
+    all_pools = resources_interface.get_all_resources(Pool)
     print("\nAll Pools after modification:", all_pools)
-    resource_interface.increase_pool_quantity(pool, 0.0)
-    all_pools = resource_interface.get_all_resources(Pool)
+    resources_interface.increase_pool_quantity(pool, 0.0)
+    all_pools = resources_interface.get_all_resources(Pool)
     print("\nAll Pools after modification:", all_pools)
     stack = Stack(
         name="Test Stack", description="A test stack", capacity=10, owner_name="test2"
     )
-    resource_interface.add_resource(stack)
-    retrieved_stack = resource_interface.get_resource(
+    resources_interface.add_resource(stack)
+    retrieved_stack = resources_interface.get_resource(
         resource_name="Test Stack", owner_name="test2"
     )
     print("Retreived_STACK:", retrieved_stack)
     asset = Asset(name="Test Asset", unique_resource=False)
     asset3 = Asset(name="Test Asset3", unique_resource=False)
-    resource_interface.push_to_stack(stack, asset)
-    resource_interface.push_to_stack(stack, asset3)
-    all_stacks = resource_interface.get_all_resources(Stack)
+    resources_interface.push_to_stack(stack, asset)
+    resources_interface.push_to_stack(stack, asset3)
+    all_stacks = resources_interface.get_all_resources(Stack)
     print("\nAll Stacks after modification:", all_stacks)
-    popped_asset = resource_interface.pop_from_stack(stack)
-    all_stacks = resource_interface.get_all_resources(Stack)
+    popped_asset = resources_interface.pop_from_stack(stack)
+    all_stacks = resources_interface.get_all_resources(Stack)
     print("\nAll Stacks after modification:", all_stacks)
     queue = Queue(
         name="Test Queue", description="A test queue", capacity=10, owner_name="test3"
     )
-    queue = resource_interface.add_resource(queue)
+    queue = resources_interface.add_resource(queue)
     asset2 = Asset(name="Test Asset2")
-    resource_interface.push_to_queue(queue, asset2)
+    resources_interface.push_to_queue(queue, asset2)
     # resource_interface.push_to_queue(queue, asset)
-    all_queues = resource_interface.get_all_resources(Queue)
+    all_queues = resources_interface.get_all_resources(Queue)
     print("\nAll Queues after modification:", all_queues)
-    popped_asset_q = resource_interface.pop_from_queue(queue)
+    popped_asset_q = resources_interface.pop_from_queue(queue)
     print("\nPopped Asset from Queue:", popped_asset_q)
-    all_queues = resource_interface.get_all_resources(Queue)
+    all_queues = resources_interface.get_all_resources(Queue)
     print("\nAll Queues after modification:", all_queues)
     collection = Collection(
         name="Test Collection",
@@ -647,9 +647,9 @@ if __name__ == "__main__":
         capacity=10,
         owner_name="test4",
     )
-    collection = resource_interface.add_resource(collection)
-    resource_interface.insert_into_collection(collection, location="1", asset=asset3)
-    retrieved_asset = resource_interface.retrieve_from_collection(
+    collection = resources_interface.add_resource(collection)
+    resources_interface.insert_into_collection(collection, location="1", asset=asset3)
+    retrieved_asset = resources_interface.retrieve_from_collection(
         collection, location=1
     )
     print("\nRetrieved Asset from Collection:", retrieved_asset)
@@ -669,32 +669,32 @@ if __name__ == "__main__":
         owner_name="test5",
         unique_resource=False,
     )
-    plate = resource_interface.add_resource(plate)
-    plate2 = resource_interface.add_resource(plate2)
+    plate = resources_interface.add_resource(plate)
+    plate2 = resources_interface.add_resource(plate2)
     wells_to_add = {
         "A1": 50.0,
         "B1": 66.0,
     }
-    resource_interface.update_plate_contents(plate, wells_to_add)
-    all_wells = resource_interface.get_wells(plate)
+    resources_interface.update_plate_contents(plate, wells_to_add)
+    all_wells = resources_interface.get_wells(plate)
     print(f"All wells in the plate: {all_wells}")
-    resource_interface.increase_well(plate, well_id="A1", quantity=20.0)
-    resource_interface.decrease_well(plate, well_id="B1", quantity=10.0)
+    resources_interface.increase_well(plate, well_id="A1", quantity=20.0)
+    resources_interface.decrease_well(plate, well_id="B1", quantity=10.0)
     new_well_to_add = {
         "C1": 70.0,
     }
-    resource_interface.update_plate_contents(plate, new_well_to_add)
-    updated_wells = resource_interface.get_wells(plate)
+    resources_interface.update_plate_contents(plate, new_well_to_add)
+    updated_wells = resources_interface.get_wells(plate)
     print(f"Updated wells: {updated_wells}")
-    resource_interface.update_plate_well(plate, well_id="A1", quantity=80.0)
-    all_plates = resource_interface.get_all_resources(Plate)
+    resources_interface.update_plate_well(plate, well_id="A1", quantity=80.0)
+    all_plates = resources_interface.get_all_resources(Plate)
     print("\nAll Plates after modification:", all_plates)
     new_well_to_add2 = {
         "D1": 70.0,  # Well C1 with 70.0 quantity
     }
 
-    r = resource_interface.get_resource(resource_id=plate2.id)
-    resource_interface.update_plate_contents(r, new_well_to_add2)
+    r = resources_interface.get_resource(resource_id=plate2.id)
+    resources_interface.update_plate_contents(r, new_well_to_add2)
 
     # all_asset = resource_interface.get_all_resources(Asset)
     # print("\n Asset Table", all_asset)

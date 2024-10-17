@@ -10,6 +10,7 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
+from pathlib import Path
 from threading import Lock, Thread
 from typing import List, Optional, Set, Union
 
@@ -25,7 +26,9 @@ from fastapi import (
 from fastapi.datastructures import State
 from typing_extensions import Annotated, get_type_hints
 
+from wei.resources_interface import ResourcesInterface
 from wei.types import ModuleStatus
+from wei.types.base_types import PathLike, ulid_factory
 from wei.types.module_types import (
     AdminCommands,
     ModuleAbout,
@@ -91,6 +94,7 @@ class RESTModule:
         host: Optional[str] = "0.0.0.0",
         port: Optional[int] = 2000,
         about: Optional[ModuleAbout] = None,
+        data_dir: Optional[PathLike] = None,
         **kwargs,
     ):
         """Creates an instance of the RESTModule class"""
@@ -111,6 +115,7 @@ class RESTModule:
         self.actions = actions if actions else []
         self.admin_commands = admin_commands if admin_commands else set()
         self.admin_commands.add(AdminCommands.SHUTDOWN)
+        self.data_dir = data_dir if data_dir else Path.home() / ".wei" / "modules"
 
         # * Set any additional keyword arguments as attributes as well
         # * These will then get added to the state object
@@ -141,6 +146,24 @@ class RESTModule:
                 type=str,
                 default=self.name,
                 help="A unique name for this particular instance of this module",
+            )
+            self.arg_parser.add_argument(
+                "--data_dir",
+                type=str,
+                default=self.data_dir,
+                help="Path to a directory where the module can store temporary data",
+            )
+            self.arg_parser.add_argument(
+                "--id",
+                type=str,
+                default=None,
+                help="The unique ID for the module (this should generally only be used to associate a new module to pre-existing resources)",
+            )
+            self.arg_parser.add_argument(
+                "--database_url",
+                type=str,
+                default=None,
+                help="The URL to the MADSci database, for saving changes to shared resources",
             )
 
     # * Module and Application Lifecycle Functions
@@ -713,6 +736,29 @@ class RESTModule:
         # * Enforce a name
         if not self.state.name:
             raise Exception("A unique --name is required")
+
+        # * Module Paths
+        self.state.module_dir = Path(self.data_dir) / self.state.name
+        Path(self.state.module_dir).mkdir(parents=True, exist_ok=True)
+        if not hasattr(self.state, "id") or self.state.id is None:
+            if Path(self.state.module_dir / "id").exists():
+                with open(self.state.module_dir / "id", "r") as f:
+                    self.state.id = f.read()
+            else:
+                self.state.id = ulid_factory()
+                with open(self.state.module_dir / "id", "w") as f:
+                    f.write(self.state.id)
+
+        # * Initialize Resources Interface
+        if hasattr(self.state, "database_url") and self.state.database_url is not None:
+            self.state.resources_interface = ResourcesInterface(
+                database_url=self.state.database_url
+            )
+        else:
+            self.state.resources_interface = ResourcesInterface(
+                database_url=Path("sqlite:///") / self.state.data_dir / "database"
+            )
+
         import colorama
 
         colorama.just_fix_windows_console()

@@ -24,6 +24,7 @@ WORKDIR /home/${CONTAINER_USER}
 RUN mkdir -p wei/requirements
 RUN mkdir -p .wei/experiments
 RUN mkdir -p .diaspora
+VOLUME /home/${CONTAINER_USER}/.wei
 
 # Install Node and Python Dependencies first, for caching purposes
 COPY ./src/ui/package*.json ./

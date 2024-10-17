@@ -212,6 +212,8 @@ class ModuleAbout(BaseModel, extra="ignore"):
 
     name: str
     """Name of the module"""
+    id: Optional[str] = None
+    """A unique identifier for the module"""
     model: Optional[str] = None
     """Model of the module"""
     interface: Optional[str] = None

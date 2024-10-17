@@ -20,9 +20,7 @@ from wei.types.resource_types import (
 
 router = APIRouter()
 state_manager = StateManager()
-state_manager.resources_interface = ResourcesInterface(
-    database_url=Config.resources_database_url
-)
+state_manager.resources_interface = ResourcesInterface(database_url=Config.database_url)
 
 # Mapping of resource type names to actual classes
 RESOURCE_TYPE_MAP = {
@@ -44,14 +42,6 @@ def get_resource_class(resource_type_name: str) -> Type[SQLModel]:
             status_code=400, detail=f"Invalid resource type: {resource_type_name}"
         )
     return resource_class
-
-
-@router.get("/up")
-def is_server_up() -> Dict[str, bool]:
-    """
-    Check if the resource server is up
-    """
-    return {"up": True}
 
 
 @router.post("/resources/add_resource")

@@ -44,6 +44,7 @@ class TestWEI_Base(unittest.TestCase):
             time.sleep(1)
             if time.time() - start_time > 60:
                 raise TimeoutError("Server did not start in 60 seconds")
+        requests.post(self.url + "/resources/clear_all_records")
 
     def __del__(self):
         """Basic cleanup for WEI's pytest tests"""
