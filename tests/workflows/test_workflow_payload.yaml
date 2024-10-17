@@ -19,16 +19,16 @@ flowdef:
     module: transfer
     action: transfer
     args:
-      source: transfer.pos
-      target: synthesis.pos
+      source: $test
+      target: $test2
     comment: put a plate in first position
 
   - name: Synthesize foobar
     module: synthesis
     action: synthesize
     args:
-      foo: 2.0
-      bar: 0.5
+      foo: {"thing": {"test": "$test"}}
+      bar: "test"
     files:
       protocol: ./protocols/foobar_protocol.py
     comment: Combines foo and bar to produce foobar, using foobar_protocol.yaml

@@ -52,6 +52,8 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
+    parameters: Optional[List[str]]
+    """inputs to the workflow"""
     flowdef: List[Step]
     """User Submitted Steps of the flow"""
 
@@ -80,6 +82,42 @@ class Workflow(BaseModel):
                     else:
                         labels.append(step.data_labels[key])
         return v
+
+    def payload_insertion(self, payload):
+        """insert the payload"""
+        for param in self.parameters:
+            if param not in payload:
+                raise ValueError("Workflow parameter not provided")
+        steps = []
+        for step in self.flowdef:
+            for key, val in iter(step):
+                if (
+                    type(val) is str
+                    and "$" in val
+                    and val.strip("$") in self.parameters
+                ):
+                    step[key] = payload[val.strip("$")]
+            test = step.args
+            test = walk_and_replace(test, self.parameters, payload)
+            step.args = test
+            steps.append(step)
+        self.flowdef = steps
+
+
+def walk_and_replace(
+    args: Dict[str, Any], parameters: List[str], payload: Dict[str, Any]
+):
+    """recursively walk the arguments and replace all parameters"""
+    for key in args.keys():
+        if (
+            type(args[key]) is str
+            and "$" in args[key]
+            and args[key].strip("$") in parameters
+        ):
+            args[key] = payload[args[key].strip("$")]
+        elif type(args[key]) is dict:
+            args[key] = walk_and_replace(args[key], parameters, payload)
+    return args
 
 
 class WorkflowRun(Workflow):
