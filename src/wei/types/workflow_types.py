@@ -1,7 +1,5 @@
 """Types related to workflows"""
 
-import copy
-import re
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -93,91 +91,6 @@ class Workflow(BaseModel):
                     else:
                         labels.append(step.data_labels[key])
         return v
-
-    def parameter_insertion(self, parameters):
-        """insert the parameters"""
-        if parameters == {}:
-            return
-        for param in self.parameters:
-            if param.name not in parameters.keys():
-                if param.default:
-                    parameters[param.name] = param.default
-                else:
-                    raise ValueError(
-                        "Workflow parameter: " + param.name + " not provided"
-                    )
-        steps = []
-        for step in self.flowdef:
-            for key, val in iter(step):
-                if type(val) is str:
-                    test = value_substitution(val, parameters)
-                    setattr(step, key, test)
-
-                # setattr(step, key, test)
-            test = step.args
-            test = walk_and_replace(test, parameters)
-            step.args = test
-            steps.append(step)
-        self.flowdef = steps
-
-
-def walk_and_replace(args: Dict[str, Any], input_parameters: Dict[str, Any]):
-    """recursively walk the arguments and replace all parameters"""
-    new_args = copy.deepcopy(args)
-    for key in args.keys():
-        if type(args[key]) is str:
-            new_args[key] = value_substitution(args[key], input_parameters)
-        elif type(args[key]) is dict:
-            new_args[key] = walk_and_replace(args[key], input_parameters)
-        if type(key) is str:
-            new_key = value_substitution(key, input_parameters)
-            new_args[new_key] = new_args[key]
-            if key is not new_key:
-                new_args.pop(key, None)
-    return new_args
-
-
-def value_substitution(input_string: str, input_parameters: Dict[str, Any]):
-    """does $ substitution on input string, returns new substituted string"""
-    if type(input_string) is str and re.match(r"^\$[A-z0-1_\-]*$", input_string):
-        if input_string.strip("$") in input_parameters.keys():
-            input_string = input_parameters[input_string.strip("$")]
-        else:
-            raise ValueError("Unknown parameter:" + input_string + ", please specify")
-    else:
-        test = input_string
-        for match in re.findall(
-            r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s|\}|$)", input_string
-        ):
-            param_name = match[0].strip("$")
-            param_name = param_name.strip("{")
-            if param_name in input_parameters.keys():
-                if match[1] == "}":
-                    if match[0][1] == "{":
-                        test = re.sub(
-                            r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\})",
-                            str(input_parameters[param_name]),
-                            test,
-                        )
-                        input_string = test
-                    else:
-                        raise SyntaxError(
-                            "forgot opening { in parameter insertion: " + match[0] + "}"
-                        )
-                elif match[1] == " ":
-                    test = re.sub(
-                        r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s)",
-                        str(input_parameters[param_name]) + " ",
-                        test,
-                    )
-                elif match[1] == "":
-                    test = re.sub(
-                        r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)($)",
-                        str(input_parameters[param_name]),
-                        test,
-                    )
-                input_string = test
-    return input_string
 
 
 class WorkflowRun(Workflow):

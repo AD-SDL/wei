@@ -15,6 +15,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from wei import __version__
+from wei.core.workflow import insert_parameter_values
 from wei.types import Workflow, WorkflowRun, WorkflowStatus
 from wei.types.base_types import PathLike
 from wei.types.datapoint_types import DataPoint
@@ -383,14 +384,14 @@ class ExperimentClient:
                 category=UserWarning,
                 stacklevel=1,
             )
-        if payload is None:
+        else:
             payload = {}
         if isinstance(workflow, str) or isinstance(workflow, Path):
             workflow = Path(workflow).expanduser().resolve()
             assert workflow.exists(), f"Workflow file {workflow} does not exist"
             workflow = Workflow.from_yaml(workflow)
         Workflow.model_validate(workflow)
-        workflow.parameter_insertion(parameters)
+        insert_parameter_values(workflow, parameters)
         url = f"{self.url}/runs/start"
         files = self._extract_files_from_workflow(workflow, payload)
         response = requests.post(
