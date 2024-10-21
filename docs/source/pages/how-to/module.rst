@@ -97,3 +97,30 @@ Some things to note:
 - The ``state: State`` here is a data structure that, as the name suggests, holds the current state of your module. You'll see it quite a bit in these examples. Think of it as a sort of blackboard you can use to keep track of everything that's going on in your module. We store all the useful members of example_module, as well as any command line parameters, in the ``state`` automatically, and you can easily extend it with additional members as needed (like the ``state.example_interface`` we define above)
 - Don't need a startup or shutdown handler? No worries, just leave them out! Some modules are stateless or otherwise don't actually need these kinds of lifecycle functionality and RESTModule is designed to support that.
 - The startup handler is called in parallel with the REST server starting up. This often means that the REST server will be up and running before the module is actually ready to do anything. To prevent this from causing too many issues, the RESTModule automatically sets ``status["INIT"] == True`` until the startup handler finishes, and the default action handler (more on that later) will prevent any actions from running until ``status["INIT"] == False``.
+
+
+Defining Your Module's Action Handlers
+--------------------------------------
+
+Now you can start defining the _Actions_ your module can perform. It's up to you to define what those actions are, but generally they will correspond to the commands you can send to your device.
+
+For instance, if your device supports a ``move`` command, you might define an action like this:
+
+.. code:: python
+    from starlette.datastructures import State
+    from wei.types.step_types import StepResponse, ActionRequest
+
+    @example_module.action(name="move", description="Move the device to a specified position")
+    def move_action_handler(state: State, action: ActionRequest, position: float) -> StepResponse:
+        """Your action handler logic goes here"""
+        state.example_interface.move(position)
+        return StepResponse.step_succeeded()
+
+Some things to note:
+
+- The ``name`` keyword argument to the ``action`` decorator defines the name of the action. This is required, and must be unique across all actions defined in your module. If you don't specify a name, the name of the function will be used instead. This name is used in Workflow definitions, so it's a good idea to make it something meaningful.
+- The ``description`` keyword argument is optional, and can be used to provide a human-readable description of the action. This can be helpful for documenting your module's actions, and for providing users with context about what the action does. If not provided, the description will be the docstring of the function.
+- The ``state: State`` argument provides access to the module's state. This is the same ``state`` object you saw in the startup and shutdown handlers, and you can use it to store whatever you want. It's optional for the action handler, and will only be passed in if you have a ``state`` argument in your function signature.
+- The ``action: ActionRequest`` argument is automatically passed in to all action handlers. It contains information about the action being performed, including the action's name, parameters, and files. It is optional for the action handler, and will only be passed in if you have an ``action`` argument in your function signature.
+- The ``position: float`` argument is an example of an action parameter. Action parameters are optional, and can be of any JSON serializable type. You can add a description to your parameters to provide additional context about what they represent or how to use them using the ``Annotated[type, description]`` syntax.
+- The return value of the function is used to determine the success or failure of the action. If you return a :class:`wei.types.step_types.StepResponse` or :class:`wei.types.step_types.StepFileResponse` object, that will be used directly. If you return nothing (i.e., just ``return``), the action will be assumed to have succeeded. Otherwise, the action will be assumed to have failed, and the module will return ``StepFailed`` with an error message to the client.

@@ -444,7 +444,19 @@ class RESTModule:
                                 )
 
                     # * Perform the action here and return result
-                    return module_action.function(**arg_dict)
+                    result = module_action.function(**arg_dict)
+                    if isinstance(result, StepResponse) or isinstance(
+                        result, StepFileResponse
+                    ):
+                        return result
+                    elif result is None:
+                        # *Assume success if no return value and no exception
+                        return StepResponse.step_succeeded()
+                    else:
+                        # * Return a failure if the action returns something unexpected
+                        return StepResponse.step_failed(
+                            error=f"Action '{action.name}' returned an unexpected value: {result}"
+                        )
             return StepResponse.step_failed(error=f"Action '{action.name}' not found")
 
     @staticmethod
