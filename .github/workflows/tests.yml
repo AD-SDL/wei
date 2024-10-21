@@ -17,4 +17,4 @@ jobs:
         with:
           python-version: 3.12
       - name: Test with pytest
-        run: make test
+        run: make init build test
