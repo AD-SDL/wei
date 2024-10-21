@@ -21,6 +21,7 @@ class TestWEI_Base(unittest.TestCase):
         campaign_name="Test_Campaign",
         campaign_description="A campaign for automated testing",
     )
+    experiment_client = None
 
     def __init__(self, *args, **kwargs):
         """Basic setup for WEI's pytest tests"""
@@ -45,7 +46,8 @@ class TestWEI_Base(unittest.TestCase):
 
     def __del__(self):
         """Basic cleanup for WEI's pytest tests"""
-        self.experiment_client.log_experiment_end()
+        if self.experiment_client:
+            self.experiment_client.log_experiment_end()
 
 
 class TestPackaging(TestWEI_Base):

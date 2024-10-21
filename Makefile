@@ -23,7 +23,7 @@ checks: # Runs all the pre-commit checks
 	@pre-commit run --all-files || { echo "Checking fixes\n" ; pre-commit run --all-files; }
 
 test: init .env build up # Runs all the tests
-	@docker compose run test_wei_server pytest -p no:cacheprovider wei
+	@docker compose exec test_wei_server pytest -p no:cacheprovider wei
 	@#docker compose down
 
 down:
