@@ -12,7 +12,8 @@ flowdef:
     module: transfer
     action: transfer
     args:
-      target: $pos
+      target:
+        $pos: $pos
     comment: Get a new plate
 
   - name: Transfer plate to synthesis
