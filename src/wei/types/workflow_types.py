@@ -96,6 +96,8 @@ class Workflow(BaseModel):
 
     def parameter_insertion(self, parameters):
         """insert the parameters"""
+        if parameters == {}:
+            return
         for param in self.parameters:
             if param.name not in parameters.keys():
                 if param.default:
@@ -108,29 +110,27 @@ class Workflow(BaseModel):
         for step in self.flowdef:
             for key, val in iter(step):
                 if type(val) is str:
-                    test = value_substitution(val, self.parameters, parameters)
+                    test = value_substitution(val, parameters)
                     setattr(step, key, test)
 
                 # setattr(step, key, test)
             test = step.args
-            test = walk_and_replace(test, self.parameters, parameters)
+            test = walk_and_replace(test, parameters)
             step.args = test
             steps.append(step)
         self.flowdef = steps
 
 
-def walk_and_replace(
-    args: Dict[str, Any], parameters: List[str], input_parameters: Dict[str, Any]
-):
+def walk_and_replace(args: Dict[str, Any], input_parameters: Dict[str, Any]):
     """recursively walk the arguments and replace all parameters"""
     new_args = copy.deepcopy(args)
     for key in args.keys():
         if type(args[key]) is str:
-            new_args[key] = value_substitution(args[key], parameters, input_parameters)
+            new_args[key] = value_substitution(args[key], input_parameters)
         elif type(args[key]) is dict:
-            new_args[key] = walk_and_replace(args[key], parameters, input_parameters)
+            new_args[key] = walk_and_replace(args[key], input_parameters)
         if type(key) is str:
-            new_key = value_substitution(key, parameters, input_parameters)
+            new_key = value_substitution(key, input_parameters)
             new_args[new_key] = new_args[key]
             if key is not new_key:
                 new_args.pop(key, None)
