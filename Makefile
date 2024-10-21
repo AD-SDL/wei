@@ -14,6 +14,11 @@ else
 	@sed -i 's/^USER_ID=.*/USER_ID=$(shell id -u)/' .env
 	@sed -i 's/^GROUP_ID=.*/GROUP_ID=$(shell id -g)/' .env
 endif
+ifeq ($(OS),Windows_NT)
+	@where pdm || (Invoke-WebRequest -Uri https://pdm-project.org/install-pdm.py -UseBasicParsing).Content | py -
+else
+    @where pdm || curl -sSL https://pdm-project.org/install-pdm.py | python3 -
+endif
 
 
 .env: init
@@ -52,7 +57,7 @@ build: build-python # Builds the project
 
 # (Make sure you've installed PDM)
 
-init-python: init pdm.lock deps # Installs the python environment (requires PDM)
+init-python: init pdm-update pdm.lock deps # Installs the python environment (requires PDM)
 
 build-python: init-python # Builds the pypi package for APP_NAME
 	pdm build
@@ -65,6 +70,9 @@ publish-python: init-python # Publishes the pypi package for wei
 ###############################
 # Python Dependency Managment #
 ###############################
+
+pdm-update:
+	pdm self update
 
 pdm.lock: pyproject.toml # Generates the pdm.lock file
 	pdm install --group :all

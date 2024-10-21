@@ -37,7 +37,7 @@ dependencies = [
 dev = [
     "build",
     "mypy",
-    "pre-commit",
+    "pre-commit>=4.0.1",
     "pytest>=7.4.4",
     "ruff",
     "types-aiofiles",
