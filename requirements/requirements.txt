@@ -6,22 +6,20 @@ alabaster==0.7.16
 annotated-types==0.7.0
 anyio==4.6.2.post1
 asttokens==2.4.1
-async-timeout==4.0.3; python_full_version <= "3.11.2"
 autodoc-pydantic==2.2.0
 babel==2.16.0
 build==1.2.2.post1
 certifi==2024.8.30
-cffi==1.17.1; implementation_name == "pypy" or platform_python_implementation != "PyPy"
+cffi==1.17.1; platform_python_implementation != "PyPy"
 cfgv==3.4.0
 charset-normalizer==3.4.0
 click==8.1.7
 colorama==0.4.6
 cryptography==43.0.3
 devtools==0.12.2
-diaspora-event-sdk[kafka-python]==0.3.7
+diaspora-event-sdk==0.3.7
 distlib==0.3.9
 docutils==0.21.2
-exceptiongroup==1.2.2; python_version < "3.11"
 executing==2.1.0
 fastapi==0.115.2
 filelock==3.16.1
@@ -31,7 +29,6 @@ httptools==0.6.4
 identify==2.6.1
 idna==3.10
 imagesize==1.4.1
-importlib-metadata==8.5.0; python_full_version < "3.10.2"
 iniconfig==2.0.0
 jinja2==3.1.4
 kafka-python==2.0.2
@@ -48,18 +45,18 @@ platformdirs==4.3.6
 pluggy==1.5.0
 pottery==3.0.0
 pre-commit==4.0.1
-pycparser==2.22; implementation_name == "pypy" or platform_python_implementation != "PyPy"
+pycparser==2.22; platform_python_implementation != "PyPy"
 pydantic==2.9.2
 pydantic-core==2.23.4
 pydantic-extra-types==2.9.0
 pydantic-settings==2.6.0
 pygments==2.18.0
-pyjwt[crypto]==2.9.0
+pyjwt==2.9.0
 pyproject-hooks==1.2.0
 pytest==8.3.3
 python-dotenv==1.0.1
 python-multipart==0.0.12
-python-ulid[pydantic]==3.0.0
+python-ulid==3.0.0
 pyyaml==6.0.2
 pyzmq==26.2.0
 redis==4.6.0
@@ -80,7 +77,6 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==2.0.0
 sphinxcontrib-serializinghtml==2.0.0
 starlette==0.40.0
-tomli==2.0.2; python_version < "3.11"
 types-aiofiles==24.1.0.20240626
 types-cffi==1.16.0.20240331
 types-cryptography==3.3.23.2
@@ -96,9 +92,8 @@ types-ujson==5.10.0.20240515
 types-urllib3==1.26.25.14
 typing-extensions==4.12.2
 urllib3==1.26.20
-uvicorn[standard]==0.32.0
+uvicorn==0.32.0
 uvloop==0.21.0; (sys_platform != "cygwin" and sys_platform != "win32") and platform_python_implementation != "PyPy"
 virtualenv==20.27.0
 watchfiles==0.24.0
 websockets==13.1
-zipp==3.20.2; python_full_version < "3.10.2"

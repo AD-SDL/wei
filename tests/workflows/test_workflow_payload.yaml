@@ -4,12 +4,13 @@ metadata:
   info: Example workflow for WEI
   version: 0.3
 parameters:
-  - test
-  - test2
-  - delay
+  - name: test
+  - name: test2
+  - name: delay
+    default: 1.5
 
 flowdef:
-  - name: Get plate
+  - name: Get plate wo${test}rd
     module: transfer
     action: transfer
     args:

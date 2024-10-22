@@ -189,7 +189,7 @@ def walk_and_replace(args: Dict[str, Any], input_parameters: Dict[str, Any]):
 def value_substitution(input_string: str, input_parameters: Dict[str, Any]):
     """Perform $-string substitution on input string, returns string with substituted values"""
     # * Check if the string is a simple parameter reference
-    if type(input_string) is str and re.match(r"^\$[A-z0-1_\-]*$", input_string):
+    if type(input_string) is str and re.match(r"^\$[A-z0-9_\-]*$", input_string):
         if input_string.strip("$") in input_parameters.keys():
             input_string = input_parameters[input_string.strip("$")]
         else:
@@ -202,7 +202,7 @@ def value_substitution(input_string: str, input_parameters: Dict[str, Any]):
         # * Replace all parameter references contained in the string
         working_string = input_string
         for match in re.findall(
-            r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s|\}|$)", input_string
+            r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\s|\}|$)", input_string
         ):
             param_name = match[0].strip("$")
             param_name = param_name.strip("{")
@@ -210,7 +210,7 @@ def value_substitution(input_string: str, input_parameters: Dict[str, Any]):
                 if match[1] == "}":
                     if match[0][1] == "{":
                         working_string = re.sub(
-                            r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\})",
+                            r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\})",
                             str(input_parameters[param_name]),
                             working_string,
                         )
@@ -221,13 +221,13 @@ def value_substitution(input_string: str, input_parameters: Dict[str, Any]):
                         )
                 elif match[1] == " ":
                     working_string = re.sub(
-                        r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)(\s)",
+                        r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\s)",
                         str(input_parameters[param_name]) + " ",
                         working_string,
                     )
                 elif match[1] == "":
                     working_string = re.sub(
-                        r"((?<!\$)\$(?!\$)[A-z0-1_\-\{]*)($)",
+                        r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)($)",
                         str(input_parameters[param_name]),
                         working_string,
                     )

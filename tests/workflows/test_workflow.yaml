@@ -7,13 +7,13 @@ parameters:
   - name: delay
     default: 1.5
   - name: pos
+  - name: aim
 flowdef:
   - name: Get plate to $pos
     module: transfer
     action: transfer
     args:
-      target:
-        $pos: $pos
+      $aim: $pos
     comment: Get a new plate
 
   - name: Transfer plate to synthesis
@@ -21,7 +21,7 @@ flowdef:
     action: transfer
     args:
       source: $pos
-      target: synthesis.pos
+      $aim: synthesis.pos
     comment: put a plate in first position
 
   - name: Synthesize foobar
