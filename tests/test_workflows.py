@@ -36,7 +36,7 @@ class TestWEI_Workflows(TestWEI_Base):
             Path(__file__).parent / "workflows" / "test_workflow_payload.yaml"
         )
         insert_parameter_values(wf, {"test": "test.pos", "test2": "target"})
-        assert wf.flowdef[0].name == "Get plate wotest.posrd"
+        assert wf.flowdef[0].name == "Get plate wotest.posrd test.pos.nottest"
         assert wf.flowdef[2].args == {
             "foo": {"thing": {"test": "test.pos"}},
             "bar": "test",

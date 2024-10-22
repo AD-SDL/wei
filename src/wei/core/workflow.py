@@ -201,36 +201,30 @@ def value_substitution(input_string: str, input_parameters: Dict[str, Any]):
     else:
         # * Replace all parameter references contained in the string
         working_string = input_string
+        for match in re.findall(r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\})", input_string):
+            if match[0][1] == "{":
+                param_name = match[0].strip("$")
+                param_name = param_name.strip("{")
+                working_string = re.sub(
+                    r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\})",
+                    str(input_parameters[param_name]),
+                    working_string,
+                )
+                input_string = working_string
+            else:
+                raise SyntaxError(
+                    "forgot opening { in parameter insertion: " + match[0] + "}"
+                )
         for match in re.findall(
-            r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\s|\}|$)", input_string
+            r"((?<!\$)\$(?!\$)[A-z0-9_\-]*)(?![A-z0-9_\-])", input_string
         ):
-            param_name = match[0].strip("$")
-            param_name = param_name.strip("{")
+            param_name = match.strip("$")
             if param_name in input_parameters.keys():
-                if match[1] == "}":
-                    if match[0][1] == "{":
-                        working_string = re.sub(
-                            r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\})",
-                            str(input_parameters[param_name]),
-                            working_string,
-                        )
-                        input_string = working_string
-                    else:
-                        raise SyntaxError(
-                            "forgot opening { in parameter insertion: " + match[0] + "}"
-                        )
-                elif match[1] == " ":
-                    working_string = re.sub(
-                        r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)(\s)",
-                        str(input_parameters[param_name]) + " ",
-                        working_string,
-                    )
-                elif match[1] == "":
-                    working_string = re.sub(
-                        r"((?<!\$)\$(?!\$)[A-z0-9_\-\{]*)($)",
-                        str(input_parameters[param_name]),
-                        working_string,
-                    )
+                working_string = re.sub(
+                    r"((?<!\$)\$(?!\$)[A-z0-9_\-]*)(?![A-z0-9_\-])",
+                    str(input_parameters[param_name]),
+                    working_string,
+                )
                 input_string = working_string
             else:
                 raise ValueError(

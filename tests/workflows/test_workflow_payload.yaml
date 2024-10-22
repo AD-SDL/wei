@@ -10,7 +10,7 @@ parameters:
     default: 1.5
 
 flowdef:
-  - name: Get plate wo${test}rd
+  - name: Get plate wo${test}rd $test.nottest
     module: transfer
     action: transfer
     args:
