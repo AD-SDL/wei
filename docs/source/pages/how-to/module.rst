@@ -221,13 +221,52 @@ The RESTModule class automatically generates an about object for your module bas
 Running Your Module and Command Line Arguments
 ----------------------------------------------
 
-TODO
+Once you've defined your module, you can run it using the command line interface.
 
+Typically, the command you'll run looks something like this:
 
-Module Admin Actions
+.. code:: bash
+
+    python -m example_module --name example1 --port 2003
+
+The ``--name`` argument is optional, and defaults to the name of the module object. The ``--port`` argument is also optional, and defaults to 2000.
+
+You can add additional command line arguments to your module by defining them as follows:
+
+.. code:: python
+
+    from argparse import ArgumentParser
+
+    example_module.arg_parser.add_argument(
+        "--foo",
+        type=float,
+        help="A foo argument",
+        default=0.0,
+    )
+
+    # *Alternatively, you can use the argparse library directly, overriding the default args:
+    parser = ArgumentParser()
+    parser.add_argument("--foo", type=str, help="A foo argument")
+    example_module.arg_parser = parser
+
+This is especially useful for adding additional arguments to your module that are used in your startup handler, such as connection information for a specific device or instrument.
+
+Module Admin Commands
 ---------------------
 
-TODO
+You can define handlers for admin commands, which allow users to control the module from the dashboard or API. These admin commands are meant to support safe and controlled pausing, resuming, locking, unlocking, cancelling, safety stopping, resetting, and shutting down, and are not meant to be used in place of actions. The RESTModule class automatically adds a number of basic admin commands to your module, but you can add your own and/or override the default functionality using the admin command decorators.
+
+.. code:: python
+
+    @example_module.safety_stop()
+    def custom_safety_stop(state: State) -> dict[str, Any]:
+        state.example_interface.estop()
+        state.status[ModuleStatus.CANCELLED] = True
+        state.status[ModuleStatus.LOCKED] = True
+        return {"message": "Module safety-stopped"}
+
+
+For a complete list of supported admin commands, see :class:`wei.types.module_types.AdminCommands`.
 
 Developing a Module from Scratch
 =================================

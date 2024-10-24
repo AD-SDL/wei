@@ -503,7 +503,6 @@ class RESTModule:
         """Handles custom safety-stop functionality"""
         state.status[ModuleStatus.CANCELLED] = True
         state.status[ModuleStatus.LOCKED] = True
-        state.status[ModuleStatus.PAUSED] = True
         return {"message": "Module safety-stopped"}
 
     def safety_stop(self):
