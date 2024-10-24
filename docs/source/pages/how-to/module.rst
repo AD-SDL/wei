@@ -24,21 +24,21 @@ Bare-Metal or Containerized?
 
 When integrating a new device, we sometimes find it beneficial to "containerize" our module implementation using Docker. Containerization is a powerful tool in any developers toolbelt, but it does come with certain tradeoffs and pitfalls to be mindful of.
 
-Generally, we find that as workcells scale, managing the lifecycls and dependencies of many different modules is much easier when each is sandboxed in its own container, but for many simple cases containerization may be overkill. In addition, because of the hardware-dependent nature of many modules, containerization is not always possible/feasible.
+Generally, we find that as workcells scale, managing the lifecycles and dependencies of many different modules is much easier when each is sandboxed in its own container, but for many simple cases containerization may be overkill. In addition, because of the hardware-dependent nature of many modules, containerization is not always possible/feasible.
 
-For more on Docker in WEI, consider reading our :doc:`/pages/deployment_guide/docker`.
+For more on Docker and WEI, consider reading our :doc:`/pages/deployment_guide/docker`.
 
 If you choose *not* to containerize, we recommend you consider alternative strategies for managing your dependencies. With Python-based modules, for instance, consider using `virtual environments <https://docs.python.org/3/library/venv.html>`_, or a tool like pdm, poetry, or conda.
 
 Developing a Module with RESTModule
 ===================================
 
-For a quickstart, you can use the `Python Template Module <https://github.com/AD-SDL/python_template_module>`_ as a template for your own implementation. You can also use it as a reference to write your own module implementation using the :class:`wei.modules.rest_module.RESTModule` class, or use it to inform your own 100%% custom module implementation.
+For a quickstart, you can use the `Python Template Module <https://github.com/AD-SDL/python_template_module>`_ as a template for your own implementation. You can also use it as a reference to write your own module implementation using the :class:`wei.modules.rest_module.RESTModule` class, or use it to inform your own 100% custom module implementation.
 
 Creating a New Module
 ---------------------
 
-First, you need to create a new ``RESTModule`` object:
+To define a module using the helper class, first you need to create a new ``RESTModule`` object:
 
 .. code:: python
 
@@ -48,11 +48,11 @@ First, you need to create a new ``RESTModule`` object:
         name="example_module",
         version="0.0.1",
         model="Example-o-tron 5000",
-        port=1234, # Default port for the rest server
+        port=1234, # Port for the rest server, defaults to 2000.
         description="A useful description of the device/robot/instrument this module can control, and any notable capabilities",
     )
 
-    # Configure your module here!
+    # TODO: Configure your module here!
 
     if __name__ == "__main__":
         example_module.start()
@@ -104,19 +104,94 @@ For instance, if your device supports a ``move`` command, you might define an ac
     from wei.types.step_types import StepResponse, ActionRequest
 
     @example_module.action(
-        name="move",
-        description="Move the device to a specified position"
+        name="move", # *Optional, defaults to the name of the function if not provided.
+        description="Move the device to a specified position", # *Optional, will default to the docstring of the function if not provided.
+        blocking=True, # *Optional, defaults to True. If True, this action will prevent other actions from running until it finishes. If False, other actions can run concurrently with this one.
     )
-    def move_action_handler(state: State, action: ActionRequest, position: float) -> StepResponse:
+    def move_action_handler(
+        state: State,
+        action: ActionRequest,
+        position: Annotated[List[float], "The position to move to, as a list of x, y, and z coordinates"], # *Required argument
+        speed: Annotated[float, "The speed at which to move the device, as a percentage of the maximum speed"] = 1.0, # *Optional argument, defaults to 1.0
+    ) -> StepResponse:
         """Your action handler logic goes here"""
         state.example_interface.move(position)
         return StepResponse.step_succeeded()
 
-Some things to note:
+Some things to note about the action function:
 
-- The ``name`` keyword argument to the ``action`` decorator defines the name of the action. This is required, and must be unique across all actions defined in your module. If you don't specify a name, the name of the function will be used instead. This name is used in Workflow definitions, so it's a good idea to make it something meaningful.
-- The ``description`` keyword argument is optional, and can be used to provide a human-readable description of the action. This can be helpful for documenting your module's actions, and for providing users with context about what the action does. If not provided, the description will be the docstring of the function.
 - The ``state: State`` argument provides access to the module's state. This is the same ``state`` object you saw in the startup and shutdown handlers, and you can use it to store whatever you want. It's optional for the action handler, and will only be passed in if you have a ``state`` argument in your function signature.
-- The ``action: ActionRequest`` argument is automatically passed in to all action handlers. It contains information about the action being performed, including the action's name, parameters, and files. It is optional for the action handler, and will only be passed in if you have an ``action`` argument in your function signature.
-- The ``position: float`` argument is an example of an action parameter. Action parameters are optional, and can be of any JSON serializable type. You can add a description to your parameters to provide additional context about what they represent or how to use them using the ``Annotated[type, description]`` syntax.
+- The ``action: ActionRequest`` argument is available at execution time to all action functions. It contains information about the action being performed, including the action's name, and any arguments or files passed in with the action. It is an optional argument for your action function, and will only be passed in if you have an ``action`` argument in your function signature.
+- The ``position`` and ``speed`` arguments are examples of action arguments. Action arguments are optional, and can be of any JSON serializable type. You can add a description to your parameters to provide additional context about what they represent or how to use them using the ``Annotated[type, description]`` syntax.
 - The return value of the function is used to determine the success or failure of the action. If you return a :class:`wei.types.step_types.StepResponse` or :class:`wei.types.step_types.StepFileResponse` object, that will be used directly. If you return nothing (i.e., just ``return``), the action will be assumed to have succeeded. Otherwise, the action will be assumed to have failed, and the module will return ``StepFailed`` with an error message to the client.
+
+Action Results
+--------------
+
+Let's look at an example of an action that returns results, as both JSON data and file:
+
+.. code:: python
+
+    from starlette.datastructures import State
+    from wei.types.step_types import StepFileResponse, ActionRequest
+    from wei.types.module_types import ValueModuleActionResult, LocalFileModuleActionResult
+    import tempfile
+
+
+    @example_module.action(
+        results=[
+            ValueModuleActionResult(
+                label="data",
+                description="The data returned from the device",
+            ),
+            LocalFileModuleActionResult(
+                label="data_file",
+                description="The data returned from the device as a file",
+            ),
+        ]
+    )
+    def get_data(
+        state: State,
+        as_file: Annotated[bool, "Whether to return the data as a file"] = False,
+    ) -> StepFileResponse | StepResponse:
+        """Get some data from your device and return it."""
+        data = state.example_interface.get_data()
+        if as_file:
+            temp = tempfile.NamedTemporaryFile(delete=False)
+            with open(temp.name, "w") as f:
+                f.write(data)
+            return StepFileResponse(
+                status=StepStatus.SUCCEEDED,
+                files={
+                    "data_file": temp.name,
+                },
+            )
+        return StepResponse(status=StepStatus.SUCCEEDED, data={"data": data})
+
+Note the ``results`` argument in the ``@action`` decorator. This is how you define the results of an action. You can return any number of ``ValueModuleActionResult`` and ``FileModuleActionResult`` objects, and they will be returned to the client as part of the action's response. The argument to the decorator is optional (i.e. even if you don't specify it, the action will still return results), but if you do specify it, users can see the expected results of the action in Module's about information.
+
+You can use StepResponse to return JSON data from an action, or StepFileResponse to return a file and, optionally, JSON data.
+
+To return JSON data, return StepResponse or StepFileResponse with the ``data`` argument set to a dictionary containing the data you want to return. Each top-level key in the dictionary will be used as the label for the result (corresponding to the ``label`` argument passed to a ``ValueModuleActionResult`` in the ``results`` list), and the value will be data to return.
+
+To return one or more files, return StepFileResponse with the ``files`` argument set to a dictionary containing the paths to the files you want to return. Each top-level key in the dictionary will be used as the label for the result (corresponding to the ``label`` argument passed to a ``LocalFileModuleActionResult`` in the ``results`` list), and the value will be the path to the file that will be returned to the client.
+
+Module State
+------------
+
+TODO
+
+Module Resources
+----------------
+
+TODO
+
+About Your Module
+------------------
+
+TODO
+
+Running Your Module and Command Line Arguments
+----------------------------------------------
+
+TODO
