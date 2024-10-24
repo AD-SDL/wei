@@ -179,7 +179,18 @@ To return one or more files, return StepFileResponse with the ``files`` argument
 Module State
 ------------
 
-TODO
+Your Module's state is automatically managed by the RESTModule class, and is available to all your module's actions. You can access it using the ``state`` argument in your action functions, and store your own data on it as needed.
+
+Your module implements a ``/state`` endpoint, which returns the current state of the module as a :class:`wei.types.module_types.ModuleState` object. This must, at the very least, include a ``status`` key.
+
+If you want to return additional fields in the ``/state`` endpoint, you can implement a custom state handler.
+
+
+.. code:: python
+
+    @example_module.state()
+    def custom_state_handler(state: State) -> ModuleState:
+        return ModuleState(status=state.status, foo="bar")
 
 Module Resources
 ----------------
@@ -209,5 +220,16 @@ The RESTModule class automatically generates an about object for your module bas
 
 Running Your Module and Command Line Arguments
 ----------------------------------------------
+
+TODO
+
+
+Module Admin Actions
+---------------------
+
+TODO
+
+Developing a Module from Scratch
+=================================
 
 TODO
