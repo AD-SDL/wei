@@ -184,12 +184,28 @@ TODO
 Module Resources
 ----------------
 
-TODO
+.. admonition:: Coming Soon!
+
+    The Resources method is not yet standardized, and is currently under active development.
 
 About Your Module
 ------------------
 
-TODO
+The Module's About information is used to provide information about the module, it's actions, and it's resources to the client. It is displayed in the Module's about modal in the dashboard, and returned as part of the module's ``/about`` endpoint.
+
+Module Abouts must conform to the :class:`wei.types.module_types.ModuleAbout` schema.
+
+The RESTModule class automatically generates an about object for your module based on the parameters you set when you create the module instance, arguments to the ``action`` decorators, and properties of the action functions, such as the function signatures. However, you can override this with your own about object if you'd like.
+
+.. code:: python
+
+    from wei.types.module_types import ModuleAbout
+
+    example_module.about = ModuleAbout(
+        name="Example Module",
+        description="A module for demonstrating how to write your own modules",
+    )
+
 
 Running Your Module and Command Line Arguments
 ----------------------------------------------
