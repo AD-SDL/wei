@@ -1,4 +1,4 @@
-wei.core.workflow
+﻿wei.core.workflow
 =================
 
 .. automodule:: wei.core.workflow
@@ -12,6 +12,9 @@ wei.core.workflow
       cancel_workflow_run
       create_run
       inject_payload
+      insert_parameter_values
       replace_positions
       save_workflow_files
+      value_substitution
+      walk_and_replace
    
