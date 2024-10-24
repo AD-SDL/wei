@@ -48,7 +48,8 @@ class TestWEI_Base(unittest.TestCase):
 
     def __del__(self):
         """Basic cleanup for WEI's pytest tests"""
-        self.experiment_client.log_experiment_end()
+        if self.experiment_client:
+            self.experiment_client.log_experiment_end()
 
 
 class TestPackaging(TestWEI_Base):
