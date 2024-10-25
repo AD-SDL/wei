@@ -2,6 +2,8 @@
 set -e
 set -o pipefail
 
+echo "Container user:group is ${USER_ID}:${GROUP_ID}"
+
 # Change the UID and GID of the app user if they are provided as environment variables
 if [ -z "${USER_ID}" ]; then
     USER_ID=9999

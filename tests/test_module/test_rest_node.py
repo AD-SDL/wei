@@ -25,7 +25,6 @@ from wei.types.step_types import ActionRequest
 
 
 test_rest_node = RESTModule(
-    name="test_rest_node",
     description="A test module for WEI",
     version="1.0.0",
     model="test_module",
@@ -250,10 +249,14 @@ def measure_action(state: State, action: ActionRequest) -> StepResponse:
 
 
 @test_rest_node.action(name="admin_actions_test")
-def admin_actions_test(state: State, action: ActionRequest) -> StepResponse:
+def admin_actions_test(
+    state: State,
+    action: ActionRequest,
+    run_time: Annotated[int, "The amount of time to run the action for"] = 30,
+) -> StepResponse:
     """Allows testing of the admin action functionality"""
 
-    if not sleep_with_signals(30, state):
+    if not sleep_with_signals(run_time, state):
         return StepResponse.step_failed()
     else:
         return StepResponse.step_succeeded()

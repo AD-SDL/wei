@@ -33,6 +33,26 @@ class WorkflowStatus(str, Enum):
     CANCELLED = "cancelled"
     """Workflow run has been cancelled"""
 
+    @property
+    def is_active(self) -> bool:
+        """Whether or not the workflow run is active"""
+        return self in [
+            WorkflowStatus.NEW,
+            WorkflowStatus.QUEUED,
+            WorkflowStatus.RUNNING,
+            WorkflowStatus.IN_PROGRESS,
+            WorkflowStatus.PAUSED,
+        ]
+
+
+class WorkflowParameter(BaseModel):
+    """container for a workflow parameter"""
+
+    name: str
+    """the name of the parameter"""
+    default: Optional[Any] = None
+    """ the default value of the parameter"""
+
 
 class Workflow(BaseModel):
     """Grand container that pulls all info of a workflow together"""
@@ -41,6 +61,8 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
+    parameters: Optional[List[WorkflowParameter]] = []
+    """Inputs to the workflow"""
     flowdef: List[Step]
     """User Submitted Steps of the flow"""
 
@@ -84,9 +106,7 @@ class WorkflowRun(Workflow):
     """current status of the workflow"""
     steps: List[Step] = []
     """WEI Processed Steps of the flow"""
-    hist: Dict[str, Any] = Field(default={})
-    """history of the workflow"""
-    experiment_id: str = ""
+    experiment_id: str
     """ID of the experiment this workflow is a part of"""
     step_index: int = 0
     """Index of the current step"""

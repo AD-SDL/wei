@@ -1,5 +1,5 @@
 <template>
-  <v-dialog class="pa-3" v-slot:default="{ isActive }" max-width="1000">
+  <v-dialog class="pa-3" v-slot:default="{ isActive }">
     <v-card>
       <v-card-title>
         <div class="d-flex align-center w-100">
@@ -8,33 +8,28 @@
           <!-- Display pause/resume button only if module has 'pause' and 'resume' admin actions -->
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('pause') && wc_state.modules[modal_title].about.admin_commands.includes('resume')">
             <PauseResumeButton
-              :main_url="main_url"
               :module="modal_title"
               :module_status="wc_state.modules[modal_title].state.status"
               class="ml-2" />
           </template>
 
           <CancelButton
-            :main_url="main_url"
             :module="modal_title"
             :module_status="wc_state.modules[modal_title].state.status"
             class="ml-2" />
 
           <ResetButton
-            :main_url="main_url"
             :module="modal_title"
             :module_status="wc_state.modules[modal_title].state.status"
             class="ml-2" />
 
           <LockUnlockButton
-            :main_url="main_url"
             :module="modal_title"
             :module_status="wc_state.modules[modal_title].state.status"
             class="ml-2" />
 
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('shutdown')">
             <ShutdownButton
-              :main_url="main_url"
               :module="modal_title"
               :module_status="wc_state.modules[modal_title].state.status"
               class="ml-2"/>
@@ -42,21 +37,18 @@
 
           <template v-if="wc_state.modules[modal_title].about.admin_commands.includes('safety_stop')">
             <SafetyStopButton
-              :main_url="main_url"
               :module="modal_title"
               :module_status="wc_state.modules[modal_title].state.status"
               class="ml-2"/>
           </template>
         </div>
-        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'module_status_' + wc_state.modules[modal_title].state.status">{{ wc_state.modules[modal_title].state.status }}</v-sheet>
+        <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'module_status_' + get_status(wc_state.modules[modal_title].state.status)">
+          {{ Object.entries(wc_state.modules[modal_title].state.status).filter(([_, value]) => value === true).map(([key, _]) => key).join(' ') }}
+        </v-sheet>
       </v-card-title>
 
       <v-card-text class="subheading grey--text">
         <div>
-          <h3>State</h3>
-          <vue-json-pretty :data="wc_state.modules[modal_title].state"></vue-json-pretty>
-          <h3>About</h3>
-          <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
           <h3>Actions</h3>
           <v-expansion-panels>
             <v-expansion-panel v-for="action in modal_text.actions" :key="action.name">
@@ -123,6 +115,22 @@
               </v-expansion-panel-text>
             </v-expansion-panel>
           </v-expansion-panels>
+          <v-container fluid>
+            <v-row dense wrap justify-content="space-evenly">
+              <v-col cols="12" md="6" lg="4" xl="3">
+                <h3>State</h3>
+                <vue-json-pretty :data="wc_state.modules[modal_title].state"></vue-json-pretty>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" xl="3">
+                <h3>About</h3>
+                <vue-json-pretty :data="modal_text" :deep="1"></vue-json-pretty>
+              </v-col>
+              <v-col cols="12" md="6" lg="4" xl="3">
+                <h3>Resources</h3>
+                  <p>Coming Soon</p>
+              </v-col>
+            </v-row>
+          </v-container>
         </div>
       </v-card-text>
       <v-card-actions>
@@ -135,7 +143,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-
+import { get_status } from '../store';
 
 import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
@@ -148,6 +156,7 @@ const arg_headers = [
   { title: 'Required', key: 'required' },
   { title: 'Default', key: 'default' },
   { title: 'Description', key: 'description' },
+  { title: "Value", minWidth: "200px"}
 ]
 const copy = ref(false)
 const file_headers = [

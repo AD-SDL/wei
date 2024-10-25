@@ -8,33 +8,45 @@ services:
     ports:
       - 2000:2000
     env_file: .env
+    environment:
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     volumes:
       - ~/.wei:/home/app/.wei
     command: 'python3 wei/tests/test_module/test_rest_node.py --name synthesis --database_url ${DB_URL}
-      --port 2000
-      --alias synthesis'
+      --port 2000'
+    depends_on:
+      - wei_postgres
   transfer:
     image: ${IMAGE}
     container_name: transfer
     ports:
       - 2001:2001
+    environment:
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     env_file: .env
     volumes:
       - ~/.wei:/home/app/.wei
     command: 'python3 wei/tests/test_module/test_rest_node.py --name transfer --database_url ${DB_URL}
-      --port 2001
-      --alias transfer'
+      --port 2001'
+    depends_on:
+      - wei_postgres
   measure:
     image: ${IMAGE}
     container_name: measure
     ports:
       - 2002:2002
+    environment:
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     env_file: .env
     volumes:
       - ~/.wei:/home/app/.wei
     command: 'python3 wei/tests/test_module/test_rest_node.py --name measure --database_url ${DB_URL}
-      --port 2002
-      --alias measure'
+      --port 2002'
+    depends_on:
+      - wei_postgres
 
   #####################
   # WEI Core Services #
@@ -54,6 +66,9 @@ services:
       - diaspora_config:/home/app/.diaspora
       - ./tests/workcells:/workcell_defs
       - ~/.wei:/home/app/.wei
+    environment:
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     env_file: .env
     command: python3 -m wei.server --workcell /workcell_defs/${WORKCELL_FILENAME} --database_url ${DB_URL}
     depends_on:
@@ -74,6 +89,9 @@ services:
   utilities:
     image: ${IMAGE}
     container_name: utilities
+    environment:
+      - USER_ID=${USER_ID:-1000}
+      - GROUP_ID=${GROUP_ID:-1000}
     env_file: .env
     ports:
       - 8001:8001

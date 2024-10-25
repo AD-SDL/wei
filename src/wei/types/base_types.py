@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 from typing import Optional, Type, TypeVar, Union
 
-import ulid
 import yaml
 from pydantic import AliasChoices, Field
 from pydantic import BaseModel as _BaseModel
+from pydantic.functional_validators import model_validator
+from typing_extensions import Self
+from ulid import ULID
 
 _T = TypeVar("_T")
 
@@ -15,8 +17,8 @@ PathLike = Union[str, Path]
 
 
 def ulid_factory() -> str:
-    """Generates a ulid string"""
-    return ulid.new().str
+    """Generates a ulid"""
+    return str(ULID())
 
 
 class BaseModel(_BaseModel, use_enum_values=True):
@@ -49,15 +51,27 @@ class BaseModel(_BaseModel, use_enum_values=True):
             raw_data = yaml.safe_load(fp)
         return cls(**raw_data)
 
+    @model_validator(mode="after")
+    def validate_ulids(self) -> Self:
+        """Validates that all ULID fields are valid"""
+        for field in self.model_fields:
+            if field == "id" or field.endswith("_id"):
+                try:
+                    if self.model_dump()[field]:
+                        ULID.from_str(self.model_dump()[field])
+                except ValueError as e:
+                    raise ValueError(f"Invalid ULID in field {field}") from e
+        return self
+
 
 class Metadata(BaseModel, extra="allow"):
     """Metadata container"""
 
     author: Optional[str] = None
-    """Who authored this workflow"""
+    """Who wrote this object"""
     description: Optional[str] = Field(
         default=None, alias=AliasChoices("description", "info")
     )
-    """Long description"""
-    version: float = 0.1
-    """Version of interface used"""
+    """Description of the object"""
+    version: Union[float, str] = ""
+    """Version of the object"""

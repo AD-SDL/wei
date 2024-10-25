@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.6.3"
+version = "0.7.1"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -10,7 +10,7 @@ authors = [
     {name = "Doga Ozgulbas", email = "dozgulbas@anl.gov"},
     {name = "Kyle Hippe", email = "khippe@anl.gov"},
 ]
-requires-python = ">=3.8.1"
+requires-python = ">=3.9.1"
 readme = "README.md"
 license = {text = "MIT"}
 dependencies = [
@@ -22,7 +22,6 @@ dependencies = [
     'PyYAML>=6.0',
     'redis>=4.2.2',
     'requests>=2.31.0',
-    'ulid-py>=1.1.0',
     'uvicorn[standard]>=0.21',
     "websockets>=12.0",
     "secure-smtplib>=0.1.1",
@@ -32,13 +31,16 @@ dependencies = [
     "aenum>=3.1.15",
     "colorama>=0.4.6",
     "pause>=0.3",
+    "pydantic-extra-types>=2.9.0",
+    "python-ulid[pydantic]>=2.7.0",
+    "rich>=13.9.2",
 ]
 
 [project.optional-dependencies]
 dev = [
     "build",
     "mypy",
-    "pre-commit",
+    "pre-commit>=4.0.1",
     "pytest>=7.4.4",
     "ruff",
     "types-aiofiles",

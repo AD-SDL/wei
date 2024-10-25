@@ -3,7 +3,7 @@
 ################################################################################
 .DEFAULT_GOAL := init
 
-.PHONY: init checks test clean
+.PHONY: init checks test clean down up restart rebuild
 
 init: # Do the initial configuration of the project
 	@test -e .env || cp example.env .env
@@ -14,6 +14,11 @@ else
 	@sed -i 's/^USER_ID=.*/USER_ID=$(shell id -u)/' .env
 	@sed -i 's/^GROUP_ID=.*/GROUP_ID=$(shell id -g)/' .env
 endif
+ifeq ($(OS),Windows_NT)
+	@where pdm || (Invoke-WebRequest -Uri https://pdm-project.org/install-pdm.py -UseBasicParsing).Content | py -
+else
+    @where pdm || curl -sSL https://pdm-project.org/install-pdm.py | python3 -
+endif
 
 
 .env: init
@@ -22,11 +27,19 @@ checks: # Runs all the pre-commit checks
 	@pre-commit install
 	@pre-commit run --all-files || { echo "Checking fixes\n" ; pre-commit run --all-files; }
 
-test: init .env build # Runs all the tests
-	@docker compose up -d wei_postgres # Ensure PostgreSQL is up first
-	@docker compose up -d
-	@docker compose run test_wei_server pytest -p no:cacheprovider wei
-	@#docker compose down
+test: init .env build up # Runs all the tests
+	@docker compose exec test_wei_server pytest -p no:cacheprovider wei || (docker compose logs --tail 25 && false)
+	@docker compose down
+
+down:
+	@docker compose down
+
+up:
+	@docker compose up -d --remove-orphans
+
+restart: build up
+
+rebuild: restart
 
 clean:
 	@rm .env
@@ -44,7 +57,7 @@ build: build-python # Builds the project
 
 # (Make sure you've installed PDM)
 
-init-python: init pdm.lock deps # Installs the python environment (requires PDM)
+init-python: init pdm-update pdm.lock deps # Installs the python environment (requires PDM)
 
 build-python: init-python # Builds the pypi package for APP_NAME
 	pdm build
@@ -57,6 +70,9 @@ publish-python: init-python # Publishes the pypi package for wei
 ###############################
 # Python Dependency Managment #
 ###############################
+
+pdm-update:
+	pdm self update
 
 pdm.lock: pyproject.toml # Generates the pdm.lock file
 	pdm install --group :all

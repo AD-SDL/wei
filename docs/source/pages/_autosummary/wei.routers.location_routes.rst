@@ -4,11 +4,6 @@ wei.routers.location\_routes
 .. automodule:: wei.routers.location_routes
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,15 +12,3 @@ wei.routers.location\_routes
       show_states
       update
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

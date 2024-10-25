@@ -1,21 +1,8 @@
-﻿wei.types.exceptions
+wei.types.exceptions
 ====================
 
 .. automodule:: wei.types.exceptions
 
-   
-   
-   
-
-   
-   
-   
-
-   
-   
-   
-
-   
    
    .. rubric:: Exceptions
 
@@ -24,7 +11,3 @@
       WorkflowCanceledException
       WorkflowFailedException
    
-   
-
-
-

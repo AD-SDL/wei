@@ -4,11 +4,6 @@ wei.core.location
 .. automodule:: wei.core.location
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -21,15 +16,3 @@ wei.core.location
       update_location_reserve
       update_source_and_target
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

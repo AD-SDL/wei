@@ -4,11 +4,6 @@ wei.core.admin
 .. automodule:: wei.core.admin
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -23,15 +18,3 @@ wei.core.admin
       send_shutdown
       send_unlock
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

@@ -35,17 +35,18 @@ This will start the server and load the workcell configuration from the specifie
 Running the WEI Engine
 ======================
 
+.. note:: As of version 0.6.3, the WEI engine is automatically started as part of the WEI server by default. If you do still want to start the engine separately, you can do so using the following instructions.
+
 The WEI engine is responsible for the scheduling and execution of workflows and other scheduled operations on the workcell. To start the engine, run the following command:
 
 ``python -m wei.engine --workcell <path/to/workcell.yaml>``
 
 This will start the engine and load the workcell configuration from the specified YAML file. The engine will begin scheduling and executing workflows and other operations as they are queued via the WEI Server.
 
-Alternatively, you can start the engine automatically as a spin-off thread from the server, via the ``autostart_engine`` configuration option in the workcell YAML file or command line arguments, e.g.:
+To run the engine separately, make sure you run the server with the ``--autostart_engine`` flag set to ``False``:
 
-``python -m wei.server --workcell <path/to/workcell.yaml> --autostart_engine True``
+``python -m wei.server --workcell <path/to/workcell.yaml> --autostart_engine False``
 
-This will start the engine automatically when the server starts, and will become the default behavior in a future release.
 
 Running Redis
 =============

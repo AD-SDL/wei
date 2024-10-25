@@ -3,6 +3,7 @@
 import argparse
 import importlib.metadata
 import inspect
+import logging
 import os
 import signal
 import sys
@@ -113,9 +114,19 @@ class RESTModule:
         self.model = model
         self.interface = interface
         self.actions = actions if actions else []
-        self.admin_commands = admin_commands if admin_commands else set()
-        self.admin_commands.add(AdminCommands.SHUTDOWN)
         self.data_dir = data_dir if data_dir else Path.home() / ".wei" / "modules"
+        self.admin_commands = (
+            admin_commands
+            if admin_commands
+            else set(
+                [
+                    AdminCommands.SHUTDOWN,
+                    AdminCommands.RESET,
+                    AdminCommands.LOCK,
+                    AdminCommands.UNLOCK,
+                ]
+            )
+        )
 
         # * Set any additional keyword arguments as attributes as well
         # * These will then get added to the state object
@@ -137,11 +148,11 @@ class RESTModule:
                 "--port",
                 type=int,
                 default=self.port,
-                help="Hostname or IP address to bind to (0.0.0.0 for all interfaces)",
+                help="Port to bind to",
             )
             self.arg_parser.add_argument(
-                "--alias",
                 "--name",
+                "--alias",
                 "--node_name",
                 type=str,
                 default=self.name,
@@ -167,6 +178,12 @@ class RESTModule:
             )
 
     # * Module and Application Lifecycle Functions
+    @staticmethod
+    def startup_message(state: State):
+        """This function is called when the module starts up. It should print a message to the console to indicate that the module has started."""
+        logger = logging.getLogger("uvicorn.error")
+        logger.setLevel(logging.INFO)
+        logger.info(f"Module {state.name} starting on {state.host}:{state.port}")
 
     @staticmethod
     def _startup_handler(state: State):
@@ -258,6 +275,8 @@ class RESTModule:
         # * Run startup on a separate thread so it doesn't block the rest server from starting
         # * (module won't accept actions until startup is complete)
         Thread(target=RESTModule.startup_thread, args=[app.state]).start()
+
+        RESTModule.startup_message(state=app.state)
 
         yield
 
@@ -455,7 +474,19 @@ class RESTModule:
                                 )
 
                     # * Perform the action here and return result
-                    return module_action.function(**arg_dict)
+                    result = module_action.function(**arg_dict)
+                    if isinstance(result, StepResponse) or isinstance(
+                        result, StepFileResponse
+                    ):
+                        return result
+                    elif result is None:
+                        # *Assume success if no return value and no exception
+                        return StepResponse.step_succeeded()
+                    else:
+                        # * Return a failure if the action returns something unexpected
+                        return StepResponse.step_failed(
+                            error=f"Action '{action.name}' returned an unexpected value: {result}"
+                        )
             return StepResponse.step_failed(error=f"Action '{action.name}' not found")
 
     @staticmethod
@@ -500,7 +531,8 @@ class RESTModule:
     @staticmethod
     def _safety_stop(state: State):
         """Handles custom safety-stop functionality"""
-        state.status[ModuleStatus.CANCELLED]
+        state.status[ModuleStatus.CANCELLED] = True
+        state.status[ModuleStatus.LOCKED] = True
         return {"message": "Module safety-stopped"}
 
     def safety_stop(self):
@@ -725,6 +757,7 @@ class RESTModule:
 
         # * If arguments are passed, set them as state variables
         args = self.arg_parser.parse_args()
+        print(args)
         for arg_name in vars(args):
             if (
                 getattr(args, arg_name) is not None

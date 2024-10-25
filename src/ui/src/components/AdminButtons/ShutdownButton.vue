@@ -22,28 +22,29 @@
 </template>
 
 <script lang="ts" setup>
-    import { defineProps, ref, watchEffect } from 'vue';
+    import { main_url } from "@/store";
+import { ref, watchEffect } from 'vue';
 
     const props = defineProps<{
-        main_url: string;
         module?: string;
         module_status?: string;
-        wc_state?: any;
     }>();
 
-    const shutdown_url = ref()
+    const shutdown_url = ref('')
     const isShutdown = ref(true);
-    const hoverText = ref()
+    const hoverText = ref('')
 
     // Format shutdown url
-    if (props.module) {
-        shutdown_url.value = props.main_url.concat('/admin/shutdown/'.concat(props.module))
-        hoverText.value = "Shutdown Module"
-    }
-    else {
-        shutdown_url.value = props.main_url.concat('/admin/shutdown')
-        hoverText.value = "Shutdown WEI Server and Dashboard"
-    }
+    watchEffect(() => {
+        if (props.module) {
+            shutdown_url.value = main_url.value.concat('/admin/shutdown/'.concat(props.module))
+            hoverText.value = "Shutdown Module"
+        }
+        else {
+            shutdown_url.value = main_url.value.concat('/admin/shutdown')
+            hoverText.value = "Shutdown WEI Server and Dashboard"
+        }
+    })
 
     watchEffect(() => {
         // Determine if the module is already shutdown

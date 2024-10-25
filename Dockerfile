@@ -34,7 +34,10 @@ COPY requirements/requirements.txt wei/requirements/requirements.txt
 COPY requirements/dev.txt wei/requirements/dev.txt
 RUN --mount=type=cache,target=/root/.cache \
 	pip install --upgrade setuptools wheel pip && \
-    pip install -r wei/requirements/requirements.txt
+    pip install -r wei/requirements/requirements.txt && \
+    pip install -r wei/requirements/dev.txt
+
+ENV PATH="${PATH}:~/.local/bin"
 
 # Copy rest of wei files
 COPY src wei/src

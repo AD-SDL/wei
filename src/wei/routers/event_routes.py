@@ -2,7 +2,7 @@
 Router for the "events" endpoints
 """
 
-from typing import Any
+from typing import Any, Dict
 
 from fastapi import APIRouter
 
@@ -21,13 +21,14 @@ def log_event(event: Event) -> Any:
     return event
 
 
+@router.get("/")
+@router.get("/all")
+def get_all_events() -> Dict[str, Event]:
+    """Returns all events stored in the event cache."""
+    return state_manager.get_all_events()
+
+
 @router.get("/{event_id}")
 def get_event(event_id: str) -> Event:
     """Returns the details for a specific event given the id"""
     return state_manager.get_event(event_id)
-
-
-@router.get("/")
-def get_all_events(event_id: str) -> Event:
-    """Returns all events stored in the event cache."""
-    return state_manager.get_all_events()

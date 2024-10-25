@@ -21,27 +21,27 @@
 </template>
 
 <script lang="ts" setup>
-    import { defineProps, ref } from 'vue';
+    import { main_url } from "@/store";
+import { ref, watchEffect } from 'vue';
 
     const props = defineProps<{
-        main_url: string;
         module?: string;
-        module_status?: string;
-        wc_state?: any;
     }>();
 
-    const safetyStop_url = ref()
-    const hoverText = ref()
+    const safetyStop_url = ref('')
+    const hoverText = ref('')
 
     // Format safety stop url
-    if (props.module) {
-        safetyStop_url.value = props.main_url.concat('/admin/safety_stop/'.concat(props.module))
-        hoverText.value = "Stop Module"
-    }
-    else {
-        safetyStop_url.value = props.main_url.concat('/admin/safety_stop')
-        hoverText.value = "Stop Workcell"
-    }
+    watchEffect(() => {
+        if (props.module) {
+            safetyStop_url.value = main_url.value.concat('/admin/safety_stop/'.concat(props.module))
+            hoverText.value = "Stop Module"
+        }
+        else {
+            safetyStop_url.value = main_url.value.concat('/admin/safety_stop')
+            hoverText.value = "Stop Workcell"
+        }
+    })
 
     // Function to send safety stop command
     const sendSafetyStopCommand = async () => {

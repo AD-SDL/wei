@@ -10,7 +10,7 @@ from zipfile import ZipFile
 import yaml
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from pydantic import AliasChoices, Field, ValidationInfo, field_validator, validator
+from pydantic import AliasChoices, Field, ValidationInfo, field_validator
 from typing_extensions import Literal
 
 from wei.types.base_types import BaseModel, PathLike, ulid_factory
@@ -172,8 +172,9 @@ class Step(BaseModel, arbitrary_types_allowed=True):
     """Result of the step after being run"""
 
     # Load any yaml arguments
-    @validator("args")
-    def validate_args_dict(cls, v: Any, **kwargs: Any) -> Any:
+    @field_validator("args")
+    @classmethod
+    def validate_args_dict(cls, v: Any) -> Any:
         """asserts that args dict is assembled correctly"""
         assert isinstance(v, dict), "Args is not a dictionary"
         for key, arg_data in v.items():

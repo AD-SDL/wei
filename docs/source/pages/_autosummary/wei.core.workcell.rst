@@ -4,11 +4,6 @@ wei.core.workcell
 .. automodule:: wei.core.workcell
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -18,15 +13,3 @@ wei.core.workcell
       load_workcell_file
       set_config_from_workcell
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
