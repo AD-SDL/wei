@@ -4,11 +4,6 @@ wei.routers.data\_routes
 .. automodule:: wei.routers.data_routes
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -17,15 +12,3 @@ wei.routers.data\_routes
       get_datapoint
       get_datapoint_info
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

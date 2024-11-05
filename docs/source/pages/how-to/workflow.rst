@@ -45,7 +45,7 @@ Example Workflow Metadata
 Modules
 -------
 
-The modules section is simply a list of the names of modules that will be used in the workflow. WEI will use this list to ensure that the modules are available in the workcell, and to ensure that the workflow is valid.
+The modules section is simply a list of the names of modules that will be used in the workflow. This section is optional.
 
 Example Module List
 ^^^^^^^^^^^^^^^^^^^
@@ -56,6 +56,25 @@ Example Module List
         - transfer
         - synthesis
         - measure
+
+Parameters
+----------
+
+Parameters are values that can be set when a job is submitted, allowing for more flexible and reusable Workflows.
+
+They support a ``default`` value, which will be used if the parameter is not provided when the workflow is run. If no default is provided, the parameter is required to be provided at runtime.
+
+For a complete breakdown of the parameters schema, see :class:`wei.types.workflow_types.WorkflowParameters`.
+
+Example Workflow Parameters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+    parameters:
+      - name: foo
+        default: 10
+      - name: bar
 
 Flow Definition
 ---------------
@@ -69,6 +88,7 @@ Each step includes:
 - The desired action to be taken by that module
 - Any arguments the module will need to execute the action (optional, this can be left out if the module does not require any arguments)
 - Any files that the module will need to execute the action (optional, this can be left out if the module does not require any files).
+- A comment that can thoroughly describe the step for readers of the workflow file.
 
 For a complete breakdown of the step schema, see :class:`wei.types.Step`.
 
@@ -97,8 +117,8 @@ Example Flowdef
         module: synthesis
         action: synthesize
         args:
-            foo: 2.0
-            bar: 0.5
+            foo: $foo
+            bar: $bar
         files:
             protocol: ./protocols/foobar_protocol.py
         comment: Combines foo and bar to produce foobar, using foobar_protocol.yaml
@@ -136,6 +156,10 @@ Full Example
         - transfer
         - synthesis
         - measure
+    parameters:
+      - name: foo
+        default: 10
+      - name: bar
     flowdef:
       - name: Get plate
         module: transfer
@@ -156,8 +180,8 @@ Full Example
         module: synthesis
         action: synthesize
         args:
-            foo: 2.0
-            bar: 0.5
+            foo: $foo
+            bar: $bar
         files:
             protocol: ./protocols/foobar_protocol.py
         comment: Combines foo and bar to produce foobar, using foobar_protocol.yaml
@@ -180,3 +204,39 @@ Full Example
         args:
             source: measure.pos
             target: wc.trash
+
+Programmatically Creating Workflows
+===================================
+
+Workflows can be created programmatically using the :class:`wei.types.workflow_types.Workflow` class. This class allows you to define a workflow without having to write out the YAML file. This can be useful for creating workflows in a python script, or for dynamically creating workflows based on some external input.
+
+Example
+^^^^^^^
+
+.. code-block:: python
+
+    from wei.types.workflow_types import Workflow, WorkflowParameter
+    from wei.types.base_types import Metadata
+    from wei.types.step_types import Step
+
+    workflow = Workflow(
+        name="MyWorkflow",
+        metadata=Metadata(
+            author="Tobias Ginsburg, Kyle Hippe, Ryan D. Lewis",
+            info="Example workflow for WEI",
+            version="0.2",
+        ),
+        modules=["transfer", "synthesis", "measure"],
+        parameters=[
+            WorkflowParameter(name="foo", default=10),
+            WorkflowParameter(name="bar"),
+        ],
+        steps=[
+            Step(name="Get plate", module="transfer", action="transfer", args={"target": "transfer.pos"}),
+            Step(name="Transfer plate to synthesis", module="transfer", action="transfer", args={"source": "transfer.pos", "target": "synthesis.pos"}),
+            Step(name="Synthesize foobar", module="synthesis", action="synthesize", args={"foo": "$foo", "bar": "$bar"}, files={"protocol": "./protocols/foobar_protocol.py"}),
+            Step(name="Transfer sample to measure", module="transfer", action="transfer", args={"source": "synthesis.pos", "target": "measure.pos"}),
+            Step(name="Measure foobar", module="measure", action="measure"),
+            Step(name="Discard sample", module="transfer", action="transfer", args={"source": "measure.pos", "target": "wc.trash"}),
+        ],
+    )

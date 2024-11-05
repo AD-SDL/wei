@@ -13,14 +13,7 @@
                   <h3 wrap>{{ module_name }}</h3>
 
                   <p wrap class="text-caption">
-                    status:
-                  <ul class="status-list" style="padding-left: 12px;">
-                    <template v-for="(statusValue, statusKey) in value.state.status" :key="statusKey">
-                      <li wrap v-if="statusValue === true">
-                        {{ statusKey }}
-                      </li>
-                    </template>
-                  </ul>
+                    status: {{ Object.entries(value.state.status).filter(([_, value]) => value === true).map(([key, _]) => key).join(' ') }}
                   </p>
                   <div v-for="(value2, key2) in value.state" :key="key2">
                     <p wrap v-if="(key2.toString() != 'status') && (value2 != null)" class="text-caption">

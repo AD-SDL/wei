@@ -113,8 +113,18 @@ class RESTModule:
         self.interface = interface
         self.actions = actions if actions else []
         self.resource_pools = resource_pools if resource_pools else []
-        self.admin_commands = admin_commands if admin_commands else set()
-        self.admin_commands.add(AdminCommands.SHUTDOWN)
+        self.admin_commands = (
+            admin_commands
+            if admin_commands
+            else set(
+                [
+                    AdminCommands.SHUTDOWN,
+                    AdminCommands.RESET,
+                    AdminCommands.LOCK,
+                    AdminCommands.UNLOCK,
+                ]
+            )
+        )
 
         # * Set any additional keyword arguments as attributes as well
         # * These will then get added to the state object
@@ -434,7 +444,19 @@ class RESTModule:
                                 )
 
                     # * Perform the action here and return result
-                    return module_action.function(**arg_dict)
+                    result = module_action.function(**arg_dict)
+                    if isinstance(result, StepResponse) or isinstance(
+                        result, StepFileResponse
+                    ):
+                        return result
+                    elif result is None:
+                        # *Assume success if no return value and no exception
+                        return StepResponse.step_succeeded()
+                    else:
+                        # * Return a failure if the action returns something unexpected
+                        return StepResponse.step_failed(
+                            error=f"Action '{action.name}' returned an unexpected value: {result}"
+                        )
             return StepResponse.step_failed(error=f"Action '{action.name}' not found")
 
     @staticmethod
@@ -481,7 +503,6 @@ class RESTModule:
         """Handles custom safety-stop functionality"""
         state.status[ModuleStatus.CANCELLED] = True
         state.status[ModuleStatus.LOCKED] = True
-        state.status[ModuleStatus.PAUSED] = True
         return {"message": "Module safety-stopped"}
 
     def safety_stop(self):

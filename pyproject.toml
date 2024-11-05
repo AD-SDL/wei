@@ -1,6 +1,6 @@
 [project]
 name = "ad_sdl.wei"
-version = "0.7.1"
+version = "0.7.2"
 description = "The Rapid Prototyping Laboratory's Workflow Execution Interface."
 authors = [
     {name = "Rafael Vescovi", email = "ravescovi@anl.gov"},
@@ -37,7 +37,7 @@ dependencies = [
 dev = [
     "build",
     "mypy",
-    "pre-commit",
+    "pre-commit>=4.0.1",
     "pytest>=7.4.4",
     "ruff",
     "types-aiofiles",

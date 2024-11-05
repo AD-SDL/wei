@@ -4,20 +4,11 @@ wei.core.events
 .. automodule:: wei.core.events
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
    
       send_event
-   
-   
-
-   
    
    .. rubric:: Classes
 
@@ -25,11 +16,3 @@ wei.core.events
    
       EventHandler
    
-   
-
-   
-   
-   
-
-
-

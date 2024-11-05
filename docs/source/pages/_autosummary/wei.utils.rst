@@ -4,11 +4,6 @@ wei.utils
 .. automodule:: wei.utils
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -23,21 +18,9 @@ wei.utils
       threaded_daemon
       threaded_task
    
-   
-
-   
-   
    .. rubric:: Classes
 
    .. autosummary::
    
       classproperty
    
-   
-
-   
-   
-   
-
-
-
