@@ -212,6 +212,8 @@ class ModuleAbout(BaseModel, extra="ignore"):
 
     name: str
     """Name of the module"""
+    id: Optional[str] = None
+    """A unique identifier for the module"""
     model: Optional[str] = None
     """Model of the module"""
     interface: Optional[str] = None
@@ -224,8 +226,8 @@ class ModuleAbout(BaseModel, extra="ignore"):
     """Description of the module"""
     actions: List[ModuleAction] = []
     """List of actions supported by the module"""
-    resource_pools: List[Any] = Field(
-        alias=AliasChoices("resources", "resource_pools"), alias_priority=2, default=[]
+    resource_pools: Union[List[Any], Dict[str, Any]] = Field(
+        alias=AliasChoices("resources", "resource_pools"), alias_priority=2, default={}
     )
     """List of resource pools used by the module"""
     admin_commands: List[AdminCommands] = []
