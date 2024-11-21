@@ -58,9 +58,14 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
 import { VDataTable } from 'vuetify/lib/components/index.mjs';
+
 /// <reference path="../store.d.ts" />
-import { campaigns, experiment_objects } from "@/store";
+import {
+  campaigns,
+  experiment_objects,
+} from '@/store';
 
 const sortBy: VDataTable['sortBy'] = [{ key: 'experiment_id', order: 'desc' }];
 

@@ -9,11 +9,13 @@
     <v-tab :value="3">
       Experiments
     </v-tab>
-    <!-- <v-tab :value="4">Events</v-tab>
-        <v-tab :value="5">Admin</v-tab>
-        <v-tab :value="6">Resources</v-tab> -->
+    <v-tab :value="4">
+      Events
+    </v-tab>
+        <!-- <v-tab :value="5">Admin</v-tab>
+        <v-tab :value="6">Resources</v-tab> --> -->
   </v-tabs>
-  <v-window v-model="tab">
+  <v-window v-model="tab"> 
     <v-window-item :key="1" :value="1">
       <v-container class="pa-1 ma-1 justify-center" fluid>
         <WorkcellPanel @view-workflows="tab = 2" />
@@ -36,12 +38,27 @@
         <Experiments/>
       </v-container>
     </v-window-item>
+    <v-window-item :key="4" :value="4">
+      <v-container class="pa-1 ma-1 justify-center" fluid>
+        <v-card>
+        <v-card-title class="text-center">
+          <h2>Events</h2>
+        </v-card-title>
+        <v-card-text>
+          <EventTable/>
+          </v-card-text>
+        </v-card>
+      </v-container>
+    </v-window-item>
   </v-window>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import 'vue-json-pretty/lib/styles.css';
+
+import { ref } from 'vue';
+
+import EventTable from './EventTable.vue';
 import Experiments from './Experiments.vue';
 import WorkcellPanel from './WorkcellPanel.vue';
 import WorkflowTable from './WorkflowTable.vue';
@@ -64,17 +81,24 @@ export default {
 
 .wf_status_completed,
 .module_status_IDLE,
-.module_status_READY {
+.module_status_READY,
+.event_name_completed {
   background-color: green;
 }
 
+.event_name_start {
+  background-color: darkcyan;
+}
+
 .wf_status_running,
-.module_status_BUSY {
+.module_status_BUSY,
+.event_name_step {
   background-color: blue;
 }
 
 .wf_status_failed,
-.module_status_ERROR {
+.module_status_ERROR,
+.event_name_failed {
   background-color: red;
 }
 
@@ -92,7 +116,8 @@ export default {
 .wf_status_queued,
 .wf_status_paused,
 .wf_status_in_progress,
-.module_status_PAUSED {
+.module_status_PAUSED,
+.event_name_queued {
   background-color: gold;
   color: black;
 }

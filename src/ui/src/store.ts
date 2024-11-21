@@ -1,5 +1,7 @@
-
-import { ref, watchEffect } from 'vue';
+import {
+  ref,
+  watchEffect,
+} from 'vue';
 
 const main_url = ref()
 const state_url = ref()
@@ -8,7 +10,7 @@ const workflows = ref([''])
 const experiments = ref()
 const experiments_url = ref()
 const events_url = ref()
-const events = ref()
+const events = ref<any[]>([])
 const workcell_state = ref()
 const workcell_info = ref()
 const campaigns = ref()
@@ -16,6 +18,7 @@ const campaigns_url = ref()
 const experiment_keys = ref()
 const experiment_objects: any = ref([])
 main_url.value = "http://".concat(window.location.host)
+
 class ExperimentInfo {
     experiment_id?: string;
     experiment_workflows: any;
@@ -52,7 +55,7 @@ watchEffect(async () => {
     }
 
     async function updateEvents() {
-        events.value = await ((await fetch(events_url.value)).json());
+        events.value = Object.values(await ((await fetch(events_url.value)).json()))
     }
 
     async function updateWorkcellState() {
@@ -87,4 +90,19 @@ function get_status(value: any) {
     }
 }
 
-export { campaigns, campaigns_url, events, experiment_keys, experiment_objects, experiments, experiments_url, get_status, main_url, state_url, workcell_info, workcell_info_url, workcell_state, workflows };
+export {
+  campaigns,
+  campaigns_url,
+  events,
+  experiment_keys,
+  experiment_objects,
+  experiments,
+  experiments_url,
+  get_status,
+  main_url,
+  state_url,
+  workcell_info,
+  workcell_info_url,
+  workcell_state,
+  workflows,
+};

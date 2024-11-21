@@ -1,5 +1,10 @@
 {
   "dependencies": {
-    "prettier": "^3.3.2"
+    "prettier": "^3.3.2",
+    "vue": "^3.5.12"
+  },
+  "devDependencies": {
+    "@types/vue": "^1.0.31",
+    "@vue/compiler-sfc": "^3.5.12"
   }
 }

@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
 const props = defineProps(['modal_title', 'modal_text'])
 const flowdef = ref(false)
 </script>

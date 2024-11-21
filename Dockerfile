@@ -46,6 +46,7 @@ RUN --mount=type=cache,target=/root/.cache \
     pip install ./wei
 
 COPY wei-entrypoint.sh /wei-entrypoint.sh
+RUN ls -l /wei-entrypoint.sh
 RUN chmod +x /wei-entrypoint.sh
 ENTRYPOINT [ "/wei-entrypoint.sh" ]
 
