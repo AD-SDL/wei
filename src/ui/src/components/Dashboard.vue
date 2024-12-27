@@ -18,7 +18,7 @@
   <v-window v-model="tab"> 
     <v-window-item :key="1" :value="1">
       <v-container class="pa-1 ma-1 justify-center" fluid>
-        <WorkcellPanel @view-workflows="tab = 2" />
+        <WorkcellPanel @view-workflows="tab = 2" @view-events="tab = 4" />
       </v-container>
     </v-window-item>
     <v-window-item :key="2" :value="2">

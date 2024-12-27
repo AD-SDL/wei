@@ -10,7 +10,6 @@
             <v-spacer></v-spacer>
             <v-btn class="ma-1" @click="$emit('viewWorkflows')" color="blue">View All Workflows</v-btn>
         </v-card-actions>
-
     </v-card>
 </template>
 
