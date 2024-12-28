@@ -36,10 +36,14 @@ const props = defineProps({
   maxEntries: {
     type: Number,
     default: Infinity 
+  },
+  items: {
+    type: Array,
+    default: () => []
   }
 });
 
-const eventsData = computed(() => events.value || []);
+const eventsData = computed(() => props.items.length ? props.items : events.value || []);
 const sortBy: VDataTable['sortBy'] = [{ key: 'event_timestamp', order: 'desc'}];
 const minEventsData = computed(() => eventsData.value.slice(0, props.maxEntries));
 

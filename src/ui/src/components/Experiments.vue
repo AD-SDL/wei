@@ -49,6 +49,34 @@
               </v-expansion-panels>
             </div>
             <div>
+              <h3 class="title">Events:</h3>
+              <v-expansion-panels>
+                  <v-expansion-panel>
+                    <v-expansion-panel-title>
+                      <h4>event table</h4>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <EventTable :items="experimentEvents"/>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                  <v-expansion-panel>
+                    <v-expansion-panel-title>
+                      <h4>event list</h4>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                        <v-list dense>
+                          <v-list-item v-for="event in experimentEvents" :key="event.event_id">
+                            <v-list-item-content>
+                              <v-list-item-title>{{ event.event_name.toLowerCase() }}</v-list-item-title>
+                              <v-list-item-subtitle>Type: {{ event.event_type.toLowerCase() }}</v-list-item-subtitle>
+                            </v-list-item-content>
+                          </v-list-item>
+                        </v-list>
+                      </v-expansion-panel-text>
+                  </v-expansion-panel>
+              </v-expansion-panels>
+            </div>
+            <div>
               <h3>Details:</h3>
               <vue-json-pretty v-if="selectedExperiment" :data="selectedExperiment" :deep="1"></vue-json-pretty>
             </div>
@@ -107,10 +135,12 @@ import { VDataTable } from 'vuetify/lib/components/index.mjs';
 /// <reference path="../store.d.ts" />
 import {
   campaigns,
+  events,
   experiment_objects,
   workcell_state,
 } from '@/store';
 
+import EventTable from './EventTable.vue';
 import WorkflowTable from './WorkflowTable.vue';
 
 const sortBy: VDataTable['sortBy'] = [{ key: 'experiment_id', order: 'desc' }];
@@ -133,6 +163,15 @@ const openExperimentDetails = (event: Event, { item }: { item: any }) => {
 const experimentWorkflows = computed<any[]>(() => {
   return Object.values(workcell_state.value?.workflows || {}).filter((workflow: any) => {
     return workflow.experiment_id === selectedExperiment.value?.experiment_id;
+  });
+});
+
+const experimentEvents = computed(() => {
+  return events.value.filter((event: any) => {
+    const matchExperiment = selectedExperiment.value?.experiment_id
+      ? event.experiment_id === selectedExperiment.value?.experiment_id
+      : true;
+    return matchExperiment;
   });
 });
 
