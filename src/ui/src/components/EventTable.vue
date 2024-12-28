@@ -47,9 +47,9 @@ const modal = ref(false)
 const modal_event = ref({})
 
 const eventHeaders = [
-  { title: 'Event ID', key: 'event_id' },
-  { title: 'Event Name', key: 'event_name' },
-  { title: 'Event Type', key: 'event_type'},
+  { title: 'ID', key: 'event_id' },
+  { title: 'Name', key: 'event_name' },
+  { title: 'Type', key: 'event_type'},
   { title: 'Timestamp', key: 'event_timestamp'},
   { title: 'Workcell ID', key: 'workcell_id'}
 ];

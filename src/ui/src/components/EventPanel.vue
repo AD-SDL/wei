@@ -1,7 +1,7 @@
 <template>
     <v-card class="pa-1 ma-1" title="Recent Events">
         <v-card-text v-if="evnts">
-            <EventTable :maxEntries="5;"/>
+            <EventTable :maxEntries="5"/>
         </v-card-text>
         <v-card-text v-else>
             <p>No Events Yet</p>
