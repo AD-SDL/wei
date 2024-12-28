@@ -48,6 +48,7 @@
       </v-card-title>
 
       <v-card-text class="subheading grey--text">
+        <ShowEvents :filteredEvents="moduleEvents"/>
         <div>
           <h3>Actions</h3>
           <v-expansion-panels>
@@ -142,13 +143,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { get_status } from '../store';
+import 'vue-json-pretty/lib/styles.css';
+
+import {
+  computed,
+  ref,
+} from 'vue';
 
 import VueJsonPretty from 'vue-json-pretty';
-import 'vue-json-pretty/lib/styles.css';
+
+import {
+  events,
+  get_status,
+} from '../store';
 import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
 import ShutdownButton from './AdminButtons/ShutdownButton.vue';
+import ShowEvents from './ShowEvents.vue';
+
 const props = defineProps(['modal_title', 'modal_text', 'main_url', 'wc_state'])
 const arg_headers = [
   { title: 'Name', key: 'name' },
@@ -291,6 +302,18 @@ function copyAction(test: any) {
   navigator.clipboard.writeText(test)
   alert("Copied!")
 }
+
+const moduleEvents = computed(() => {
+  return events.value.filter((event: any) => {
+    const eventName = event.event_name
+      ? event.event_name === "STEP"
+      : true;
+    const moduleName = props.modal_title
+      ? event.step.module === props.modal_title
+      : true;
+    return eventName && moduleName;
+  });
+});
 </script>
 
 <style>

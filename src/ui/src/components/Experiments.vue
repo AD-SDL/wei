@@ -20,62 +20,7 @@
             {{ selectedExperiment.experiment_id }}
           </v-card-title>
           <v-card-text>
-            <div>
-              <h3 class="title">Workflows:</h3>
-              <v-expansion-panels>
-                  <v-expansion-panel>
-                    <v-expansion-panel-title>
-                      <h4>workflow table</h4>
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                      <WorkflowTable :workflows="experimentWorkflows" :workcell_state="workcell_state"/>
-                    </v-expansion-panel-text>
-                  </v-expansion-panel>
-                  <v-expansion-panel>
-                    <v-expansion-panel-title>
-                      <h4>workflow list</h4>
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                        <v-list dense>
-                          <v-list-item v-for="workflow in experimentWorkflows" :key="workflow.run_id">
-                            <v-list-item-content>
-                              <v-list-item-title>{{ workflow.name }}</v-list-item-title>
-                              <v-list-item-subtitle>Status: {{ workflow.status }}</v-list-item-subtitle>
-                            </v-list-item-content>
-                          </v-list-item>
-                        </v-list>
-                      </v-expansion-panel-text>
-                  </v-expansion-panel>
-              </v-expansion-panels>
-            </div>
-            <div>
-              <h3 class="title">Events:</h3>
-              <v-expansion-panels>
-                  <v-expansion-panel>
-                    <v-expansion-panel-title>
-                      <h4>event table</h4>
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                      <EventTable :items="experimentEvents"/>
-                    </v-expansion-panel-text>
-                  </v-expansion-panel>
-                  <v-expansion-panel>
-                    <v-expansion-panel-title>
-                      <h4>event list</h4>
-                    </v-expansion-panel-title>
-                    <v-expansion-panel-text>
-                        <v-list dense>
-                          <v-list-item v-for="event in experimentEvents" :key="event.event_id">
-                            <v-list-item-content>
-                              <v-list-item-title>{{ event.event_name.toLowerCase() }}</v-list-item-title>
-                              <v-list-item-subtitle>Type: {{ event.event_type.toLowerCase() }}</v-list-item-subtitle>
-                            </v-list-item-content>
-                          </v-list-item>
-                        </v-list>
-                      </v-expansion-panel-text>
-                  </v-expansion-panel>
-              </v-expansion-panels>
-            </div>
+            <ShowEvents :filteredEvents="experimentEvents"/>
             <div>
               <h3>Details:</h3>
               <vue-json-pretty v-if="selectedExperiment" :data="selectedExperiment" :deep="1"></vue-json-pretty>
@@ -141,6 +86,7 @@ import {
 } from '@/store';
 
 import EventTable from './EventTable.vue';
+import ShowEvents from './ShowEvents.vue';
 import WorkflowTable from './WorkflowTable.vue';
 
 const sortBy: VDataTable['sortBy'] = [{ key: 'experiment_id', order: 'desc' }];
