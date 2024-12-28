@@ -48,8 +48,8 @@
       </v-card-title>
 
       <v-card-text class="subheading grey--text">
-        <ShowEvents :filteredEvents="moduleEvents"/>
         <div>
+          <ShowEvents :filteredEvents="moduleEvents"/>
           <h3>Actions</h3>
           <v-expansion-panels>
             <v-expansion-panel v-for="action in modal_text.actions" :key="action.name">
@@ -304,16 +304,21 @@ function copyAction(test: any) {
 }
 
 const moduleEvents = computed(() => {
+  if (!events.value || !props.modal_title) {
+    return [];
+  }
   return events.value.filter((event: any) => {
     const eventName = event.event_name
       ? event.event_name === "STEP"
       : true;
-    const moduleName = props.modal_title
+    const moduleName = event.step && event.step.module
       ? event.step.module === props.modal_title
       : true;
     return eventName && moduleName;
   });
 });
+
+
 </script>
 
 <style>

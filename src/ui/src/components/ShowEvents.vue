@@ -1,13 +1,13 @@
 <template>
     <div>
-        <h3 class="title">Events:</h3>
+        <h3 class="title">Recent Events:</h3>
         <v-expansion-panels>
             <v-expansion-panel>
                 <v-expansion-panel-title>
                     <h4>event table</h4>
                 </v-expansion-panel-title>
                 <v-expansion-panel-text>
-                    <EventTable :items="filteredEvents"/>
+                    <EventTable :items="filteredEvents" :maxEntries="25"/>
                 </v-expansion-panel-text>
             </v-expansion-panel>
             <v-expansion-panel>
@@ -16,7 +16,7 @@
                 </v-expansion-panel-title>
                 <v-expansion-panel-text>
                     <v-list dense>
-                        <v-list-item v-for="event in filteredEvents" :key="event.event_id">
+                        <v-list-item v-for="event in filteredEvents.slice(0, 10)" :key="event.event_id">
                             <v-list-item-content>
                               <v-list-item-title>{{ event.event_name.toLowerCase() }}</v-list-item-title>
                               <v-list-item-subtitle>Type: {{ event.event_type.toLowerCase() }}</v-list-item-subtitle>

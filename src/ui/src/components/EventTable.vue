@@ -63,9 +63,9 @@ const openModal = (event: Object) => {
     modal.value = true;
 };
 
-watch(eventsData, (newVal: any, oldVal: any) => {
-  console.log('Events data updated:', newVal);
-});
+// watch(eventsData, (newVal: any, oldVal: any) => {
+//   console.log('Events data updated:', newVal);
+// });
 </script>
 
 <style scoped>
