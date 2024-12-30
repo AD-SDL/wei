@@ -22,12 +22,18 @@
 </template>
 
 <script setup lang="ts">
-import { main_url } from "@/store";
-import { ref, watchEffect } from 'vue';
+import {
+  ref,
+  watchEffect,
+} from 'vue';
+
+import { main_url } from '@/store';
 
 const props = defineProps<{
     module?: string;
     module_status?: string;
+    wf_run_id?: string;
+    wf_status?: string;
 }>();
 
 const cancel_url = ref('')
@@ -39,6 +45,11 @@ watchEffect(() => {
     if (props.module) {
         cancel_url.value = main_url.value.concat('/admin/cancel/'.concat(props.module))
         hoverText.value = "Cancel Module Action"
+    }
+    else if (props.wf_run_id) {
+        cancel_url.value = main_url.value.concat('/admin/cancel/'.concat(props.wf_run_id))
+        console.log(cancel_url.value)
+        hoverText.value = "Cancel Workflow"
     }
     else {
         cancel_url.value = main_url.value.concat('/admin/cancel')
@@ -56,6 +67,14 @@ watchEffect(() => {
             canCancel.value = false
         }
     }
+    else if (props.wf_run_id) {
+        if (props.wf_status == "running" || (props.wf_status == "queued" || props.wf_status == "in_progress")) {
+            canCancel.value = true
+        }
+        else {
+            canCancel.value = false
+        }
+    }
     else {
         // TODO: Allow cancel if there's an actively running workflow
         canCancel.value = true
@@ -66,13 +85,12 @@ watchEffect(() => {
 const sendCancelCommand = async () => {
     try {
         const response = await fetch(cancel_url.value, {
-            method: 'POST',
+            method: "POST",
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         console.log('Cancel successful');
-
     } catch (error) {
         console.error('Error in cancel:', error);
     }

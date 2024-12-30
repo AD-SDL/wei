@@ -2,6 +2,8 @@
 
 from wei.types.interface_types import InterfaceMap
 from wei.types.module_types import AdminCommands, Module, ModuleStatus
+from wei.types.workflow_types import WorkflowRun, WorkflowStatus
+from wei.core.workflow import cancel_workflow_run
 from wei.utils import threaded_task
 
 
@@ -66,6 +68,14 @@ def send_cancel(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support canceling.")
 
+@threaded_task
+def send_cancel_wf(workflow: WorkflowRun) -> None:
+    """Cancels a workflow"""
+    if check_can_send_admin_command_wf(workflow):
+        cancel_workflow_run(workflow)
+        print(f"Workflow {workflow.label} has been canceled.")
+    else:
+        print(f"Error cancelling workflow {workflow.label}")
 
 @threaded_task
 def send_shutdown(module: Module) -> None:
@@ -108,3 +118,7 @@ def check_can_send_admin_command(module: Module, command: AdminCommands) -> bool
     return not module.state.status == ModuleStatus.UNKNOWN and (
         module.about is None or command in module.about.admin_commands
     )
+
+def check_can_send_admin_command_wf(workflow: WorkflowRun, command: AdminCommands) -> bool: # ***
+    """Checks if an admin command can be sent to workflow"""
+    return not workflow.status == WorkflowStatus.UNKNOWN

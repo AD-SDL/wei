@@ -45,7 +45,14 @@ const props = defineProps({
 
 const eventsData = computed(() => props.items.length ? props.items : events.value || []);
 const sortBy: VDataTable['sortBy'] = [{ key: 'event_timestamp', order: 'desc'}];
-const minEventsData = computed(() => eventsData.value.slice(0, props.maxEntries));
+const minEventsData = computed(() => {
+  return eventsData.value
+    .slice() 
+    .sort((a: { event_timestamp: string }, b: { event_timestamp: string }) => {
+      return new Date(b.event_timestamp).getTime() - new Date(a.event_timestamp).getTime();
+    }) 
+    .slice(0, props.maxEntries); 
+});
 
 const modal = ref(false)
 const modal_event = ref({})
