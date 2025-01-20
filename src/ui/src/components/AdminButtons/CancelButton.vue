@@ -45,15 +45,17 @@ watchEffect(() => {
     if (props.module) {
         cancel_url.value = main_url.value.concat('/admin/cancel/'.concat(props.module))
         hoverText.value = "Cancel Module Action"
+        console.log(cancel_url.value)
     }
     else if (props.wf_run_id) {
-        cancel_url.value = main_url.value.concat('/admin/cancel/'.concat(props.wf_run_id))
-        console.log(cancel_url.value)
+        cancel_url.value = main_url.value.concat('/admin/cancel_wf/'.concat(props.wf_run_id))
         hoverText.value = "Cancel Workflow"
+        console.log(cancel_url.value)
     }
     else {
         cancel_url.value = main_url.value.concat('/admin/cancel')
-        hoverText.value = "Cancel All Workflows"
+        hoverText.value = "Cancel Workcell"
+        console.log(cancel_url.value)
     }
 })
 

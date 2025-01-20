@@ -21,6 +21,8 @@ from wei.core.state_manager import state_manager
 from wei.core.workflow import cancel_active_workflow_runs, cancel_workflow_run
 from wei.utils import initialize_state
 from wei.routers.workflow_routes import get_run
+from wei.core.module import clear_module_reservation
+from wei.types.module_types import ModuleStatus
 
 router = APIRouter()
 
@@ -100,17 +102,15 @@ def cancel_module(module_name: str) -> None:
     """Cancels a module"""
     send_cancel(state_manager.get_module(module_name))
 
-
-@router.api_route("/cancel/{wf_run_id}", methods=["POST"])
+@router.api_route("/cancel_wf/{wf_run_id}", methods=["POST"])
 def cancel_workflow(wf_run_id: str) -> None:
     """Cancels a workflow"""
-    try:
-        workflow = state_manager.get_workflow_run(wf_run_id)
-        send_cancel_wf(workflow)
-        cancel_workflow_run(get_run(wf_run_id))
-        cancel_active_workflow_runs()
-    except KeyError:
-        raise HTTPException(status_code=404, detail=f"Workflow {wf_run_id} not found")
+    for module in state_manager.get_all_modules().values():
+        send_cancel(module)
+        #clear_module_reservation(module)
+    send_cancel_wf(get_run(wf_run_id))
+    for module in state_manager.get_all_modules().values():
+        send_reset(module)
 
 @router.api_route("/shutdown", methods=["POST"])
 def shutdown_workcell(modules: bool = False) -> None:

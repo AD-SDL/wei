@@ -4,7 +4,9 @@ from wei.types.interface_types import InterfaceMap
 from wei.types.module_types import AdminCommands, Module, ModuleStatus
 from wei.types.workflow_types import WorkflowRun, WorkflowStatus
 from wei.core.workflow import cancel_workflow_run
+from wei.core.state_manager import state_manager
 from wei.utils import threaded_task
+import time
 
 
 @threaded_task
@@ -68,11 +70,17 @@ def send_cancel(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support canceling.")
 
-@threaded_task
 def send_cancel_wf(workflow: WorkflowRun) -> None:
     """Cancels a workflow"""
-    if check_can_send_admin_command_wf(workflow):
-        cancel_workflow_run(workflow)
+    if check_can_send_admin_command_wf(workflow, AdminCommands.CANCEL):
+        while not workflow.status == WorkflowStatus.CANCELLED:
+            cancel_workflow_run(workflow)
+        time.sleep(3)
+        for wf_run in state_manager.get_all_workflow_runs().values():
+            if wf_run.status in [WorkflowStatus.IN_PROGRESS]:
+                cancel_workflow_run(wf_run)
+                time.sleep(1)
+                return
         print(f"Workflow {workflow.label} has been canceled.")
     else:
         print(f"Error cancelling workflow {workflow.label}")
