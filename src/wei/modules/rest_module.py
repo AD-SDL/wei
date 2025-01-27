@@ -334,10 +334,15 @@ class RESTModule:
                             )
                         if type_hint.__name__ == "UploadFile":
                             # * Add a file parameter to the action
+                            parameter_info = signature.parameters[parameter_name]
                             action.files.append(
                                 ModuleActionFile(
                                     name=parameter_name,
-                                    required=True,
+                                    required=True
+                                    if parameter_info.default
+                                    == inspect.Parameter.empty
+                                    is None
+                                    else False,
                                     description=description,
                                 )
                             )
@@ -355,7 +360,11 @@ class RESTModule:
                                     name=parameter_name,
                                     type=pretty_type_repr(type_hint),
                                     default=default,
-                                    required=True if default is None else False,
+                                    required=True
+                                    if parameter_info.default
+                                    == inspect.Parameter.empty
+                                    is None
+                                    else False,
                                     description=description,
                                 )
                             )
