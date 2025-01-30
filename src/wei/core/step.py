@@ -84,7 +84,7 @@ def check_module_status(step: Step, run_id: str):
         return True
     else:
         print(
-            f"Can't run '{run_id}.{step.name}', module '{step.module}' is not idle. Module status: {module.state.status}"
+            f"Can't run '{run_id}.{step.name}', module '{step.module}' is not OK. Module status: {module.state.status}"
         )
         return False
 

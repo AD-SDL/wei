@@ -37,7 +37,7 @@ modules:
 
 locations:
   transfer:
-    synthesis.pos: [0, 0, 0, 0, 0, 0]
-    transfer.pos: [0, 0, 0, 0, 0, 0]
-    measure.pos: [0, 0, 0, 0, 0, 0]
-    wc.trash: [0, 0, 0, 0, 0, 0]
+    synthesis.pos: "Stack2"
+    transfer.pos: "Stack1"
+    measure.pos: "Stack3"
+    wc.trash: "Trash"

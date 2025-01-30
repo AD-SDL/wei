@@ -3,6 +3,8 @@
 import unittest
 from pathlib import Path
 
+import requests
+
 import wei
 from wei import ExperimentClient
 from wei.types import Workcell
@@ -45,6 +47,8 @@ class TestWEI_Base(unittest.TestCase):
             TestWEI_Base.experiment_client = self.experiment_client
         self.url = f"http://{self.server_host}:{self.server_port}"
         self.redis_host = self.workcell.config.redis_host
+
+        requests.post(self.url + "/resources/clear_all_records")
 
     def __del__(self):
         """Basic cleanup for WEI's pytest tests"""

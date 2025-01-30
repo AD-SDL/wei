@@ -3,6 +3,7 @@
 import argparse
 import importlib.metadata
 import inspect
+import logging
 import os
 import signal
 import sys
@@ -10,8 +11,9 @@ import time
 import traceback
 import warnings
 from contextlib import asynccontextmanager
+from pathlib import Path
 from threading import Lock, Thread
-from typing import Any, List, Optional, Set, Union
+from typing import List, Optional, Set, Union
 
 from fastapi import (
     APIRouter,
@@ -25,7 +27,9 @@ from fastapi import (
 from fastapi.datastructures import State
 from typing_extensions import Annotated, get_type_hints
 
+from wei.resources_interface import ResourcesInterface
 from wei.types import ModuleStatus
+from wei.types.base_types import PathLike, ulid_factory
 from wei.types.module_types import (
     AdminCommands,
     ModuleAbout,
@@ -67,8 +71,6 @@ class RESTModule:
     """The interface used by the module."""
     actions: List[ModuleAction] = []
     """A list of actions that the module can perform."""
-    resource_pools: List[Any] = []
-    """A list of resource pools used by the module."""
     admin_commands: Set[AdminCommands] = set()
     """A list of admin commands supported by the module."""
     wei_version: Optional[str] = importlib.metadata.version("ad_sdl.wei")
@@ -88,12 +90,12 @@ class RESTModule:
         model: Optional[str] = None,
         interface: str = "wei_rest_node",
         actions: Optional[List[ModuleAction]] = None,
-        resource_pools: Optional[List[Any]] = None,
         admin_commands: Optional[Set[AdminCommands]] = None,
         name: Optional[str] = None,
         host: Optional[str] = "0.0.0.0",
         port: Optional[int] = 2000,
         about: Optional[ModuleAbout] = None,
+        data_dir: Optional[PathLike] = None,
         **kwargs,
     ):
         """Creates an instance of the RESTModule class"""
@@ -112,7 +114,7 @@ class RESTModule:
         self.model = model
         self.interface = interface
         self.actions = actions if actions else []
-        self.resource_pools = resource_pools if resource_pools else []
+        self.data_dir = data_dir if data_dir else Path.home() / ".wei" / "modules"
         self.admin_commands = (
             admin_commands
             if admin_commands
@@ -146,18 +148,42 @@ class RESTModule:
                 "--port",
                 type=int,
                 default=self.port,
-                help="Hostname or IP address to bind to (0.0.0.0 for all interfaces)",
+                help="Port to bind to",
             )
             self.arg_parser.add_argument(
-                "--alias",
                 "--name",
+                "--alias",
                 "--node_name",
                 type=str,
                 default=self.name,
                 help="A unique name for this particular instance of this module",
             )
+            self.arg_parser.add_argument(
+                "--data_dir",
+                type=str,
+                default=self.data_dir,
+                help="Path to a directory where the module can store temporary data",
+            )
+            self.arg_parser.add_argument(
+                "--id",
+                type=str,
+                default=None,
+                help="The unique ID for the module (this should generally only be used to associate a new module to pre-existing resources)",
+            )
+            self.arg_parser.add_argument(
+                "--database_url",
+                type=str,
+                default=None,
+                help="The URL to the MADSci database, for saving changes to shared resources",
+            )
 
     # * Module and Application Lifecycle Functions
+    @staticmethod
+    def startup_message(state: State):
+        """This function is called when the module starts up. It should print a message to the console to indicate that the module has started."""
+        logger = logging.getLogger("uvicorn.error")
+        logger.setLevel(logging.INFO)
+        logger.info(f"Module {state.name} starting on {state.host}:{state.port}")
 
     @staticmethod
     def _startup_handler(state: State):
@@ -225,6 +251,7 @@ class RESTModule:
             # * If an exception occurs during startup, handle it and put the module in an error state
             state.exception_handler(state, exception, "Error during startup")
             state.status[ModuleStatus.ERROR] = True
+            state.status[ModuleStatus.INIT] = False
             state.status[ModuleStatus.READY] = (
                 False  # * Make extra sure the status is set to ERROR
             )
@@ -237,6 +264,7 @@ class RESTModule:
                     "Startup completed successfully. Module is now ready to accept actions."
                 )
             elif state.status[ModuleStatus.ERROR]:
+                state.status[ModuleStatus.INIT] = False
                 print("Startup completed with errors.")
 
     @asynccontextmanager
@@ -247,6 +275,8 @@ class RESTModule:
         # * Run startup on a separate thread so it doesn't block the rest server from starting
         # * (module won't accept actions until startup is complete)
         Thread(target=RESTModule.startup_thread, args=[app.state]).start()
+
+        RESTModule.startup_message(state=app.state)
 
         yield
 
@@ -281,8 +311,6 @@ class RESTModule:
             return function
 
         return decorator
-
-    # * Module Action Handling Functions
 
     def action(self, **kwargs):
         """Decorator to add an action to the module.
@@ -352,6 +380,8 @@ class RESTModule:
                             default = (
                                 None
                                 if parameter_info.default == inspect.Parameter.empty
+                                else "None"
+                                if parameter_info.default is None
                                 else parameter_info.default
                             )
 
@@ -672,11 +702,6 @@ class RESTModule:
                 return ModuleState(status=state.status, error=state.error)
             return self._state_handler(state=state)
 
-        @self.router.get("/resources")
-        async def resources(request: Request):
-            # state = request.app.state
-            return {"resources": {}}
-
         @self.router.get("/about")
         async def about(request: Request, response: Response) -> ModuleAbout:
             state = request.app.state
@@ -741,16 +766,41 @@ class RESTModule:
 
         # * If arguments are passed, set them as state variables
         args = self.arg_parser.parse_args()
+        print(args)
         for arg_name in vars(args):
             if (
                 getattr(args, arg_name) is not None
             ):  # * Don't override already set attributes with None's
                 self.state.__setattr__(arg_name, getattr(args, arg_name))
+
         self._configure_routes()
 
         # * Enforce a name
         if not self.state.name:
             raise Exception("A unique --name is required")
+
+        # * Module Paths
+        self.state.module_dir = Path(self.data_dir) / self.state.name
+        Path(self.state.module_dir).mkdir(parents=True, exist_ok=True)
+        if not hasattr(self.state, "id") or self.state.id is None:
+            if Path(self.state.module_dir / "id").exists():
+                with open(self.state.module_dir / "id", "r") as f:
+                    self.state.id = f.read()
+            else:
+                self.state.id = ulid_factory()
+                with open(self.state.module_dir / "id", "w") as f:
+                    f.write(self.state.id)
+
+        # * Initialize Resources Interface
+        if hasattr(self.state, "database_url") and self.state.database_url is not None:
+            self.state.resources_interface = ResourcesInterface(
+                database_url=self.state.database_url
+            )
+        else:
+            self.state.resources_interface = ResourcesInterface(
+                database_url=Path("sqlite:///") / self.state.data_dir / "database"
+            )
+
         import colorama
 
         colorama.just_fix_windows_console()
