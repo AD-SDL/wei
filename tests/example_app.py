@@ -19,7 +19,7 @@ def main() -> None:
     exp._register_experiment(experiment_design=experiment)
     wf_path = Path(__file__).parent / "workflows" / "test_workflow.yaml"
     payload = {
-        "delay": 25,
+        "delay": 20,
     }
 
     for _ in range(1):

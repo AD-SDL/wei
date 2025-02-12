@@ -10,6 +10,7 @@ from wei.core.step import validate_step
 from wei.core.storage import get_workflow_run_directory
 from wei.types import Step, Workcell, Workflow, WorkflowRun
 from wei.types.workflow_types import WorkflowStatus
+from wei.core.location import free_source_and_target
 
 
 def create_run(
@@ -125,6 +126,13 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
                         print(f"{step_file_key}: {file_path} ({step_file_path})")
     return wf_run
 
+def pause_workflow_run(wf_run: WorkflowRun) -> None:
+    """Pauses the workflow run"""
+    wf_run.status = WorkflowStatus.PAUSED
+    free_source_and_target(wf_run)
+    with state_manager.wc_state_lock():
+        state_manager.set_workflow_run(wf_run)
+    return wf_run
 
 def cancel_workflow_run(wf_run: WorkflowRun) -> None:
     """Cancels the workflow run"""

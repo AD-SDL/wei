@@ -2,7 +2,7 @@
 
 import os
 import signal
-
+import time
 from fastapi import APIRouter, HTTPException
 
 from wei.config import Config
@@ -11,18 +11,20 @@ from wei.core.admin import (
     send_cancel_wf,
     send_lock,
     send_pause,
+    send_pause_wf,
     send_reset,
     send_resume,
     send_safety_stop,
     send_shutdown,
     send_unlock,
+    check_can_send_admin_command
 )
 from wei.core.state_manager import state_manager
 from wei.core.workflow import cancel_active_workflow_runs, cancel_workflow_run
 from wei.utils import initialize_state
 from wei.routers.workflow_routes import get_run
 from wei.core.module import clear_module_reservation
-from wei.types.module_types import ModuleStatus
+from wei.types.module_types import ModuleStatus, AdminCommands
 
 router = APIRouter()
 
@@ -74,6 +76,19 @@ def pause_module(module_name: str) -> None:
     """Pauses a module"""
     send_pause(state_manager.get_module(module_name))
 
+@router.api_route("/pause_wf/{wf_run_id}", methods=["POST"])
+def pause_workflow(wf_run_id: str) -> None:
+    """Pauses a workflow"""
+    for module in state_manager.get_all_modules().values():
+        send_pause(module)
+        clear_module_reservation(module)
+    # state_manager.paused = True
+    test = send_pause_wf(get_run(wf_run_id))
+    while test != True:
+        time.sleep(5)
+    for module in state_manager.get_all_modules().values():
+        send_resume(module)
+    # state_manager.paused = False
 
 @router.api_route("/resume", methods=["POST"])
 def resume_workcell() -> None:
@@ -105,12 +120,26 @@ def cancel_module(module_name: str) -> None:
 @router.api_route("/cancel_wf/{wf_run_id}", methods=["POST"])
 def cancel_workflow(wf_run_id: str) -> None:
     """Cancels a workflow"""
-    for module in state_manager.get_all_modules().values():
-        send_cancel(module)
-        #clear_module_reservation(module)
+    ## vers 1.
+    # # for module in state_manager.get_all_modules().values():
+    # #     send_cancel(module)
+    # pause_workcell()
+    # cancelled = send_cancel_wf(get_run(wf_run_id))  # Not sure if this does anything..,
+    # while not cancelled:
+    #     time.sleep(5)
+    # resume_workcell()
+    # # for module in state_manager.get_all_modules().values():
+    # #     send_reset(module)
+
+    ## vers 2.
+    #pause_workcell()
+    state_manager.paused = True
     send_cancel_wf(get_run(wf_run_id))
-    for module in state_manager.get_all_modules().values():
-        send_reset(module)
+    state_manager.paused = False
+    #resume_workcell()
+
+    ## vers 3.
+    # cancel_workflow_run(get_run(wf_run_id))
 
 @router.api_route("/shutdown", methods=["POST"])
 def shutdown_workcell(modules: bool = False) -> None:

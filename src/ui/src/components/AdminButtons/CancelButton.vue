@@ -34,6 +34,7 @@ const props = defineProps<{
     module_status?: string;
     wf_run_id?: string;
     wf_status?: string;
+    can_Cancel?: boolean;
 }>();
 
 const cancel_url = ref('')
@@ -71,7 +72,11 @@ watchEffect(() => {
     }
     else if (props.wf_run_id) {
         if (props.wf_status == "running" || (props.wf_status == "queued" || props.wf_status == "in_progress")) {
-            canCancel.value = true
+            if (props.can_Cancel) {
+                canCancel.value = true
+            } else {
+                canCancel.value = false
+            }
         }
         else {
             canCancel.value = false

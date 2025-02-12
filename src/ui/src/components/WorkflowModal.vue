@@ -4,9 +4,15 @@
       <v-card-title>
         <div class="d-flex align-center w-100">
           <h2 class="title py-3 my-3">Workflow: {{ modal_title }}</h2>
+          <PauseResumeButton
+            :wf_run_id="modal_text.run_id"
+            :wf_status="modal_text.status"
+            class="ml-2">
+          </PauseResumeButton>
           <CancelButton
             :wf_run_id="modal_text.run_id"
             :wf_status="modal_text.status"
+            :can_Cancel="canCancel"
             class="ml-2">
           </CancelButton>
         </div>
@@ -29,11 +35,16 @@
 import {
   computed,
   ref,
+  watchEffect,
 } from 'vue';
 
-import { events } from '@/store';
+import {
+  events,
+  workcell_state,
+} from '@/store';
 
 import CancelButton from './AdminButtons/CancelButton.vue';
+import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
 import ShowEvents from './ShowEvents.vue';
 
 const props = defineProps(['modal_title', 'modal_text'])
@@ -50,4 +61,30 @@ const workflowEvents = computed(() => {
     return eventType && matchWorkflow;
   });
 });
+
+const stepIndex = computed(() => props.modal_text?.step_index ?? -1);
+
+const currentStep = computed(() => props.modal_text?.steps?.[stepIndex.value] ?? null);
+
+const moduleName = computed(() => currentStep.value?.module);
+
+const currentModule = computed(() => {
+  const modules = workcell_state.value?.modules;
+  if (!modules || !moduleName.value) return null;
+  
+  return Object.values(modules).find((module: any) => module.name === moduleName.value) || null;
+});
+
+const canCancel = computed(() => {
+  const module = currentModule.value as { about?: { admin_commands?: string[] } };
+  return module?.about?.admin_commands?.includes("cancel") ?? false;
+});
+
+// watchEffect(() => {
+//   console.log('Step Index:', stepIndex.value);
+//   console.log('Current Step:', currentStep.value);
+//   console.log('Module Name:', moduleName.value);
+//   console.log('Current Module:', currentModule.value);
+//   console.log("Can Cancel:", canCancel.value);
+// });
 </script>
