@@ -15,6 +15,12 @@
             :can_Cancel="canCancel"
             class="ml-2">
           </CancelButton>
+          <ResetButton
+            :wf_run_id="modal_text.run_id"
+            :wf_status="modal_text.status"
+            :can_Pause="canPause"
+            class="ml-2">
+          </ResetButton>
         </div>
         {{modal_text.run_id}}
         <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'wf_status_' + modal_text.status">{{ modal_text.status }}</v-sheet>
@@ -45,6 +51,7 @@ import {
 
 import CancelButton from './AdminButtons/CancelButton.vue';
 import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
+import ResetButton from './AdminButtons/ResetButton.vue';
 import ShowEvents from './ShowEvents.vue';
 
 const props = defineProps(['modal_title', 'modal_text'])
@@ -78,6 +85,11 @@ const currentModule = computed(() => {
 const canCancel = computed(() => {
   const module = currentModule.value as { about?: { admin_commands?: string[] } };
   return module?.about?.admin_commands?.includes("cancel") ?? false;
+});
+
+const canPause = computed(() => {
+  const module = currentModule.value as { about?: { admin_commands?: string[] } };
+  return module?.about?.admin_commands?.includes("pause") ?? false;
 });
 
 // watchEffect(() => {

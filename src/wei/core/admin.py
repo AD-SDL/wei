@@ -3,10 +3,10 @@
 from wei.types.interface_types import InterfaceMap
 from wei.types.module_types import AdminCommands, Module, ModuleStatus
 from wei.types.workflow_types import WorkflowRun, WorkflowStatus
-from wei.core.workflow import cancel_workflow_run, pause_workflow_run
+from wei.core.workflow import cancel_workflow_run, pause_workflow_run, resume_workflow_run
 from wei.core.state_manager import state_manager
 from wei.core.module import clear_module_reservation
-from wei.types.event_types import WorkflowCancelled
+from wei.types.event_types import WorkflowCancelled, WorkflowStartEvent
 from wei.core.events import send_event
 from wei.utils import threaded_task
 import time
@@ -37,6 +37,24 @@ def send_reset(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support resetting.")
 
+@threaded_task
+def send_reset_wf(workflow: WorkflowRun):
+    """Resets a workflow"""
+    if check_can_send_admin_command_wf(workflow, AdminCommands.RESET):
+        run_id = workflow.run_id
+        workflow.status = WorkflowStatus.NEW
+        with state_manager.wc_state_lock():
+            workflow.end_time = None
+            workflow.start_time = None
+            workflow.duration = None
+            workflow.step_index = 0
+            send_event(WorkflowStartEvent.from_wf_run(workflow))
+            state_manager.set_workflow_run(workflow)
+            print(f"Workflow run with id {run_id} has been cancelled.")
+        
+    else:
+        print(f"Error restarting workflow {workflow.label}")
+
 
 @threaded_task
 def send_pause(module: Module) -> None:
@@ -53,15 +71,7 @@ def send_pause(module: Module) -> None:
 def send_pause_wf(workflow: WorkflowRun):
     """Pauses a workflow"""
     if check_can_send_admin_command_wf(workflow, AdminCommands.PAUSE):
-        while not workflow.status == WorkflowStatus.PAUSED:
-            pause_workflow_run(workflow)
-        time.sleep(3)
-        for wf_run in state_manager.get_all_workflow_runs().values():
-            if (wf_run.status in [WorkflowStatus.IN_PROGRESS]): # & (workflow.run_id == wf_run.run_id):   
-                pause_workflow_run(wf_run)
-                time.sleep(1)
-                return True
-        return True
+        pause_workflow_run(workflow)
     else:
         print(f"Error pausing workflow {workflow.label}")
 
@@ -77,6 +87,13 @@ def send_resume(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support resuming.")
 
+def send_resume_wf(workflow: WorkflowRun):
+    """Resumes a workflow"""
+    if check_can_send_admin_command_wf(workflow, AdminCommands.RESUME):
+        resume_workflow_run(workflow)
+    else:
+        print(f"Error resuming workflow {workflow.label}")
+
 
 @threaded_task
 def send_cancel(module: Module) -> None:
@@ -89,40 +106,11 @@ def send_cancel(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support canceling.")
 
-@threaded_task # ** try with and wo thread
+@threaded_task 
 def send_cancel_wf(workflow: WorkflowRun):
     """Cancels a workflow"""
     if check_can_send_admin_command_wf(workflow, AdminCommands.CANCEL):
         cancel_workflow_run(workflow)
-        ## vers 1.
-        # while not workflow.status == WorkflowStatus.CANCELLED:
-        #     cancel_workflow_run(workflow)
-        # time.sleep(3)
-        # for wf_run in state_manager.get_all_workflow_runs().values():
-        #     if wf_run.status in [WorkflowStatus.IN_PROGRESS]:
-        #         cancel_workflow_run(wf_run)
-        #         time.sleep(1)
-        #         return True
-        # print(f"Workflow {workflow.label} has been canceled.")
-        # return True
-
-        ## vers 2.
-        # workflow.status = WorkflowStatus.CANCELLED
-        # with state_manager.wc_state_lock():
-
-        #     workflow.status = WorkflowStatus.CANCELLED
-        #     workflow.end_time = datetime.now()
-        #     workflow.duration = workflow.end_time - workflow.start_time
-
-        #     for step in workflow.steps:
-        #         module = state_manager.get_module(step.module)
-        #         clear_module_reservation(module)
-
-        #     state_manager.set_workflow_run(workflow)
-
-        #     send_event(WorkflowCancelled.from_wf_run(workflow=workflow))
-        #     print(f"Workflow run with id {workflow.run_id} has been cancelled.")
-
     else:
         print(f"Error cancelling workflow {workflow.label}")
 

@@ -9,7 +9,7 @@ from wei.core.workcell import find_step_module
 from wei.core.module import clear_module_reservation
 from wei.core.location import free_source_and_target
 from wei.types import WorkflowStatus, WorkflowRun
-from wei.types.event_types import WorkflowQueuedEvent, WorkflowStartEvent, WorkflowCancelled
+from wei.types.event_types import WorkflowQueuedEvent, WorkflowStartEvent, WorkflowCancelled, WorkflowPausedEvent
 from wei.utils import threaded_daemon
 
 class Scheduler:
@@ -28,7 +28,9 @@ class Scheduler:
         with state_manager.wc_state_lock():
             # * Update all queued workflows
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():
-                if wf_run.status == WorkflowStatus.NEW:
+                if wf_run.status == WorkflowStatus.PAUSED: # ***
+                    continue
+                elif wf_run.status == WorkflowStatus.NEW:
                     wf_run.status = WorkflowStatus.QUEUED
                     print(
                         f"Processed new workflow: {wf_run.name} with run_id: {run_id}"
@@ -58,26 +60,27 @@ class Scheduler:
                             wf_run.start_time = datetime.now()
                         state_manager.set_workflow_run(wf_run)
                         run_step(wf_run=wf_run, module=module)
-                elif wf_run.status == WorkflowStatus.CANCELLED:
+                elif wf_run.status == WorkflowStatus.CANCELLED: # ***
                     self.handle_cancelled_workflow(wf_run, run_id)
 
-    @threaded_daemon # Move to admin.py...
+    @threaded_daemon # Move to admin.py... # ***
     def handle_cancelled_workflow(self, wf_run: WorkflowRun, run_id: str) -> None:
         """Handles the cancellation of a workflow run in a separate thread."""
-        if wf_run.end_time == None:
-            wf_run.end_time = datetime.now()
-            wf_run.duration = wf_run.end_time - wf_run.start_time
-            wf_run.status = WorkflowStatus.CANCELLED
+        with state_manager.wc_state_lock():
+            if wf_run.end_time == None:
+                wf_run.end_time = datetime.now()
+                wf_run.duration = wf_run.end_time - wf_run.start_time
+                wf_run.status = WorkflowStatus.CANCELLED
 
-        for step in wf_run.steps:
-            module = state_manager.get_module(step.module)
-            clear_module_reservation(module)
+                for step in wf_run.steps:
+                    module = state_manager.get_module(step.module)
+                    clear_module_reservation(module)
 
-        free_source_and_target(wf_run)
-        state_manager.set_workflow_run(wf_run)
+                free_source_and_target(wf_run)
+                state_manager.set_workflow_run(wf_run)
 
-        send_event(WorkflowCancelled.from_wf_run(workflow=wf_run))
-        print(f"Workflow run with id {run_id} has been cancelled.")
+                send_event(WorkflowCancelled.from_wf_run(workflow=wf_run))
+                print(f"Workflow run with id {run_id} has been cancelled.")
 
-        state_manager.delete_workflow_run(run_id)
-        #state_manager.paused = False
+                # state_manager.delete_workflow_run(run_id) # *** Still works but maybe slower..
+

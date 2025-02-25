@@ -19,11 +19,13 @@ def main() -> None:
     exp._register_experiment(experiment_design=experiment)
     wf_path = Path(__file__).parent / "workflows" / "test_workflow.yaml"
     payload = {
-        "delay": 20,
+        "delay": 5,
     }
 
     for _ in range(1):
-        exp.start_run(wf_path.resolve(), payload=payload)
+        exp.start_run(wf_path.resolve(), payload=payload, raise_on_cancelled=False, blocking=False)
+        
+        
         
 
     # print("Base timeline for un-optimized camera communication: ", time_avg/10)
