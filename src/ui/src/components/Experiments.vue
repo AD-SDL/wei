@@ -25,6 +25,14 @@
               <h3>Details:</h3>
               <vue-json-pretty v-if="selectedExperiment" :data="selectedExperiment" :deep="1"></vue-json-pretty>
             </div>
+            <div>
+              <h3>Workflows:</h3>
+              <v-data-table :headers="workflowHeaders" :items="experimentWorkflows" density="compact">
+                <template v-slot:item.status="{ value }">
+                  <td>{{ value }}</td>
+                </template>
+              </v-data-table>
+            </div>
             <!-- <div>
               <h3 class="title">Details:</h3>
               <v-list>
@@ -56,6 +64,7 @@
                 </v-list-item>
               </v-list>
             </div> -->
+
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -96,6 +105,14 @@ const arg_headers = [
   { title: 'ID', key: 'experiment_id' },
   { title: 'Campaign', key: 'campaign_id' },
   { title: 'Last Check-in', key: 'check_in_timestamp' }
+];
+
+const workflowHeaders = [
+{ title: 'Workflow Name', key: 'name' },
+  { title: 'Workflow ID', key: 'run_id' },
+  { title: 'Status', key: 'status' },
+  { title: 'Start Time', key: 'start_time' },
+  { title: 'End Time', key: 'end_time' }
 ];
 
 const dialogVisible = ref(false);

@@ -13,7 +13,7 @@
       Events
     </v-tab>
         <!-- <v-tab :value="5">Admin</v-tab>
-        <v-tab :value="6">Resources</v-tab> --> -->
+        <v-tab :value="6">Resources</v-tab> --> 
   </v-tabs>
   <v-window v-model="tab"> 
     <v-window-item :key="1" :value="1">

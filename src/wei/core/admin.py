@@ -50,7 +50,7 @@ def send_reset_wf(workflow: WorkflowRun):
             workflow.step_index = 0
             send_event(WorkflowStartEvent.from_wf_run(workflow))
             state_manager.set_workflow_run(workflow)
-            print(f"Workflow run with id {run_id} has been cancelled.")
+            print(f"Workflow run with id {run_id} has been restarted.")
         
     else:
         print(f"Error restarting workflow {workflow.label}")

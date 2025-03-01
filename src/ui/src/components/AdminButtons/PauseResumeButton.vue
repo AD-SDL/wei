@@ -84,7 +84,7 @@ watchEffect(() => {
         }
     }
     else if (props.wf_run_id) {
-        if (props.wf_status == "running" || props.wf_status == "in_progress" || props.wf_status == "paused" || props.can_Cancel == false) {
+        if (props.wf_status == "running" || props.wf_status == "in_progress" || props.wf_status == "paused" || props.can_Pause == false) {
             allowButton.value = true
         } else {
             allowButton.value = false

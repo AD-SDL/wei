@@ -7,6 +7,7 @@
           <PauseResumeButton
             :wf_run_id="modal_text.run_id"
             :wf_status="modal_text.status"
+            :can_Pause="canPause"
             class="ml-2">
           </PauseResumeButton>
           <CancelButton
@@ -18,7 +19,6 @@
           <ResetButton
             :wf_run_id="modal_text.run_id"
             :wf_status="modal_text.status"
-            :can_Pause="canPause"
             class="ml-2">
           </ResetButton>
         </div>
