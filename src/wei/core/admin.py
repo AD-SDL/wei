@@ -1,16 +1,17 @@
 """Handles admin commands and related logic."""
 
+from wei.core.events import send_event
+from wei.core.state_manager import state_manager
+from wei.core.workflow import (
+    cancel_workflow_run,
+    pause_workflow_run,
+    resume_workflow_run,
+)
+from wei.types.event_types import WorkflowStartEvent
 from wei.types.interface_types import InterfaceMap
 from wei.types.module_types import AdminCommands, Module, ModuleStatus
 from wei.types.workflow_types import WorkflowRun, WorkflowStatus
-from wei.core.workflow import cancel_workflow_run, pause_workflow_run, resume_workflow_run
-from wei.core.state_manager import state_manager
-from wei.core.module import clear_module_reservation
-from wei.types.event_types import WorkflowCancelled, WorkflowStartEvent
-from wei.core.events import send_event
 from wei.utils import threaded_task
-import time
-import datetime
 
 
 @threaded_task
@@ -37,6 +38,7 @@ def send_reset(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support resetting.")
 
+
 @threaded_task
 def send_reset_wf(workflow: WorkflowRun):
     """Resets a workflow"""
@@ -51,7 +53,7 @@ def send_reset_wf(workflow: WorkflowRun):
             send_event(WorkflowStartEvent.from_wf_run(workflow))
             state_manager.set_workflow_run(workflow)
             print(f"Workflow run with id {run_id} has been restarted.")
-        
+
     else:
         print(f"Error restarting workflow {workflow.label}")
 
@@ -67,6 +69,7 @@ def send_pause(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support pausing.")
         send_cancel(module)
+
 
 def send_pause_wf(workflow: WorkflowRun):
     """Pauses a workflow"""
@@ -87,6 +90,7 @@ def send_resume(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support resuming.")
 
+
 def send_resume_wf(workflow: WorkflowRun):
     """Resumes a workflow"""
     if check_can_send_admin_command_wf(workflow, AdminCommands.RESUME):
@@ -106,13 +110,15 @@ def send_cancel(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support canceling.")
 
-@threaded_task 
+
+@threaded_task
 def send_cancel_wf(workflow: WorkflowRun):
     """Cancels a workflow"""
     if check_can_send_admin_command_wf(workflow, AdminCommands.CANCEL):
         cancel_workflow_run(workflow)
     else:
         print(f"Error cancelling workflow {workflow.label}")
+
 
 @threaded_task
 def send_shutdown(module: Module) -> None:
@@ -156,6 +162,9 @@ def check_can_send_admin_command(module: Module, command: AdminCommands) -> bool
         module.about is None or command in module.about.admin_commands
     )
 
-def check_can_send_admin_command_wf(workflow: WorkflowRun, command: AdminCommands) -> bool: # ***
+
+def check_can_send_admin_command_wf(
+    workflow: WorkflowRun, command: AdminCommands
+) -> bool:  # ***
     """Checks if an admin command can be sent to workflow"""
     return not workflow.status == WorkflowStatus.UNKNOWN

@@ -89,7 +89,7 @@ watchEffect(() => {
         } else {
             allowButton.value = false
         }
-                
+
         if (props.wf_status == "paused") {
             isPaused.value = true
         } else {

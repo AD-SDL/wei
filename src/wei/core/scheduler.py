@@ -3,14 +3,19 @@
 from datetime import datetime
 
 from wei.core.events import send_event
+from wei.core.location import free_source_and_target
+from wei.core.module import clear_module_reservation
 from wei.core.state_manager import state_manager
 from wei.core.step import check_step, run_step
 from wei.core.workcell import find_step_module
-from wei.core.module import clear_module_reservation
-from wei.core.location import free_source_and_target
-from wei.types import WorkflowStatus, WorkflowRun
-from wei.types.event_types import WorkflowQueuedEvent, WorkflowStartEvent, WorkflowCancelled, WorkflowPausedEvent
+from wei.types import WorkflowRun, WorkflowStatus
+from wei.types.event_types import (
+    WorkflowCancelled,
+    WorkflowQueuedEvent,
+    WorkflowStartEvent,
+)
 from wei.utils import threaded_daemon
+
 
 class Scheduler:
     """Handles scheduling workflow steps on the workcell."""
@@ -28,7 +33,7 @@ class Scheduler:
         with state_manager.wc_state_lock():
             # * Update all queued workflows
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():
-                if wf_run.status == WorkflowStatus.PAUSED: # ***
+                if wf_run.status == WorkflowStatus.PAUSED:  # ***
                     continue
                 elif wf_run.status == WorkflowStatus.NEW:
                     wf_run.status = WorkflowStatus.QUEUED
@@ -60,10 +65,10 @@ class Scheduler:
                             wf_run.start_time = datetime.now()
                         state_manager.set_workflow_run(wf_run)
                         run_step(wf_run=wf_run, module=module)
-                elif wf_run.status == WorkflowStatus.CANCELLED: # ***
+                elif wf_run.status == WorkflowStatus.CANCELLED:  # ***
                     self.handle_cancelled_workflow(wf_run, run_id)
 
-    @threaded_daemon # Move to admin.py... # ***
+    @threaded_daemon  # Move to admin.py... # ***
     def handle_cancelled_workflow(self, wf_run: WorkflowRun, run_id: str) -> None:
         """Handles the cancellation of a workflow run in a separate thread."""
         with state_manager.wc_state_lock():
@@ -83,4 +88,3 @@ class Scheduler:
                 print(f"Workflow run with id {run_id} has been cancelled.")
 
                 # state_manager.delete_workflow_run(run_id) # *** Still works but maybe slower..
-
