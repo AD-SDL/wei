@@ -71,16 +71,7 @@ watchEffect(() => {
         }
     }
     else if (props.wf_run_id) {
-        if (props.wf_status == "running" || (props.wf_status == "queued" || props.wf_status == "in_progress")) {
-            if (props.can_Cancel) {
-                canCancel.value = true
-            } else {
-                canCancel.value = false
-            }
-        }
-        else {
-            canCancel.value = false
-        }
+        canCancel.value = ["running", "queued", "in_progress"].includes(props.wf_status || "") && props.can_Cancel === true;
     }
     else {
         // TODO: Allow cancel if there's an actively running workflow

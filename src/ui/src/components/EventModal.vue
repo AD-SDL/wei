@@ -7,10 +7,10 @@
                 </div>
                 <div v-if="modal_event?.event_type === 'WORKFLOW'">
                         <h2 class="title">Workflow: {{ (modal_event?.workflow_name).toLowerCase() }}</h2>
-                </div> 
+                </div>
                 <div v-if="modal_event?.event_type === 'EXPERIMENT'">
                     <h2 class="title">Experiment</h2>
-                </div>                                   
+                </div>
                     {{modal_event.event_id}}
                     <v-sheet class="pa-2 rounded-lg text-md-center text-white"
                         :class="'event_name_' + (modal_event?.event_name).toLowerCase()">

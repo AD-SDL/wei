@@ -68,13 +68,7 @@ const props = defineProps<{
             }
         }
         else if (props.wf_run_id) {
-            if (props.wf_status == "running" || props.wf_status == "in_progress" || props.wf_status == "new" || props.wf_status == "queued") {
-                canReset.value = false
-            }
-            else {
-                canReset.value = true
-            }
-
+            canReset.value = !["running", "in_progress", "new", "queued"].includes(props.wf_status || "")
         }
         else {
             // TODO: Allow reset only if no workflows/experiments are actively running

@@ -13,9 +13,9 @@
       Events
     </v-tab>
         <!-- <v-tab :value="5">Admin</v-tab>
-        <v-tab :value="6">Resources</v-tab> --> 
+        <v-tab :value="6">Resources</v-tab> -->
   </v-tabs>
-  <v-window v-model="tab"> 
+  <v-window v-model="tab">
     <v-window-item :key="1" :value="1">
       <v-container class="pa-1 ma-1 justify-center" fluid>
         <WorkcellPanel @view-workflows="tab = 2" @view-events="tab = 4" />

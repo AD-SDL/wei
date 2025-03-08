@@ -3,7 +3,7 @@
     :items="minEventsData" item-value="event_timestamp" :sort-by="sortBy" density="compact">
     <template v-slot:body="{ items }">
         <tr v-for="item in items" :key="item.event_id" @click="openModal(item)">
-            <td>{{ item.event_id }}</td> 
+            <td>{{ item.event_id }}</td>
             <td>
                 <v-sheet class="pa-2 rounded-lg text-md-center text-white event-name-badge" :class="'event_name_' + item.event_name.toLowerCase()">
                     {{ (item.event_name).toLowerCase() }}
@@ -35,7 +35,7 @@ import EventModal from './EventModal.vue';
 const props = defineProps({
   maxEntries: {
     type: Number,
-    default: Infinity 
+    default: Infinity
   },
   items: {
     type: Array,
@@ -47,11 +47,11 @@ const eventsData = computed(() => props.items.length ? props.items : events.valu
 const sortBy: VDataTable['sortBy'] = [{ key: 'event_timestamp', order: 'desc'}];
 const minEventsData = computed(() => {
   return eventsData.value
-    .slice() 
+    .slice()
     .sort((a: { event_timestamp: string }, b: { event_timestamp: string }) => {
       return new Date(b.event_timestamp).getTime() - new Date(a.event_timestamp).getTime();
-    }) 
-    .slice(0, props.maxEntries); 
+    })
+    .slice(0, props.maxEntries);
 });
 
 const modal = ref(false)
@@ -77,9 +77,9 @@ const openModal = (event: Object) => {
 
 <style scoped>
 .event-name-badge {
-  display: inline-block; 
-  width: 100%; 
-  text-align: center; 
-  min-width: 120px; 
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  min-width: 120px;
 }
 </style>

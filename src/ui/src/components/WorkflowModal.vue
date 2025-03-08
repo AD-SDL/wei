@@ -78,7 +78,7 @@ const moduleName = computed(() => currentStep.value?.module);
 const currentModule = computed(() => {
   const modules = workcell_state.value?.modules;
   if (!modules || !moduleName.value) return null;
-  
+
   return Object.values(modules).find((module: any) => module.name === moduleName.value) || null;
 });
 
