@@ -9,6 +9,8 @@ from test_base import TestWEI_Base
 from wei.types.module_types import ModuleStatus
 from wei.types.workflow_types import WorkflowStatus
 
+from .test_base import TestWEI_Base
+
 # Constants
 SERVER_URL = "http://test_wei_server:8000"
 ADMIN_URL = f"{SERVER_URL}/admin"
