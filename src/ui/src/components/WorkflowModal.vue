@@ -26,7 +26,8 @@
         <v-sheet class="pa-2 rounded-lg text-md-center text-white" :class="'wf_status_' + modal_text.status">{{ modal_text.status }}</v-sheet>
       </v-card-title>
       <v-card-text>
-        <ShowEvents :filteredEvents="workflowEvents"/>
+        <h3 class="title">Recent Events:</h3>
+          <EventTable :items="workflowEvents" :maxEntries="5"/>
         <Workflow :steps="modal_text.steps" :wf="modal_text" />
       </v-card-text>
       <v-card-actions>
@@ -52,7 +53,7 @@ import {
 import CancelButton from './AdminButtons/CancelButton.vue';
 import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
 import ResetButton from './AdminButtons/ResetButton.vue';
-import ShowEvents from './ShowEvents.vue';
+import EventTable from './EventTable.vue';
 
 const props = defineProps(['modal_title', 'modal_text'])
 const flowdef = ref(false)

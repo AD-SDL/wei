@@ -20,11 +20,10 @@
             {{ selectedExperiment.experiment_id }}
           </v-card-title>
           <v-card-text>
-            <ShowEvents :filteredEvents="experimentEvents"/>
-            <div>
+              <h3 class="title">Recent Events:</h3>
+                <EventTable :items="experimentEvents" :maxEntries="5"/>
               <h3>Details:</h3>
               <vue-json-pretty v-if="selectedExperiment" :data="selectedExperiment" :deep="1"></vue-json-pretty>
-            </div>
             <div>
               <h3>Workflows:</h3>
               <v-data-table :headers="workflowHeaders" :items="experimentWorkflows" density="compact">
@@ -33,38 +32,6 @@
                 </template>
               </v-data-table>
             </div>
-            <!-- <div>
-              <h3 class="title">Details:</h3>
-              <v-list>
-                <v-list-item>
-                  <v-list-item-title>Name:</v-list-item-title>
-                  <v-list-item-subtitle>{{ selectedExperiment.experiment_name }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title>ID:</v-list-item-title>
-                  <v-list-item-subtitle>{{ selectedExperiment.experiment_id }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title>Campaign:</v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ selectedExperiment.campaign_id ? campaigns[selectedExperiment.campaign_id]?.campaign_name : '-' }}
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title>Description:</v-list-item-title>
-                  <v-list-item-subtitle>{{ selectedExperiment.experiment_description || '-' }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title>Last Check-in:</v-list-item-title>
-                  <v-list-item-subtitle>{{ selectedExperiment.check_in_timestamp || '-' }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title>Email Addresses:</v-list-item-title>
-                  <v-list-item-subtitle>{{ selectedExperiment.email_addresses.join(', ') || '-' }}</v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
-            </div> -->
-
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -95,8 +62,6 @@ import {
 } from '@/store';
 
 import EventTable from './EventTable.vue';
-import ShowEvents from './ShowEvents.vue';
-import WorkflowTable from './WorkflowTable.vue';
 
 const sortBy: VDataTable['sortBy'] = [{ key: 'experiment_id', order: 'desc' }];
 

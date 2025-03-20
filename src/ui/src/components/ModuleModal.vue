@@ -49,7 +49,8 @@
 
       <v-card-text class="subheading grey--text">
         <div>
-          <ShowEvents :filteredEvents="moduleEvents"/>
+            <h3 class="title">Recent Events:</h3>
+              <EventTable :items="moduleEvents" :maxEntries="5"/>
           <h3>Actions</h3>
           <v-expansion-panels>
             <v-expansion-panel v-for="action in modal_text.actions" :key="action.name">
@@ -158,7 +159,7 @@ import {
 } from '../store';
 import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
 import ShutdownButton from './AdminButtons/ShutdownButton.vue';
-import ShowEvents from './ShowEvents.vue';
+import EventTable from './EventTable.vue';
 
 const props = defineProps(['modal_title', 'modal_text', 'main_url', 'wc_state'])
 const arg_headers = [

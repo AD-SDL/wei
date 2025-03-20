@@ -1,6 +1,10 @@
 <template>
-    <v-data-table :headers="eventHeaders" hover
-    :items="minEventsData" item-value="event_timestamp" :sort-by="sortBy" density="compact">
+  <div>
+    <div v-if="loading" class="d-flex justify-center">
+      <v-progress-circular indeterminate color="primary" size="32"></v-progress-circular>
+    </div>
+    <v-data-table v-else :headers="eventHeaders" hover
+    :items="minEventsData" item-value="event_timestamp" :sort-by="sortBy" density="compact" :hide-default-footer="maxEntries <= 10">
     <template v-slot:body="{ items }">
         <tr v-for="item in items" :key="item.event_id" @click="openModal(item)">
             <td>{{ item.event_id }}</td>
@@ -16,6 +20,7 @@
     </template>
     </v-data-table>
     <EventModal :modalValue="modal" @update:modalValue="modal = $event" :modal_event="modal_event" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -23,7 +28,7 @@
 import {
   computed,
   ref,
-  watch,
+  watchEffect,
 } from 'vue';
 
 import { VDataTable } from 'vuetify/lib/components/index.mjs';
@@ -54,6 +59,8 @@ const minEventsData = computed(() => {
     .slice(0, props.maxEntries);
 });
 
+const loading = ref(true)
+
 const modal = ref(false)
 const modal_event = ref({})
 
@@ -70,9 +77,11 @@ const openModal = (event: Object) => {
     modal.value = true;
 };
 
-// watch(eventsData, (newVal: any, oldVal: any) => {
-//   console.log('Events data updated:', newVal);
-// });
+watchEffect(() => {
+  if (eventsData.value.length > 0) {
+    loading.value = false;
+  }
+});
 </script>
 
 <style scoped>

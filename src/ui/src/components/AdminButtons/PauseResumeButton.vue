@@ -84,22 +84,8 @@ watchEffect(() => {
         }
     }
     else if (props.wf_run_id) {
-<<<<<<< HEAD
         allowButton.value = ["running", "in_progress", "paused"].includes(props.wf_status || "") && props.can_Pause === true;
         isPaused.value = (props.wf_status == "paused")
-=======
-        if (props.wf_status == "running" || props.wf_status == "in_progress" || props.wf_status == "paused" || props.can_Pause == false) {
-            allowButton.value = true
-        } else {
-            allowButton.value = false
-        }
-
-        if (props.wf_status == "paused") {
-            isPaused.value = true
-        } else {
-            isPaused.value = false
-        }
->>>>>>> 43187f45132f15e130ab4858d7a01dfef4d895f4
     }
     else {
         if (workcell_state.value) {
