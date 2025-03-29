@@ -70,7 +70,6 @@ def send_pause(module: Module) -> None:
         print(f"Module {module.name} does not support pausing.")
         send_cancel(module)
 
-
 def send_pause_wf(workflow: WorkflowRun):
     """Pauses a workflow"""
     if check_can_send_admin_command_wf(workflow, AdminCommands.PAUSE):

@@ -24,6 +24,7 @@ from wei.core.state_manager import state_manager
 from wei.core.workflow import cancel_active_workflow_runs
 from wei.routers.workflow_routes import get_run
 from wei.utils import initialize_state
+from wei.types.workflow_types import WorkflowStatus
 
 router = APIRouter()
 
@@ -132,9 +133,12 @@ def cancel_module(module_name: str) -> None:
 def cancel_workflow(wf_run_id: str) -> None:
     """Cancels a workflow"""
 
-    ## vers 2.
     state_manager.paused = True
-    send_cancel_wf(get_run(wf_run_id))
+    # send_cancel_wf(get_run(wf_run_id))
+    wf_run = get_run(wf_run_id)
+    wf_run.status = WorkflowStatus.CANCELLED
+    with state_manager.wc_state_lock():
+        state_manager.set_workflow_run(wf_run)
     state_manager.paused = False
 
 
