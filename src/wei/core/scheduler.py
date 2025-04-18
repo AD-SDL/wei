@@ -17,7 +17,7 @@ from wei.types.event_types import (
 )
 from wei.utils import threaded_daemon
 
-
+import threading
 class Scheduler:
     """Handles scheduling workflow steps on the workcell."""
 
@@ -36,7 +36,7 @@ class Scheduler:
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():
                     if wf_run.status == WorkflowStatus.CANCELLED:
                         if wf_run.end_time is None:
-                            event_stop.set()
+                            stop_event.set()
                             cancel_workflow_run(wf_run=wf_run)
                     elif wf_run.status == WorkflowStatus.PAUSED:  # ***
                         continue
@@ -66,9 +66,10 @@ class Scheduler:
                             if wf_run.step_index == 0:
                                 wf_run.start_time = datetime.now()
                             state_manager.set_workflow_run(wf_run)
-                            thread, event_stop = run_step(wf_run=wf_run, module=module)
+                            stop_event = threading.Event()
+                            thread= run_step(wf_run=wf_run, module=module, stop_event=stop_event)
                             if wf_run.status == WorkflowStatus.CANCELLED:
-                                event_stop.set()
+                                stop_event.set()
                 
     
     @threaded_daemon

@@ -94,18 +94,19 @@ def check_dependency_status(step: Step):
     """Returns true if the module is able to run based on the step requirements"""
     return True
 
-
+import threading
 @threaded_daemon
 def run_step(
     wf_run: WorkflowRun,
     module: Module,
     stop_event=None
 ) -> None:
+    """Runs a single Step from a given workflow on a specified Module."""
+    if stop_event is None:
+        stop_event = threading.Event()
+    logger = Logger.get_workflow_run_logger(wf_run.run_id)
+    step: Step = wf_run.steps[wf_run.step_index]
     while not stop_event.is_set():
-        """Runs a single Step from a given workflow on a specified Module."""
-        logger = Logger.get_workflow_run_logger(wf_run.run_id)
-        step: Step = wf_run.steps[wf_run.step_index]
-
         logger.debug(f"Started running step with name: {step.name}")
         logger.debug(step)
 
