@@ -2,6 +2,7 @@
 
 from datetime import datetime
 
+from wei.core.workflow import cancel_workflow_run
 from wei.core.events import send_event
 from wei.core.location import free_source_and_target
 from wei.core.module import clear_module_reservation
@@ -33,58 +34,62 @@ class Scheduler:
         with state_manager.wc_state_lock():
             # * Update all queued workflows
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():
-                if wf_run.status == WorkflowStatus.PAUSED:  # ***
-                    continue
-                elif wf_run.status == WorkflowStatus.NEW:
-                    wf_run.status = WorkflowStatus.QUEUED
-                    print(
-                        f"Processed new workflow: {wf_run.name} with run_id: {run_id}"
-                    )
-                    send_event(WorkflowQueuedEvent.from_wf_run(wf_run=wf_run))
-                    state_manager.set_workflow_run(wf_run)
-                elif wf_run.status == WorkflowStatus.CANCELLED:
-                    self.handle_cancelled_workflow(wf_run, run_id)
-                    continue
-                elif wf_run.status in [
-                    WorkflowStatus.QUEUED,
-                    WorkflowStatus.IN_PROGRESS,
-                ]:
-                    step = wf_run.steps[wf_run.step_index]
-                    if check_step(wf_run.experiment_id, run_id, step):
-                        module = find_step_module(
-                            state_manager.get_workcell(), step.module
-                        )
-
-                        if wf_run.status == WorkflowStatus.QUEUED:
-                            send_event(WorkflowStartEvent.from_wf_run(wf_run=wf_run))
-                        wf_run.status = WorkflowStatus.RUNNING
+                    if wf_run.status == WorkflowStatus.CANCELLED:
+                        if wf_run.end_time is None:
+                            event_stop.set()
+                            cancel_workflow_run(wf_run=wf_run)
+                    elif wf_run.status == WorkflowStatus.PAUSED:  # ***
+                        continue
+                    elif wf_run.status == WorkflowStatus.NEW:
+                        wf_run.status = WorkflowStatus.QUEUED
                         print(
-                            f"Starting step {wf_run.name}.{step.name} for run: {run_id}"
+                            f"Processed new workflow: {wf_run.name} with run_id: {run_id}"
                         )
-                        if wf_run.step_index == 0:
-                            wf_run.start_time = datetime.now()
+                        send_event(WorkflowQueuedEvent.from_wf_run(wf_run=wf_run))
                         state_manager.set_workflow_run(wf_run)
-                        run_step(wf_run=wf_run, module=module)
-                elif wf_run.status == WorkflowStatus.CANCELLED:  # ***
-                    self.handle_cancelled_workflow(wf_run, run_id)
+                    elif wf_run.status in [
+                        WorkflowStatus.QUEUED,
+                        WorkflowStatus.IN_PROGRESS,
+                    ]:
+                        step = wf_run.steps[wf_run.step_index]
+                        if check_step(wf_run.experiment_id, run_id, step):
+                            module = find_step_module(
+                                state_manager.get_workcell(), step.module
+                            )
 
-    @threaded_daemon  # Move to admin.py... # ***
+                            if wf_run.status == WorkflowStatus.QUEUED:
+                                send_event(WorkflowStartEvent.from_wf_run(wf_run=wf_run))
+                            wf_run.status = WorkflowStatus.RUNNING
+                            print(
+                                f"Starting step {wf_run.name}.{step.name} for run: {run_id}"
+                            )
+                            if wf_run.step_index == 0:
+                                wf_run.start_time = datetime.now()
+                            state_manager.set_workflow_run(wf_run)
+                            thread, event_stop = run_step(wf_run=wf_run, module=module)
+                            if wf_run.status == WorkflowStatus.CANCELLED:
+                                event_stop.set()
+                
+    
+    @threaded_daemon
     def handle_cancelled_workflow(self, wf_run: WorkflowRun, run_id: str) -> None:
         """Handles the cancellation of a workflow run in a separate thread."""
-        with state_manager.wc_state_lock():
-            if wf_run.end_time is None:
-                wf_run.end_time = datetime.now()
-                wf_run.duration = wf_run.end_time - wf_run.start_time
-                wf_run.status = WorkflowStatus.CANCELLED
+        if wf_run.end_time is None:
+            print("Inside guy", wf_run.status)
+            wf_run.end_time = datetime.now()
+            if wf_run.start_time is None:
+                wf_run.start_time = wf_run.end_time
+            wf_run.duration = wf_run.end_time - wf_run.start_time
+            wf_run.status = WorkflowStatus("cancelled")
 
-                for step in wf_run.steps:
-                    module = state_manager.get_module(step.module)
-                    clear_module_reservation(module)
+            for step in wf_run.steps:
+                module = state_manager.get_module(step.module)
+                clear_module_reservation(module)
 
-                free_source_and_target(wf_run)
-                state_manager.set_workflow_run(wf_run)
+            free_source_and_target(wf_run)
+            state_manager.set_workflow_run(wf_run)
 
-                send_event(WorkflowCancelled.from_wf_run(workflow=wf_run))
-                print(f"Workflow run with id {run_id} has been cancelled.")
+            send_event(WorkflowCancelled.from_wf_run(wf_run=wf_run))
+            print(f"Workflow run with id {run_id} has been cancelled.")
 
-                # state_manager.delete_workflow_run(run_id) # *** Still works but maybe slower..
+                

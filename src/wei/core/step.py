@@ -25,6 +25,7 @@ from wei.types.event_types import (
     WorkflowCompletedEvent,
     WorkflowFailedEvent,
     WorkflowStepEvent,
+    WorkflowCancelled
 )
 from wei.types.interface_types import InterfaceMap
 from wei.utils import threaded_daemon
@@ -98,113 +99,123 @@ def check_dependency_status(step: Step):
 def run_step(
     wf_run: WorkflowRun,
     module: Module,
+    stop_event=None
 ) -> None:
-    """Runs a single Step from a given workflow on a specified Module."""
-    logger = Logger.get_workflow_run_logger(wf_run.run_id)
-    step: Step = wf_run.steps[wf_run.step_index]
+    while not stop_event.is_set():
+        """Runs a single Step from a given workflow on a specified Module."""
+        logger = Logger.get_workflow_run_logger(wf_run.run_id)
+        step: Step = wf_run.steps[wf_run.step_index]
 
-    logger.debug(f"Started running step with name: {step.name}")
-    logger.debug(step)
+        logger.debug(f"Started running step with name: {step.name}")
+        logger.debug(step)
 
-    interface = "simulate_callback" if wf_run.simulate else module.interface
-
-    try:
-        step.start_time = datetime.now()
-        status, data_key, error, files = InterfaceMap.interfaces[interface].send_action(
-            step=step,
-            module=module,
-            run_dir=get_workflow_run_directory(wf_run.run_id),
-        )
-        step_response = StepResponse(
-            status=status,
-            data=data_key,
-            error=error,
-            files=files,
-        )
-        if step_response.status == StepStatus.NOT_READY:
-            wf_run.status = WorkflowStatus.IN_PROGRESS
-            step.result = step_response
-            with state_manager.wc_state_lock():
-                wf_run.steps[wf_run.step_index] = step
-                state_manager.set_workflow_run(wf_run)
-                return
-    except Exception as e:
-        logger.debug(f"Exception occurred while running step with name: {step.name}")
-        logger.debug(str(e))
-        logger.debug(traceback.format_exc())
-        step_response = StepResponse(
-            status=StepStatus.FAILED,
-            error=str(e),
-        )
-        traceback.print_exc()
-    else:
-        logger.debug(f"Finished running step with name: {step.name}")
-
-    step.end_time = datetime.now()
-    step.duration = step.end_time - step.start_time
-
-    labeled_data = None
-    if step_response.data:
-        labeled_data = {}
-        for data_key in step_response.data:
-            if step.data_labels is not None and data_key in step.data_labels:
-                label = step.data_labels[data_key]
-            else:
-                label = data_key
-            datapoint = ValueDataPoint(
-                label=label,
-                step_id=step.id,
-                workflow_id=wf_run.run_id,
-                experiment_id=wf_run.experiment_id,
-                value=step_response.data[data_key],
+        interface = "simulate_callback" if wf_run.simulate else module.interface
+        print("STEP: entered run_step, ", wf_run.status, step.name)
+        if wf_run.status == WorkflowStatus.CANCELLED:
+            return
+        try:
+            step.start_time = datetime.now()
+            status, data_key, error, files = InterfaceMap.interfaces[interface].send_action(
+                step=step,
+                module=module,
+                run_dir=get_workflow_run_directory(wf_run.run_id),
             )
-            state_manager.set_datapoint(datapoint)
-            labeled_data[label] = datapoint.id
-    if step_response.files:
-        if not labeled_data:
+            step_response = StepResponse(
+                status=status,
+                data=data_key,
+                error=error,
+                files=files,
+            )
+            if step_response.status == StepStatus.NOT_READY:
+                print("STEP: not ready, ", wf_run.status, step_response.status)
+                wf_run.status = WorkflowStatus.IN_PROGRESS
+                step.result = step_response
+                with state_manager.wc_state_lock():
+                    wf_run.steps[wf_run.step_index] = step
+                    state_manager.set_workflow_run(wf_run)
+                    return
+        except Exception as e:
+            logger.debug(f"Exception occurred while running step with name: {step.name}")
+            logger.debug(str(e))
+            logger.debug(traceback.format_exc())
+            step_response = StepResponse(
+                status=StepStatus.FAILED,
+                error=str(e),
+            )
+            traceback.print_exc()
+        else:
+            logger.debug(f"Finished running step with name: {step.name}")
+
+        step.end_time = datetime.now()
+        step.duration = step.end_time - step.start_time
+
+        labeled_data = None
+        if step_response.data:
             labeled_data = {}
-        for file_key in step_response.files:
-            if step.data_labels is not None and file_key in step.data_labels:
-                label = step.data_labels[file_key]
-            else:
-                label = file_key
-            datapoint = LocalFileDataPoint(
-                step_id=step.id,
-                workflow_id=wf_run.run_id,
-                experiment_id=wf_run.experiment_id,
-                label=label,
-                path=str(step_response.files[file_key]),
-            )
-            state_manager.set_datapoint(datapoint)
-            labeled_data[label] = datapoint.id
+            for data_key in step_response.data:
+                if step.data_labels is not None and data_key in step.data_labels:
+                    label = step.data_labels[data_key]
+                else:
+                    label = data_key
+                datapoint = ValueDataPoint(
+                    label=label,
+                    step_id=step.id,
+                    workflow_id=wf_run.run_id,
+                    experiment_id=wf_run.experiment_id,
+                    value=step_response.data[data_key],
+                )
+                state_manager.set_datapoint(datapoint)
+                labeled_data[label] = datapoint.id
+        if step_response.files:
+            if not labeled_data:
+                labeled_data = {}
+            for file_key in step_response.files:
+                if step.data_labels is not None and file_key in step.data_labels:
+                    label = step.data_labels[file_key]
+                else:
+                    label = file_key
+                datapoint = LocalFileDataPoint(
+                    step_id=step.id,
+                    workflow_id=wf_run.run_id,
+                    experiment_id=wf_run.experiment_id,
+                    label=label,
+                    path=str(step_response.files[file_key]),
+                )
+                state_manager.set_datapoint(datapoint)
+                labeled_data[label] = datapoint.id
 
-    send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
-    step_response.data = labeled_data
-    step.result = step_response
-    if step_response.status == StepStatus.FAILED:
-        logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
-        wf_run.status = WorkflowStatus.FAILED
-        wf_run.end_time = datetime.now()
-        wf_run.duration = wf_run.end_time - wf_run.start_time
-        send_event(
-            WorkflowFailedEvent.from_wf_run(
-                wf_run=wf_run,
-            )
-        )
-        send_failed_step_notification(wf_run, step)
-    else:
-        if wf_run.step_index + 1 == len(wf_run.steps):
-            wf_run.status = WorkflowStatus.COMPLETED
+        send_event(WorkflowStepEvent.from_wf_run(wf_run=wf_run, step=step))
+        step_response.data = labeled_data
+        step.result = step_response
+        if step_response.status == StepStatus.FAILED:
+            logger.debug(f"Step {step.name} failed: {step_response.model_dump_json()}")
+            wf_run.status = WorkflowStatus.FAILED
             wf_run.end_time = datetime.now()
             wf_run.duration = wf_run.end_time - wf_run.start_time
-            send_event(WorkflowCompletedEvent.from_wf_run(wf_run=wf_run))
+            send_event(
+                WorkflowFailedEvent.from_wf_run(
+                    wf_run=wf_run,
+                )
+            )
+            send_failed_step_notification(wf_run, step)
         else:
-            wf_run.status = WorkflowStatus.IN_PROGRESS
-    with state_manager.wc_state_lock():
-        wf_run.steps[wf_run.step_index] = step
-        update_source_and_target(wf_run)
-        free_source_and_target(wf_run)
-        clear_module_reservation(module)
-        if wf_run.step_index < len(wf_run.steps) - 1:
-            wf_run.step_index += 1
-        state_manager.set_workflow_run(wf_run)
+            if wf_run.step_index + 1 == len(wf_run.steps):
+                wf_run.status = WorkflowStatus.COMPLETED
+                wf_run.end_time = datetime.now()
+                wf_run.duration = wf_run.end_time - wf_run.start_time
+                send_event(WorkflowCompletedEvent.from_wf_run(wf_run=wf_run))
+            else:
+                print("STEP: setting to progress, ", wf_run.status, step_response.status)
+                wf_run.status = WorkflowStatus.IN_PROGRESS
+        with state_manager.wc_state_lock():
+            print("STEP: in workcell state lock, ", wf_run.status, step_response.status)
+            wf_run.steps[wf_run.step_index] = step
+            update_source_and_target(wf_run)
+            free_source_and_target(wf_run)
+            clear_module_reservation(module)
+            if wf_run.step_index < len(wf_run.steps) - 1:
+                wf_run.step_index += 1
+            state_manager.set_workflow_run(wf_run)
+            return
+    print("thread stopped")
+    return

@@ -128,31 +128,14 @@ def cancel_module(module_name: str) -> None:
     """Cancels a module"""
     send_cancel(state_manager.get_module(module_name))
 
-from wei.core.workcell import find_step_module
-from wei.core.module import clear_module_reservation
-from wei.core.location import free_source_and_target
+from wei.core.workflow import cancel_workflow_run
 
 @router.api_route("/cancel_wf/{wf_run_id}", methods=["POST"])
 def cancel_workflow(wf_run_id: str) -> None:
     """Cancels a workflow"""
 
-    # state_manager.paused = True
-    # # send_cancel_wf(get_run(wf_run_id))
-    # wf_run = get_run(wf_run_id)
-    # wf_run.status = WorkflowStatus.CANCELLED
-    # with state_manager.wc_state_lock():
-    #     state_manager.set_workflow_run(wf_run)
-    # state_manager.paused = False
-
     wf_run = get_run(wf_run_id)
-    step = wf_run.steps[wf_run.step_index]
-    module = find_step_module(state_manager.get_workcell(), step.module)
-    wf_run.status = WorkflowStatus.CANCELLED
-    with state_manager.wc_state_lock():
-        free_source_and_target(wf_run)
-        clear_module_reservation(module)
-        state_manager.set_workflow_run(wf_run)
-    
+    cancel_workflow_run(wf_run)
 
 
 @router.api_route("/shutdown", methods=["POST"])

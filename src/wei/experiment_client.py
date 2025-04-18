@@ -429,6 +429,7 @@ class ExperimentClient:
                     WorkflowStatus.FAILED,
                     WorkflowStatus.CANCELLED,
                 ]:
+                    print("EXP_CLIENT: break, ", wf_run.status)
                     break
                 prior_status = status
                 prior_index = step_index
