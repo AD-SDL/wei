@@ -109,16 +109,6 @@ def send_cancel(module: Module) -> None:
     else:
         print(f"Module {module.name} does not support canceling.")
 
-
-@threaded_task
-def send_cancel_wf(workflow: WorkflowRun):
-    """Cancels a workflow"""
-    if check_can_send_admin_command_wf(workflow, AdminCommands.CANCEL):
-        cancel_workflow_run(workflow)
-    else:
-        print(f"Error cancelling workflow {workflow.label}")
-
-
 @threaded_task
 def send_shutdown(module: Module) -> None:
     """Shuts down a module"""

@@ -65,9 +65,7 @@ def reset_module(module_name: str) -> None:
 @router.api_route("/reset_wf/{wf_run_id}", methods=["POST"])
 def reset_workflow(wf_run_id: str) -> None:
     """Restarts a workflow"""
-    state_manager.paused = True
     send_reset_wf(get_run(wf_run_id))
-    state_manager.paused = False
 
 
 @router.api_route("/pause", methods=["POST"])
@@ -87,9 +85,7 @@ def pause_module(module_name: str) -> None:
 @router.api_route("/pause_wf/{wf_run_id}", methods=["POST"])
 def pause_workflow(wf_run_id: str) -> None:
     """Pauses a workflow"""
-    state_manager.paused = True
     send_pause_wf(get_run(wf_run_id))
-    state_manager.paused = False
 
 
 @router.api_route("/resume", methods=["POST"])
@@ -109,9 +105,7 @@ def resume_module(module_name: str) -> None:
 @router.api_route("/resume_wf/{wf_run_id}", methods=["POST"])
 def resume_workflow(wf_run_id: str) -> None:
     """Resumes a workflow"""
-    # state_manager.paused = True
     send_resume_wf(get_run(wf_run_id))
-    state_manager.paused = False
 
 
 @router.api_route("/cancel", methods=["POST"])
