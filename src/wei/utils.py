@@ -143,7 +143,6 @@ def threaded_daemon(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs) -> threading.Thread:
-        # stop_event = kwargs.pop("stop_event", threading.Event())
         thread = threading.Thread(target=func, args=args, kwargs=kwargs)
         thread.daemon = True
         thread.start()

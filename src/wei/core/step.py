@@ -25,7 +25,6 @@ from wei.types.event_types import (
     WorkflowCompletedEvent,
     WorkflowFailedEvent,
     WorkflowStepEvent,
-    WorkflowCancelled
 )
 from wei.types.interface_types import InterfaceMap
 from wei.utils import threaded_daemon
@@ -94,26 +93,26 @@ def check_dependency_status(step: Step):
     """Returns true if the module is able to run based on the step requirements"""
     return True
 
-import threading
+from wei.core.workflow_admin import wf_status_change
+
 @threaded_daemon
 def run_step(
     wf_run: WorkflowRun,
     module: Module,
-    stop_event=None
 ) -> None:
     """Runs a single Step from a given workflow on a specified Module."""
-    if stop_event is None:
-        stop_event = threading.Event()
     logger = Logger.get_workflow_run_logger(wf_run.run_id)
     step: Step = wf_run.steps[wf_run.step_index]
-    while not stop_event.is_set():
+    while not wf_status_change.is_set():
         logger.debug(f"Started running step with name: {step.name}")
         logger.debug(step)
-
         interface = "simulate_callback" if wf_run.simulate else module.interface
-        print("STEP: entered run_step, ", wf_run.status, step.name)
-        if wf_run.status == WorkflowStatus.CANCELLED:
+
+        if wf_run.status == WorkflowStatus.CANCELLED: # *** Not sure if boosts performance or not..
             return
+        if wf_status_change.is_set():
+            return
+        
         try:
             step.start_time = datetime.now()
             status, data_key, error, files = InterfaceMap.interfaces[interface].send_action(
@@ -206,10 +205,12 @@ def run_step(
                 wf_run.duration = wf_run.end_time - wf_run.start_time
                 send_event(WorkflowCompletedEvent.from_wf_run(wf_run=wf_run))
             else:
-                print("STEP: setting to progress, ", wf_run.status, step_response.status)
+                if wf_status_change.is_set():
+                    return
                 wf_run.status = WorkflowStatus.IN_PROGRESS
         with state_manager.wc_state_lock():
-            print("STEP: in workcell state lock, ", wf_run.status, step_response.status)
+            if wf_status_change.is_set():
+                    return
             wf_run.steps[wf_run.step_index] = step
             update_source_and_target(wf_run)
             free_source_and_target(wf_run)
@@ -218,5 +219,4 @@ def run_step(
                 wf_run.step_index += 1
             state_manager.set_workflow_run(wf_run)
             return
-    print("thread stopped")
     return

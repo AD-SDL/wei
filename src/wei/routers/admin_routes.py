@@ -8,7 +8,6 @@ from fastapi import APIRouter
 from wei.config import Config
 from wei.core.admin import (
     send_cancel,
-    send_cancel_wf,
     send_lock,
     send_pause,
     send_pause_wf,
@@ -21,7 +20,7 @@ from wei.core.admin import (
     send_unlock,
 )
 from wei.core.state_manager import state_manager
-from wei.core.workflow import cancel_active_workflow_runs
+from wei.core.workflow import cancel_active_workflow_runs, cancel_workflow_run
 from wei.routers.workflow_routes import get_run
 from wei.utils import initialize_state
 from wei.types.workflow_types import WorkflowStatus
@@ -128,12 +127,10 @@ def cancel_module(module_name: str) -> None:
     """Cancels a module"""
     send_cancel(state_manager.get_module(module_name))
 
-from wei.core.workflow import cancel_workflow_run
 
 @router.api_route("/cancel_wf/{wf_run_id}", methods=["POST"])
 def cancel_workflow(wf_run_id: str) -> None:
     """Cancels a workflow"""
-
     wf_run = get_run(wf_run_id)
     cancel_workflow_run(wf_run)
 

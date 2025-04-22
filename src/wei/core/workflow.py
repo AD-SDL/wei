@@ -10,7 +10,7 @@ from wei.core.step import validate_step
 from wei.core.storage import get_workflow_run_directory
 from wei.types import Step, Workcell, Workflow, WorkflowRun
 from wei.types.workflow_types import WorkflowStatus
-from wei.utils import threaded_daemon
+from wei.core.workflow_admin import wf_status_change
 
 def create_run(
     workflow: Workflow,
@@ -148,25 +148,27 @@ from wei.core.events import send_event
 from wei.types.event_types import WorkflowCancelled
 from datetime import datetime
 
-@threaded_daemon
 def cancel_workflow_run(wf_run: WorkflowRun) -> None:
     """Cancels the workflow run"""
-    with state_manager.wc_state_lock():
-        wf_run.status = WorkflowStatus.CANCELLED
-        print("WORKFLOW: cancel func called, ", wf_run.status)
-        wf_run.end_time = datetime.now()
-        if wf_run.start_time is None:
-            wf_run.start_time = wf_run.end_time
-        wf_run.duration = wf_run.end_time - wf_run.start_time
-        wf_run.status = WorkflowStatus("cancelled")
-                
-        for step in wf_run.steps:
-            module = state_manager.get_module(step.module)
-            clear_module_reservation(module)
+    wf_status_change.set()
+    wf_run.status = WorkflowStatus.CANCELLED
+    wf_run.end_time = datetime.now()
 
+    if wf_run.start_time is None:
+        wf_run.start_time = wf_run.end_time
+    wf_run.duration = wf_run.end_time - wf_run.start_time
+    
+    step = wf_run.steps[wf_run.step_index]
+    module = find_step_module(state_manager.get_workcell(), step.module)
+
+    with state_manager.wc_state_lock():
+        clear_module_reservation(module)
         free_source_and_target(wf_run)
         state_manager.set_workflow_run(wf_run)
-    print("WORKFLOW: before returning, ", wf_run.status)
+
+    send_event(WorkflowCancelled.from_wf_run(wf_run=wf_run))
+    print(f"Workflow run with id {wf_run.run_id} has been cancelled.")
+    
     return wf_run
 
 

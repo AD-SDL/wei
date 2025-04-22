@@ -2,22 +2,17 @@
 
 from datetime import datetime
 
-from wei.core.workflow import cancel_workflow_run
+from wei.core.workflow_admin import wf_status_change
 from wei.core.events import send_event
-from wei.core.location import free_source_and_target
-from wei.core.module import clear_module_reservation
 from wei.core.state_manager import state_manager
 from wei.core.step import check_step, run_step
 from wei.core.workcell import find_step_module
-from wei.types import WorkflowRun, WorkflowStatus
+from wei.types import WorkflowStatus
 from wei.types.event_types import (
-    WorkflowCancelled,
     WorkflowQueuedEvent,
     WorkflowStartEvent,
 )
-from wei.utils import threaded_daemon
 
-import threading
 class Scheduler:
     """Handles scheduling workflow steps on the workcell."""
 
@@ -34,11 +29,7 @@ class Scheduler:
         with state_manager.wc_state_lock():
             # * Update all queued workflows
             for run_id, wf_run in state_manager.get_all_workflow_runs().items():
-                    if wf_run.status == WorkflowStatus.CANCELLED:
-                        if wf_run.end_time is None:
-                            stop_event.set()
-                            cancel_workflow_run(wf_run=wf_run)
-                    elif wf_run.status == WorkflowStatus.PAUSED:  # ***
+                    if wf_run.status == WorkflowStatus.PAUSED:  # ***
                         continue
                     elif wf_run.status == WorkflowStatus.NEW:
                         wf_run.status = WorkflowStatus.QUEUED
@@ -50,13 +41,13 @@ class Scheduler:
                     elif wf_run.status in [
                         WorkflowStatus.QUEUED,
                         WorkflowStatus.IN_PROGRESS,
-                    ]:
+                    ]: 
+                        wf_status_change.clear()
                         step = wf_run.steps[wf_run.step_index]
                         if check_step(wf_run.experiment_id, run_id, step):
                             module = find_step_module(
                                 state_manager.get_workcell(), step.module
                             )
-
                             if wf_run.status == WorkflowStatus.QUEUED:
                                 send_event(WorkflowStartEvent.from_wf_run(wf_run=wf_run))
                             wf_run.status = WorkflowStatus.RUNNING
@@ -66,31 +57,6 @@ class Scheduler:
                             if wf_run.step_index == 0:
                                 wf_run.start_time = datetime.now()
                             state_manager.set_workflow_run(wf_run)
-                            stop_event = threading.Event()
-                            thread= run_step(wf_run=wf_run, module=module, stop_event=stop_event)
-                            if wf_run.status == WorkflowStatus.CANCELLED:
-                                stop_event.set()
-                
-    
-    @threaded_daemon
-    def handle_cancelled_workflow(self, wf_run: WorkflowRun, run_id: str) -> None:
-        """Handles the cancellation of a workflow run in a separate thread."""
-        if wf_run.end_time is None:
-            print("Inside guy", wf_run.status)
-            wf_run.end_time = datetime.now()
-            if wf_run.start_time is None:
-                wf_run.start_time = wf_run.end_time
-            wf_run.duration = wf_run.end_time - wf_run.start_time
-            wf_run.status = WorkflowStatus("cancelled")
-
-            for step in wf_run.steps:
-                module = state_manager.get_module(step.module)
-                clear_module_reservation(module)
-
-            free_source_and_target(wf_run)
-            state_manager.set_workflow_run(wf_run)
-
-            send_event(WorkflowCancelled.from_wf_run(wf_run=wf_run))
-            print(f"Workflow run with id {run_id} has been cancelled.")
+                            run_step(wf_run=wf_run, module=module)
 
                 
