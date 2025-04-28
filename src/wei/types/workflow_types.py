@@ -45,6 +45,15 @@ class WorkflowStatus(str, Enum):
         ]
 
 
+class WorkflowParameter(BaseModel):
+    """container for a workflow parameter"""
+
+    name: str
+    """the name of the parameter"""
+    default: Optional[Any] = None
+    """ the default value of the parameter"""
+
+
 class Workflow(BaseModel):
     """Grand container that pulls all info of a workflow together"""
 
@@ -52,6 +61,8 @@ class Workflow(BaseModel):
     """Name of the workflow"""
     metadata: Metadata = Field(default_factory=Metadata)
     """Information about the flow"""
+    parameters: Optional[List[WorkflowParameter]] = []
+    """Inputs to the workflow"""
     flowdef: List[Step]
     """User Submitted Steps of the flow"""
 

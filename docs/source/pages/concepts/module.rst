@@ -18,7 +18,7 @@ Modules are designed to be:
 The WEI Module Interface
 ========================
 
-All Modules must implement the WEI Module Interface, which is a set of methods that allow the Module to be communicated with and controlled by WEI. The interface is protocol agnostic, with current support for implementations in REST (preferred), ROS 2, TCP, and ZeroMQ.
+All Modules must implement the WEI Module Interface, which is a set of methods that allow the Module to be communicated with and controlled by WEI. The interface is protocol agnostic, with current support for implementations in REST, and legacy implementations in ROS 2, TCP, and ZeroMQ.
 
 A Module must implement the following methods:
 
@@ -30,7 +30,8 @@ The Action method is called by WEI to trigger a specified Action on the device o
 The Action method should accept the following parameters:
 
 - ``name``: The name of the specific action to be performed.
-- ``args``: A json-serializable dictionary of variables specific to the action in question. The keys and values of the dictionary correspond to the names and values of the variables, respectively.
+- ``args``: A JSON-serializable dictionary of variables specific to the action in question. The keys and values of the dictionary correspond to the names and values of the variables, respectively.
+- ``files`` (Optional): Some modules require one or more files as inputs, typically instruments that support their own protocols/workflows. These files are uploaded as Form data.
 
 State
 -----
@@ -39,20 +40,26 @@ The State method is called by WEI to query the current state of the device or in
 
 It should, at the very least, return the following keys:
 
-- ``status``: the status of the module, must be included in the :class:`wei.types.ModuleStatus` enum.
-- ``error``: a string describing any error that has occurred, or an empty string if no error has occurred.
+- ``status``: the status of the module, a dictionary of the form ``Dict[``:class:`wei.types.ModuleStatus` ``: bool]``, for example: ``{"READY": False, "ERROR": True, "BUSY": False}``. Flags that aren't set are assumed to be ``False``.
+- ``error``: a string or list of strings describing any error that has occurred, or ``None`` if no error has occurred.
+
+Additional keys may be provided on a per-module basis, allowing users and the system to monitor the state of the module and the device it controls in detail.
 
 About
 -----
 
-The ``about`` method is called by WEI to query the Module for information about itself. It should return a dictionary of information about the Module, which should conform to the :class:`wei.types.ModuleAbout` specification.
+The About method is called by WEI to query the Module for information about itself. It should return a dictionary of information about the Module, which should conform to the :class:`wei.types.ModuleAbout` specification.
 
-This ``about`` method is both a very useful affordance for WEI users, allowing them to more easily parse how to use a particular module, and a valuable piece of functionality for the WEI Engine. Among other things, it allows the WEI Engine to pre-validate workflows, reducing runtime errors and failed workflow runs.
+This ``about`` method is both a very useful affordance for WEI users, allowing them to more easily parse how to use a particular module, and a valuable piece of functionality for the WEI Engine. Among other benefits, it allows the WEI Engine to pre-validate workflows, reducing runtime errors and failed workflow runs.
 
 Resources
 ---------
 
-The Resources method is called by WEI to query the Module for information about the resources it controls. This method is not yet standardized, and is currently under active development.
+.. admonition:: Coming Soon!
+
+    This method is not yet standardized, and is currently under active development.
+
+The Resources method is called by the WEI server to query the Module for information about the resources it controls.
 
 Next Steps
 ==========

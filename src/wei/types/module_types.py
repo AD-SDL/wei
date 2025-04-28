@@ -77,8 +77,8 @@ class ModuleState(BaseModel, extra="allow"):
         ModuleStatus.CANCELLED: False,
     }
     """Current state of the module"""
-    error: Optional[str] = None
-    """Error message if the module is in an error state"""
+    error: Optional[Union[str, list[str]]] = None
+    """Error message(s) if the module is in an error state"""
 
     @field_validator("status", mode="before")
     def validate_status(cls, v: Any) -> Any:

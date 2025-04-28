@@ -4,11 +4,6 @@ wei.routers.workcell\_routes
 .. automodule:: wei.routers.workcell_routes
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -20,15 +15,3 @@ wei.routers.workcell\_routes
       reset_state
       set_workcell
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
