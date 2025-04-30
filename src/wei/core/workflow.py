@@ -2,8 +2,8 @@
 
 import copy
 import re
-from typing import Any, Dict, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
@@ -272,4 +272,3 @@ def value_substitution(input_string: str, input_parameters: Dict[str, Any]):
                     + ", please define it in the parameters section of the Workflow Definition."
                 )
     return input_string
-
