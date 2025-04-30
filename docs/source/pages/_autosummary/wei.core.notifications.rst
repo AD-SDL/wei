@@ -4,11 +4,6 @@ wei.core.notifications
 .. automodule:: wei.core.notifications
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -16,15 +11,3 @@ wei.core.notifications
       send_email
       send_failed_step_notification
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

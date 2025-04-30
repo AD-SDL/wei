@@ -1,6 +1,7 @@
 """The server that takes incoming WEI flow requests from the experiment application"""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Dict
 
 from fastapi import FastAPI
@@ -49,7 +50,9 @@ async def lifespan(app: FastAPI) -> None:  # type: ignore[misc]
     app.include_router(module_routes.router, prefix="/modules")
     app.include_router(workcell_routes.router, prefix="/workcells")
     app.include_router(workcell_routes.router, prefix="/wc")
-    app.mount("/", StaticFiles(directory="wei/src/ui/dist", html=True))
+    ui_files_path = Path("wei") / "src" / "ui" / "dist"
+    if ui_files_path.exists():
+        app.mount("/", StaticFiles(directory=ui_files_path, html=True))
     EventHandler.initialize_diaspora()
 
     if Config.autostart_engine:

@@ -14,14 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         name: Checkout code
-      - name: Set up Python 3.9
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.12
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v3
         with:
-          python-version: 3.9
+          python-version: 3.12
       - name: Install dependencies
         run: pdm install
       - name: Publish to PyPi

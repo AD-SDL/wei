@@ -4,11 +4,6 @@ wei.core.module
 .. automodule:: wei.core.module
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -22,15 +17,3 @@ wei.core.module
       update_module_reservation
       validate_module_names
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

@@ -4,11 +4,6 @@ wei.core.storage
 .. automodule:: wei.core.storage
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -24,15 +19,3 @@ wei.core.storage
       initialize_storage
       search_for_experiment_directory
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-

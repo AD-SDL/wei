@@ -9,10 +9,12 @@ The Workflow File
 
 Workflows can be defined declaratively using a YAML file, which should conform with the :class:`wei.types.workflow_types.Workflow`.
 
-In general, a workflow file consists of 3 parts:
+In general, a workflow file consists of the following parts:
 
+- Name: the name of the workflow
 - Metadata: defines information about the workflow as a whole
 - Modules (Optional): lists the modules used in the workflow
+- Parameters: defines the parameters that can be used in the workflow (and optionally their default values)
 - Flowdef: a sequence of Steps to execute
 
 As an example, consider the following Workflow file:
@@ -25,60 +27,62 @@ As an example, consider the following Workflow file:
         info: Example workflow for WEI
         version: 0.2
 
-    modules:
-    - name: sleeper
-    - name: webcam
+    parameters:
+        - name: wait_time
+          default: 5
 
-    - name: Sleep workcell for t seconds
-        module: sleeper
-        action: sleep
-        args:
-            t: "payload.wait_time"
-        comment: Sleep for payload.wait_time seconds before we take a picture
+    flowdef:
+        - name: Delay
+            module: utilities
+            action: delay
+            args:
+                seconds: $wait_time
+            comment: Delay for $wait_time seconds before we take a picture
 
-    - name: Take Picture
-        module: webcam
-        action: take_picture
-        args:
-            file_name: "experiment_result.jgp"
+        - name: Take Picture
+            module: camera
+            action: take_picture
+            comment: Takes a picture with the camera
 
 Steps
 =====
 
 Each step in a Workflow is a dictionary that specifies, at the very least, the name of the step, the action to be performed, and the module on which the action should be performed. The step may also include a comment, which is a human-readable description of the step.
 
-Each module supports a specific set of actions. You can find the list of supported actions for each module in the module's ``/about`` interface, on the Dashboard, or in the documentation.
+Each module supports a specific set of actions. You can find the list of supported actions for each module in the module's ``/about`` interface, on the Dashboard, or in the documentation/source code.
 
-Many actions have arguments (``args``) that must be provided in order to execute the action. These arguments are specified as key-value pairs in the step dictionary. The value of each argument can be a string, a number, or a reference to a value in the payload (see below).
+Many actions have arguments (``args``) that must be provided in order to execute the action. These arguments are specified as key-value pairs in the step dictionary. The value of each argument can be a string, a number, or any other JSON serializable value.
 
 In addition, some actions may accept files as arguments. These arguments are specified as filepaths in a separate ``files`` dictionary within the step, and are automatically uploaded to the WEI server when the workflow is submitted. The filepaths in the dictionary must either be absolute paths, or relative paths to the ``working_dir`` of your ExperimentClient.
 
-Payloads
-========
+Parameters
+==========
 
-A payload is a dictionary of values, supplied alongside a Workflow when it is submitted to WEI to be run. These values are used to parameterize the Workflow, allowing for more flexible and reusable Workflows.
+Parameters are values that can be set when a job is submitted, allowing for more flexible and reusable Workflows.
 
-When a payload is provided while starting a Workflow run, WEI will find each instance of the `payload.<key>` pattern in the Workflow and replace it with the corresponding value from the payload.
+Parameters are specified in the ``parameters`` section of the workflow file, and can optionally include a ``default`` value. They can be referenced anywhere in the flowdef using the ``$parameter_name`` or ``${parameter_name}`` syntax.
 
 For example, if the workflow file contains the following step:
 
 .. code-block:: yaml
 
-    - name: Wait for t seconds
-        module: sleeper
-        action: sleep
+    - name: Delay Workflow
+        module: utilities
+        action: delay
         args:
-            t: "payload.wait_time"
+            seconds: $wait_time
+        comment: Delay for $wait_time seconds
 
-And the payload is ``{"wait_time": 5}``, then the step will be executed as if it were
+And you pass in the parameters as ``{"wait_time": 10}``, then the step will be executed as if it were
 
 .. code-block:: yaml
 
-    - name: Wait for t seconds
-        module: sleeper
-        action: sleep
+    - name: Delay Workflow
+        module: utilities
+        action: delay
         args:
-            t: "5"
+            seconds: 10
+        comment: Delay for 10 seconds
 
 Next Steps
 ==========

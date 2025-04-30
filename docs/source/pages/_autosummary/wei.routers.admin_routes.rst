@@ -4,11 +4,6 @@ wei.routers.admin\_routes
 .. automodule:: wei.routers.admin_routes
 
    
-   
-   
-
-   
-   
    .. rubric:: Functions
 
    .. autosummary::
@@ -30,15 +25,3 @@ wei.routers.admin\_routes
       unlock_module
       unlock_workcell
    
-   
-
-   
-   
-   
-
-   
-   
-   
-
-
-
