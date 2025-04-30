@@ -7,7 +7,6 @@ from wei import ExperimentClient
 from wei.types.experiment_types import ExperimentDesign
 
 
-
 def main() -> None:
     """
     Run test workflow for workflow Admin Actions. Multi-step workflow involving all modules.

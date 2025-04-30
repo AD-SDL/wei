@@ -11,6 +11,7 @@ from wei.core.module import clear_module_reservation, get_module_about
 from wei.core.notifications import send_failed_step_notification
 from wei.core.state_manager import state_manager
 from wei.core.storage import get_workflow_run_directory
+from wei.core.workflow_admin import wf_status_change
 from wei.types import (
     Module,
     ModuleStatus,
@@ -93,7 +94,6 @@ def check_dependency_status(step: Step):
     """Returns true if the module is able to run based on the step requirements"""
     return True
 
-from wei.core.workflow_admin import wf_status_change
 
 @threaded_daemon
 def run_step(
@@ -108,14 +108,18 @@ def run_step(
         logger.debug(step)
         interface = "simulate_callback" if wf_run.simulate else module.interface
 
-        if wf_run.status == WorkflowStatus.CANCELLED: # *** Not sure if boosts performance or not..
+        if (
+            wf_run.status == WorkflowStatus.CANCELLED
+        ):  # *** Not sure if boosts performance or not..
             return
         if wf_status_change.is_set():
             return
-        
+
         try:
             step.start_time = datetime.now()
-            status, data_key, error, files = InterfaceMap.interfaces[interface].send_action(
+            status, data_key, error, files = InterfaceMap.interfaces[
+                interface
+            ].send_action(
                 step=step,
                 module=module,
                 run_dir=get_workflow_run_directory(wf_run.run_id),
@@ -135,7 +139,9 @@ def run_step(
                     state_manager.set_workflow_run(wf_run)
                     return
         except Exception as e:
-            logger.debug(f"Exception occurred while running step with name: {step.name}")
+            logger.debug(
+                f"Exception occurred while running step with name: {step.name}"
+            )
             logger.debug(str(e))
             logger.debug(traceback.format_exc())
             step_response = StepResponse(
@@ -210,7 +216,7 @@ def run_step(
                 wf_run.status = WorkflowStatus.IN_PROGRESS
         with state_manager.wc_state_lock():
             if wf_status_change.is_set():
-                    return
+                return
             wf_run.steps[wf_run.step_index] = step
             update_source_and_target(wf_run)
             free_source_and_target(wf_run)

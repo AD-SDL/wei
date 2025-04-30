@@ -23,7 +23,6 @@ from wei.core.state_manager import state_manager
 from wei.core.workflow import cancel_active_workflow_runs, cancel_workflow_run
 from wei.routers.workflow_routes import get_run
 from wei.utils import initialize_state
-from wei.types.workflow_types import WorkflowStatus
 
 router = APIRouter()
 

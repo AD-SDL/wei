@@ -3,7 +3,6 @@
 from wei.core.events import send_event
 from wei.core.state_manager import state_manager
 from wei.core.workflow import (
-    cancel_workflow_run,
     pause_workflow_run,
     resume_workflow_run,
 )
@@ -70,6 +69,7 @@ def send_pause(module: Module) -> None:
         print(f"Module {module.name} does not support pausing.")
         send_cancel(module)
 
+
 def send_pause_wf(workflow: WorkflowRun):
     """Pauses a workflow"""
     if check_can_send_admin_command_wf(workflow, AdminCommands.PAUSE):
@@ -108,6 +108,7 @@ def send_cancel(module: Module) -> None:
         print(f"Module {module.name} action has been canceled.")
     else:
         print(f"Module {module.name} does not support canceling.")
+
 
 @threaded_task
 def send_shutdown(module: Module) -> None:

@@ -1,23 +1,22 @@
 """The module that initializes and runs the step by step WEI workflow"""
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
-from wei.core.module import validate_module_names
+from wei.core.events import send_event
+from wei.core.location import free_source_and_target
+from wei.core.module import clear_module_reservation, validate_module_names
 from wei.core.state_manager import state_manager
 from wei.core.step import validate_step
 from wei.core.storage import get_workflow_run_directory
-from wei.types import Step, Workcell, Workflow, WorkflowRun
-from wei.types.workflow_types import WorkflowStatus
-from wei.core.workflow_admin import wf_status_change
 from wei.core.workcell import find_step_module
-from wei.core.module import clear_module_reservation
-from wei.core.location import free_source_and_target
-from wei.core.events import send_event
+from wei.core.workflow_admin import wf_status_change
+from wei.types import Step, Workcell, Workflow, WorkflowRun
 from wei.types.event_types import WorkflowCancelled
-from datetime import datetime
-from wei.core.step import check_step, run_step
+from wei.types.workflow_types import WorkflowStatus
+
 
 def create_run(
     workflow: Workflow,
@@ -159,7 +158,7 @@ def cancel_workflow_run(wf_run: WorkflowRun) -> None:
     if wf_run.start_time is None:
         wf_run.start_time = wf_run.end_time
     wf_run.duration = wf_run.end_time - wf_run.start_time
-    
+
     step = wf_run.steps[wf_run.step_index]
     module = find_step_module(state_manager.get_workcell(), step.module)
 
@@ -170,7 +169,7 @@ def cancel_workflow_run(wf_run: WorkflowRun) -> None:
 
     send_event(WorkflowCancelled.from_wf_run(wf_run=wf_run))
     print(f"Workflow run with id {wf_run.run_id} has been cancelled.")
-    
+
     return wf_run
 
 

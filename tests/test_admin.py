@@ -4,7 +4,6 @@ import time
 from pathlib import Path
 
 import requests
-from test_base import TestWEI_Base
 
 from wei.types.module_types import ModuleStatus
 from wei.types.workflow_types import WorkflowStatus
