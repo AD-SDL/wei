@@ -1,5 +1,4 @@
-
-export { };
+export {};
 
 declare module "store" {
 
@@ -14,5 +13,6 @@ declare module "store" {
     state_url: string;
     wc_info: any;
     wc_state: any;
+    events: any;
   }
 }

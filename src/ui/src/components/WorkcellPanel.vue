@@ -17,6 +17,7 @@
           <v-col cols="12" md="6" lg="6" xl="6">
             <ModulesPanel :modules="workcell_state.modules" :main_url="main_url" :wc_state="workcell_state" />
             <LocationsPanel :locations="workcell_state.locations" />
+            <EventPanel :evnts="events" @view-events="$emit('view-events')" />
           </v-col>
           <v-col cols="12" md="6" lg="6" xl="6">
             <WorkflowsPanel :wc_state="workcell_state" :wfs="workflows" @view-workflows="$emit('view-workflows')" />
@@ -59,18 +60,28 @@
 </template>
 
 <script setup lang="ts">
-import { main_url, workcell_info, workcell_state, workflows } from "@/store";
-import VueJsonPretty from 'vue-json-pretty';
 import 'vue-json-pretty/lib/styles.css';
+
+import VueJsonPretty from 'vue-json-pretty';
+
+import {
+  events,
+  main_url,
+  workcell_info,
+  workcell_state,
+  workflows,
+} from '@/store';
+
 import CancelButton from './AdminButtons/CancelButton.vue';
 import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
 import PauseResumeButton from './AdminButtons/PauseResumeButton.vue';
 import ResetButton from './AdminButtons/ResetButton.vue';
 import SafetyStopButton from './AdminButtons/SafetyStopButton.vue';
 import ShutdownButton from './AdminButtons/ShutdownButton.vue';
+import EventPanel from './EventPanel.vue';
 import LocationsPanel from './LocationsPanel.vue';
 import ModulesPanel from './ModulesPanel.vue';
 import WorkflowsPanel from './WorkflowsPanel.vue';
 
-defineEmits(['view-workflows']);
+defineEmits(['view-workflows', 'view-events']);
 </script>

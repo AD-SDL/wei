@@ -22,12 +22,19 @@
 </template>
 
 <script setup lang="ts">
-import { main_url } from "@/store";
-import { ref, watchEffect } from 'vue';
+import {
+  ref,
+  watchEffect,
+} from 'vue';
+
+import { main_url } from '@/store';
 
 const props = defineProps<{
     module?: string;
     module_status?: string;
+    wf_run_id?: string;
+    wf_status?: string;
+    can_Cancel?: boolean;
 }>();
 
 const cancel_url = ref('')
@@ -39,10 +46,17 @@ watchEffect(() => {
     if (props.module) {
         cancel_url.value = main_url.value.concat('/admin/cancel/'.concat(props.module))
         hoverText.value = "Cancel Module Action"
+        console.log(cancel_url.value)
+    }
+    else if (props.wf_run_id) {
+        cancel_url.value = main_url.value.concat('/admin/cancel_wf/'.concat(props.wf_run_id))
+        hoverText.value = "Cancel Workflow"
+        console.log(cancel_url.value)
     }
     else {
         cancel_url.value = main_url.value.concat('/admin/cancel')
-        hoverText.value = "Cancel All Workflows"
+        hoverText.value = "Cancel Workcell"
+        console.log(cancel_url.value)
     }
 })
 
@@ -56,6 +70,9 @@ watchEffect(() => {
             canCancel.value = false
         }
     }
+    else if (props.wf_run_id) {
+        canCancel.value = ["running", "queued", "in_progress"].includes(props.wf_status || "") && props.can_Cancel === true;
+    }
     else {
         // TODO: Allow cancel if there's an actively running workflow
         canCancel.value = true
@@ -66,13 +83,12 @@ watchEffect(() => {
 const sendCancelCommand = async () => {
     try {
         const response = await fetch(cancel_url.value, {
-            method: 'POST',
+            method: "POST",
         });
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         console.log('Cancel successful');
-
     } catch (error) {
         console.error('Error in cancel:', error);
     }

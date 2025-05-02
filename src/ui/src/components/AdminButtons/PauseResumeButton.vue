@@ -24,12 +24,22 @@
   </template>
 
 <script lang="ts" setup>
-import { main_url, workcell_state } from "@/store";
-import { ref, watchEffect } from 'vue';
+import {
+  ref,
+  watchEffect,
+} from 'vue';
+
+import {
+  main_url,
+  workcell_state,
+} from '@/store';
 
 const props = defineProps<{
     module?: string;
     module_status?: any;
+    wf_run_id?: string;
+    wf_status?: string;
+    can_Pause?: boolean;
 }>();
 
 const pause_url = ref('')
@@ -44,6 +54,11 @@ watchEffect(() => {
         pause_url.value = main_url.value.concat('/admin/pause/'.concat(props.module))
         resume_url.value = main_url.value.concat('/admin/resume/'.concat(props.module))
         hoverText.value = "Module"
+    }
+    else if (props.wf_run_id) {
+        pause_url.value = main_url.value.concat('/admin/pause_wf/'.concat(props.wf_run_id))
+        resume_url.value = main_url.value.concat('/admin/resume_wf/'.concat(props.wf_run_id))
+        hoverText.value = "Workflow"
     }
     else {
         pause_url.value = main_url.value.concat('/admin/pause')
@@ -67,6 +82,10 @@ watchEffect(() => {
         } else {
             isPaused.value = false
         }
+    }
+    else if (props.wf_run_id) {
+        allowButton.value = ["running", "in_progress", "paused"].includes(props.wf_status || "") && props.can_Pause === true;
+        isPaused.value = (props.wf_status == "paused")
     }
     else {
         if (workcell_state.value) {

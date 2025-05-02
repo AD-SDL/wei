@@ -22,12 +22,18 @@
 </template>
 
 <script lang="ts" setup>
-    import { main_url } from "@/store";
-import { ref, watchEffect } from 'vue';
+import {
+  ref,
+  watchEffect,
+} from 'vue';
 
-    const props = defineProps<{
+import { main_url } from '@/store';
+
+const props = defineProps<{
         module?: string;
         module_status?: string;
+        wf_run_id?: string;
+        wf_status?: string;
     }>();
 
     const reset_url = ref('')
@@ -39,6 +45,10 @@ import { ref, watchEffect } from 'vue';
         if (props.module) {
             reset_url.value = main_url.value.concat('/admin/reset/'.concat(props.module))
             hoverText.value = "Reset Module"
+        }
+        else if (props.wf_run_id) {
+            reset_url.value = main_url.value.concat('/admin/reset_wf/'.concat(props.wf_run_id))
+            hoverText.value = "Reset Workflow"
         }
         else {
             reset_url.value = main_url.value.concat('/admin/reset')
@@ -56,6 +66,9 @@ import { ref, watchEffect } from 'vue';
             else {
                 canReset.value = true
             }
+        }
+        else if (props.wf_run_id) {
+            canReset.value = !["running", "in_progress", "new", "queued"].includes(props.wf_status || "")
         }
         else {
             // TODO: Allow reset only if no workflows/experiments are actively running

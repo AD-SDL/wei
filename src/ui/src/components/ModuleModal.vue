@@ -49,6 +49,8 @@
 
       <v-card-text class="subheading grey--text">
         <div>
+            <h3 class="title">Recent Events:</h3>
+              <EventTable :items="moduleEvents" :maxEntries="5"/>
           <h3>Actions</h3>
           <v-expansion-panels>
             <v-expansion-panel v-for="action in modal_text.actions" :key="action.name">
@@ -142,13 +144,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { get_status } from '../store';
+import 'vue-json-pretty/lib/styles.css';
+
+import {
+  computed,
+  ref,
+} from 'vue';
 
 import VueJsonPretty from 'vue-json-pretty';
-import 'vue-json-pretty/lib/styles.css';
+
+import {
+  events,
+  get_status,
+} from '../store';
 import LockUnlockButton from './AdminButtons/LockUnlockButton.vue';
 import ShutdownButton from './AdminButtons/ShutdownButton.vue';
+import EventTable from './EventTable.vue';
+
 const props = defineProps(['modal_title', 'modal_text', 'main_url', 'wc_state'])
 const arg_headers = [
   { title: 'Name', key: 'name' },
@@ -291,6 +303,23 @@ function copyAction(test: any) {
   navigator.clipboard.writeText(test)
   alert("Copied!")
 }
+
+const moduleEvents = computed(() => {
+  if (!events.value || !props.modal_title) {
+    return [];
+  }
+  return events.value.filter((event: any) => {
+    const eventName = event.event_name
+      ? event.event_name === "STEP"
+      : true;
+    const moduleName = event.step && event.step.module
+      ? event.step.module === props.modal_title
+      : true;
+    return eventName && moduleName;
+  });
+});
+
+
 </script>
 
 <style>

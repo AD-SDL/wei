@@ -46,8 +46,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+
 import VueJsonPretty from 'vue-json-pretty';
 import { VDataTable } from 'vuetify/components';
+
 const props = defineProps(['steps', 'wf'])
 
 const test = ref()
@@ -64,7 +66,7 @@ props.steps.forEach((step: any) => {
     Object.keys(step.result.data).forEach(async (key: string) => {
 
       let val = await ((await fetch("http://".concat(window.location.host).concat("/data/").concat(step.result.data[key]).concat("/info"))).json())
-      console.log(val)
+      // console.log(val)
       test.value[step.id][val.id] = val
 
     })

@@ -2,15 +2,21 @@
 
 import copy
 import re
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import UploadFile
 
-from wei.core.module import validate_module_names
+from wei.core.events import send_event
+from wei.core.location import free_source_and_target
+from wei.core.module import clear_module_reservation, validate_module_names
 from wei.core.state_manager import state_manager
 from wei.core.step import validate_step
 from wei.core.storage import get_workflow_run_directory
+from wei.core.workcell import find_step_module
+from wei.core.workflow_admin import wf_status_change
 from wei.types import Step, Workcell, Workflow, WorkflowRun
+from wei.types.event_types import WorkflowCancelled
 from wei.types.workflow_types import WorkflowStatus
 
 
@@ -128,11 +134,44 @@ def save_workflow_files(wf_run: WorkflowRun, files: List[UploadFile]) -> Workflo
     return wf_run
 
 
-def cancel_workflow_run(wf_run: WorkflowRun) -> None:
-    """Cancels the workflow run"""
-    wf_run.status = WorkflowStatus.CANCELLED
+def pause_workflow_run(wf_run: WorkflowRun) -> None:
+    """Pauses the workflow run"""
+    wf_status_change.set()
+    wf_run.status = WorkflowStatus.PAUSED
     with state_manager.wc_state_lock():
         state_manager.set_workflow_run(wf_run)
+    return wf_run
+
+
+def resume_workflow_run(wf_run: WorkflowRun) -> None:
+    """Resumes the workflow run"""
+    wf_run.status = WorkflowStatus.IN_PROGRESS
+    with state_manager.wc_state_lock():
+        state_manager.set_workflow_run(wf_run)
+    return wf_run
+
+
+def cancel_workflow_run(wf_run: WorkflowRun) -> None:
+    """Cancels the workflow run"""
+    wf_status_change.set()
+    wf_run.status = WorkflowStatus.CANCELLED
+    wf_run.end_time = datetime.now()
+
+    if wf_run.start_time is None:
+        wf_run.start_time = wf_run.end_time
+    wf_run.duration = wf_run.end_time - wf_run.start_time
+
+    step = wf_run.steps[wf_run.step_index]
+    module = find_step_module(state_manager.get_workcell(), step.module)
+
+    with state_manager.wc_state_lock():
+        clear_module_reservation(module)
+        free_source_and_target(wf_run)
+        state_manager.set_workflow_run(wf_run)
+
+    send_event(WorkflowCancelled.from_wf_run(wf_run=wf_run))
+    print(f"Workflow run with id {wf_run.run_id} has been cancelled.")
+
     return wf_run
 
 
